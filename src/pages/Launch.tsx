@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Coins, AlertTriangle, Check } from "lucide-react";
+import { Coins, AlertTriangle, Check, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
+import { Link } from "react-router-dom";
 
 const Launch = () => {
   const { wallet, connect } = useWallet();
@@ -95,6 +96,22 @@ const Launch = () => {
               </div>
               <h1 className="text-2xl font-bold">Launch Your Meme Coin</h1>
               <p className="text-gray-400 mt-2">Create and deploy your token in seconds</p>
+            </div>
+            
+            {/* New Package Banner */}
+            <div className="mb-6 p-3 glass-card bg-gradient-to-r from-orange-600/30 to-purple-600/30 border border-purple-500/30">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-white">Need full launch support?</h3>
+                  <p className="text-xs text-gray-300">All-in $500 package with marketing and support</p>
+                </div>
+                <Link to="/package">
+                  <Button size="sm" className="btn-primary text-xs flex items-center gap-1">
+                    Learn More
+                    <ChevronRight size={12} />
+                  </Button>
+                </Link>
+              </div>
             </div>
             
             {!isWalletConnected ? (

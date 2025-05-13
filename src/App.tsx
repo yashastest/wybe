@@ -13,6 +13,7 @@ import Trade from "./pages/Trade";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import LaunchPackage from "./pages/LaunchPackage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/trade/:symbol" element={<Trade />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/package" element={<LaunchPackage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
