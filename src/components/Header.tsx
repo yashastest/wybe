@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -85,8 +86,10 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               >
                 <Link
                   to={link.to}
-                  className={`nav-link text-sm font-medium ${
-                    location.pathname === link.to ? 'active-nav-link' : ''
+                  className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary ${
+                    location.pathname === link.to 
+                      ? 'active-nav-link' 
+                      : 'text-white hover:text-wybe-primary/90'
                   }`}
                 >
                   {link.label}
@@ -144,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`nav-link text-sm font-medium py-2 ${
+                  className={`nav-link text-sm font-medium py-2 transition-colors hover:bg-wybe-primary/20 hover:text-white hover:pl-2 rounded ${
                     location.pathname === link.to ? 'active-nav-link' : ''
                   }`}
                 >

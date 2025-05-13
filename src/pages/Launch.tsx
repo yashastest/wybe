@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, ImageIcon, X, Link as LinkIcon } from "lucide-react";
+import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, Link as LinkIcon } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Select,
   SelectContent,
@@ -33,7 +35,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { Link } from "react-router-dom";
 import { Shimmer } from "@/components/ui/shimmer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const Launch = () => {
   const { wallet, connect } = useWallet();
@@ -51,8 +52,12 @@ const Launch = () => {
   const [whitelistDescription, setWhitelistDescription] = useState("");
   const [website, setWebsite] = useState("");
   const [telegramChannel, setTelegramChannel] = useState("");
+  
+  // Image upload states
   const [tokenLogo, setTokenLogo] = useState<File | null>(null);
   const [tokenLogoPreview, setTokenLogoPreview] = useState<string | null>(null);
+  const [tokenBanner, setTokenBanner] = useState<File | null>(null);
+  const [tokenBannerPreview, setTokenBannerPreview] = useState<string | null>(null);
   
   useEffect(() => {
     // Simulate loading state
@@ -71,8 +76,11 @@ const Launch = () => {
       if (tokenLogoPreview) {
         URL.revokeObjectURL(tokenLogoPreview);
       }
+      if (tokenBannerPreview) {
+        URL.revokeObjectURL(tokenBannerPreview);
+      }
     };
-  }, [tokenLogoPreview]);
+  }, [tokenLogoPreview, tokenBannerPreview]);
   
   const handleConnect = async () => {
     try {
@@ -88,19 +96,6 @@ const Launch = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
-      // Check file size (limit to 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.match('image.*')) {
-        toast.error("Please select an image file");
-        return;
-      }
-      
       setTokenLogo(file);
       setTokenLogoPreview(URL.createObjectURL(file));
       toast.success("Logo uploaded successfully!");
@@ -113,6 +108,23 @@ const Launch = () => {
     }
     setTokenLogo(null);
     setTokenLogoPreview(null);
+  };
+  
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setTokenBanner(file);
+      setTokenBannerPreview(URL.createObjectURL(file));
+      toast.success("Banner uploaded successfully!");
+    }
+  };
+  
+  const handleRemoveBanner = () => {
+    if (tokenBannerPreview) {
+      URL.revokeObjectURL(tokenBannerPreview);
+    }
+    setTokenBanner(null);
+    setTokenBannerPreview(null);
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -292,59 +304,30 @@ const Launch = () => {
                             </div>
                             
                             <div>
-                              <Label htmlFor="assistedTokenLogo">Token Logo</Label>
-                              <div className="flex flex-col items-center gap-4 mb-4">
-                                {tokenLogoPreview ? (
-                                  <div className="relative">
-                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-wybe-primary">
-                                      <AspectRatio ratio={1} className="bg-muted">
-                                        <img 
-                                          src={tokenLogoPreview} 
-                                          alt="Token Logo" 
-                                          className="object-cover w-full h-full"
-                                        />
-                                      </AspectRatio>
-                                    </div>
-                                    <Button 
-                                      type="button"
-                                      variant="destructive" 
-                                      size="sm"
-                                      className="absolute -top-2 -right-2 rounded-full h-6 w-6 p-0"
-                                      onClick={handleRemoveLogo}
-                                    >
-                                      <X size={14} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="w-24 h-24 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                                    <ImageIcon size={32} className="text-wybe-primary" />
-                                  </div>
-                                )}
-                                <div>
-                                  <input
-                                    type="file"
-                                    id="assistedTokenLogo"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleLogoUpload}
-                                  />
-                                  <label htmlFor="assistedTokenLogo">
-                                    <Button 
-                                      type="button" 
-                                      variant="outline" 
-                                      className="cursor-pointer"
-                                      asChild
-                                    >
-                                      <span>
-                                        {tokenLogoPreview ? 'Change Logo' : 'Upload Logo'}
-                                      </span>
-                                    </Button>
-                                  </label>
-                                  <p className="text-xs text-gray-400 mt-2">
-                                    Recommended: 512×512px PNG or JPG, max 2MB
-                                  </p>
-                                </div>
-                              </div>
+                              <Label>Token Logo (Optional)</Label>
+                              <ImageUpload
+                                id="assistedTokenLogo"
+                                label="Logo"
+                                imagePreview={tokenLogoPreview}
+                                onImageUpload={handleLogoUpload}
+                                onImageRemove={handleRemoveLogo}
+                                className="mb-2"
+                                imageClassName="w-24 h-24 rounded-full"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label>Token Banner (Optional)</Label>
+                              <ImageUpload
+                                id="assistedTokenBanner"
+                                label="Banner"
+                                imagePreview={tokenBannerPreview}
+                                onImageUpload={handleBannerUpload}
+                                onImageRemove={handleRemoveBanner}
+                                aspectRatio={3/1}
+                                className="mb-2"
+                                imageClassName="w-full h-auto rounded-lg"
+                              />
                             </div>
                             
                             <div>
@@ -434,69 +417,33 @@ const Launch = () => {
                             </div>
                             
                             <div>
-                              <Label htmlFor="logo">Token Logo</Label>
-                              <div className="flex flex-col items-center gap-4 mb-2">
-                                {tokenLogoPreview ? (
-                                  <div className="relative">
-                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-wybe-primary">
-                                      <AspectRatio ratio={1} className="bg-muted">
-                                        <img 
-                                          src={tokenLogoPreview} 
-                                          alt="Token Logo" 
-                                          className="object-cover w-full h-full"
-                                        />
-                                      </AspectRatio>
-                                    </div>
-                                    <Button 
-                                      type="button"
-                                      variant="destructive" 
-                                      size="sm"
-                                      className="absolute -top-2 -right-2 rounded-full h-6 w-6 p-0"
-                                      onClick={handleRemoveLogo}
-                                    >
-                                      <X size={14} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <label htmlFor="logo" className="cursor-pointer">
-                                    <div className="border border-dashed border-wybe-primary/40 rounded-lg p-6 text-center hover:bg-wybe-primary/10 transition-colors">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <div className="w-16 h-16 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                                          <ImageIcon size={24} className="text-wybe-primary" />
-                                        </div>
-                                        <p className="text-sm text-gray-400">
-                                          Click to upload logo image
-                                          <span className="block text-xs">(Optional, recommended 512x512px)</span>
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </label>
-                                )}
-                                <input
-                                  type="file"
-                                  id="logo"
-                                  className="hidden"
-                                  accept="image/*"
-                                  onChange={handleLogoUpload}
-                                />
-                                {tokenLogoPreview && (
-                                  <label htmlFor="logo">
-                                    <Button 
-                                      type="button" 
-                                      variant="outline" 
-                                      className="cursor-pointer mt-2"
-                                      asChild
-                                    >
-                                      <span>Change Logo</span>
-                                    </Button>
-                                  </label>
-                                )}
-                              </div>
-                              {tokenLogoPreview && (
-                                <p className="text-xs text-gray-400 text-center mt-2">
-                                  Recommended: 512×512px PNG or JPG, max 2MB
-                                </p>
-                              )}
+                              <Label>Token Logo (Optional)</Label>
+                              <ImageUpload
+                                id="logo"
+                                label="Logo"
+                                imagePreview={tokenLogoPreview}
+                                onImageUpload={handleLogoUpload}
+                                onImageRemove={handleRemoveLogo}
+                                className="mb-2"
+                                imageClassName="w-24 h-24 rounded-full"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label>Token Banner (Optional)</Label>
+                              <ImageUpload
+                                id="banner"
+                                label="Banner"
+                                imagePreview={tokenBannerPreview}
+                                onImageUpload={handleBannerUpload}
+                                onImageRemove={handleRemoveBanner}
+                                aspectRatio={3/1}
+                                className="mb-2"
+                                imageClassName="w-full h-auto rounded-lg"
+                              />
+                              <p className="text-xs text-gray-400 text-center mt-1">
+                                Recommended: 1500×500px banner image
+                              </p>
                             </div>
                             
                             <div>
@@ -594,6 +541,16 @@ const Launch = () => {
                   <p className="text-sm text-gray-400">{symbol || "STKN"}</p>
                 </div>
               </div>
+              
+              {tokenBannerPreview && (
+                <div className="mb-4 rounded-lg overflow-hidden">
+                  <img 
+                    src={tokenBannerPreview} 
+                    alt={`${name || "Token"} Banner`} 
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              )}
               
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-400">Total Supply:</span>
