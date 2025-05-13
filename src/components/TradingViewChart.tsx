@@ -1,6 +1,8 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { motion } from 'framer-motion';
+import { Loader } from 'lucide-react';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -23,12 +25,27 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isChartReady, setIsChartReady] = useState(false);
   
   useEffect(() => {
+    setIsLoading(true);
+    setIsChartReady(false);
+    
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
-    script.onload = createWidget;
+    
+    script.onload = () => {
+      createWidget();
+      
+      // Simulate some loading time to show the animation
+      setTimeout(() => {
+        setIsLoading(false);
+        setTimeout(() => setIsChartReady(true), 300);
+      }, 1000);
+    };
+    
     document.head.appendChild(script);
 
     return () => {
@@ -64,9 +81,21 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           allow_symbol_change: true,
           hide_side_toolbar: isMobile,
           studies: ['Volume@tv-basicstudies'],
+          overrides: {
+            "paneProperties.background": "#0F172A",
+            "paneProperties.vertGridProperties.color": "rgba(139, 92, 246, 0.1)",
+            "paneProperties.horzGridProperties.color": "rgba(139, 92, 246, 0.1)",
+            "mainSeriesProperties.candleStyle.upColor": "#22C55E",
+            "mainSeriesProperties.candleStyle.downColor": "#EF4444",
+            "mainSeriesProperties.candleStyle.wickUpColor": "#22C55E",
+            "mainSeriesProperties.candleStyle.wickDownColor": "#EF4444",
+          },
           disabled_features: [
             "header_symbol_search",
             "use_localstorage_for_settings",
+            "header_saveload",
+            "header_screenshot",
+            "header_compare",
           ],
           enabled_features: ["save_chart_properties_to_local_storage"],
         });
@@ -85,6 +114,14 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           toolbar_bg: '#131722',
           enable_publishing: false,
           hide_side_toolbar: isMobile,
+          overrides: {
+            "paneProperties.background": "#0F172A",
+            "paneProperties.vertGridProperties.color": "rgba(139, 92, 246, 0.1)",
+            "paneProperties.horzGridProperties.color": "rgba(139, 92, 246, 0.1)",
+            "mainSeriesProperties.areaStyle.color1": "rgba(139, 92, 246, 0.4)",
+            "mainSeriesProperties.areaStyle.color2": "rgba(139, 92, 246, 0.05)",
+            "mainSeriesProperties.lineStyle.color": "#8B5CF6",
+          },
         });
       }
     }
@@ -106,15 +143,39 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   };
 
   return (
-    <div 
-      className={`w-full ${containerClassName}`}
-      style={{ height: '500px' }}
-    >
-      <div 
-        id={`tradingview-widget-${symbol}-${timeframe}-${chartType}`} 
-        ref={containerRef} 
+    <div className={`w-full relative ${containerClassName} glass-card overflow-hidden`} style={{ height: '500px' }}>
+      {isLoading && (
+        <motion.div 
+          className="absolute inset-0 flex items-center justify-center bg-wybe-background-light z-10"
+          animate={{ opacity: isLoading ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex flex-col items-center gap-4">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            >
+              <Loader size={32} className="text-wybe-primary" />
+            </motion.div>
+            <p className="text-gradient text-lg">Loading Chart</p>
+          </div>
+        </motion.div>
+      )}
+      
+      <motion.div 
         className="w-full h-full"
-      />
+        animate={{ 
+          opacity: isChartReady ? 1 : 0,
+          scale: isChartReady ? 1 : 0.98,
+        }}
+        transition={{ duration: 0.4 }}
+      >
+        <div 
+          id={`tradingview-widget-${symbol}-${timeframe}-${chartType}`} 
+          ref={containerRef} 
+          className="w-full h-full"
+        />
+      </motion.div>
     </div>
   );
 };

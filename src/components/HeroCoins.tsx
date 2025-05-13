@@ -5,6 +5,21 @@ import { motion } from "framer-motion";
 const HeroCoins = () => {
   return (
     <div className="relative h-96">
+      {/* Background glow effects */}
+      <motion.div
+        className="absolute inset-0 rounded-full bg-wybe-primary/10 blur-3xl"
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.6, 0.8, 0.6],
+        }}
+        transition={{ 
+          duration: 8, 
+          repeat: Infinity, 
+          repeatType: "reverse",
+          ease: "easeInOut", 
+        }}
+      />
+      
       {/* Large center coin */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
@@ -12,9 +27,32 @@ const HeroCoins = () => {
         transition={{ duration: 0.8 }}
         className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
       >
-        <div className="w-48 h-48 rounded-full bg-gradient-to-br from-wybe-gradient-from to-wybe-gradient-to shadow-glow-lg flex items-center justify-center">
-          <span className="text-white text-4xl font-bold">WYBE</span>
-        </div>
+        <motion.div
+          animate={{ 
+            boxShadow: [
+              '0 0 15px rgba(139, 92, 246, 0.4)', 
+              '0 0 30px rgba(139, 92, 246, 0.7)', 
+              '0 0 15px rgba(139, 92, 246, 0.4)'
+            ],
+          }}
+          transition={{ duration: 4, repeat: Infinity }}
+          className="w-48 h-48 rounded-full bg-gradient-to-br from-wybe-gradient-from to-wybe-gradient-to flex items-center justify-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 20, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+            className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative"
+          >
+            <span className="absolute text-white text-4xl font-bold z-10">WYBE</span>
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/10" />
+            </div>
+          </motion.div>
+        </motion.div>
       </motion.div>
       
       {/* Smaller floating coins */}
@@ -58,9 +96,6 @@ const HeroCoins = () => {
         delay={1.0}
         className="bg-violet-700/80" 
       />
-      
-      {/* Background glow */}
-      <div className="absolute inset-0 rounded-full bg-wybe-primary/10 blur-3xl transform -translate-y-8"></div>
     </div>
   );
 };
@@ -86,21 +121,33 @@ const CoinFloat = ({ size, symbol, top, bottom, left, right, delay, className }:
       style={{ top, bottom, left, right }}
     >
       <motion.div
-        animate={{ y: [0, -15, 0] }}
+        animate={{ 
+          y: [0, -15, 0],
+          scale: [1, 1.05, 1],
+        }}
         transition={{ 
           duration: 4, 
           repeat: Infinity,
           repeatType: "reverse",
           ease: "easeInOut",
-          delay: delay * 2
+          delay: delay * 2,
+          times: [0, 0.5, 1]
         }}
       >
-        <div 
-          className={`rounded-full flex items-center justify-center border border-white/20 shadow-glow-sm ${className}`}
+        <motion.div 
+          className={`rounded-full flex items-center justify-center border border-white/20 ${className}`}
           style={{ width: `${size}px`, height: `${size}px` }}
+          animate={{ 
+            boxShadow: [
+              '0 0 5px rgba(255,255,255,0.2)', 
+              '0 0 10px rgba(255,255,255,0.4)', 
+              '0 0 5px rgba(255,255,255,0.2)'
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity, delay: delay }}
         >
           <span className="text-white text-xs font-bold">{symbol}</span>
-        </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
