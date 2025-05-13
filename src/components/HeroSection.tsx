@@ -1,12 +1,19 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
+import { TypewriterText, TypewriterHeading, SplitColorHeading } from "@/components/ui/typewriter-text";
 
 const HeroSection = () => {
+  const [showFullTagline, setShowFullTagline] = useState(false);
+  
+  const handleTypewriterComplete = () => {
+    setShowFullTagline(true);
+  };
+  
   return (
     <section className="relative overflow-hidden pt-28 md:pt-32 pb-16 min-h-[80vh] flex items-center">
       <div className="container relative z-10">
@@ -23,20 +30,31 @@ const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <span className="text-wybe-primary font-mono text-sm uppercase tracking-wider font-bold">Powered by Solana</span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight">
-                Build your <span className="text-gradient">meme empire</span> <br className="hidden md:block" /> in seconds <span className="text-wybe-primary">🚀</span>
-              </h1>
+              <span className="text-orange-500 font-mono text-sm uppercase tracking-wider font-bold">Powered by Solana</span>
+              <SplitColorHeading 
+                text="Build your meme empire in seconds 🚀"
+                className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight"
+                whiteTextClassName="text-white"
+                coloredTextClassName="text-orange-500"
+                splitAt={0.6}
+              />
             </motion.div>
             
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
               className="text-lg text-gray-300 max-w-xl"
             >
-              First AI meme launchpad on Solana with bonding curves, killer tokenomics, and creator rewards. Go from zero to hero, instantly.
-            </motion.p>
+              <TypewriterText 
+                text="First AI meme launchpad on Solana with bonding curves, killer tokenomics, and creator rewards."
+                delay={20}
+                onComplete={handleTypewriterComplete}
+              />
+              {showFullTagline && (
+                <span className="ml-1 text-orange-500">Go from zero to hero, instantly.</span>
+              )}
+            </motion.div>
             
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -49,7 +67,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button className="btn-primary font-poppins font-bold text-base px-8 py-6 bg-gradient-to-r from-wybe-gradient-from to-wybe-gradient-to">
+                  <Button className="font-poppins font-bold text-base px-8 py-6" variant="orange">
                     Launch a Meme Coin
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -60,7 +78,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button variant="outline" className="btn-secondary font-poppins font-bold text-base px-8 py-6">
+                  <Button variant="outline" className="font-poppins font-bold text-base px-8 py-6">
                     Launch Package
                   </Button>
                 </motion.div>
@@ -74,15 +92,15 @@ const HeroSection = () => {
               className="grid grid-cols-3 gap-8 mt-8 pt-8 border-t border-white/10"
             >
               <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-wybe-primary">3s</h3>
+                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">3s</h3>
                 <p className="text-sm text-gray-400 mt-1">Average Deploy Time</p>
               </div>
               <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-wybe-primary">247+</h3>
+                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">247+</h3>
                 <p className="text-sm text-gray-400 mt-1">Projects Launched</p>
               </div>
               <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-wybe-primary">$4.2M</h3>
+                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">$4.2M</h3>
                 <p className="text-sm text-gray-400 mt-1">Total Trading Volume</p>
               </div>
             </motion.div>
@@ -100,14 +118,14 @@ const HeroSection = () => {
         <motion.div 
           className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full opacity-20"
           style={{ 
-            background: "linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.2) 100%)",
+            background: "linear-gradient(135deg, rgba(249, 115, 22, 0.3) 0%, rgba(234, 88, 12, 0.2) 100%)",
             filter: "blur(50px)"
           }}
         />
         <motion.div 
           className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full opacity-10"
           style={{ 
-            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(168, 85, 247, 0.2) 100%)",
+            background: "linear-gradient(135deg, rgba(249, 115, 22, 0.3) 0%, rgba(234, 88, 12, 0.2) 100%)",
             filter: "blur(60px)"
           }}
         />

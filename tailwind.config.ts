@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -73,12 +74,12 @@ export default {
         },
         // New Vibrant Color Scheme
         wybe: {
-          primary: "#9b4dca", // Purple
+          primary: "#f97316", // Orange (previously purple)
           secondary: "#33c3f0", // Blue
-          accent: "#f97316", // Orange
+          accent: "#10b981", // Green
           muted: "#f1f1f1", // Light Gray
           dark: "#2a2a2a", // Dark Gray
-          light: "#e5deff", // Light Purple
+          light: "#fff7ed", // Light Orange
           background: "#1e1e1e", // Dark Background
           "background-light": "#2d2d2d", // Lighter Background
           danger: "#ea384c", // Red
@@ -86,8 +87,8 @@ export default {
           warning: "#f9a825", // Amber/Orange
           info: "#0ea5e9", // Sky Blue
           gradient: {
-            from: "#9b4dca", // Purple
-            to: "#33c3f0", // Blue
+            from: "#f97316", // Orange (previously purple)
+            to: "#fed7aa", // Light Orange
           },
         },
       },

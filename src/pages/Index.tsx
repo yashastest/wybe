@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
+import { TypewriterHeading } from "@/components/ui/typewriter-text";
 
 const Index = () => {
   return (
@@ -63,7 +64,14 @@ const CreatorFeesSection = () => {
             }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold font-poppins mb-4">Creator <span className="gradient-text">Fee Structure</span></h2>
+            <TypewriterHeading
+              text="Creator Fee Structure"
+              highlightWords={["Fee", "Structure"]}
+              className="text-3xl md:text-4xl font-bold font-poppins mb-4"
+              highlightClassName="text-orange-500"
+              delay={50}
+              tag="h2"
+            />
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               We reward creators who build sustainable meme coins with a generous fee-sharing model.
             </p>
@@ -79,23 +87,23 @@ const CreatorFeesSection = () => {
                   transition: { delay: 0.1, duration: 0.3 }
                 }
               }}
-              className="glass-card p-6 bg-gradient-to-br from-purple-900/20 to-transparent relative overflow-hidden group"
+              className="glass-card p-6 bg-gradient-to-br from-orange-900/20 to-transparent relative overflow-hidden group"
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-xl font-bold font-poppins">Performance Based</h3>
-                <div className="bg-wybe-primary/20 p-2 rounded-full">
-                  <Rocket size={18} className="text-wybe-primary" />
+                <div className="bg-orange-500/20 p-2 rounded-full">
+                  <Rocket size={18} className="text-orange-500" />
                 </div>
               </div>
-              <div className="text-4xl font-bold text-gradient mb-3">
+              <div className="text-4xl font-bold text-orange-500 mb-3">
                 40%
               </div>
               <p className="text-gray-300 mb-4">
                 Of all trading fees when your token reaches $50K market cap within 4 days and sustains it for 48 hours.
               </p>
-              <div className="h-1 w-full bg-wybe-primary/30 rounded-full mb-2 overflow-hidden">
+              <div className="h-1 w-full bg-orange-500/30 rounded-full mb-2 overflow-hidden">
                 <motion.div 
-                  className="h-full bg-wybe-primary"
+                  className="h-full bg-orange-500"
                   initial={{ width: "0%" }}
                   whileInView={{ width: "90%" }}
                   transition={{ duration: 1, delay: 0.5 }}
@@ -118,19 +126,19 @@ const CreatorFeesSection = () => {
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-xl font-bold font-poppins">Standard</h3>
-                <div className="bg-wybe-primary/20 p-2 rounded-full">
-                  <CircleDollarSign size={18} className="text-wybe-primary" />
+                <div className="bg-blue-500/20 p-2 rounded-full">
+                  <CircleDollarSign size={18} className="text-blue-500" />
                 </div>
               </div>
-              <div className="text-4xl font-bold text-gradient mb-3">
+              <div className="text-4xl font-bold text-blue-500 mb-3">
                 20%
               </div>
               <p className="text-gray-300 mb-4">
                 Of all trading fees if the $50K cap is not met, starting 7 days after launch.
               </p>
-              <div className="h-1 w-full bg-wybe-primary/30 rounded-full mb-2 overflow-hidden">
+              <div className="h-1 w-full bg-blue-500/30 rounded-full mb-2 overflow-hidden">
                 <motion.div 
-                  className="h-full bg-wybe-primary"
+                  className="h-full bg-blue-500"
                   initial={{ width: "0%" }}
                   whileInView={{ width: "60%" }}
                   transition={{ duration: 1, delay: 0.7 }}
@@ -153,19 +161,19 @@ const CreatorFeesSection = () => {
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-xl font-bold font-poppins">Platform Fee</h3>
-                <div className="bg-wybe-primary/20 p-2 rounded-full">
-                  <CircleDollarSign size={18} className="text-wybe-primary" />
+                <div className="bg-green-500/20 p-2 rounded-full">
+                  <CircleDollarSign size={18} className="text-green-500" />
                 </div>
               </div>
-              <div className="text-4xl font-bold text-gradient mb-3">
+              <div className="text-4xl font-bold text-green-500 mb-3">
                 2.5%
               </div>
               <p className="text-gray-300 mb-4">
                 Total fee on all trades, significantly lower than most DEXs which typically charge 3-5%.
               </p>
-              <div className="h-1 w-full bg-wybe-primary/30 rounded-full mb-2 overflow-hidden">
+              <div className="h-1 w-full bg-green-500/30 rounded-full mb-2 overflow-hidden">
                 <motion.div 
-                  className="h-full bg-wybe-primary"
+                  className="h-full bg-green-500"
                   initial={{ width: "0%" }}
                   whileInView={{ width: "40%" }}
                   transition={{ duration: 1, delay: 0.9 }}
@@ -188,7 +196,7 @@ const CreatorFeesSection = () => {
             className="text-center"
           >
             <Link to="/launch">
-              <Button className="btn-primary font-poppins font-extrabold">
+              <Button variant="orange" className="font-poppins font-extrabold">
                 Apply for Whitelist
               </Button>
             </Link>
@@ -204,11 +212,11 @@ const CreatorFeesSection = () => {
             }}
             className="mt-16 glass-card p-6 md:p-8 backdrop-blur-lg"
           >
-            <h3 className="text-2xl font-bold font-poppins mb-4 text-center">The <span className="text-white font-extrabold font-poppins italic">Wybe</span> <span className="text-gradient">Advantage</span></h3>
+            <h3 className="text-2xl font-bold font-poppins mb-4 text-center">The <span className="text-white font-extrabold font-poppins italic">Wybe</span> <span className="text-orange-500">Advantage</span></h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <motion.div className="flex items-start gap-3">
-                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
-                  <Shield size={16} className="text-wybe-primary" />
+                <div className="mt-1 bg-green-500/20 p-2 rounded-full">
+                  <Shield size={16} className="text-green-500" />
                 </div>
                 <div>
                   <h4 className="text-lg font-bold font-poppins mb-1">Enhanced Security</h4>
@@ -216,8 +224,8 @@ const CreatorFeesSection = () => {
                 </div>
               </motion.div>
               <motion.div className="flex items-start gap-3">
-                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
-                  <TrendingUp size={16} className="text-wybe-primary" />
+                <div className="mt-1 bg-orange-500/20 p-2 rounded-full">
+                  <TrendingUp size={16} className="text-orange-500" />
                 </div>
                 <div>
                   <h4 className="text-lg font-bold font-poppins mb-1">Instant Liquidity</h4>
@@ -225,8 +233,8 @@ const CreatorFeesSection = () => {
                 </div>
               </motion.div>
               <motion.div className="flex items-start gap-3">
-                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
-                  <Wallet size={16} className="text-wybe-primary" />
+                <div className="mt-1 bg-blue-500/20 p-2 rounded-full">
+                  <Wallet size={16} className="text-blue-500" />
                 </div>
                 <div>
                   <h4 className="text-lg font-bold font-poppins mb-1">Passive Income</h4>
@@ -234,8 +242,8 @@ const CreatorFeesSection = () => {
                 </div>
               </motion.div>
               <motion.div className="flex items-start gap-3">
-                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
-                  <Globe size={16} className="text-wybe-primary" />
+                <div className="mt-1 bg-gray-500/20 p-2 rounded-full">
+                  <Globe size={16} className="text-gray-400" />
                 </div>
                 <div>
                   <h4 className="text-lg font-bold font-poppins mb-1">Global Reach</h4>

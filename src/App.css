@@ -2,11 +2,11 @@
 /* App styles have been moved to index.css with Tailwind */
 
 :root {
-  --wybe-primary-glow: rgba(155, 77, 202, 0.5);
-  --wybe-secondary-glow: rgba(51, 195, 240, 0.5);
-  --wybe-accent-glow: rgba(249, 115, 22, 0.5);
-  --wybe-danger-glow: rgba(234, 56, 76, 0.5);
-  --wybe-success-glow: rgba(74, 222, 128, 0.5);
+  --wybe-primary-glow: rgba(249, 115, 22, 0.5); /* Orange */
+  --wybe-secondary-glow: rgba(51, 195, 240, 0.5); /* Blue */
+  --wybe-accent-glow: rgba(16, 185, 129, 0.5); /* Green */
+  --wybe-danger-glow: rgba(234, 56, 76, 0.5); /* Red */
+  --wybe-success-glow: rgba(74, 222, 128, 0.5); /* Green */
 }
 
 .primary-glow {
@@ -27,4 +27,34 @@
 
 .success-glow {
   box-shadow: 0 0 15px var(--wybe-success-glow);
+}
+
+/* Typewriter animation styles */
+.typewriter-cursor {
+  display: inline-block;
+  background-color: #f97316;
+  margin-left: 2px;
+  width: 2px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Split text color animation */
+.split-text {
+  position: relative;
+  display: inline-block;
+}
+
+.split-text-light {
+  color: white;
+}
+
+.split-text-accent {
+  color: #f97316;
+  display: inline;
 }
