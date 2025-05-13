@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, Rocket, Users, Whale } from "lucide-react";
+import { TrendingUp, TrendingDown, Rocket, Users, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -133,7 +133,7 @@ const TrendingCoinCard = ({ coin, delay }) => {
         </div>
       </div>
       
-      {/* Holder statistics with emojis */}
+      {/* Holder statistics with icons */}
       <div className="mb-4 bg-wybe-background-light/30 rounded-xl p-2">
         <p className="text-xs text-gray-300 mb-1 flex items-center gap-1">
           <Users size={12} className="text-wybe-primary" />

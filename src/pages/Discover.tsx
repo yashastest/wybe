@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, Whale, User, Code, Rocket } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, DollarSign, User, Code, Rocket } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { 
