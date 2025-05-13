@@ -198,7 +198,7 @@ toast.success = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Success",
     description: message,
-    type: "success" as ToastType,
+    type: "success",
     ...options,
   });
 };
@@ -207,7 +207,7 @@ toast.error = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Error",
     description: message,
-    type: "destructive" as ToastType,
+    type: "destructive",
     ...options,
   });
 };
@@ -216,7 +216,7 @@ toast.warning = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Warning",
     description: message,
-    type: "warning" as ToastType,
+    type: "warning",
     ...options,
   });
 };
@@ -225,7 +225,7 @@ toast.info = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Info",
     description: message,
-    type: "info" as ToastType,
+    type: "info",
     ...options,
   });
 };
