@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { 
   type ToastActionElement, 
@@ -193,7 +192,7 @@ function useToast() {
 
 interface ToastOptions extends Omit<Toast, "title" | "description" | "type"> {}
 
-// Helper toast methods with proper type definitions
+// Correctly type the helper toast methods to specify that they return the same type as the main toast function
 toast.success = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Success",
