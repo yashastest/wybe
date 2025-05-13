@@ -34,6 +34,39 @@ const Trade = () => {
     supply: 1000000000
   };
 
+  // Sample trader activities for the chart
+  const traderActivities = [
+    {
+      type: 'developer' as const,
+      price: 0.00021,
+      timestamp: '2024-04-20T10:30:00Z',
+      action: 'buy' as const,
+      quantity: 50000,
+      percentage: 12
+    },
+    {
+      type: 'whale' as const,
+      price: 0.00022,
+      timestamp: '2024-04-21T14:15:00Z',
+      action: 'buy' as const,
+      quantity: 200000
+    },
+    {
+      type: 'retail' as const,
+      price: 0.00023,
+      timestamp: '2024-04-22T09:45:00Z',
+      action: 'sell' as const,
+      quantity: 10000
+    },
+    {
+      type: 'whale' as const,
+      price: 0.00024,
+      timestamp: '2024-04-23T16:20:00Z',
+      action: 'sell' as const,
+      quantity: 100000
+    }
+  ];
+
   // Process trade
   const handleTrade = () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -163,7 +196,7 @@ const Trade = () => {
                   
                   <TabsContent value="activity" className="mt-4">
                     <div className="h-[400px]">
-                      <TraderActivityMarkers />
+                      <TraderActivityMarkers activities={traderActivities} />
                     </div>
                   </TabsContent>
                 </Tabs>

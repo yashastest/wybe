@@ -6,6 +6,8 @@ import { toast } from "sonner";
 interface WalletContextType {
   wallet: string | null;
   isConnecting: boolean;
+  connected: boolean;
+  address: string;
   connect: () => Promise<void>;
   disconnect: () => void;
   connectPhantom: () => Promise<void>;
@@ -18,6 +20,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [wallet, setWallet] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSolanaAvailable, setIsSolanaAvailable] = useState(false);
+
+  // Get address from wallet and determine connection status
+  const connected = wallet !== null;
+  const address = wallet || "";
 
   useEffect(() => {
     // Check local storage for previously connected wallet
@@ -103,7 +109,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       connect, 
       disconnect,
       connectPhantom,
-      isSolanaAvailable
+      isSolanaAvailable,
+      connected,
+      address
     }}>
       {children}
     </WalletContext.Provider>

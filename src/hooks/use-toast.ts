@@ -145,31 +145,19 @@ function dispatch(action: Action) {
   });
 }
 
-interface Toast {
-  id: string;
+// Define ToastOptions for helper methods
+export interface ToastOptions {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  type?: ToastType;
   action?: ToastActionElement;
   variant?: "default" | "destructive";
   duration?: number;
   className?: string;
   onOpenChange?: (open: boolean) => void;
+  type?: ToastType;
 }
 
 type ToasterToast = ReturnType<typeof toast>;
-
-// Define ToastOptions for helper methods
-interface ToastOptions {
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  action?: ToastActionElement;
-  variant?: "default" | "destructive";
-  duration?: number;
-  className?: string;
-  onOpenChange?: (open: boolean) => void;
-  type?: ToastType;
-}
 
 export function toast(props: ToastOptions) {
   const id = genId();
