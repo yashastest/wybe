@@ -1,13 +1,19 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/useWallet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { wallet, isConnecting, connect, disconnect } = useWallet();
+  const { wallet, isConnecting, connect, disconnect, connectPhantom, isSolanaAvailable } = useWallet();
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -22,24 +28,17 @@ const Header = () => {
     setMobileMenuOpen(false);
   };
   
-  const handleConnect = async () => {
-    try {
-      await connect();
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-    }
-  };
-  
-  const handleDisconnect = () => {
-    disconnect();
-  };
-  
   return (
     <header className="sticky top-0 z-50 glass-nav">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
+              <img 
+                src="/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png" 
+                alt="Wybe Logo" 
+                className="h-8 w-8 mr-2" 
+              />
               <div className="text-2xl font-bold text-white">
                 <span className="text-wybe-primary">Wybe</span>
               </div>
@@ -60,28 +59,55 @@ const Header = () => {
             <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active-nav-link' : ''}`}>
               Dashboard
             </Link>
-            <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active-nav-link' : ''}`}>
-              Admin
-            </Link>
           </nav>
           
           <div className="flex items-center">
             {wallet ? (
-              <Button 
-                variant="outline" 
-                onClick={handleDisconnect}
-                className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background"
-              >
-                {wallet.substring(0, 4)}...{wallet.substring(wallet.length - 4)}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background flex items-center gap-1"
+                  >
+                    {wallet.substring(0, 4)}...{wallet.substring(wallet.length - 4)}
+                    <ChevronDown size={14} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-wybe-background-light border-white/10 w-56">
+                  <DropdownMenuItem 
+                    className="cursor-pointer hover:bg-wybe-primary/20"
+                    onClick={disconnect}
+                  >
+                    Disconnect Wallet
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Button 
-                onClick={handleConnect} 
-                disabled={isConnecting}
-                className="btn-primary"
-              >
-                {isConnecting ? "Connecting..." : "Connect Wallet"}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    className="btn-primary"
+                    disabled={isConnecting}
+                  >
+                    {isConnecting ? "Connecting..." : "Connect Wallet"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-wybe-background-light border-white/10 w-56">
+                  <DropdownMenuItem 
+                    className="cursor-pointer hover:bg-wybe-primary/20"
+                    onClick={connect}
+                  >
+                    Connect Demo Wallet
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer hover:bg-wybe-primary/20"
+                    onClick={connectPhantom}
+                  >
+                    Connect Phantom Wallet
+                    {!isSolanaAvailable && " (Install)"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             
             <Button
@@ -126,13 +152,6 @@ const Header = () => {
               onClick={closeMobileMenu}
             >
               Dashboard
-            </Link>
-            <Link 
-              to="/admin" 
-              className={`block py-2 ${isActive('/admin') ? 'text-wybe-primary' : 'text-white'}`}
-              onClick={closeMobileMenu}
-            >
-              Admin
             </Link>
           </div>
         </div>

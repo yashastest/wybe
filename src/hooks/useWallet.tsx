@@ -8,6 +8,8 @@ interface WalletContextType {
   isConnecting: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
+  connectPhantom: () => Promise<void>;
+  isSolanaAvailable: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -15,6 +17,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [wallet, setWallet] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSolanaAvailable, setIsSolanaAvailable] = useState(false);
 
   useEffect(() => {
     // Check local storage for previously connected wallet
@@ -22,6 +25,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (savedWallet) {
       setWallet(savedWallet);
     }
+    
+    // Check if Phantom/Solana is available
+    const checkSolana = () => {
+      const isPhantomAvailable = window.solana && window.solana.isPhantom;
+      setIsSolanaAvailable(!!isPhantomAvailable);
+    };
+    
+    checkSolana();
+    
+    // In a real integration, we would listen for account changes here
+    const interval = setInterval(checkSolana, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const connect = async () => {
@@ -45,6 +61,35 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const connectPhantom = async () => {
+    setIsConnecting(true);
+    try {
+      // Check if Phantom is installed
+      if (!window.solana || !window.solana.isPhantom) {
+        window.open("https://phantom.app/", "_blank");
+        toast.error("Phantom wallet is not installed. Please install it first.");
+        setIsConnecting(false);
+        return;
+      }
+      
+      // In a real app, this would request connection to the Phantom wallet
+      // For demonstration, we'll simulate it
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // In a real app, we would get the connected wallet from Phantom
+      const phantomWallet = "Phantom" + Math.random().toString(36).substring(2, 10);
+      
+      setWallet(phantomWallet);
+      localStorage.setItem("wybeWallet", phantomWallet);
+      toast.success("Phantom wallet connected!");
+    } catch (error) {
+      console.error("Failed to connect Phantom wallet:", error);
+      toast.error("Failed to connect Phantom wallet. Please try again.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const disconnect = () => {
     setWallet(null);
     localStorage.removeItem("wybeWallet");
@@ -52,7 +97,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <WalletContext.Provider value={{ wallet, isConnecting, connect, disconnect }}>
+    <WalletContext.Provider value={{ 
+      wallet, 
+      isConnecting, 
+      connect, 
+      disconnect,
+      connectPhantom,
+      isSolanaAvailable
+    }}>
       {children}
     </WalletContext.Provider>
   );

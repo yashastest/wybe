@@ -1,477 +1,206 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Shield,
-  Users,
-  Settings,
-  Wallet,
-  Plus,
-  Check,
-  X,
-  Download,
-  Rocket
-} from "lucide-react";
+import { Coins, Users, Settings, BarChart, LogOut, Plus } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useWallet } from "@/hooks/useWallet";
+import { useNavigate } from "react-router-dom";
 
 const Admin = () => {
-  const { wallet, connect } = useWallet();
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [newTreasuryWallet, setNewTreasuryWallet] = useState("");
-  const [newWhitelistWallet, setNewWhitelistWallet] = useState("");
-  const [showDeployDialog, setShowDeployDialog] = useState(false);
-  const [selectedToken, setSelectedToken] = useState(null);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [whitelistWallet, setWhitelistWallet] = useState("");
+  const [treasuryWallet, setTreasuryWallet] = useState("DummyTreasuryWallet123456");
   
-  // Mock data
-  const mockCoins = [
-    {
-      name: "Pepe Solana",
-      symbol: "PEPES",
-      address: "DummyAddress123456",
-      creator: "Creator123",
-      marketCap: "$48,000",
-      volume: "$12,000",
-      deployed: true
-    },
-    {
-      name: "Doge Sol",
-      symbol: "DSOL",
-      address: "DummyAddress789012",
-      creator: "Creator456",
-      marketCap: "$85,000",
-      volume: "$56,000",
-      deployed: true
-    },
-    {
-      name: "Shiba Solana",
-      symbol: "SHIBSOL",
-      address: "DummyAddress345678",
-      creator: "Creator789",
-      marketCap: "$12,000",
-      volume: "$5,000",
-      deployed: false
-    },
-  ];
-  
-  const mockWhitelist = [
-    { wallet: "WhitelistedWallet123", added: "2023-05-10", status: "Active" },
-    { wallet: "WhitelistedWallet456", added: "2023-05-12", status: "Active" },
-    { wallet: "WhitelistedWallet789", added: "2023-05-15", status: "Pending" },
-  ];
-  
-  const handleConnect = async () => {
-    try {
-      await connect();
-      setIsWalletConnected(true);
-      
-      // In a real app, you'd check if the wallet is an admin
-      setIsAdmin(true);
-      
-      toast.success("Admin wallet connected!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to connect wallet");
+  useEffect(() => {
+    // Check if admin is logged in
+    const isAdminLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+    if (!isAdminLoggedIn) {
+      navigate("/admin-login");
+      return;
     }
+    setIsLoading(false);
+  }, [navigate]);
+  
+  const handleLogout = () => {
+    localStorage.removeItem("wybeAdminLoggedIn");
+    toast.success("Logged out successfully");
+    navigate("/admin-login");
   };
   
-  const handleUpdateTreasury = () => {
-    if (!newTreasuryWallet) {
-      toast.error("Please enter a valid wallet address");
+  const handleWhitelistWallet = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!whitelistWallet) {
+      toast.error("Please enter a wallet address");
       return;
     }
     
-    // In a real app, this would call the contract
-    toast.success("Treasury wallet updated successfully!");
-    setNewTreasuryWallet("");
+    // Simulate adding wallet to whitelist
+    toast.success(`Wallet ${whitelistWallet.substring(0, 6)}...${whitelistWallet.substring(whitelistWallet.length - 4)} added to whitelist`);
+    setWhitelistWallet("");
   };
   
-  const handleAddToWhitelist = () => {
-    if (!newWhitelistWallet) {
-      toast.error("Please enter a valid wallet address");
+  const handleUpdateTreasury = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!treasuryWallet) {
+      toast.error("Please enter a valid treasury wallet");
       return;
     }
     
-    // In a real app, this would call the contract
-    toast.success("Wallet added to whitelist!");
-    setNewWhitelistWallet("");
+    toast.success("Treasury wallet updated successfully");
   };
   
-  const handleRemoveFromWhitelist = (wallet: string) => {
-    // In a real app, this would call the contract
-    toast.success(`${wallet} removed from whitelist`);
-  };
-  
-  const handleDownloadContract = (token) => {
-    toast.success(`Downloading contract for ${token.symbol}...`);
-  };
-  
-  const handleDeployToMainnet = () => {
-    setShowDeployDialog(false);
-    toast.success(`Deploying ${selectedToken.symbol} to mainnet...`);
-    
-    // Simulate deployment progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 20;
-      if (progress <= 100) {
-        toast(`Deployment progress: ${progress}%`);
-      } else {
-        clearInterval(interval);
-        toast.success(`${selectedToken.symbol} successfully deployed to mainnet!`);
-      }
-    }, 1000);
-  };
-  
-  const openDeployDialog = (token) => {
-    setSelectedToken(token);
-    setShowDeployDialog(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-12 flex-grow">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
-          <p className="text-gray-400 mt-2">Manage your Wybe platform settings</p>
-        </motion.div>
-        
-        {!isWalletConnected ? (
-          <div className="glass-card p-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-wybe-primary/20 flex items-center justify-center mx-auto mb-4">
-              <Shield className="text-wybe-primary" size={24} />
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <div className="flex flex-col-reverse md:flex-row gap-6">
+          {/* Admin Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="md:w-64 glass-card p-4"
+          >
+            <div className="flex items-center gap-3 mb-6 p-2 bg-wybe-primary/10 rounded-md">
+              <Settings className="text-wybe-primary" size={20} />
+              <h2 className="text-lg font-medium">Admin Panel</h2>
             </div>
-            <h2 className="text-xl font-bold mb-2">Admin Authentication Required</h2>
-            <p className="text-gray-400 mb-6">Connect your admin wallet to access the panel</p>
-            <Button onClick={handleConnect} className="btn-primary">
-              Connect Admin Wallet
-            </Button>
-          </div>
-        ) : !isAdmin ? (
-          <div className="glass-card p-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <X className="text-red-500" size={24} />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Unauthorized Access</h2>
-            <p className="text-gray-400 mb-6">Your wallet does not have admin privileges</p>
-            <Button onClick={() => setIsWalletConnected(false)} className="btn-secondary">
-              Disconnect
-            </Button>
-          </div>
-        ) : (
-          <Tabs defaultValue="treasury" className="space-y-6">
-            <TabsList className="grid grid-cols-3 max-w-md mx-auto mb-8">
-              <TabsTrigger value="treasury">Treasury</TabsTrigger>
-              <TabsTrigger value="tokens">Tokens</TabsTrigger>
-              <TabsTrigger value="whitelist">Whitelist</TabsTrigger>
-            </TabsList>
             
-            {/* Treasury Tab */}
-            <TabsContent value="treasury">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+            <nav className="space-y-2">
+              <Button variant="ghost" className="w-full justify-start">
+                <BarChart className="mr-2" size={18} />
+                Dashboard
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                <Coins className="mr-2" size={18} />
+                Manage Coins
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                <Users className="mr-2" size={18} />
+                Users
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                <Settings className="mr-2" size={18} />
+                Settings
+              </Button>
+            </nav>
+            
+            <div className="mt-auto pt-6">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                onClick={handleLogout}
               >
-                <div className="glass-card p-6">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                      <Wallet className="text-wybe-primary" size={20} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">Treasury Management</h2>
-                      <p className="text-gray-400">Update the platform treasury wallet</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6 p-4 bg-wybe-background/40 rounded-lg">
-                    <h3 className="text-sm font-medium mb-2">Current Treasury Wallet</h3>
-                    <div className="font-mono bg-wybe-background p-3 rounded border border-wybe-primary/20 text-gray-300">
-                      TreasuryWalletAddress123456789
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      This wallet receives 1% of all newly created tokens
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="treasury">New Treasury Wallet Address</Label>
-                      <Input 
-                        id="treasury"
-                        value={newTreasuryWallet}
-                        onChange={(e) => setNewTreasuryWallet(e.target.value)}
-                        placeholder="Enter Solana address" 
-                        className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                      />
-                    </div>
-                    
-                    <Button onClick={handleUpdateTreasury} className="btn-primary">
-                      Update Treasury Wallet
+                <LogOut className="mr-2" size={18} />
+                Logout
+              </Button>
+            </div>
+          </motion.div>
+          
+          {/* Admin Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex-grow"
+          >
+            <div className="glass-card p-6 mb-6">
+              <h1 className="text-xl font-bold mb-4">Admin Dashboard</h1>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="glass-card p-4 bg-wybe-primary/10 border border-wybe-primary/30">
+                  <h3 className="text-sm text-gray-300 mb-1">Total Coins</h3>
+                  <p className="text-2xl font-bold">32</p>
+                </div>
+                <div className="glass-card p-4 bg-wybe-secondary/10 border border-wybe-secondary/30">
+                  <h3 className="text-sm text-gray-300 mb-1">Total Volume</h3>
+                  <p className="text-2xl font-bold">3,421 SOL</p>
+                </div>
+                <div className="glass-card p-4 bg-green-500/10 border border-green-500/30">
+                  <h3 className="text-sm text-gray-300 mb-1">Fee Revenue</h3>
+                  <p className="text-2xl font-bold">89.5 SOL</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="glass-card p-6 mb-6">
+              <h2 className="text-lg font-medium mb-4">Whitelist Management</h2>
+              <form onSubmit={handleWhitelistWallet} className="space-y-4">
+                <div>
+                  <Label htmlFor="whitelistWallet">Add Wallet to Whitelist</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="whitelistWallet"
+                      value={whitelistWallet}
+                      onChange={(e) => setWhitelistWallet(e.target.value)}
+                      placeholder="Enter Solana wallet address"
+                      className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                    />
+                    <Button type="submit" className="btn-primary whitespace-nowrap">
+                      <Plus size={18} />
+                      Add
                     </Button>
                   </div>
                 </div>
-              </motion.div>
-            </TabsContent>
-            
-            {/* Tokens Tab */}
-            <TabsContent value="tokens">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="glass-card p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                        <Settings className="text-wybe-primary" size={20} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold">Token Management</h2>
-                        <p className="text-gray-400">View and manage all created meme coins</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Symbol</TableHead>
-                          <TableHead className="hidden md:table-cell">Address</TableHead>
-                          <TableHead className="hidden md:table-cell">Creator</TableHead>
-                          <TableHead className="hidden md:table-cell">Market Cap</TableHead>
-                          <TableHead className="hidden md:table-cell">Volume</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mockCoins.map((token, i) => (
-                          <TableRow key={i}>
-                            <TableCell className="font-medium">{token.name}</TableCell>
-                            <TableCell>{token.symbol}</TableCell>
-                            <TableCell className="hidden md:table-cell font-mono text-xs">
-                              {token.address}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">{token.creator}</TableCell>
-                            <TableCell className="hidden md:table-cell">{token.marketCap}</TableCell>
-                            <TableCell className="hidden md:table-cell">{token.volume}</TableCell>
-                            <TableCell className="text-right space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDownloadContract(token)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              {!token.deployed && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => openDeployDialog(token)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Rocket className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </motion.div>
-            </TabsContent>
-            
-            {/* Whitelist Tab */}
-            <TabsContent value="whitelist">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="glass-card p-6">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                      <Users className="text-wybe-primary" size={20} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">Wallet Whitelist</h2>
-                      <p className="text-gray-400">Manage wallets allowed to create meme coins</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6 space-y-4">
-                    <div>
-                      <Label htmlFor="whitelist">Add Wallet to Whitelist</Label>
-                      <div className="flex space-x-2">
-                        <Input 
-                          id="whitelist"
-                          value={newWhitelistWallet}
-                          onChange={(e) => setNewWhitelistWallet(e.target.value)}
-                          placeholder="Enter Solana address" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                        />
-                        <Button onClick={handleAddToWhitelist} className="shrink-0">
-                          <Plus size={18} className="mr-2" />
-                          Add
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Wallet</TableHead>
-                          <TableHead>Added On</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mockWhitelist.map((item, i) => (
-                          <TableRow key={i}>
-                            <TableCell className="font-mono">{item.wallet}</TableCell>
-                            <TableCell>{item.added}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                item.status === "Active" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"
-                              }`}>
-                                {item.status}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleRemoveFromWhitelist(item.wallet)}
-                                className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-400"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </motion.div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-      
-      {/* Deploy to Mainnet Dialog */}
-      <Dialog open={showDeployDialog} onOpenChange={setShowDeployDialog}>
-        <DialogContent className="bg-wybe-background-light border-wybe-primary/20 sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Deploy to Mainnet</DialogTitle>
-            <DialogDescription>
-              This will deploy {selectedToken?.symbol} to Solana mainnet. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="space-y-4">
-              <div className="bg-wybe-background/70 p-4 rounded-lg border border-white/10">
-                <h4 className="text-sm font-medium mb-2">Token Details</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Name:</span>
-                    <span>{selectedToken?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Symbol:</span>
-                    <span>{selectedToken?.symbol}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Address:</span>
-                    <span className="font-mono">{selectedToken?.address}</span>
-                  </div>
-                </div>
-              </div>
+              </form>
               
-              <div className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/20">
-                <p className="text-yellow-400 text-sm flex items-center gap-2">
-                  <AlertTriangle size={16} />
-                  <span>This will require paying Solana transaction fees from your admin wallet</span>
-                </p>
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-300 mb-2">Recent Whitelist Additions</h3>
+                <div className="bg-wybe-background/70 rounded-lg p-2">
+                  <div className="flex justify-between items-center py-2 px-3 border-b border-white/5">
+                    <span>Wybe7g3h2...89dj</span>
+                    <span className="text-xs text-gray-400">2 hours ago</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 px-3 border-b border-white/5">
+                    <span>WybeN4kl7...23fs</span>
+                    <span className="text-xs text-gray-400">5 hours ago</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 px-3">
+                    <span>Wybe8j3n4...56gh</span>
+                    <span className="text-xs text-gray-400">1 day ago</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-3">
-            <Button variant="ghost" onClick={() => setShowDeployDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleDeployToMainnet} className="btn-primary">
-              <Rocket size={16} className="mr-2" />
-              Deploy to Mainnet
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            
+            <div className="glass-card p-6">
+              <h2 className="text-lg font-medium mb-4">Treasury Settings</h2>
+              <form onSubmit={handleUpdateTreasury} className="space-y-4">
+                <div>
+                  <Label htmlFor="treasuryWallet">Treasury Wallet</Label>
+                  <Input
+                    id="treasuryWallet"
+                    value={treasuryWallet}
+                    onChange={(e) => setTreasuryWallet(e.target.value)}
+                    placeholder="Enter treasury wallet address"
+                    className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                  />
+                </div>
+                
+                <Button type="submit" className="btn-primary">
+                  Update Treasury Wallet
+                </Button>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      </div>
       
       <Footer />
     </div>
-  );
-};
-
-const AlertTriangle = ({ size = 24, className = "" }) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-      <path d="M12 9v4"></path>
-      <path d="M12 17h.01"></path>
-    </svg>
   );
 };
 

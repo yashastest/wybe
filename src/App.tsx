@@ -12,10 +12,22 @@ import Launch from "./pages/Launch";
 import Trade from "./pages/Trade";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import LaunchPackage from "./pages/LaunchPackage";
 
 const queryClient = new QueryClient();
+
+// Add Phantom window type declaration
+declare global {
+  interface Window {
+    solana?: {
+      isPhantom?: boolean;
+      connect?: () => Promise<{ publicKey: { toString: () => string } }>;
+      disconnect?: () => Promise<void>;
+    };
+  }
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -30,6 +42,7 @@ const App = () => (
             <Route path="/trade" element={<Trade />} />
             <Route path="/trade/:symbol" element={<Trade />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/package" element={<LaunchPackage />} />
             <Route path="*" element={<NotFound />} />
