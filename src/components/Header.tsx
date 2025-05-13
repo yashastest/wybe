@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,11 +35,15 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
-              <img 
-                src="/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png" 
-                alt="Wybe Logo" 
-                className="h-8 w-8 mr-2" 
-              />
+              <div className="h-8 w-8 mr-2 overflow-hidden rounded-full">
+                <AspectRatio ratio={1 / 1} className="relative w-full h-full">
+                  <img 
+                    src="/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png" 
+                    alt="Wybe Logo" 
+                    className="object-cover"
+                  />
+                </AspectRatio>
+              </div>
               <div className="text-2xl font-bold text-white">
                 <span className="text-wybe-primary">Wybe</span>
               </div>
@@ -46,9 +51,12 @@ const Header = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-6">
             <Link to="/" className={`nav-link ${isActive('/') ? 'active-nav-link' : ''}`}>
               Home
+            </Link>
+            <Link to="/discover" className={`nav-link ${isActive('/discover') ? 'active-nav-link' : ''}`}>
+              Discover
             </Link>
             <Link to="/launch" className={`nav-link ${isActive('/launch') ? 'active-nav-link' : ''}`}>
               Launch
@@ -131,6 +139,13 @@ const Header = () => {
               onClick={closeMobileMenu}
             >
               Home
+            </Link>
+            <Link 
+              to="/discover" 
+              className={`block py-2 ${isActive('/discover') ? 'text-wybe-primary' : 'text-white'}`}
+              onClick={closeMobileMenu}
+            >
+              Discover
             </Link>
             <Link 
               to="/launch" 

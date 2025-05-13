@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Info, Coins, TrendingUp } from "lucide-react";
+import { ArrowRight, Info, Coins, TrendingUp, History, Calendar } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import BondingCurveChart from "@/components/BondingCurveChart";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const Trade = () => {
   const { wallet, connect } = useWallet();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [activeTab, setActiveTab] = useState("buy");
+  const [activeHistoryTab, setActiveHistoryTab] = useState("all");
   const [amount, setAmount] = useState("");
   const [estimatedReceived, setEstimatedReceived] = useState("0");
   
@@ -30,6 +32,64 @@ const Trade = () => {
     volume24h: "$52,000",
     priceChange: "+15.4%"
   };
+
+  // Mock trade history data
+  const tradeHistory = [
+    { 
+      type: "buy",
+      amount: "500,000",
+      price: "0.00020",
+      value: "100",
+      wallet: "DUmm...7j2k",
+      time: "2 mins ago"
+    },
+    { 
+      type: "sell",
+      amount: "250,000",
+      price: "0.00022",
+      value: "55",
+      wallet: "8kAs...1x3P",
+      time: "15 mins ago"
+    },
+    { 
+      type: "buy",
+      amount: "750,000",
+      price: "0.00019",
+      value: "142.5",
+      wallet: "3mNb...9q7R",
+      time: "35 mins ago"
+    },
+    { 
+      type: "sell",
+      amount: "120,000",
+      price: "0.00021",
+      value: "25.2",
+      wallet: "2xYz...8h6G",
+      time: "1 hour ago"
+    },
+    { 
+      type: "buy",
+      amount: "1,000,000",
+      price: "0.00018",
+      value: "180",
+      wallet: "7jKl...5t4R",
+      time: "2 hours ago"
+    },
+    { 
+      type: "buy",
+      amount: "350,000",
+      price: "0.00019",
+      value: "66.5",
+      wallet: "9pQr...3d2F",
+      time: "3 hours ago"
+    }
+  ];
+  
+  // Filter trade history based on active tab
+  const filteredHistory = tradeHistory.filter(trade => {
+    if (activeHistoryTab === "all") return true;
+    return trade.type === activeHistoryTab;
+  });
   
   const handleConnect = async () => {
     try {
@@ -94,8 +154,14 @@ const Trade = () => {
               <div className="glass-card p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-                      <Coins className="text-wybe-primary" size={20} />
+                    <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center overflow-hidden">
+                      <AspectRatio ratio={1 / 1} className="relative w-full h-full">
+                        <img 
+                          src="/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png" 
+                          alt="Wybe Logo"
+                          className="object-cover"
+                        />
+                      </AspectRatio>
                     </div>
                     <div>
                       <h1 className="text-xl font-bold">{coinData.name} ({coinData.symbol})</h1>
@@ -115,10 +181,19 @@ const Trade = () => {
                   <StatsCard label="24h Volume" value={coinData.volume24h} />
                   <StatsCard label="Total Supply" value={coinData.supply} />
                 </div>
+                
+                <div className="mt-4 p-3 bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-wybe-primary" />
+                    <p className="text-sm text-gray-300">
+                      Contract Address: <span className="text-wybe-secondary">FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw</span>
+                    </p>
+                  </div>
+                </div>
               </div>
               
               {/* Chart */}
-              <div className="glass-card p-6">
+              <div className="glass-card p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-medium">Bonding Curve</h2>
                   <TooltipProvider>
@@ -144,6 +219,55 @@ const Trade = () => {
                     <TrendingUp size={16} className="text-wybe-primary" />
                     <span>Classic bonding curve: Price increases linearly with supply</span>
                   </p>
+                </div>
+              </div>
+              
+              {/* Trade History */}
+              <div className="glass-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-medium flex items-center gap-2">
+                    <History size={18} className="text-wybe-primary" />
+                    Trade History
+                  </h2>
+                  
+                  <div className="flex items-center gap-2">
+                    <Tabs value={activeHistoryTab} onValueChange={setActiveHistoryTab}>
+                      <TabsList className="bg-wybe-background-light border border-wybe-primary/20 h-8">
+                        <TabsTrigger value="all" className="text-xs h-6">All</TabsTrigger>
+                        <TabsTrigger value="buy" className="text-xs h-6">Buys</TabsTrigger>
+                        <TabsTrigger value="sell" className="text-xs h-6">Sells</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-gray-400 text-sm border-b border-white/10">
+                        <th className="pb-2">Type</th>
+                        <th className="pb-2">Amount</th>
+                        <th className="pb-2">Price</th>
+                        <th className="pb-2">Total Value</th>
+                        <th className="pb-2">Wallet</th>
+                        <th className="pb-2 text-right">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredHistory.map((trade, index) => (
+                        <tr key={index} className="border-b border-white/5 last:border-b-0">
+                          <td className={`py-3 ${trade.type === 'buy' ? 'text-green-400' : 'text-red-400'}`}>
+                            {trade.type === 'buy' ? 'Buy' : 'Sell'}
+                          </td>
+                          <td className="py-3">{trade.amount} {coinData.symbol}</td>
+                          <td className="py-3">{trade.price} SOL</td>
+                          <td className="py-3">{trade.value} SOL</td>
+                          <td className="py-3 text-gray-400">{trade.wallet}</td>
+                          <td className="py-3 text-right text-gray-400">{trade.time}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </motion.div>

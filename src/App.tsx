@@ -16,6 +16,7 @@ import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import LaunchPackage from "./pages/LaunchPackage";
+import Discover from "./pages/Discover";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => {
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/package" element={<LaunchPackage />} />
+                <Route path="/discover" element={<Discover />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
