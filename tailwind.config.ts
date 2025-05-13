@@ -69,19 +69,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Wybe custom colors
+        // New Vibrant Color Scheme
         wybe: {
-          primary: "#8B5CF6",
-          secondary: "#C4B5FD",
-          accent: "#7C3AED",
-          muted: "#F5F3FF",
-          dark: "#4C1D95",
-          light: "#DDD6FE",
-          background: "#0F172A",
-          "background-light": "#1E293B",
+          primary: "#9b4dca", // Purple
+          secondary: "#33c3f0", // Blue
+          accent: "#f97316", // Orange
+          muted: "#f1f1f1", // Light Gray
+          dark: "#2a2a2a", // Dark Gray
+          light: "#e5deff", // Light Purple
+          background: "#1e1e1e", // Dark Background
+          "background-light": "#2d2d2d", // Lighter Background
+          danger: "#ea384c", // Red
+          success: "#4ade80", // Green
+          warning: "#f9a825", // Amber/Orange
+          info: "#0ea5e9", // Sky Blue
           gradient: {
-            from: "#8B5CF6",
-            to: "#6366F1",
+            from: "#9b4dca", // Purple
+            to: "#33c3f0", // Blue
           },
         },
       },

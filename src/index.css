@@ -1,46 +1,45 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
+    --background: 0 0% 12%;
     --foreground: 210 40% 98%;
 
-    --card: 0 0% 3%;
+    --card: 0 0% 16%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 3%;
+    --popover: 0 0% 16%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 265 83.2% 45.9%;
+    --primary: 280 60% 55%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 262 83% 58%;
+    --secondary: 199 89% 57%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 215 20.2% 75%;
 
-    --accent: 268 94% 41%;
+    --accent: 25 95% 53%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 91% 58%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 263.4 70% 50.4%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 280 60% 55%;
 
     --radius: 0.75rem;
     
-    --wybe-background: #000000;
-    --wybe-background-light: #111111;
-    --wybe-primary: #8B5CF6;
-    --wybe-secondary: #C4B5FD;
-    --wybe-gradient-from: #A855F7;
-    --wybe-gradient-to: #6366F1;
+    --wybe-background: #1e1e1e;
+    --wybe-background-light: #2d2d2d;
+    --wybe-primary: #9b4dca;
+    --wybe-secondary: #33c3f0;
+    --wybe-gradient-from: #9b4dca;
+    --wybe-gradient-to: #33c3f0;
   }
 
   * {
@@ -51,7 +50,7 @@
     @apply bg-wybe-background text-foreground font-poppins overflow-x-hidden;
     background-image: radial-gradient(
       circle at 25px 25px,
-      rgba(139, 92, 246, 0.06) 2%,
+      rgba(155, 77, 202, 0.06) 2%,
       transparent 0%
     );
     background-size: 40px 40px;
@@ -97,11 +96,11 @@
   @keyframes pulse-glow {
     0%, 100% { 
       opacity: 0.6;
-      box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 15px rgba(155, 77, 202, 0.3);
     }
     50% { 
       opacity: 1;
-      box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+      box-shadow: 0 0 25px rgba(155, 77, 202, 0.6);
     }
   }
 
@@ -111,10 +110,10 @@
   }
 
   @keyframes rainbow-glow {
-    0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.6); }
+    0% { box-shadow: 0 0 10px rgba(155, 77, 202, 0.6); }
     33% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.7); }
     66% { box-shadow: 0 0 20px rgba(196, 181, 253, 0.8); }
-    100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.6); }
+    100% { box-shadow: 0 0 10px rgba(155, 77, 202, 0.6); }
   }
   
   @keyframes shimmer {
@@ -133,8 +132,8 @@
   }
   
   @keyframes glow-pulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.8); }
+    0%, 100% { box-shadow: 0 0 10px rgba(155, 77, 202, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(155, 77, 202, 0.8); }
   }
 }
 
@@ -152,19 +151,19 @@
   }
   
   .btn-primary {
-    @apply px-6 py-2 rounded-full bg-gradient-to-r from-wybe-gradient-from to-wybe-gradient-to text-white font-medium shadow-glow-sm hover:shadow-glow-md transition-all duration-300 hover:scale-105;
+    @apply px-6 py-2 rounded-full bg-gradient-to-r from-wybe-primary to-wybe-secondary text-white font-medium shadow-glow-sm hover:shadow-glow-md transition-all duration-300 hover:scale-105;
   }
   
   .btn-secondary {
-    @apply px-6 py-2 rounded-full bg-wybe-background-light text-white font-medium border border-wybe-primary/30 hover:border-wybe-primary transition-all duration-300;
+    @apply px-6 py-2 rounded-full bg-wybe-background-light text-white font-medium border border-wybe-accent/30 hover:border-wybe-accent transition-all duration-300;
   }
   
   .nav-link {
-    @apply transition-colors duration-300 hover:text-wybe-primary relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:w-0 after:bg-wybe-primary after:transition-all after:duration-300 hover:after:w-full;
+    @apply transition-colors duration-300 hover:text-wybe-secondary relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:w-0 after:bg-wybe-secondary after:transition-all after:duration-300 hover:after:w-full;
   }
   
   .active-nav-link {
-    @apply text-wybe-primary after:w-full;
+    @apply text-wybe-secondary after:w-full;
   }
 
   /* Enhanced animation classes */
@@ -210,12 +209,12 @@
   .funky-card::before {
     content: '';
     @apply absolute -top-1 left-0 right-0 h-1;
-    background: linear-gradient(90deg, #8B5CF6, #6366F1, #C4B5FD);
+    background: linear-gradient(90deg, #9b4dca, #33c3f0, #33c3f0);
   }
   
   .gradient-border {
     @apply relative p-0.5 overflow-hidden rounded-xl;
-    background: linear-gradient(145deg, #8B5CF6, #6366F1, #7C3AED);
+    background: linear-gradient(145deg, #9b4dca, #33c3f0, #7C3AED);
   }
 
   /* Loading animations */
@@ -246,7 +245,7 @@
   
   .gradient-text {
     @apply font-bold;
-    background: linear-gradient(90deg, #8B5CF6, #6366F1, #C4B5FD);
+    background: linear-gradient(90deg, #9b4dca, #33c3f0, #33c3f0);
     background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
@@ -264,15 +263,15 @@
   
   /* Shadow utilities */
   .shadow-glow-sm {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 15px rgba(155, 77, 202, 0.3);
   }
   
   .shadow-glow-md {
-    box-shadow: 0 0 25px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 25px rgba(155, 77, 202, 0.5);
   }
   
   .shadow-glow-lg {
-    box-shadow: 0 0 35px rgba(139, 92, 246, 0.7);
+    box-shadow: 0 0 35px rgba(155, 77, 202, 0.7);
   }
 
   .container {

@@ -1,1 +1,30 @@
+
 /* App styles have been moved to index.css with Tailwind */
+
+:root {
+  --wybe-primary-glow: rgba(155, 77, 202, 0.5);
+  --wybe-secondary-glow: rgba(51, 195, 240, 0.5);
+  --wybe-accent-glow: rgba(249, 115, 22, 0.5);
+  --wybe-danger-glow: rgba(234, 56, 76, 0.5);
+  --wybe-success-glow: rgba(74, 222, 128, 0.5);
+}
+
+.primary-glow {
+  box-shadow: 0 0 15px var(--wybe-primary-glow);
+}
+
+.secondary-glow {
+  box-shadow: 0 0 15px var(--wybe-secondary-glow);
+}
+
+.accent-glow {
+  box-shadow: 0 0 15px var(--wybe-accent-glow);
+}
+
+.danger-glow {
+  box-shadow: 0 0 15px var(--wybe-danger-glow);
+}
+
+.success-glow {
+  box-shadow: 0 0 15px var(--wybe-success-glow);
+}

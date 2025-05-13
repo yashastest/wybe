@@ -44,7 +44,7 @@ const Section = ({ children, className = "" }) => {
 const HeroSection = () => {
   return (
     <div className="relative py-16 md:py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-wybe-background via-purple-900/40 to-wybe-background z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-wybe-background via-wybe-primary/20 to-wybe-background z-0"></div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 z-0"></div>
       
       <Section className="container mx-auto px-4 relative z-10">
@@ -89,9 +89,9 @@ const HeroSection = () => {
           </div>
           
           <div className="md:w-1/2 flex justify-center">
-            <div className="bg-gradient-to-br from-wybe-primary/30 to-wybe-secondary/20 glass-card p-6 border-2 border-wybe-primary/40 rounded-2xl shadow-glow-md">
+            <div className="bg-gradient-to-br from-wybe-primary/30 to-wybe-secondary/20 glass-card p-6 border-2 border-wybe-secondary/40 rounded-2xl shadow-glow-md">
               <div className="flex items-center mb-6">
-                <Coins className="text-wybe-primary mr-3" size={28} />
+                <Coins className="text-wybe-secondary mr-3" size={28} />
                 <h2 className="text-2xl font-bold">Pricing</h2>
               </div>
               
@@ -116,7 +116,7 @@ const HeroSection = () => {
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="mt-1">
-                      <Check size={16} className="text-green-400" />
+                      <Check size={16} className="text-wybe-success" />
                     </div>
                     <span className="text-white/90">{item}</span>
                   </div>
@@ -132,7 +132,7 @@ const HeroSection = () => {
 
 const LaunchProcessSection = () => {
   return (
-    <div className="bg-wybe-background-light/50 py-16">
+    <div className="bg-wybe-background-light/70 py-16">
       <Section className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gradient">Step-by-Step Launch Process</h2>
@@ -147,7 +147,7 @@ const LaunchProcessSection = () => {
             {
               title: "Submit Whitelist Request",
               description: "Creators submit a project proposal via our whitelist request form. This includes project vision, team details, and wallet address.",
-              icon: <Rocket className="text-orange-400" size={24} />
+              icon: <Rocket className="text-wybe-warning" size={24} />
             },
             {
               title: "Verification & Contact",
@@ -157,7 +157,7 @@ const LaunchProcessSection = () => {
             {
               title: "Wallet Whitelisting",
               description: "Once approved, the creator's wallet is whitelisted for launch.",
-              icon: <Check className="text-green-400" size={24} />
+              icon: <Check className="text-wybe-success" size={24} />
             },
             {
               title: "Launch Preparation",
@@ -167,12 +167,12 @@ const LaunchProcessSection = () => {
             {
               title: "Payment & Confirmation",
               description: "You pay the $500 launch fee, and we finalize your launch timeline.",
-              icon: <AlertTriangle className="text-yellow-400" size={24} />
+              icon: <AlertTriangle className="text-wybe-warning" size={24} />
             },
             {
               title: "Launch & Earn",
               description: "We launch the token and push it with full marketing support across our network.",
-              icon: <Rocket className="text-red-400" size={24} />
+              icon: <Rocket className="text-wybe-danger" size={24} />
             }
           ].map((step, index) => (
             <div 
