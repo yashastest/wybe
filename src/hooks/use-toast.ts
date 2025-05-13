@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { 
   type ToastActionElement, 
@@ -192,8 +193,18 @@ function useToast() {
 
 interface ToastOptions extends Omit<Toast, "title" | "description" | "type"> {}
 
-// Correctly type the helper toast methods to specify that they return the same type as the main toast function
-toast.success = (message: string, options: ToastOptions = {}) => {
+// Add type to the toast function and explicitly type the helper methods
+type ToastFunction = typeof toast & {
+  success: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
+  error: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
+  warning: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
+  info: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
+};
+
+// Cast toast to ToastFunction to add the helper methods
+const typedToast = toast as ToastFunction;
+
+typedToast.success = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Success",
     description: message,
@@ -202,7 +213,7 @@ toast.success = (message: string, options: ToastOptions = {}) => {
   });
 };
 
-toast.error = (message: string, options: ToastOptions = {}) => {
+typedToast.error = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Error",
     description: message,
@@ -211,7 +222,7 @@ toast.error = (message: string, options: ToastOptions = {}) => {
   });
 };
 
-toast.warning = (message: string, options: ToastOptions = {}) => {
+typedToast.warning = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Warning",
     description: message,
@@ -220,7 +231,7 @@ toast.warning = (message: string, options: ToastOptions = {}) => {
   });
 };
 
-toast.info = (message: string, options: ToastOptions = {}) => {
+typedToast.info = (message: string, options: ToastOptions = {}) => {
   return toast({
     title: "Info",
     description: message,
@@ -229,4 +240,4 @@ toast.info = (message: string, options: ToastOptions = {}) => {
   });
 };
 
-export { useToast, toast };
+export { useToast, typedToast as toast };
