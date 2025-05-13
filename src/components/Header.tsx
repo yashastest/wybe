@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
 
   return (
     <header 
-      className={`sticky top-0 left-0 w-full z-50 transition-all duration-300 glass-nav ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 glass-nav ${
         scrolled ? 'py-3 shadow-lg' : 'py-5'
       }`}
     >
