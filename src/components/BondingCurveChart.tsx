@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   ResponsiveContainer,
@@ -8,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  TooltipProps,
 } from "recharts";
 
 // Generate data for a bonding curve (price increases as supply sold increases)
@@ -43,10 +43,17 @@ const generateBondingCurveData = (curveType = "linear") => {
   return data;
 };
 
+// Define interface for the tooltip props to fix type error
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
 const BondingCurveChart = ({ curveType = "linear" }) => {
   const [data] = useState(generateBondingCurveData(curveType));
 
-  const CustomTooltip = ({ active, payload }) => {
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="glass-card p-3 border-0 shadow-glow-sm text-xs">

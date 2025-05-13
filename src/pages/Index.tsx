@@ -1,7 +1,6 @@
-
 import React from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Globe, Shield, Trending, Wallet } from "lucide-react";
+import { ChevronDown, Globe, Shield, TrendingUp, Wallet } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TrendingCoins from "@/components/TrendingCoins";
@@ -90,7 +89,7 @@ const Index = () => {
               delay={0}
             />
             <FeatureCard 
-              icon={<Trending />}
+              icon={<TrendingUp />}
               title="Trade"
               description="Built-in bonding curve provides instant liquidity. No need for external DEX."
               delay={0.2}

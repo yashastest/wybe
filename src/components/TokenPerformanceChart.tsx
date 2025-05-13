@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   ResponsiveContainer,
@@ -39,6 +38,13 @@ const generateTokenHistoricalData = (symbol, daysBack = 30) => {
   return data;
 };
 
+// Define interface for the tooltip props to fix type error
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
 const TokenPerformanceChart = ({ symbol }) => {
   const [data, setData] = useState([]);
   
@@ -47,7 +53,7 @@ const TokenPerformanceChart = ({ symbol }) => {
   }, [symbol]);
 
   // Format the tooltip display
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="glass-card p-3 border-0 shadow-glow-sm text-xs">
