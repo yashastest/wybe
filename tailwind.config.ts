@@ -22,6 +22,8 @@ export default {
       fontFamily: {
         sans: ["Poppins", "sans-serif"],
         poppins: ["Poppins", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+        jetbrains: ["JetBrains Mono", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

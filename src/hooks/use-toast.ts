@@ -1,21 +1,24 @@
-
 import * as React from "react";
-import { 
-  type ToastActionElement, 
-  type ToastProps as ToastPrimitiveProps 
+import type {
+  ToastActionElement,
+  ToastProps,
 } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToastType = "default" | "destructive" | "success" | "warning" | "info";
+export type ToastType = "default" | "success" | "error" | "warning" | "info" | "destructive";
 
-type ToasterToast = ToastPrimitiveProps & {
+export type Toast = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  variant?: "default" | "destructive";
   type?: ToastType;
+  duration?: number;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const actionTypes = {
@@ -27,21 +30,21 @@ const actionTypes = {
 
 let count = 0;
 
-function generateId() {
-  return (count++).toString();
+function genId() {
+  count = (count + 1) % Number.MAX_SAFE_INTEGER;
+  return count.toString();
 }
 
-// Action types
 type ActionType = typeof actionTypes;
 
 type Action =
   | {
       type: ActionType["ADD_TOAST"];
-      toast: ToasterToast;
+      toast: Toast;
     }
   | {
       type: ActionType["UPDATE_TOAST"];
-      toast: Partial<ToasterToast>;
+      toast: Partial<Toast>;
     }
   | {
       type: ActionType["DISMISS_TOAST"];
@@ -53,7 +56,7 @@ type Action =
     };
 
 interface State {
-  toasts: ToasterToast[];
+  toasts: Toast[];
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -109,7 +112,9 @@ export const reducer = (state: State, action: Action): State => {
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
+                onOpenChange: (open) => {
+                  if (!open) t.onOpenChange?.(false);
+                },
               }
             : t
         ),
@@ -140,13 +145,36 @@ function dispatch(action: Action) {
   });
 }
 
-// Define the Toast type properly
-type Toast = Omit<ToasterToast, "id">;
+interface Toast {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  type?: ToastType;
+  action?: ToastActionElement;
+  variant?: "default" | "destructive";
+  duration?: number;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
+}
 
-function toast({ ...props }: Toast) {
-  const id = generateId();
+type ToasterToast = ReturnType<typeof toast>;
 
-  const update = (props: Toast) =>
+// Define ToastOptions for helper methods
+interface ToastOptions {
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
+  variant?: "default" | "destructive";
+  duration?: number;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
+  type?: ToastType;
+}
+
+export function toast(props: ToastOptions) {
+  const id = genId();
+
+  const update = (props: ToastOptions) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
@@ -158,7 +186,6 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
-      open: true,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
@@ -166,13 +193,53 @@ function toast({ ...props }: Toast) {
   });
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   };
 }
 
-function useToast() {
+// Define success helper method
+toast.success = (message: string, options: Omit<ToastOptions, "type"> = {}) => {
+  return toast({
+    ...options,
+    title: message,
+    type: "success",
+  });
+};
+
+// Define error helper method
+toast.error = (message: string, options: Omit<ToastOptions, "type"> = {}) => {
+  return toast({
+    ...options,
+    title: message,
+    type: "error",
+  });
+};
+
+// Define warning helper method
+toast.warning = (message: string, options: Omit<ToastOptions, "type"> = {}) => {
+  return toast({
+    ...options,
+    title: message,
+    type: "warning",
+  });
+};
+
+// Define info helper method
+toast.info = (message: string, options: Omit<ToastOptions, "type"> = {}) => {
+  return toast({
+    ...options,
+    title: message,
+    type: "info",
+  });
+};
+
+type UseToastOptions = Partial<
+  Pick<Toast, "type" | "duration" | "variant" | "className">
+>;
+
+export function useToast(options?: UseToastOptions) {
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
@@ -187,68 +254,19 @@ function useToast() {
 
   return {
     ...state,
-    toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    toast: React.useCallback(
+      (props: ToastOptions) =>
+        toast({
+          ...options,
+          ...props,
+        }),
+      [options]
+    ),
+    dismiss: React.useCallback((toastId?: string) => {
+      dispatch({
+        type: "DISMISS_TOAST",
+        toastId,
+      });
+    }, []),
   };
 }
-
-// Define ToastOptions for helper methods
-interface ToastOptions {
-  action?: ToastActionElement;
-  variant?: "default" | "destructive";
-  duration?: number;
-  className?: string;
-  onOpenChange?: (open: boolean) => void;
-  // Include any other properties from Toast that might be needed except title and description
-  type?: ToastType;
-}
-
-// Add type to the toast function and explicitly type the helper methods
-interface ToastFunction {
-  (props: Toast): ReturnType<typeof toast>;
-  success(message: string, options?: ToastOptions): ReturnType<typeof toast>;
-  error(message: string, options?: ToastOptions): ReturnType<typeof toast>;
-  warning(message: string, options?: ToastOptions): ReturnType<typeof toast>;
-  info(message: string, options?: ToastOptions): ReturnType<typeof toast>;
-}
-
-// Cast toast to ToastFunction
-const typedToast = toast as unknown as ToastFunction;
-
-typedToast.success = (message: string, options: ToastOptions = {}) => {
-  return toast({
-    title: "Success",
-    description: message,
-    type: "success",
-    ...options,
-  });
-};
-
-typedToast.error = (message: string, options: ToastOptions = {}) => {
-  return toast({
-    title: "Error",
-    description: message,
-    type: "destructive",
-    ...options,
-  });
-};
-
-typedToast.warning = (message: string, options: ToastOptions = {}) => {
-  return toast({
-    title: "Warning",
-    description: message,
-    type: "warning",
-    ...options,
-  });
-};
-
-typedToast.info = (message: string, options: ToastOptions = {}) => {
-  return toast({
-    title: "Info",
-    description: message,
-    type: "info",
-    ...options,
-  });
-};
-
-export { useToast, typedToast as toast };

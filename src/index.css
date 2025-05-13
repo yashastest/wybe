@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -78,6 +79,18 @@
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-wybe-primary;
+  }
+
+  /* Poppins Bold as primary font */
+  h1, h2, h3, h4, h5, h6, .font-poppins {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+  }
+
+  /* JetBrains Mono Bold as secondary font */
+  code, pre, .font-jetbrains, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
   }
 
   /* Add loading animations */
@@ -261,52 +274,6 @@
   .shadow-glow-lg {
     box-shadow: 0 0 35px rgba(139, 92, 246, 0.7);
   }
-  
-  /* New floating meme animations */
-  @keyframes float-rotate {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    25% { transform: translateY(-15px) rotate(5deg); }
-    75% { transform: translateY(15px) rotate(-5deg); }
-  }
-  
-  @keyframes coin-flip {
-    0% { transform: rotateY(0deg); }
-    100% { transform: rotateY(360deg); }
-  }
-  
-  @keyframes rainbow-border {
-    0% { border-color: rgba(168, 85, 247, 0.6); }
-    33% { border-color: rgba(99, 102, 241, 0.6); }
-    66% { border-color: rgba(139, 92, 246, 0.6); }
-    100% { border-color: rgba(168, 85, 247, 0.6); }
-  }
-  
-  .animate-float-rotate {
-    animation: float-rotate 6s ease-in-out infinite;
-  }
-  
-  .animate-coin-flip {
-    animation: coin-flip 8s linear infinite;
-  }
-  
-  .animate-rainbow-border {
-    animation: rainbow-border 6s linear infinite;
-  }
-  
-  .sparkle-effect {
-    position: relative;
-  }
-  
-  .sparkle-effect::before {
-    content: '';
-    position: absolute;
-    inset: -5px;
-    background: linear-gradient(45deg, #8B5CF6, #6366F1, #A855F7, #8B5CF6);
-    border-radius: inherit;
-    z-index: -1;
-    animation: rainbow-border 6s linear infinite;
-    opacity: 0.6;
-  }
 
   .container {
     @apply px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl;
@@ -317,10 +284,20 @@
 /* Add custom font */
 @font-face {
   font-family: 'Poppins';
-  src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+  src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
   font-display: swap;
 }
 
 .font-poppins {
   font-family: 'Poppins', sans-serif;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+  font-display: swap;
+}
+
+.font-jetbrains {
+  font-family: 'JetBrains Mono', monospace;
 }

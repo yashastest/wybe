@@ -1,488 +1,354 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, TrendingUp, Calendar, Coins } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, ChevronDown, Filter } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
-import { TraderActivity } from "@/components/TraderActivityMarkers";
+
+// Mock data for discovered coins
+const discoverCoins = [
+  {
+    id: "pepe",
+    name: "Pepe",
+    symbol: "PEPE",
+    logo: "/coins/pepe.png",
+    banner: "/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png",
+    price: 0.00000123,
+    change24h: 5.67,
+    marketCap: 420000000,
+    volume24h: 69000000,
+    category: ["Meme", "Frog"],
+  },
+  {
+    id: "doge",
+    name: "Dogecoin",
+    symbol: "DOGE",
+    logo: "/coins/doge.png",
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.123,
+    change24h: -2.34,
+    marketCap: 16000000000,
+    volume24h: 980000000,
+    category: ["Meme", "Dog"],
+  },
+  {
+    id: "shib",
+    name: "Shiba Inu",
+    symbol: "SHIB",
+    logo: "/coins/shib.png",
+    banner: "/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png",
+    price: 0.00002345,
+    change24h: 7.89,
+    marketCap: 13500000000,
+    volume24h: 850000000,
+    category: ["Meme", "Dog"],
+  },
+  {
+    id: "floki",
+    name: "Floki",
+    symbol: "FLOKI",
+    logo: "/coins/floki.png",
+    banner: "/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png",
+    price: 0.0001234,
+    change24h: 12.34,
+    marketCap: 1200000000,
+    volume24h: 320000000,
+    category: ["Meme", "Dog"],
+  },
+  {
+    id: "bonk",
+    name: "Bonk",
+    symbol: "BONK",
+    logo: "/coins/bonk.png",
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.00000234,
+    change24h: -3.45,
+    marketCap: 950000000,
+    volume24h: 210000000,
+    category: ["Meme", "Dog", "Solana"],
+  },
+  {
+    id: "wojak",
+    name: "Wojak",
+    symbol: "WOJAK",
+    logo: "/coins/wojak.png",
+    banner: "/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png",
+    price: 0.0000789,
+    change24h: 9.87,
+    marketCap: 320000000,
+    volume24h: 78000000,
+    category: ["Meme", "Feels"],
+  },
+];
+
+// Format functions
+const formatPrice = (price) => {
+  if (price < 0.00001) {
+    return price.toFixed(8);
+  } else if (price < 0.01) {
+    return price.toFixed(6);
+  } else if (price < 1) {
+    return price.toFixed(4);
+  } else {
+    return price.toFixed(2);
+  }
+};
+
+const formatMarketCap = (marketCap) => {
+  if (marketCap >= 1000000000) {
+    return `$${(marketCap / 1000000000).toFixed(2)}B`;
+  } else if (marketCap >= 1000000) {
+    return `$${(marketCap / 1000000).toFixed(2)}M`;
+  } else {
+    return `$${(marketCap / 1000).toFixed(2)}K`;
+  }
+};
 
 const Discover = () => {
-  const [sortBy, setSortBy] = useState("marketCap");
-  const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Mock data for coins
-  const coins = [
-    {
-      name: "Pepe Solana",
-      symbol: "PEPES",
-      marketCap: 230000,
-      volume24h: 52000,
-      priceChange: 15.4,
-      launchDate: "2025-04-01",
-      status: "live",
-      trades: 1240,
-      developerHolding: 12.5,
-      retailTraders: 842,
-      whaleTraders: 24,
-      emoji: "🐸"
-    },
-    {
-      name: "Solana Doge",
-      symbol: "SOLDOGE",
-      marketCap: 450000,
-      volume24h: 87000,
-      priceChange: -5.3,
-      launchDate: "2025-04-05",
-      status: "live",
-      trades: 2130,
-      developerHolding: 8.2,
-      retailTraders: 1245,
-      whaleTraders: 42,
-      emoji: "🐶"
-    },
-    {
-      name: "Moon Shot",
-      symbol: "MOON",
-      marketCap: 120000,
-      volume24h: 31000,
-      priceChange: 40.2,
-      launchDate: "2025-04-10",
-      status: "live",
-      trades: 980,
-      developerHolding: 15.0,
-      retailTraders: 632,
-      whaleTraders: 18,
-      emoji: "🚀"
-    },
-    {
-      name: "Wybe Coin",
-      symbol: "WYBE",
-      marketCap: 780000,
-      volume24h: 145000,
-      priceChange: 8.7,
-      launchDate: "2025-03-28",
-      status: "live",
-      trades: 4500,
-      developerHolding: 5.0,
-      retailTraders: 3214,
-      whaleTraders: 68,
-      emoji: "⚡"
-    },
-    {
-      name: "Cat Protocol",
-      symbol: "MEOW",
-      marketCap: null,
-      volume24h: null,
-      priceChange: null,
-      launchDate: "2025-05-15",
-      status: "upcoming",
-      trades: 0,
-      developerHolding: 20.0,
-      retailTraders: 0,
-      whaleTraders: 0,
-      emoji: "🐱"
-    },
-    {
-      name: "Rocket Finance",
-      symbol: "ROCKET",
-      marketCap: null,
-      volume24h: null,
-      priceChange: null,
-      launchDate: "2025-05-20",
-      status: "upcoming",
-      trades: 0,
-      developerHolding: 18.5,
-      retailTraders: 0,
-      whaleTraders: 0,
-      emoji: "🚀"
-    }
-  ];
+  const [sortOption, setSortOption] = useState("marketCap");
+  const [filterCategory, setFilterCategory] = useState("All");
   
   // Filter and sort coins
-  const filteredCoins = coins.filter(coin => {
-    // Filter by name or symbol
-    if (searchTerm && !coin.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !coin.symbol.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by type
-    if (filterType === "live" && coin.status !== "live") return false;
-    if (filterType === "upcoming" && coin.status !== "upcoming") return false;
-    
-    return true;
-  }).sort((a, b) => {
-    if (sortBy === "marketCap") {
-      return (b.marketCap || 0) - (a.marketCap || 0);
-    } else if (sortBy === "volume24h") {
-      return (b.volume24h || 0) - (a.volume24h || 0);
-    } else if (sortBy === "trades") {
-      return b.trades - a.trades;
-    } else if (sortBy === "priceChange") {
-      return (b.priceChange || 0) - (a.priceChange || 0);
-    } else if (sortBy === "launchDate") {
-      return new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime();
-    }
-    return 0;
-  });
+  const filteredCoins = discoverCoins
+    .filter(coin => {
+      const matchesSearch = coin.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          coin.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === "All" || coin.category.includes(filterCategory);
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortOption === "marketCap") return b.marketCap - a.marketCap;
+      if (sortOption === "volume") return b.volume24h - a.volume24h;
+      if (sortOption === "priceAsc") return a.price - b.price;
+      if (sortOption === "priceDesc") return b.price - a.price;
+      if (sortOption === "change") return b.change24h - a.change24h;
+      return 0;
+    });
+
+  // All categories from data
+  const allCategories = ["All", ...new Set(discoverCoins.flatMap(coin => coin.category))];
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black">
       <Header />
       
-      <div className="container mx-auto px-4 py-12 flex-grow">
+      <main className="flex-grow container px-4 py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
         >
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Discover Coins</h1>
-          <p className="text-xl text-gray-300">
-            Explore trending coins and upcoming launches on Wybe
-          </p>
+          <h1 className="text-3xl font-poppins font-bold mb-2">Discover <span className="text-gradient">Meme Coins</span></h1>
+          <p className="text-gray-300 mb-8">Explore trending and popular meme coins on the Solana blockchain</p>
         </motion.div>
         
-        {/* Filters and Search */}
-        <div className="glass-card p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative w-full md:w-auto flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <Input 
-                placeholder="Search coins..." 
-                className="pl-10 bg-wybe-background-light border-wybe-primary/20"
+        {/* Search and filter section */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative col-span-1 md:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search by name or symbol..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-wybe-background-light/30 border border-white/10 rounded-lg pl-10 pr-4 py-2 w-full text-white focus:outline-none focus:ring-2 focus:ring-wybe-primary"
               />
             </div>
             
-            <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <span className="text-gray-400 whitespace-nowrap">Filter:</span>
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="bg-wybe-background-light border-wybe-primary/20 w-[120px]">
-                    <SelectValue placeholder="Filter by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-wybe-background-light border-white/10">
-                    <SelectItem value="all">All Coins</SelectItem>
-                    <SelectItem value="live">Live Coins</SelectItem>
-                    <SelectItem value="upcoming">Upcoming</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins">
+                    <Filter size={16} className="mr-2" />
+                    Category: {filterCategory}
+                    <ChevronDown size={16} className="ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg">
+                  {allCategories.map((category) => (
+                    <DropdownMenuItem 
+                      key={category}
+                      onClick={() => setFilterCategory(category)}
+                      className={filterCategory === category ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    >
+                      {category}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <span className="text-gray-400 whitespace-nowrap">Sort by:</span>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="bg-wybe-background-light border-wybe-primary/20 w-[150px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-wybe-background-light border-white/10">
-                    <SelectItem value="marketCap">Market Cap</SelectItem>
-                    <SelectItem value="volume24h">Volume (24h)</SelectItem>
-                    <SelectItem value="priceChange">Price Change</SelectItem>
-                    <SelectItem value="trades">Number of Trades</SelectItem>
-                    <SelectItem value="launchDate">Launch Date</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins">
+                    Sort By
+                    <ChevronDown size={16} className="ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg">
+                  <DropdownMenuItem 
+                    onClick={() => setSortOption("marketCap")} 
+                    className={sortOption === "marketCap" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                  >
+                    Market Cap
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortOption("volume")}
+                    className={sortOption === "volume" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                  >
+                    Volume
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortOption("priceDesc")}
+                    className={sortOption === "priceDesc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                  >
+                    Price (High to Low)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortOption("priceAsc")}
+                    className={sortOption === "priceAsc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                  >
+                    Price (Low to High)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortOption("change")}
+                    className={sortOption === "change" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                  >
+                    24h Change
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
         
-        {/* Tabs for Live and Upcoming */}
-        <Tabs defaultValue="all" className="mb-8">
-          <TabsList className="bg-wybe-background-light border border-wybe-primary/20 mb-6">
-            <TabsTrigger value="all">All Coins</TabsTrigger>
-            <TabsTrigger value="live">Live Trading</TabsTrigger>
-            <TabsTrigger value="upcoming">Upcoming Launches</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCoins.map((coin) => (
-                <CoinCard key={coin.symbol} coin={coin} />
-              ))}
+        {/* Coins grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCoins.length > 0 ? (
+            filteredCoins.map((coin, index) => (
+              <CoinCard key={coin.id} coin={coin} index={index} />
+            ))
+          ) : (
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16">
+              <h3 className="text-xl font-poppins font-bold mb-2">No coins found</h3>
+              <p className="text-gray-400">Try adjusting your search or filter criteria</p>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="live">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCoins.filter(c => c.status === "live").map((coin) => (
-                <CoinCard key={coin.symbol} coin={coin} />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="upcoming">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCoins.filter(c => c.status === "upcoming").map((coin) => (
-                <CoinCard key={coin.symbol} coin={coin} />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        {/* Smart Contract Testing Information */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="glass-card p-6 mb-8 overflow-hidden"
-        >
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Coins className="text-wybe-primary" size={20} />
-            Smart Contract Deployment Guide
-          </h2>
-          
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-2">Testnet Deployment</h3>
-              <p className="text-gray-300 mb-3">
-                Before mainnet deployment, test your token on Solana Devnet/Testnet using this address:
-              </p>
-              <div className="bg-wybe-background/80 p-3 rounded-md border border-wybe-primary/20 flex justify-between items-center">
-                <code className="text-wybe-secondary text-sm">
-                  FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw
-                </code>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="text-xs hover:bg-wybe-primary/20"
-                  onClick={() => {
-                    navigator.clipboard.writeText("FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw");
-                    toast.success("Testnet address copied to clipboard!");
-                  }}
-                >
-                  Copy
-                </Button>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2">Mainnet Deployment Steps</h3>
-              <ol className="space-y-4 pl-5 list-decimal text-gray-300">
-                <li>
-                  <p><strong>Set Up Development Environment</strong></p>
-                  <p className="text-sm text-gray-400 mt-1">Install Solana CLI tools and Anchor framework</p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ sh -c "$(curl -sSfL https://release.solana.com/v1.16.5/install)" <br />
-                    $ npm install -g @project-serum/anchor-cli
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Configure Your Wallet</strong></p>
-                  <p className="text-sm text-gray-400 mt-1">Generate a new keypair or use your existing one</p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ solana-keygen new -o ~/.config/solana/id.json <br />
-                    $ solana config set -k ~/.config/solana/id.json
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Fund Your Wallet</strong></p>
-                  <p className="text-sm text-gray-400 mt-1">Ensure you have enough SOL for deployment (~5 SOL recommended)</p>
-                </li>
-                <li>
-                  <p><strong>Initialize Anchor Project</strong></p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ anchor init wybe_token <br />
-                    $ cd wybe_token
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Build the Project</strong></p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ anchor build
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Deploy to Mainnet</strong></p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ solana config set --url https://api.mainnet-beta.solana.com <br />
-                    $ anchor deploy
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Verify Deployment</strong></p>
-                  <p className="text-sm text-gray-400 mt-1">Check your program ID and verify on Solscan</p>
-                  <code className="text-xs block bg-wybe-background/80 p-2 rounded-md mt-1 border border-wybe-primary/20">
-                    $ solana address -k target/deploy/wybe_token-keypair.json
-                  </code>
-                </li>
-                <li>
-                  <p><strong>Initialize Your Token</strong></p>
-                  <p className="text-sm text-gray-400 mt-1">Create the token, set supply, and configure bonding curve</p>
-                </li>
-              </ol>
-            </div>
-          </div>
-          
-          <div className="mt-8">
-            <Button className="btn-primary" onClick={() => toast.info("Our team can help you with deployment!")}>
-              Request Deployment Assistance
-            </Button>
-          </div>
-        </motion.div>
-      </div>
+          )}
+        </div>
+      </main>
       
       <Footer />
     </div>
   );
 };
 
-// Coin Card Component
-const CoinCard = ({ coin }) => {
-  // Mock trading activities
-  const mockTraderActivities: Record<string, TraderActivity[]> = {
-    PEPES: [
-      { type: 'developer', price: 0.00019, timestamp: '2025-04-05T10:30:00Z', action: 'buy', quantity: 4500000, percentage: 12.5 },
-      { type: 'whale', price: 0.00022, timestamp: '2025-04-07T14:15:00Z', action: 'buy', quantity: 1200000 },
-      { type: 'retail', price: 0.00023, timestamp: '2025-04-08T09:45:00Z', action: 'buy', quantity: 45000 }
-    ],
-    SOLDOGE: [
-      { type: 'developer', price: 0.00038, timestamp: '2025-04-02T11:20:00Z', action: 'buy', quantity: 2800000, percentage: 8.2 },
-      { type: 'whale', price: 0.00042, timestamp: '2025-04-04T16:30:00Z', action: 'buy', quantity: 950000 },
-      { type: 'retail', price: 0.00045, timestamp: '2025-04-06T08:15:00Z', action: 'sell', quantity: 72000 }
-    ]
-  };
-
-  // Get activities for this specific coin or an empty array
-  const activities = mockTraderActivities[coin.symbol] || [];
-
+// Coin card component with banner
+const CoinCard = ({ coin, index }) => {
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      transition={{ type: "spring", stiffness: 300 }}
-      className="glass-card overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      className="glass-card overflow-hidden hover:shadow-glow-sm transition-all duration-300"
     >
-      <div className={`h-1.5 w-full ${coin.status === 'upcoming' ? 'bg-wybe-secondary' : coin.priceChange >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center">
-            <span className="text-2xl mr-2">{coin.emoji}</span>
-            <div>
-              <h3 className="text-lg font-bold">{coin.name}</h3>
-              <p className="text-wybe-secondary font-medium">{coin.symbol}</p>
-            </div>
+      {/* Banner image */}
+      <div className="w-full h-36 relative">
+        <AspectRatio ratio={16 / 9}>
+          <img
+            src={coin.banner}
+            alt={`${coin.name} banner`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg";
+            }}
+          />
+        </AspectRatio>
+        
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
+        
+        {/* Logo and symbol on banner */}
+        <div className="absolute bottom-0 left-0 p-4 flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm p-1">
+            <img
+              src={coin.logo}
+              alt={coin.name}
+              className="w-full h-full object-cover rounded-full"
+              onError={(e) => {
+                e.currentTarget.src = "/placeholder.svg";
+              }}
+            />
           </div>
-          <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
-            <Coins className="text-wybe-primary" size={20} />
+          <div>
+            <h3 className="font-poppins font-bold text-white text-xl">{coin.name}</h3>
+            <p className="text-gray-300 text-sm font-mono">{coin.symbol}</p>
           </div>
         </div>
         
-        {coin.status === "live" ? (
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <div>
-              <p className="text-sm text-gray-400">Market Cap</p>
-              <p className="font-medium">${coin.marketCap.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Volume (24h)</p>
-              <p className="font-medium">${coin.volume24h.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Price Change</p>
-              <p className={`font-medium ${coin.priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {coin.priceChange >= 0 ? '+' : ''}{coin.priceChange}%
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Trades</p>
-              <p className="font-medium">{coin.trades.toLocaleString()}</p>
-            </div>
+        {/* Price change indicator */}
+        <div className="absolute top-4 right-4">
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+            coin.change24h >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+          }`}>
+            {coin.change24h >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+            <span className="font-mono font-bold">{Math.abs(coin.change24h).toFixed(2)}%</span>
           </div>
-        ) : (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar size={16} className="text-wybe-secondary" />
-              <p className="text-sm">
-                Launching on {new Date(coin.launchDate).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg p-3 mt-2">
-              <p className="text-sm flex items-center gap-2">
-                <TrendingUp size={16} className="text-wybe-secondary" />
-                <span>Upcoming token launch via Wybe Assisted Launch</span>
-              </p>
-            </div>
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-xs text-gray-400 font-mono">Price</p>
+            <p className="font-medium font-mono">${formatPrice(coin.price)}</p>
           </div>
-        )}
-
-        {/* Trader activity section */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-sm text-gray-400">Trading Activity</p>
+          <div>
+            <p className="text-xs text-gray-400 font-mono">Market Cap</p>
+            <p className="font-medium font-mono">{formatMarketCap(coin.marketCap)}</p>
           </div>
-          <div className="bg-wybe-background/60 rounded-lg p-3">
-            <TooltipProvider>
-              <div className="flex justify-between">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <span className="text-xl">👨‍💻</span>
-                      <span className="text-sm">{coin.developerHolding}%</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
-                    <p className="text-sm">Developer holds {coin.developerHolding}% of total supply</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <span className="text-xl">👤</span>
-                      <span className="text-sm">{coin.retailTraders}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
-                    <p className="text-sm">{coin.retailTraders} retail traders (under $1,000)</p>
-                  </TooltipContent>
-                </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-pointer">
-                      <span className="text-xl">🐋</span>
-                      <span className="text-sm">{coin.whaleTraders}</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
-                    <p className="text-sm">{coin.whaleTraders} whale traders (over $1,000)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </TooltipProvider>
+          <div>
+            <p className="text-xs text-gray-400 font-mono">Volume (24h)</p>
+            <p className="font-medium font-mono">{formatMarketCap(coin.volume24h)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-mono">Categories</p>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {coin.category.slice(0, 2).map((cat) => (
+                <span
+                  key={cat}
+                  className="text-[10px] px-1.5 py-0.5 bg-wybe-primary/10 text-wybe-primary rounded-full font-mono"
+                >
+                  {cat}
+                </span>
+              ))}
+              {coin.category.length > 2 && (
+                <span className="text-[10px] px-1.5 py-0.5 bg-gray-700/30 text-gray-400 rounded-full">
+                  +{coin.category.length - 2}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         
-        <div className="flex gap-2 mt-4">
-          {coin.status === "live" ? (
-            <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="w-full">
-              <Button className="btn-primary w-full">Trade Now</Button>
-            </Link>
-          ) : (
-            <Button className="btn-secondary w-full" disabled>Coming Soon</Button>
-          )}
+        <div className="flex gap-2">
+          <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="flex-1">
+            <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 font-poppins font-bold">
+              Trade
+            </Button>
+          </Link>
+          <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 font-poppins">
+            Details
+          </Button>
         </div>
       </div>
     </motion.div>
