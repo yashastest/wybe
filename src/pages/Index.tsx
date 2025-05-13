@@ -1,16 +1,16 @@
 
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
-import { ChevronDown, Globe, Shield, TrendingUp, Wallet } from "lucide-react";
+import { ChevronDown, Globe, Shield, TrendingUp, Wallet, Rocket, CircleDollarSign, ChartBarIcon } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import HeroCoins from "@/components/HeroCoins";
+import RocketLaunch from "@/components/RocketLaunch";
 import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black">
       <Header />
       
       {/* Hero Section */}
@@ -91,7 +91,7 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="flex-1 relative"
           >
-            <HeroCoins />
+            <RocketLaunch />
           </motion.div>
         </div>
       </div>
@@ -108,8 +108,8 @@ const HeroSection = () => {
       </motion.div>
       
       {/* Background gradient effect */}
-      <div className="absolute top-40 right-20 w-96 h-96 bg-wybe-primary/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 left-20 w-64 h-64 bg-wybe-accent/20 rounded-full blur-3xl" />
+      <div className="absolute top-40 right-20 w-96 h-96 bg-wybe-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 left-20 w-64 h-64 bg-wybe-accent/10 rounded-full blur-3xl" />
     </section>
   );
 };
@@ -167,7 +167,7 @@ const FeaturesSection = () => {
                 }}
                 className="glass-card p-6 md:p-8 flex flex-col items-center text-center hover:border-wybe-primary/30 transition-colors"
               >
-                <div className="w-16 h-16 bg-wybe-primary/20 text-wybe-primary rounded-full flex items-center justify-center mb-6 animate-pulse-slow">
+                <div className="w-16 h-16 bg-wybe-primary/20 text-wybe-primary rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
@@ -183,7 +183,7 @@ const FeaturesSection = () => {
 
 const CreatorFeesSection = () => {
   return (
-    <section className="py-16 relative bg-gradient-to-br from-wybe-background via-wybe-background-light/50 to-wybe-background">
+    <section className="py-16 relative bg-gradient-to-br from-black via-wybe-background-light/10 to-black">
       <div className="container mx-auto px-4">
         <Section>
           <motion.div
@@ -211,7 +211,12 @@ const CreatorFeesSection = () => {
               }}
               className="glass-card p-6 bg-gradient-to-br from-purple-900/20 to-transparent"
             >
-              <h3 className="text-xl font-bold mb-3">Performance Based</h3>
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-xl font-bold">Performance Based</h3>
+                <div className="bg-wybe-primary/20 p-2 rounded-full">
+                  <Rocket size={18} className="text-wybe-primary" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-gradient mb-3">40%</div>
               <p className="text-gray-300 mb-4">
                 Of all trading fees when your token reaches $50K market cap within 4 days and sustains it for 48 hours.
@@ -231,7 +236,12 @@ const CreatorFeesSection = () => {
               }}
               className="glass-card p-6 bg-gradient-to-br from-blue-900/20 to-transparent"
             >
-              <h3 className="text-xl font-bold mb-3">Standard</h3>
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-xl font-bold">Standard</h3>
+                <div className="bg-wybe-primary/20 p-2 rounded-full">
+                  <CircleDollarSign size={18} className="text-wybe-primary" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-gradient mb-3">20%</div>
               <p className="text-gray-300 mb-4">
                 Of all trading fees if the $50K cap is not met, starting 7 days after launch.
@@ -251,7 +261,12 @@ const CreatorFeesSection = () => {
               }}
               className="glass-card p-6 bg-gradient-to-br from-green-900/20 to-transparent"
             >
-              <h3 className="text-xl font-bold mb-3">Platform Fee</h3>
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-xl font-bold">Platform Fee</h3>
+                <div className="bg-wybe-primary/20 p-2 rounded-full">
+                  <ChartBarIcon size={18} className="text-wybe-primary" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-gradient mb-3">2.5%</div>
               <p className="text-gray-300 mb-4">
                 Total fee on all trades, significantly lower than most DEXs which typically charge 3-5%.
@@ -272,33 +287,66 @@ const CreatorFeesSection = () => {
             }}
             className="text-center"
           >
-            <Link to="/package">
+            <Link to="/launch">
               <Button className="btn-primary animate-pulse-glow">
-                Learn More About Our Launch Package
+                Apply for Whitelist
               </Button>
             </Link>
+          </motion.div>
+          
+          <motion.div
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { 
+                opacity: 1, 
+                transition: { delay: 0.5, duration: 0.5 }
+              }
+            }}
+            className="mt-16 glass-card p-6 md:p-8"
+          >
+            <h3 className="text-2xl font-bold mb-4 text-center">The Wybe <span className="text-gradient">Advantage</span></h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
+                  <Shield size={16} className="text-wybe-primary" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-medium mb-1">Enhanced Security</h4>
+                  <p className="text-sm text-gray-300">All smart contracts are audited and secured, protecting both creators and investors.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
+                  <TrendingUp size={16} className="text-wybe-primary" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-medium mb-1">Instant Liquidity</h4>
+                  <p className="text-sm text-gray-300">No need to wait for liquidity providers. Trade instantly with the built-in bonding curve.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
+                  <Wallet size={16} className="text-wybe-primary" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-medium mb-1">Passive Income</h4>
+                  <p className="text-sm text-gray-300">Earn 40% of all trading fees as long as your token maintains active trading volume.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">
+                  <Globe size={16} className="text-wybe-primary" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-medium mb-1">Global Reach</h4>
+                  <p className="text-sm text-gray-300">Tap into the growing Solana ecosystem with millions of active users worldwide.</p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </Section>
       </div>
     </section>
-  );
-};
-
-const FeatureCard = ({ icon, title, description, delay }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.7, delay }}
-      className="glass-card p-6 md:p-8 flex flex-col items-center text-center"
-    >
-      <div className="w-16 h-16 bg-wybe-primary/20 text-wybe-primary rounded-full flex items-center justify-center mb-6">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
-      <p className="text-gray-300">{description}</p>
-    </motion.div>
   );
 };
 

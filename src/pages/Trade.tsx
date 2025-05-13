@@ -25,6 +25,7 @@ const Trade = () => {
   const [estimatedReceived, setEstimatedReceived] = useState("0");
   const [chartTimeframe, setChartTimeframe] = useState("1D");
   const [chartType, setChartType] = useState<'price' | 'marketCap'>('price');
+  const [bondingCurveType, setBondingCurveType] = useState<"linear" | "exponential" | "sigmoid">("linear");
   const isMobile = useIsMobile();
   
   // Mock coin data
@@ -182,8 +183,8 @@ const Trade = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-12 flex-grow">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="container mx-auto px-4 py-8 flex-grow overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left column - Coin info & Chart */}
           <div className="lg:col-span-3">
             <motion.div
@@ -192,10 +193,10 @@ const Trade = () => {
               transition={{ duration: 0.5 }}
             >
               {/* Token header */}
-              <div className="glass-card p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center overflow-hidden">
+              <div className="glass-card p-4 md:p-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center overflow-hidden">
                       <AspectRatio ratio={1 / 1} className="relative w-full h-full">
                         <img 
                           src="/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png" 
@@ -205,8 +206,12 @@ const Trade = () => {
                       </AspectRatio>
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold">{coinData.name} ({coinData.symbol})</h1>
-                      <p className="text-sm text-gray-400">Creator: {coinData.creator}</p>
+                      <h1 className="text-lg md:text-xl font-bold">{coinData.name} ({coinData.symbol})</h1>
+                      <p className="text-xs md:text-sm text-gray-400">
+                        Creator: <a href="#" className="hover:text-wybe-primary transition-colors hover:underline">
+                          {coinData.creator}
+                        </a>
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -216,7 +221,7 @@ const Trade = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                   <StatsCard label="Price" value={`${coinData.price} SOL`} />
                   <StatsCard label="Market Cap" value={coinData.marketCap} />
                   <StatsCard label="24h Volume" value={coinData.volume24h} />
@@ -226,8 +231,15 @@ const Trade = () => {
                 <div className="mt-4 p-3 bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-wybe-primary" />
-                    <p className="text-sm text-gray-300">
-                      Contract Address: <span className="text-wybe-secondary">FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw</span>
+                    <p className="text-xs md:text-sm text-gray-300">
+                      Contract: <a 
+                        href={`https://solscan.io/token/FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-wybe-secondary hover:underline"
+                      >
+                        FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw
+                      </a>
                     </p>
                   </div>
                 </div>
@@ -240,10 +252,10 @@ const Trade = () => {
               </div>
               
               {/* Chart Controls */}
-              <div className="glass-card p-4 mb-2">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400">Chart Type:</span>
+              <div className="glass-card p-3 md:p-4 mb-2">
+                <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <span className="text-xs md:text-sm text-gray-400">Chart Type:</span>
                     <div className="flex">
                       <Button 
                         size="sm" 
@@ -264,8 +276,8 @@ const Trade = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-gray-400">Timeframe:</span>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <span className="text-xs md:text-sm text-gray-400">Timeframe:</span>
                     <div className="flex flex-wrap gap-1">
                       {timeFrameOptions.map((tf) => (
                         <Button 
@@ -283,18 +295,74 @@ const Trade = () => {
                 </div>
               </div>
               
-              {/* Chart */}
-              <div className="glass-card p-4 mb-6">
+              {/* Price Chart */}
+              <div className="glass-card p-3 md:p-4 mb-6">
                 <TradingViewChart 
                   symbol={coinData.symbol}
                   timeframe={chartTimeframe}
                   chartType={chartType}
-                  containerClassName="h-[400px] md:h-[500px]"
+                  containerClassName="h-[300px] md:h-[400px]"
+                />
+              </div>
+              
+              {/* Bonding Curve Section - New Addition */}
+              <div className="glass-card p-3 md:p-6 mb-6">
+                <div className="flex flex-wrap items-center justify-between mb-4">
+                  <h2 className="text-lg font-medium flex items-center gap-2">
+                    <TrendingUp size={18} className="text-wybe-primary" />
+                    Bonding Curve
+                  </h2>
+                  
+                  <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                    <span className="text-xs md:text-sm text-gray-400">Curve Type:</span>
+                    <div className="flex">
+                      <Button 
+                        size="sm" 
+                        variant={bondingCurveType === 'linear' ? 'default' : 'outline'}
+                        className="rounded-r-none text-xs h-8"
+                        onClick={() => setBondingCurveType('linear')}
+                      >
+                        Linear
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={bondingCurveType === 'exponential' ? 'default' : 'outline'}
+                        className="rounded-none border-x-0 text-xs h-8"
+                        onClick={() => setBondingCurveType('exponential')}
+                      >
+                        Exponential
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={bondingCurveType === 'sigmoid' ? 'default' : 'outline'}
+                        className="rounded-l-none text-xs h-8"
+                        onClick={() => setBondingCurveType('sigmoid')}
+                      >
+                        Sigmoid
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-2">
+                  <p className="text-sm text-gray-300">
+                    This bonding curve shows how token price changes as supply is sold. {bondingCurveType === 'linear' ? 
+                    'Linear curves have a constant price increase.' : 
+                    bondingCurveType === 'exponential' ? 
+                    'Exponential curves accelerate price growth as supply decreases.' : 
+                    'Sigmoid curves have slow initial growth, rapid middle growth, and slow final growth.'}
+                  </p>
+                </div>
+                
+                <BondingCurveChart 
+                  curveType={bondingCurveType} 
+                  height={250} 
+                  animated={true}
                 />
               </div>
               
               {/* Trade History */}
-              <div className="glass-card p-6">
+              <div className="glass-card p-3 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-medium flex items-center gap-2">
                     <History size={18} className="text-wybe-primary" />
@@ -312,8 +380,8 @@ const Trade = () => {
                   </div>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-3 px-3">
+                  <table className="w-full min-w-[640px]">
                     <thead>
                       <tr className="text-left text-gray-400 text-sm border-b border-white/10">
                         <th className="pb-2">Type</th>
@@ -351,7 +419,7 @@ const Trade = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <div className="glass-card p-6 sticky top-24">
+            <div className="glass-card p-4 md:p-6 sticky top-24">
               <h2 className="text-xl font-bold mb-6">Trade {coinData.symbol}</h2>
               
               {!isWalletConnected ? (

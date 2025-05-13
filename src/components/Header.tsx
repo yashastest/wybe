@@ -1,265 +1,168 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useWallet } from "@/hooks/useWallet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 
-const Header = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+interface HeaderProps {
+  adminOnly?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { wallet, isConnecting, connect, disconnect, connectPhantom, isSolanaAvailable } = useWallet();
   const location = useLocation();
-  
-  // Check if we're on the admin route
-  const isAdminRoute = location.pathname.includes('/admin');
   
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrolled]);
   
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-  
-  const closeMobileMenu = () => {
-    setMobileMenuOpen(false);
-  };
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
 
-  // Animation variants
-  const logoVariants = {
-    initial: { opacity: 0, y: -20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const navVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1, delayChildren: 0.3 } }
-  };
-
-  const itemVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
+  // Regular navigation links
+  const navLinks = [
+    { to: "/", label: "Home" },
+    { to: "/discover", label: "Discover" },
+    { to: "/trade", label: "Trade" },
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/launch", label: "Launch" },
+  ];
   
+  // Admin navigation links
+  const adminNavLinks = [
+    { to: "/admin", label: "Dashboard" },
+    { to: "/admin-login", label: "Logout" },
+  ];
+
+  // Choose which links to display
+  const linksToDisplay = adminOnly ? adminNavLinks : navLinks;
+
   return (
-    <header className={`sticky top-0 z-50 glass-nav ${scrolled ? 'shadow-glow-sm' : ''}`}>
+    <header 
+      className={`sticky top-0 left-0 w-full z-50 transition-all duration-300 glass-nav ${
+        scrolled ? 'py-3 shadow-lg' : 'py-5'
+      }`}
+    >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          <motion.div 
-            className="flex items-center"
-            initial="initial"
-            animate="animate"
-            variants={logoVariants}
-          >
-            <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
-              <div className="h-10 w-10 mr-2 overflow-hidden rounded-full animate-pulse-glow">
-                <AspectRatio ratio={1 / 1} className="relative w-full h-full">
-                  <img 
-                    src="/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png" 
-                    alt="Wybe Logo" 
-                    className="object-cover"
-                  />
-                </AspectRatio>
-              </div>
-              <span className="text-white font-bold text-xl ml-2">WYBE</span>
-            </Link>
-          </motion.div>
+        <div className="flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center"
+            >
+              <img 
+                src="/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png" 
+                alt="Wybe Logo" 
+                className="h-10 w-10"
+              />
+              <span className="ml-2 text-xl font-bold font-poppins tracking-wide text-white">WYBE</span>
+            </motion.div>
+          </Link>
           
-          {/* Desktop Navigation - Show different nav for admin vs normal users */}
-          {!isAdminRoute ? (
-            <motion.nav 
-              className="hidden md:flex space-x-6"
-              initial="initial"
-              animate="animate"
-              variants={navVariants}
-            >
-              <motion.div variants={itemVariants}>
-                <Link to="/" className={`nav-link ${isActive('/') ? 'active-nav-link' : ''}`}>
-                  Home
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8">
+            {linksToDisplay.map((link, index) => (
+              <motion.div
+                key={link.to}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <Link
+                  to={link.to}
+                  className={`nav-link text-sm font-medium ${
+                    location.pathname === link.to ? 'active-nav-link' : ''
+                  }`}
+                >
+                  {link.label}
                 </Link>
               </motion.div>
-              <motion.div variants={itemVariants}>
-                <Link to="/package" className={`nav-link ${isActive('/package') ? 'active-nav-link' : ''}`}>
-                  Launch Package
-                </Link>
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <Link to="/launch" className={`nav-link ${isActive('/launch') ? 'active-nav-link' : ''}`}>
-                  Launch
-                </Link>
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <Link to="/trade" className={`nav-link ${isActive('/trade') ? 'active-nav-link' : ''}`}>
-                  Trade
-                </Link>
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active-nav-link' : ''}`}>
-                  Dashboard
-                </Link>
-              </motion.div>
-            </motion.nav>
-          ) : (
-            <motion.div 
+            ))}
+          </nav>
+          
+          {!adminOnly && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
               className="hidden md:block"
-              initial="initial"
-              animate="animate"
-              variants={navVariants}
             >
-              <motion.div variants={itemVariants}>
-                <span className="text-gradient font-medium">Admin Panel</span>
-              </motion.div>
+              <Link to="/launch">
+                <Button className="btn-primary">
+                  Launch a Token
+                </Button>
+              </Link>
             </motion.div>
           )}
           
-          <motion.div 
-            className="flex items-center"
+          {/* Mobile Menu Button */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            className="md:hidden"
           >
-            {isAdminRoute ? (
-              <Link to="/admin-login">
-                <Button 
-                  variant="outline" 
-                  className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background flex items-center gap-1"
-                >
-                  Back to Login
-                </Button>
-              </Link>
-            ) : wallet ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background flex items-center gap-1 shadow-glow-sm"
-                  >
-                    {wallet.substring(0, 4)}...{wallet.substring(wallet.length - 4)}
-                    <ChevronDown size={14} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-wybe-background-light border-white/10 w-56">
-                  <DropdownMenuItem 
-                    className="cursor-pointer hover:bg-wybe-primary/20"
-                    onClick={disconnect}
-                  >
-                    Disconnect Wallet
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    className="btn-primary animate-rainbow-glow"
-                    disabled={isConnecting}
-                  >
-                    {isConnecting ? "Connecting..." : "Connect Wallet"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-wybe-background-light border-white/10 w-56">
-                  <DropdownMenuItem 
-                    className="cursor-pointer hover:bg-wybe-primary/20"
-                    onClick={connect}
-                  >
-                    Connect Demo Wallet
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="cursor-pointer hover:bg-wybe-primary/20"
-                    onClick={connectPhantom}
-                  >
-                    Connect Phantom Wallet
-                    {!isSolanaAvailable && " (Install)"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            
-            <Button
-              variant="ghost"
-              className="ml-2 md:hidden text-white hover:bg-wybe-primary/20"
-              onClick={toggleMobileMenu}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-white focus:outline-none"
             >
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </Button>
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </motion.div>
         </div>
-      </div>
-      
-      {/* Mobile Navigation */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div 
-            className="md:hidden bg-wybe-background-light border-t border-white/10"
+        
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
+            className="md:hidden mt-4 pb-4"
           >
-            <div className="container mx-auto px-4 py-4 space-y-2">
-              {!isAdminRoute ? (
-                <>
-                  <Link 
-                    to="/" 
-                    className={`block py-2 ${isActive('/') ? 'text-wybe-primary' : 'text-white'}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Home
-                  </Link>
-                  <Link 
-                    to="/package" 
-                    className={`block py-2 ${isActive('/package') ? 'text-wybe-primary' : 'text-white'}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Launch Package
-                  </Link>
-                  <Link 
-                    to="/launch" 
-                    className={`block py-2 ${isActive('/launch') ? 'text-wybe-primary' : 'text-white'}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Launch
-                  </Link>
-                  <Link 
-                    to="/trade" 
-                    className={`block py-2 ${isActive('/trade') ? 'text-wybe-primary' : 'text-white'}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Trade
-                  </Link>
-                  <Link 
-                    to="/dashboard" 
-                    className={`block py-2 ${isActive('/dashboard') ? 'text-wybe-primary' : 'text-white'}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Dashboard
-                  </Link>
-                </>
-              ) : (
-                <span className="block py-2 text-gradient font-medium">Admin Panel</span>
+            <nav className="flex flex-col space-y-4">
+              {linksToDisplay.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`nav-link text-sm font-medium py-2 ${
+                    location.pathname === link.to ? 'active-nav-link' : ''
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              
+              {!adminOnly && (
+                <Link to="/launch" className="mt-2">
+                  <Button className="btn-primary w-full">
+                    Launch a Token
+                  </Button>
+                </Link>
               )}
-            </div>
+            </nav>
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
     </header>
   );
 };
