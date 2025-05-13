@@ -192,25 +192,28 @@ function useToast() {
   };
 }
 
-// Define ToastOptions correctly without extending from Toast to avoid type conflicts
+// Define ToastOptions for helper methods
 interface ToastOptions {
   action?: ToastActionElement;
   variant?: "default" | "destructive";
   duration?: number;
   className?: string;
   onOpenChange?: (open: boolean) => void;
+  // Include any other properties from Toast that might be needed except title and description
+  type?: ToastType;
 }
 
 // Add type to the toast function and explicitly type the helper methods
-type ToastFunction = typeof toast & {
-  success: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
-  error: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
-  warning: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
-  info: (message: string, options?: ToastOptions) => ReturnType<typeof toast>;
-};
+interface ToastFunction {
+  (props: Toast): ReturnType<typeof toast>;
+  success(message: string, options?: ToastOptions): ReturnType<typeof toast>;
+  error(message: string, options?: ToastOptions): ReturnType<typeof toast>;
+  warning(message: string, options?: ToastOptions): ReturnType<typeof toast>;
+  info(message: string, options?: ToastOptions): ReturnType<typeof toast>;
+}
 
-// Cast toast to ToastFunction to add the helper methods
-const typedToast = toast as ToastFunction;
+// Cast toast to ToastFunction
+const typedToast = toast as unknown as ToastFunction;
 
 typedToast.success = (message: string, options: ToastOptions = {}) => {
   return toast({

@@ -26,6 +26,12 @@ export function Toaster() {
             key={id} 
             {...props}
             variant={mapToastTypeToVariant(type)}
+            className={
+              type === "success" ? "bg-green-600" :
+              type === "warning" ? "bg-yellow-600" :
+              type === "info" ? "bg-blue-600" :
+              undefined
+            }
           >
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
