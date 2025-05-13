@@ -31,13 +31,11 @@ const HeroSection = () => {
               transition={{ delay: 0.2, duration: 0.5 }}
             >
               <span className="text-orange-500 font-mono text-sm uppercase tracking-wider font-bold">Powered by Solana</span>
-              <SplitColorHeading 
-                text="Build your meme empire in seconds 🚀"
-                className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight"
-                whiteTextClassName="text-white"
-                coloredTextClassName="text-orange-500"
-                splitAt={0.6}
-              />
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight">
+                <span className="text-white">Build your meme empire in </span>
+                <span className="text-orange-500">seconds</span>
+                <span className="text-white"> 🚀</span>
+              </h1>
             </motion.div>
             
             <motion.div
@@ -78,7 +76,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <Button variant="outline" className="font-poppins font-bold text-base px-8 py-6">
+                  <Button variant="blue" className="font-poppins font-bold text-base px-8 py-6">
                     Launch Package
                   </Button>
                 </motion.div>

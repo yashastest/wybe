@@ -3,8 +3,9 @@ import React from "react";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster"; // Using the shadcn toaster
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { WalletProvider } from "./hooks/useWallet";
+import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Pages
 import Index from "./pages/Index";
@@ -20,7 +21,11 @@ import Discover from "./pages/Discover";
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// We don't need to redeclare the Phantom window type here since it's in vite-env.d.ts
+// ScrollToTop component will ensure all pages start at the top
+const ScrollToTop = () => {
+  useScrollToTop();
+  return null;
+};
 
 const App = () => {
   return (
@@ -30,6 +35,7 @@ const App = () => {
           <ShadcnToaster />
           <WalletProvider>
             <BrowserRouter>
+              <ScrollToTop />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/launch" element={<Launch />} />

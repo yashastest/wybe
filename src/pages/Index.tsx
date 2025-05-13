@@ -10,6 +10,11 @@ import HeroSection from "@/components/HeroSection";
 import { TypewriterHeading } from "@/components/ui/typewriter-text";
 
 const Index = () => {
+  // Ensure the page starts at the top when loaded
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-black overflow-x-hidden pt-0">
       <Header />
@@ -196,7 +201,7 @@ const CreatorFeesSection = () => {
             className="text-center"
           >
             <Link to="/launch">
-              <Button variant="orange" className="font-poppins font-extrabold">
+              <Button variant="green" className="font-poppins font-extrabold">
                 Apply for Whitelist
               </Button>
             </Link>
