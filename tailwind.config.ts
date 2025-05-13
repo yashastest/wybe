@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -93,9 +92,13 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "1.5rem",
+        md: "1.25rem",
+        sm: "1rem",
+        xl: "2rem",
+        '2xl': "2.5rem",
+        '3xl': "3rem",
+        'full': "9999px",
       },
       keyframes: {
         "accordion-down": {
@@ -156,6 +159,8 @@ export default {
         'glow-sm': '0 0 10px rgba(139, 92, 246, 0.2)',
         'glow-md': '0 0 15px rgba(139, 92, 246, 0.4)',
         'glow-lg': '0 0 25px rgba(139, 92, 246, 0.6)',
+        'curved': '0 8px 32px rgba(0, 0, 0, 0.1)',
+        'curved-lg': '0 12px 40px rgba(0, 0, 0, 0.15)',
       },
     },
   },
