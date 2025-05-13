@@ -9,9 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import BondingCurveChart from "@/components/BondingCurveChart";
+import TradingViewChart from "@/components/TradingViewChart";
+import TraderActivityMarkers, { TraderActivity } from "@/components/TraderActivityMarkers";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Trade = () => {
   const { wallet, connect } = useWallet();
@@ -20,6 +23,9 @@ const Trade = () => {
   const [activeHistoryTab, setActiveHistoryTab] = useState("all");
   const [amount, setAmount] = useState("");
   const [estimatedReceived, setEstimatedReceived] = useState("0");
+  const [chartTimeframe, setChartTimeframe] = useState("1D");
+  const [chartType, setChartType] = useState<'price' | 'marketCap'>('price');
+  const isMobile = useIsMobile();
   
   // Mock coin data
   const coinData = {
@@ -85,6 +91,39 @@ const Trade = () => {
     }
   ];
   
+  // Mock trader activity data
+  const traderActivities: TraderActivity[] = [
+    {
+      type: 'developer',
+      price: 0.00018,
+      timestamp: '2025-04-01T10:00:00Z',
+      action: 'buy',
+      quantity: 5000000,
+      percentage: 12.5
+    },
+    {
+      type: 'whale',
+      price: 0.00021,
+      timestamp: '2025-04-05T14:30:00Z',
+      action: 'buy',
+      quantity: 2000000
+    },
+    {
+      type: 'retail',
+      price: 0.00023,
+      timestamp: '2025-04-10T09:15:00Z',
+      action: 'buy',
+      quantity: 50000
+    },
+    {
+      type: 'whale',
+      price: 0.00025,
+      timestamp: '2025-04-12T16:45:00Z',
+      action: 'sell',
+      quantity: 1000000
+    }
+  ];
+
   // Filter trade history based on active tab
   const filteredHistory = tradeHistory.filter(trade => {
     if (activeHistoryTab === "all") return true;
@@ -136,6 +175,8 @@ const Trade = () => {
     setAmount("");
     setEstimatedReceived("0");
   };
+
+  const timeFrameOptions = ["5m", "15m", "30m", "1h", "4h", "1D", "1W", "1M"];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -190,36 +231,66 @@ const Trade = () => {
                     </p>
                   </div>
                 </div>
+                
+                {/* Trader activity markers */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-gray-400">Trading Activity:</span>
+                  <TraderActivityMarkers activities={traderActivities} />
+                </div>
+              </div>
+              
+              {/* Chart Controls */}
+              <div className="glass-card p-4 mb-2">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-400">Chart Type:</span>
+                    <div className="flex">
+                      <Button 
+                        size="sm" 
+                        variant={chartType === 'price' ? 'default' : 'outline'}
+                        className="rounded-r-none text-xs h-8"
+                        onClick={() => setChartType('price')}
+                      >
+                        Price
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={chartType === 'marketCap' ? 'default' : 'outline'}
+                        className="rounded-l-none text-xs h-8"
+                        onClick={() => setChartType('marketCap')}
+                      >
+                        Market Cap
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-gray-400">Timeframe:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {timeFrameOptions.map((tf) => (
+                        <Button 
+                          key={tf}
+                          size="sm" 
+                          variant={chartTimeframe === tf ? 'default' : 'outline'}
+                          className="text-xs h-7 px-2"
+                          onClick={() => setChartTimeframe(tf)}
+                        >
+                          {tf}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Chart */}
-              <div className="glass-card p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-medium">Bonding Curve</h2>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Info className="h-4 w-4 text-wybe-secondary" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-wybe-background-light border-white/10">
-                        <p>Price increases as more tokens are purchased</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                
-                <div className="h-64 md:h-80">
-                  <BondingCurveChart />
-                </div>
-                
-                <div className="mt-4 p-3 bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg">
-                  <p className="text-sm flex items-center gap-2 text-gray-300">
-                    <TrendingUp size={16} className="text-wybe-primary" />
-                    <span>Classic bonding curve: Price increases linearly with supply</span>
-                  </p>
-                </div>
+              <div className="glass-card p-4 mb-6">
+                <TradingViewChart 
+                  symbol={coinData.symbol}
+                  timeframe={chartTimeframe}
+                  chartType={chartType}
+                  containerClassName="h-[400px] md:h-[500px]"
+                />
               </div>
               
               {/* Trade History */}

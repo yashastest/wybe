@@ -15,14 +15,14 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { TraderActivity } from "@/components/TraderActivityMarkers";
 
 const Discover = () => {
   const [sortBy, setSortBy] = useState("marketCap");
@@ -39,7 +39,11 @@ const Discover = () => {
       priceChange: 15.4,
       launchDate: "2025-04-01",
       status: "live",
-      trades: 1240
+      trades: 1240,
+      developerHolding: 12.5,
+      retailTraders: 842,
+      whaleTraders: 24,
+      emoji: "🐸"
     },
     {
       name: "Solana Doge",
@@ -49,7 +53,11 @@ const Discover = () => {
       priceChange: -5.3,
       launchDate: "2025-04-05",
       status: "live",
-      trades: 2130
+      trades: 2130,
+      developerHolding: 8.2,
+      retailTraders: 1245,
+      whaleTraders: 42,
+      emoji: "🐶"
     },
     {
       name: "Moon Shot",
@@ -59,7 +67,11 @@ const Discover = () => {
       priceChange: 40.2,
       launchDate: "2025-04-10",
       status: "live",
-      trades: 980
+      trades: 980,
+      developerHolding: 15.0,
+      retailTraders: 632,
+      whaleTraders: 18,
+      emoji: "🚀"
     },
     {
       name: "Wybe Coin",
@@ -69,7 +81,11 @@ const Discover = () => {
       priceChange: 8.7,
       launchDate: "2025-03-28",
       status: "live",
-      trades: 4500
+      trades: 4500,
+      developerHolding: 5.0,
+      retailTraders: 3214,
+      whaleTraders: 68,
+      emoji: "⚡"
     },
     {
       name: "Cat Protocol",
@@ -79,7 +95,11 @@ const Discover = () => {
       priceChange: null,
       launchDate: "2025-05-15",
       status: "upcoming",
-      trades: 0
+      trades: 0,
+      developerHolding: 20.0,
+      retailTraders: 0,
+      whaleTraders: 0,
+      emoji: "🐱"
     },
     {
       name: "Rocket Finance",
@@ -89,7 +109,11 @@ const Discover = () => {
       priceChange: null,
       launchDate: "2025-05-20",
       status: "upcoming",
-      trades: 0
+      trades: 0,
+      developerHolding: 18.5,
+      retailTraders: 0,
+      whaleTraders: 0,
+      emoji: "🚀"
     }
   ];
   
@@ -327,6 +351,23 @@ const Discover = () => {
 
 // Coin Card Component
 const CoinCard = ({ coin }) => {
+  // Mock trading activities
+  const mockTraderActivities: Record<string, TraderActivity[]> = {
+    PEPES: [
+      { type: 'developer', price: 0.00019, timestamp: '2025-04-05T10:30:00Z', action: 'buy', quantity: 4500000, percentage: 12.5 },
+      { type: 'whale', price: 0.00022, timestamp: '2025-04-07T14:15:00Z', action: 'buy', quantity: 1200000 },
+      { type: 'retail', price: 0.00023, timestamp: '2025-04-08T09:45:00Z', action: 'buy', quantity: 45000 }
+    ],
+    SOLDOGE: [
+      { type: 'developer', price: 0.00038, timestamp: '2025-04-02T11:20:00Z', action: 'buy', quantity: 2800000, percentage: 8.2 },
+      { type: 'whale', price: 0.00042, timestamp: '2025-04-04T16:30:00Z', action: 'buy', quantity: 950000 },
+      { type: 'retail', price: 0.00045, timestamp: '2025-04-06T08:15:00Z', action: 'sell', quantity: 72000 }
+    ]
+  };
+
+  // Get activities for this specific coin or an empty array
+  const activities = mockTraderActivities[coin.symbol] || [];
+
   return (
     <motion.div
       whileHover={{ y: -5 }}
@@ -336,9 +377,12 @@ const CoinCard = ({ coin }) => {
       <div className={`h-1.5 w-full ${coin.status === 'upcoming' ? 'bg-wybe-secondary' : coin.priceChange >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-lg font-bold">{coin.name}</h3>
-            <p className="text-wybe-secondary font-medium">{coin.symbol}</p>
+          <div className="flex items-center">
+            <span className="text-2xl mr-2">{coin.emoji}</span>
+            <div>
+              <h3 className="text-lg font-bold">{coin.name}</h3>
+              <p className="text-wybe-secondary font-medium">{coin.symbol}</p>
+            </div>
           </div>
           <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
             <Coins className="text-wybe-primary" size={20} />
@@ -382,6 +426,54 @@ const CoinCard = ({ coin }) => {
             </div>
           </div>
         )}
+
+        {/* Trader activity section */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm text-gray-400">Trading Activity</p>
+          </div>
+          <div className="bg-wybe-background/60 rounded-lg p-3">
+            <TooltipProvider>
+              <div className="flex justify-between">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <span className="text-xl">👨‍💻</span>
+                      <span className="text-sm">{coin.developerHolding}%</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
+                    <p className="text-sm">Developer holds {coin.developerHolding}% of total supply</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <span className="text-xl">👤</span>
+                      <span className="text-sm">{coin.retailTraders}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
+                    <p className="text-sm">{coin.retailTraders} retail traders (under $1,000)</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <span className="text-xl">🐋</span>
+                      <span className="text-sm">{coin.whaleTraders}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-wybe-background-light border-wybe-primary/20">
+                    <p className="text-sm">{coin.whaleTraders} whale traders (over $1,000)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </div>
+        </div>
         
         <div className="flex gap-2 mt-4">
           {coin.status === "live" ? (
