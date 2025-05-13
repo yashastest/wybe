@@ -1,12 +1,13 @@
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -31,9 +32,11 @@ import {
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { Link } from "react-router-dom";
+import { Shimmer } from "@/components/ui/shimmer";
 
 const Launch = () => {
   const { wallet, connect } = useWallet();
+  const [loading, setLoading] = useState(true);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -45,6 +48,19 @@ const Launch = () => {
   const [whitelistEmail, setWhitelistEmail] = useState("");
   const [whitelistTelegram, setWhitelistTelegram] = useState("");
   const [whitelistDescription, setWhitelistDescription] = useState("");
+  const [website, setWebsite] = useState("");
+  const [telegramChannel, setTelegramChannel] = useState("");
+  
+  useEffect(() => {
+    // Simulate loading state
+    setTimeout(() => {
+      setLoading(false);
+    }, 1200);
+    
+    if (wallet) {
+      setIsWalletConnected(true);
+    }
+  }, [wallet]);
   
   const handleConnect = async () => {
     try {
@@ -89,192 +105,313 @@ const Launch = () => {
     window.location.href = "/trade";
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
       {/* Launch Page Content */}
-      <div className="flex-grow flex items-center justify-center py-12 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md mx-auto"
-        >
-          <div className="glass-card p-6 md:p-8">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-wybe-primary/20 flex items-center justify-center mx-auto mb-4">
-                <Coins className="text-wybe-primary" size={24} />
-              </div>
-              <h1 className="text-2xl font-bold">Launch Your Meme Coin</h1>
-              <p className="text-gray-400 mt-2">Create and deploy your token in seconds</p>
-            </div>
-            
-            {/* Package Banner */}
-            <div className="mb-6 p-3 glass-card bg-gradient-to-r from-orange-600/30 to-purple-600/30 border border-purple-500/30">
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-white">Need full launch support?</h3>
-                  <p className="text-xs text-gray-300">All-in $500 package with marketing and support</p>
+      <div className="flex-grow flex items-center justify-center py-12 px-4 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute top-40 right-20 w-96 h-96 bg-wybe-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-wybe-accent/10 rounded-full blur-3xl" />
+        
+        <AnimatePresence>
+          {loading ? (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="glass-card p-6 md:p-8 w-full max-w-md"
+            >
+              <div className="flex flex-col items-center">
+                <Shimmer className="w-16 h-16 rounded-full mb-4" />
+                <Shimmer className="h-8 w-48 mb-2" rounded="lg" />
+                <Shimmer className="h-4 w-64 mb-6" rounded="lg" />
+                
+                <div className="w-full mb-6">
+                  <Shimmer className="h-16 w-full mb-6" rounded="lg" />
                 </div>
-                <Link to="/package">
-                  <Button size="sm" className="btn-primary text-xs flex items-center gap-1">
-                    Learn More
-                    <ChevronRight size={12} />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            
-            {!isWalletConnected ? (
-              <div className="text-center">
-                <p className="text-gray-300 mb-4">Connect your wallet to launch your coin</p>
-                <Button onClick={handleConnect} className="btn-primary w-full">
-                  Connect Wallet
-                </Button>
-              </div>
-            ) : (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-                <TabsList className="grid grid-cols-2 mb-4 w-full">
-                  <TabsTrigger value="assisted" className="text-sm">
-                    <Shield className="mr-1 h-4 w-4" />
-                    Assisted Launch
-                  </TabsTrigger>
-                  <TabsTrigger value="direct" className="text-sm">
-                    <Rocket className="mr-1 h-4 w-4" />
-                    Direct Launch
-                  </TabsTrigger>
-                </TabsList>
                 
-                <TabsContent value="assisted">
-                  {whitelistRequestSent ? (
-                    <div className="p-6 text-center">
-                      <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                        <Check className="text-green-500" size={24} />
-                      </div>
-                      <h3 className="text-xl font-medium mb-2">Request Submitted!</h3>
-                      <p className="text-gray-300 mb-4">
-                        We'll review your request and contact you soon. Once approved, you'll be able to launch your coin.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        className="btn-secondary"
-                        onClick={() => setWhitelistRequestSent(false)}
-                      >
-                        Submit Another Request
-                      </Button>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div>
-                        <Label htmlFor="whitelistEmail">Your Email</Label>
-                        <Input 
-                          id="whitelistEmail" 
-                          value={whitelistEmail} 
-                          onChange={(e) => setWhitelistEmail(e.target.value)}
-                          placeholder="your@email.com" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="whitelistTelegram">Telegram Username</Label>
-                        <Input 
-                          id="whitelistTelegram" 
-                          value={whitelistTelegram} 
-                          onChange={(e) => setWhitelistTelegram(e.target.value)}
-                          placeholder="@username" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="whitelistDescription">Project Description</Label>
-                        <Input
-                          id="whitelistDescription" 
-                          value={whitelistDescription} 
-                          onChange={(e) => setWhitelistDescription(e.target.value)}
-                          placeholder="Tell us about your meme coin idea" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary min-h-[80px]"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg p-3 mt-4">
-                        <p className="text-sm flex items-center gap-2">
-                          <Shield size={16} className="text-wybe-secondary" />
-                          <span>Assisted launch requires whitelist approval</span>
-                        </p>
-                      </div>
-                      
-                      <Button type="submit" className="btn-primary w-full">
-                        Submit Whitelist Request
-                      </Button>
-                    </form>
-                  )}
-                </TabsContent>
+                <Shimmer className="h-10 w-full" rounded="lg" />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+              className="w-full max-w-md mx-auto"
+              key="content"
+            >
+              <div className="glass-card p-6 md:p-8">
+                <motion.div variants={itemVariants} className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-wybe-primary/20 flex items-center justify-center mx-auto mb-4">
+                    <Coins className="text-wybe-primary animate-pulse" size={24} />
+                  </div>
+                  <h1 className="text-2xl font-bold gradient-text">Launch Your Meme Coin</h1>
+                  <p className="text-gray-400 mt-2">Create and deploy your token in seconds</p>
+                </motion.div>
                 
-                <TabsContent value="direct">
-                  <form onSubmit={handleSubmit}>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="name">Token Name</Label>
-                        <Input 
-                          id="name" 
-                          value={name} 
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="e.g. Doge Coin" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                          required
-                        />
+                <motion.div variants={itemVariants}>
+                  {/* Package Banner */}
+                  <div className="mb-6 p-3 glass-card bg-gradient-to-r from-orange-600/30 to-purple-600/30 border border-purple-500/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-white">Need full launch support?</h3>
+                        <p className="text-xs text-gray-300">All-in $500 package with marketing and support</p>
                       </div>
-                      
-                      <div>
-                        <Label htmlFor="symbol">Token Symbol</Label>
-                        <Input 
-                          id="symbol" 
-                          value={symbol} 
-                          onChange={(e) => setSymbol(e.target.value)}
-                          placeholder="e.g. DOGE" 
-                          className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
-                          maxLength={5}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="curve">Bonding Curve Style</Label>
-                        <Select value={curveStyle} onValueChange={setCurveStyle}>
-                          <SelectTrigger className="bg-wybe-background-light border-wybe-primary/20 focus:ring-wybe-primary">
-                            <SelectValue placeholder="Select curve style" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-wybe-background-light border-white/10">
-                            <SelectItem value="classic">Classic (Linear)</SelectItem>
-                            <SelectItem value="exponential">Exponential</SelectItem>
-                            <SelectItem value="sigmoid">Sigmoid</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg p-3 mt-4">
-                        <p className="text-sm flex items-center gap-2">
-                          <AlertTriangle size={16} className="text-wybe-secondary" />
-                          <span>Creation fee: ~$1 USDT (paid in SOL)</span>
-                        </p>
-                      </div>
-                      
-                      <Button type="submit" className="btn-primary w-full" disabled={isCreating}>
-                        {isCreating ? "Creating..." : "Launch Coin"}
-                      </Button>
+                      <Link to="/package">
+                        <Button size="sm" className="btn-primary text-xs flex items-center gap-1 animate-pulse-slow">
+                          Learn More
+                          <ChevronRight size={12} />
+                        </Button>
+                      </Link>
                     </div>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
-        </motion.div>
+                  </div>
+                </motion.div>
+                
+                {!isWalletConnected ? (
+                  <motion.div variants={itemVariants} className="text-center">
+                    <p className="text-gray-300 mb-4">Connect your wallet to launch your coin</p>
+                    <Button onClick={handleConnect} className="btn-primary w-full animate-pulse-glow">
+                      Connect Wallet
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div variants={itemVariants}>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+                      <TabsList className="grid grid-cols-2 mb-4 w-full">
+                        <TabsTrigger value="assisted" className="text-sm">
+                          <Shield className="mr-1 h-4 w-4" />
+                          Assisted Launch
+                        </TabsTrigger>
+                        <TabsTrigger value="direct" className="text-sm">
+                          <Rocket className="mr-1 h-4 w-4" />
+                          Direct Launch
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="assisted">
+                        {whitelistRequestSent ? (
+                          <div className="p-6 text-center">
+                            <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                              <Check className="text-green-500" size={24} />
+                            </div>
+                            <h3 className="text-xl font-medium mb-2">Request Submitted!</h3>
+                            <p className="text-gray-300 mb-4">
+                              We'll review your request and contact you soon. Once approved, you'll be able to launch your coin.
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              className="btn-secondary"
+                              onClick={() => setWhitelistRequestSent(false)}
+                            >
+                              Submit Another Request
+                            </Button>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                              <Label htmlFor="whitelistEmail">Your Email</Label>
+                              <Input 
+                                id="whitelistEmail" 
+                                value={whitelistEmail} 
+                                onChange={(e) => setWhitelistEmail(e.target.value)}
+                                placeholder="your@email.com" 
+                                className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="whitelistTelegram">Telegram Username</Label>
+                              <Input 
+                                id="whitelistTelegram" 
+                                value={whitelistTelegram} 
+                                onChange={(e) => setWhitelistTelegram(e.target.value)}
+                                placeholder="@username" 
+                                className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="website">Website (Optional)</Label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                  <Globe size={16} className="text-gray-400" />
+                                </div>
+                                <Input 
+                                  id="website" 
+                                  value={website} 
+                                  onChange={(e) => setWebsite(e.target.value)}
+                                  placeholder="https://yourwebsite.com" 
+                                  className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary pl-10"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="telegramChannel">Telegram Channel (Optional)</Label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                  <MessageCircle size={16} className="text-gray-400" />
+                                </div>
+                                <Input 
+                                  id="telegramChannel" 
+                                  value={telegramChannel} 
+                                  onChange={(e) => setTelegramChannel(e.target.value)}
+                                  placeholder="https://t.me/yourchannel" 
+                                  className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary pl-10"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="whitelistDescription">Project Description</Label>
+                              <Textarea
+                                id="whitelistDescription" 
+                                value={whitelistDescription} 
+                                onChange={(e) => setWhitelistDescription(e.target.value)}
+                                placeholder="Tell us about your meme coin idea" 
+                                className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary min-h-[80px]"
+                                required
+                              />
+                            </div>
+                            
+                            <div className="bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg p-3 mt-4">
+                              <p className="text-sm flex items-center gap-2">
+                                <Shield size={16} className="text-wybe-secondary" />
+                                <span>Assisted launch requires whitelist approval</span>
+                              </p>
+                            </div>
+                            
+                            <Button type="submit" className="btn-primary w-full animate-pulse-glow">
+                              Submit Whitelist Request
+                            </Button>
+                          </form>
+                        )}
+                      </TabsContent>
+                      
+                      <TabsContent value="direct">
+                        <form onSubmit={handleSubmit}>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="name">Token Name</Label>
+                              <Input 
+                                id="name" 
+                                value={name} 
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="e.g. Doge Coin" 
+                                className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="symbol">Token Symbol</Label>
+                              <Input 
+                                id="symbol" 
+                                value={symbol} 
+                                onChange={(e) => setSymbol(e.target.value)}
+                                placeholder="e.g. DOGE" 
+                                className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary"
+                                maxLength={5}
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="logo">Token Logo</Label>
+                              <div className="border border-dashed border-wybe-primary/40 rounded-lg p-4 text-center hover:bg-wybe-primary/10 transition-colors cursor-pointer">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-12 h-12 rounded-full bg-wybe-primary/20 flex items-center justify-center">
+                                    <ImageIcon size={20} className="text-wybe-primary" />
+                                  </div>
+                                  <p className="text-sm text-gray-400">
+                                    Click to upload logo image
+                                    <span className="block text-xs">(Optional, recommended 512x512px)</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="curve">Bonding Curve Style</Label>
+                              <Select value={curveStyle} onValueChange={setCurveStyle}>
+                                <SelectTrigger className="bg-wybe-background-light border-wybe-primary/20 focus:ring-wybe-primary">
+                                  <SelectValue placeholder="Select curve style" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-wybe-background-light border-white/10">
+                                  <SelectItem value="classic">Classic (Linear)</SelectItem>
+                                  <SelectItem value="exponential">Exponential</SelectItem>
+                                  <SelectItem value="sigmoid">Sigmoid</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <Label>Social Links (Optional)</Label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                  <Globe size={16} className="text-gray-400" />
+                                </div>
+                                <Input 
+                                  placeholder="Website URL" 
+                                  className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary pl-10"
+                                />
+                              </div>
+                              
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                  <MessageCircle size={16} className="text-gray-400" />
+                                </div>
+                                <Input 
+                                  placeholder="Telegram Channel" 
+                                  className="bg-wybe-background-light border-wybe-primary/20 focus-visible:ring-wybe-primary pl-10"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="bg-wybe-primary/10 border border-wybe-primary/20 rounded-lg p-3 mt-4">
+                              <p className="text-sm flex items-center gap-2">
+                                <AlertTriangle size={16} className="text-wybe-secondary" />
+                                <span>Creation fee: ~$1 USDT (paid in SOL)</span>
+                              </p>
+                            </div>
+                            
+                            <Button type="submit" className="btn-primary w-full animate-pulse-glow" disabled={isCreating}>
+                              {isCreating ? (
+                                <>
+                                  <span className="animate-pulse">Creating...</span>
+                                  <div className="ml-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                                </>
+                              ) : "Launch Coin"}
+                            </Button>
+                          </div>
+                        </form>
+                      </TabsContent>
+                    </Tabs>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       
       {/* Success Dialog */}
@@ -320,7 +457,7 @@ const Launch = () => {
             <Button variant="outline" className="btn-secondary flex-1">
               View on Solscan
             </Button>
-            <Button onClick={handleStartTrading} className="btn-primary flex-1">
+            <Button onClick={handleStartTrading} className="btn-primary flex-1 animate-pulse-glow">
               Start Trading
             </Button>
           </DialogFooter>

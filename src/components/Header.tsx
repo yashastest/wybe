@@ -70,7 +70,7 @@ const Header = () => {
             variants={logoVariants}
           >
             <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
-              <div className="h-12 w-12 mr-2 overflow-hidden rounded-full animate-pulse-glow">
+              <div className="h-10 w-10 mr-2 overflow-hidden rounded-full animate-pulse-glow">
                 <AspectRatio ratio={1 / 1} className="relative w-full h-full">
                   <img 
                     src="/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png" 
@@ -79,6 +79,7 @@ const Header = () => {
                   />
                 </AspectRatio>
               </div>
+              <span className="text-white font-bold text-xl ml-2">WYBE</span>
             </Link>
           </motion.div>
           
@@ -96,8 +97,8 @@ const Header = () => {
                 </Link>
               </motion.div>
               <motion.div variants={itemVariants}>
-                <Link to="/discover" className={`nav-link ${isActive('/discover') ? 'active-nav-link' : ''}`}>
-                  Discover
+                <Link to="/package" className={`nav-link ${isActive('/package') ? 'active-nav-link' : ''}`}>
+                  Launch Package
                 </Link>
               </motion.div>
               <motion.div variants={itemVariants}>
@@ -224,11 +225,11 @@ const Header = () => {
                     Home
                   </Link>
                   <Link 
-                    to="/discover" 
-                    className={`block py-2 ${isActive('/discover') ? 'text-wybe-primary' : 'text-white'}`}
+                    to="/package" 
+                    className={`block py-2 ${isActive('/package') ? 'text-wybe-primary' : 'text-white'}`}
                     onClick={closeMobileMenu}
                   >
-                    Discover
+                    Launch Package
                   </Link>
                   <Link 
                     to="/launch" 

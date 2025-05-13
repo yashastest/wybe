@@ -98,6 +98,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             "header_compare",
           ],
           enabled_features: ["save_chart_properties_to_local_storage"],
+          loading_screen: { backgroundColor: "#0F172A", foregroundColor: "#8B5CF6" },
         });
       } else {
         // Market cap view has different settings
@@ -122,6 +123,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             "mainSeriesProperties.areaStyle.color2": "rgba(139, 92, 246, 0.05)",
             "mainSeriesProperties.lineStyle.color": "#8B5CF6",
           },
+          loading_screen: { backgroundColor: "#0F172A", foregroundColor: "#8B5CF6" },
         });
       }
     }
@@ -157,7 +159,21 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             >
               <Loader size={32} className="text-wybe-primary" />
             </motion.div>
-            <p className="text-gradient text-lg">Loading Chart</p>
+            <p className="gradient-text text-lg">Loading Chart</p>
+            <div className="w-32 h-1 bg-wybe-primary/30 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-wybe-primary"
+                animate={{ 
+                  width: ["0%", "100%", "0%"],
+                  x: ["-100%", "0%", "100%"]
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 2,
+                  ease: "easeInOut" 
+                }}
+              />
+            </div>
           </div>
         </motion.div>
       )}
