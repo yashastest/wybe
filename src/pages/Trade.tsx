@@ -126,8 +126,8 @@ const Trade = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
       <Header />
       
-      <main className="flex-grow w-full px-4">
-        <div className="max-w-7xl mx-auto py-8">
+      <main className="flex-grow w-full px-4 pt-20 md:pt-24">
+        <div className="max-w-7xl mx-auto py-4 md:py-8">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -137,7 +137,7 @@ const Trade = () => {
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <motion.div 
-                  className="h-16 w-16 rounded-full flex items-center justify-center relative overflow-hidden"
+                  className="h-14 w-14 md:h-16 md:w-16 rounded-full flex items-center justify-center relative overflow-hidden"
                   animate={{
                     boxShadow: [
                       "0 0 15px rgba(139, 92, 246, 0.5)",
@@ -155,20 +155,20 @@ const Trade = () => {
                   <img 
                     src={token.logo.startsWith('/') ? token.logo : `/coins/${token.id}.png`} 
                     alt={token.name} 
-                    className="h-12 w-12 rounded-full relative z-10 object-cover"
+                    className="h-10 w-10 md:h-12 md:w-12 rounded-full relative z-10 object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/placeholder.svg";
                     }}
                   />
                 </motion.div>
                 <div>
-                  <h1 className="text-3xl font-poppins font-bold">
+                  <h1 className="text-2xl md:text-3xl font-poppins font-bold">
                     <span className="bg-gradient-to-r from-purple-500 via-indigo-400 to-blue-500 bg-clip-text text-transparent">
                       {token.name}
                     </span>
                   </h1>
                   <div className="flex items-center gap-3 text-gray-300">
-                    <span className="font-mono font-bold bg-gradient-to-r from-purple-500 to-indigo-500 px-2 py-0.5 rounded text-white">
+                    <span className="font-mono font-bold bg-gradient-to-r from-purple-500 to-indigo-500 px-2 py-0.5 rounded-full text-white">
                       {token.symbol}
                     </span>
                     <span className={token.change24h >= 0 ? "text-green-400 flex items-center" : "text-red-400 flex items-center"}>
@@ -179,11 +179,11 @@ const Trade = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 font-mono">
+              <div className="flex items-center gap-2 md:gap-3 font-mono mt-2 md:mt-0 w-full md:w-auto">
                 <motion.div 
                   variants={pulseVariants}
                   animate="pulse"
-                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-4 py-2 rounded-lg text-sm border border-white/10"
+                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-2 md:px-4 py-2 rounded-xl text-xs md:text-sm border border-white/10 flex-1 md:flex-none text-center md:text-left"
                 >
                   <span className="text-gray-400">Price:</span>{" "}
                   <span className="font-bold text-white">{token.price} SOL</span>
@@ -191,7 +191,7 @@ const Trade = () => {
                 <motion.div 
                   variants={pulseVariants}
                   animate="pulse"
-                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-4 py-2 rounded-lg text-sm border border-white/10"
+                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-2 md:px-4 py-2 rounded-xl text-xs md:text-sm border border-white/10 flex-1 md:flex-none text-center md:text-left"
                 >
                   <span className="text-gray-400">24h Vol:</span>{" "}
                   <span className="font-bold text-white">${token.volume24h.toLocaleString()}</span>
@@ -200,7 +200,7 @@ const Trade = () => {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Chart Section */}
             <motion.div
               initial="hidden"
@@ -209,38 +209,40 @@ const Trade = () => {
               custom={0.1}
               className="lg:col-span-2 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 bg-gradient-to-br from-indigo-950/50 to-purple-900/20"
             >
-              <div className="border-b border-white/10 p-4">
+              <div className="border-b border-white/10 p-2 md:p-4">
                 <Tabs defaultValue="chart">
-                  <TabsList className="bg-black/40 backdrop-blur-md">
+                  <TabsList className="bg-black/40 backdrop-blur-md w-full overflow-x-auto flex-nowrap">
                     <TabsTrigger 
                       value="chart" 
-                      className="font-poppins font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
+                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
                     >
-                      <LineChart size={16} className="mr-2" />
+                      <LineChart size={14} className="mr-1 md:mr-2" />
                       Price Chart
                     </TabsTrigger>
                     <TabsTrigger 
                       value="depth" 
-                      className="font-poppins font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
+                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
                     >
-                      <Layers size={16} className="mr-2" />
+                      <Layers size={14} className="mr-1 md:mr-2" />
                       Market Depth
                     </TabsTrigger>
                     <TabsTrigger 
                       value="activity" 
-                      className="font-poppins font-bold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
+                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
                     >
-                      <TrendingUp size={16} className="mr-2" />
+                      <TrendingUp size={14} className="mr-1 md:mr-2" />
                       Activity
                     </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="chart" className="mt-4">
-                    <TradingViewChart symbol={token.symbol} />
+                    <div className="h-[300px] md:h-[400px]">
+                      <TradingViewChart symbol={token.symbol} />
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="depth" className="mt-4">
-                    <div className="h-[400px] flex items-center justify-center">
+                    <div className="h-[300px] md:h-[400px] flex items-center justify-center">
                       <div className="text-center">
                         <motion.div
                           animate={{
@@ -262,42 +264,42 @@ const Trade = () => {
                   </TabsContent>
                   
                   <TabsContent value="activity" className="mt-4">
-                    <div className="h-[400px]">
+                    <div className="h-[300px] md:h-[400px]">
                       <TraderActivityMarkers activities={traderActivities} />
                     </div>
                   </TabsContent>
                 </Tabs>
               </div>
               
-              <div className="p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-3 rounded-lg border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+              <div className="p-3 md:p-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
                     <span className="text-xs text-indigo-300 flex items-center gap-1">
                       <TrendingUp size={12} className="text-indigo-400" />
                       Market Cap
                     </span>
-                    <p className="font-bold font-mono text-lg text-white">${token.marketCap.toLocaleString()}</p>
+                    <p className="font-bold font-mono text-sm md:text-lg text-white">${token.marketCap.toLocaleString()}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-3 rounded-lg border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
                     <span className="text-xs text-indigo-300 flex items-center gap-1">
                       <ArrowDownUp size={12} className="text-indigo-400" />
                       24h Volume
                     </span>
-                    <p className="font-bold font-mono text-lg text-white">${token.volume24h.toLocaleString()}</p>
+                    <p className="font-bold font-mono text-sm md:text-lg text-white">${token.volume24h.toLocaleString()}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-3 rounded-lg border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
                     <span className="text-xs text-indigo-300 flex items-center gap-1">
                       <Layers size={12} className="text-indigo-400" />
                       Total Supply
                     </span>
-                    <p className="font-bold font-mono text-lg text-white">{token.supply.toLocaleString()}</p>
+                    <p className="font-bold font-mono text-sm md:text-lg text-white">{token.supply.toLocaleString()}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-3 rounded-lg border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
                     <span className="text-xs text-indigo-300 flex items-center gap-1">
                       <Clock size={12} className="text-indigo-400" />
                       Last Updated
                     </span>
-                    <p className="font-bold font-mono text-lg text-white">Just now</p>
+                    <p className="font-bold font-mono text-sm md:text-lg text-white">Just now</p>
                   </div>
                 </div>
               </div>
@@ -309,36 +311,36 @@ const Trade = () => {
               animate="visible"
               variants={fadeUpVariants}
               custom={0.2}
-              className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-6 rounded-xl border border-white/10 shadow-glow-sm"
+              className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-4 md:p-6 rounded-xl border border-white/10 shadow-glow-sm"
             >
-              <h2 className="text-xl font-poppins font-bold mb-6 flex items-center">
-                <Flame size={20} className="mr-2 text-orange-500" />
+              <h2 className="text-lg md:text-xl font-poppins font-bold mb-4 md:mb-6 flex items-center">
+                <Flame size={18} className="mr-2 text-orange-500" />
                 <span className="bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
                   Trade {token.symbol}
                 </span>
               </h2>
               
               <Tabs defaultValue="buy" onValueChange={setTab}>
-                <TabsList className="mb-6 grid grid-cols-2 bg-black/40 backdrop-blur">
+                <TabsList className="mb-4 md:mb-6 grid grid-cols-2 bg-black/40 backdrop-blur">
                   <TabsTrigger
                     value="buy"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600/50 data-[state=active]:to-emerald-600/20 data-[state=active]:text-green-400 font-poppins font-bold"
                   >
-                    <Sparkles size={16} className="mr-2" />
+                    <Sparkles size={14} className="mr-1 md:mr-2" />
                     Buy
                   </TabsTrigger>
                   <TabsTrigger
                     value="sell"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600/50 data-[state=active]:to-rose-600/20 data-[state=active]:text-red-400 font-poppins font-bold"
                   >
-                    <Zap size={16} className="mr-2" />
+                    <Zap size={14} className="mr-1 md:mr-2" />
                     Sell
                   </TabsTrigger>
                 </TabsList>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   <div>
-                    <label className="block text-sm text-indigo-200 mb-2 font-mono">
+                    <label className="block text-sm text-indigo-200 mb-1 md:mb-2 font-mono">
                       {tab === 'buy' ? 'Pay with SOL' : `Sell ${token.symbol}`}
                     </label>
                     <div className="relative">
@@ -347,7 +349,7 @@ const Trade = () => {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
-                        className="bg-black/30 border-white/10 font-mono text-base h-12 focus:border-indigo-500 focus:ring-indigo-500/30"
+                        className="bg-black/30 border-white/10 font-mono text-base h-10 md:h-12 focus:border-indigo-500 focus:ring-indigo-500/30 rounded-xl"
                       />
                       <div className="absolute top-0 right-0 h-full px-3 flex items-center font-mono text-indigo-200">
                         {tab === 'buy' ? 'SOL' : token.symbol}
@@ -372,7 +374,7 @@ const Trade = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm text-indigo-200 mb-2 font-mono">
+                    <label className="block text-sm text-indigo-200 mb-1 md:mb-2 font-mono">
                       {tab === 'buy' ? `Receive ${token.symbol}` : 'Receive SOL'}
                     </label>
                     <div className="relative">
@@ -380,7 +382,7 @@ const Trade = () => {
                         type="text"
                         value={receiveAmount}
                         disabled
-                        className="bg-black/30 border-white/10 font-mono text-base h-12"
+                        className="bg-black/30 border-white/10 font-mono text-base h-10 md:h-12 rounded-xl"
                       />
                       <div className="absolute top-0 right-0 h-full px-3 flex items-center font-mono text-indigo-200">
                         {tab === 'buy' ? token.symbol : 'SOL'}
@@ -388,14 +390,14 @@ const Trade = () => {
                     </div>
                   </div>
                   
-                  <div className="pt-2">
+                  <div className="pt-1 md:pt-2">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Button
                         onClick={handleTrade}
-                        className={`w-full py-6 font-poppins font-bold text-base ${
+                        className={`w-full py-4 md:py-6 font-poppins font-bold text-sm md:text-base rounded-xl ${
                           tab === 'buy'
                             ? 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_15px_rgba(34,197,94,0.5)] hover:shadow-[0_0_20px_rgba(34,197,94,0.7)]'
                             : 'bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:shadow-[0_0_20px_rgba(239,68,68,0.7)]'
@@ -403,19 +405,19 @@ const Trade = () => {
                       >
                         {!connected && (
                           <>
-                            <Wallet className="mr-2 h-5 w-5" />
+                            <Wallet className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                             Connect Wallet
                           </>
                         )}
                         {connected && tab === 'buy' && (
                           <>
-                            <Star className="mr-2 h-5 w-5" />
+                            <Star className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                             Buy {token.symbol}
                           </>
                         )}
                         {connected && tab === 'sell' && (
                           <>
-                            <Zap className="mr-2 h-5 w-5" />
+                            <Zap className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                             Sell {token.symbol}
                           </>
                         )}
@@ -424,7 +426,7 @@ const Trade = () => {
                   </div>
                   
                   <motion.div 
-                    className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 p-4 rounded-lg border border-indigo-500/20 text-sm"
+                    className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 p-3 md:p-4 rounded-xl border border-indigo-500/20 text-xs md:text-sm"
                     animate={{
                       boxShadow: [
                         "0 0 10px rgba(139, 92, 246, 0.2)",
@@ -439,7 +441,7 @@ const Trade = () => {
                     }}
                   >
                     <h3 className="font-poppins font-bold mb-2 text-indigo-200">Trade Information</h3>
-                    <div className="space-y-2 font-mono">
+                    <div className="space-y-1 md:space-y-2 font-mono">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Price</span>
                         <span className="text-white">{token.price} SOL</span>
@@ -463,22 +465,22 @@ const Trade = () => {
           <Collapsible
             open={isBondingOpen}
             onOpenChange={setIsBondingOpen}
-            className="mt-8"
+            className="mt-6 md:mt-8"
           >
             <CollapsibleTrigger asChild>
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className="w-full py-3 flex items-center justify-between bg-gradient-to-r from-indigo-950/80 to-purple-900/60 backdrop-blur-lg rounded-xl border border-white/10 px-6 text-white font-poppins font-bold"
+                className="w-full py-3 flex items-center justify-between bg-gradient-to-r from-indigo-950/80 to-purple-900/60 backdrop-blur-lg rounded-xl border border-white/10 px-4 md:px-6 text-white font-poppins font-bold"
               >
                 <div className="flex items-center">
-                  <Star className="mr-2 h-5 w-5 text-yellow-400" />
-                  <span className="bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
+                  <Star className="mr-2 h-4 w-4 md:h-5 md:w-5 text-yellow-400" />
+                  <span className="bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent text-sm md:text-base">
                     Bonding Curve Information
                   </span>
                 </div>
-                <div className="text-indigo-300">
-                  {isBondingOpen ? '↑ Hide Details' : '↓ Show Details'}
+                <div className="text-indigo-300 text-sm">
+                  {isBondingOpen ? '↑ Hide' : '↓ Show'}
                 </div>
               </motion.button>
             </CollapsibleTrigger>
@@ -491,35 +493,35 @@ const Trade = () => {
                   height: isBondingOpen ? 'auto' : 0
                 }}
                 transition={{ duration: 0.3 }}
-                className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-6 rounded-xl border border-white/10 mt-2"
+                className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-4 md:p-6 rounded-xl border border-white/10 mt-2"
               >
-                <h2 className="text-xl font-poppins font-bold mb-4 bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
+                <h2 className="text-lg md:text-xl font-poppins font-bold mb-2 md:mb-4 bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
                   Bonding Curve
                 </h2>
-                <p className="text-indigo-200 mb-6">
+                <p className="text-indigo-200 mb-4 md:mb-6 text-sm md:text-base">
                   This token uses a bonding curve mechanism to determine price. The price increases as more tokens are bought and decreases as tokens are sold.
                 </p>
                 
-                <div className="h-[300px]">
+                <div className="h-[250px] md:h-[300px]">
                   <BondingCurveChart />
                 </div>
                 
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-2 text-indigo-200">How It Works</h3>
-                    <p className="text-sm text-gray-300">
+                <div className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">How It Works</h3>
+                    <p className="text-xs md:text-sm text-gray-300">
                       The bonding curve ensures price stability and liquidity for the token by algorithmically adjusting prices based on supply.
                     </p>
                   </div>
-                  <div className="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-2 text-indigo-200">Benefits</h3>
-                    <p className="text-sm text-gray-300">
+                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">Benefits</h3>
+                    <p className="text-xs md:text-sm text-gray-300">
                       Always available liquidity, predictable price movements, and incentivized early adoption.
                     </p>
                   </div>
-                  <div className="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-2 text-indigo-200">Current Parameters</h3>
-                    <p className="text-sm font-mono">
+                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">Current Parameters</h3>
+                    <p className="text-xs md:text-sm font-mono">
                       <span className="text-gray-400">Curve Type:</span> <span className="text-white">Exponential</span><br />
                       <span className="text-gray-400">Reserve Ratio:</span> <span className="text-white">20%</span><br />
                       <span className="text-gray-400">Initial Price:</span> <span className="text-white">0.0001 SOL</span>

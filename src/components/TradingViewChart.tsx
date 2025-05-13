@@ -81,8 +81,9 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           toolbar_bg: '#131722',
           enable_publishing: false,
           allow_symbol_change: true,
-          hide_side_toolbar: isMobile,
-          studies: ['Volume@tv-basicstudies'],
+          hide_side_toolbar: true, // Always hide side toolbar on all devices for consistent UI
+          hide_top_toolbar: isMobile, // Hide top toolbar on mobile for more chart space
+          studies: isMobile ? [] : ['Volume@tv-basicstudies'], // Simplify on mobile
           overrides: {
             "paneProperties.background": "#0F172A",
             "paneProperties.vertGridProperties.color": "rgba(139, 92, 246, 0.1)",
@@ -98,9 +99,13 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             "header_saveload",
             "header_screenshot",
             "header_compare",
+            "volume_force_overlay",
+            ...(isMobile ? ["left_toolbar", "header_indicators", "header_chart_type"] : []),
           ],
           enabled_features: ["save_chart_properties_to_local_storage"],
           loading_screen: { backgroundColor: "#0F172A", foregroundColor: "#8B5CF6" },
+          height: isMobile ? "100%" : undefined,
+          width: isMobile ? "100%" : undefined,
         });
       } else {
         // Market cap view has different settings
@@ -116,7 +121,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           style: '3', // Area chart for market cap
           toolbar_bg: '#131722',
           enable_publishing: false,
-          hide_side_toolbar: isMobile,
+          hide_side_toolbar: true, // Always hide side toolbar
+          hide_top_toolbar: isMobile, // Hide top toolbar on mobile
           overrides: {
             "paneProperties.background": "#0F172A",
             "paneProperties.vertGridProperties.color": "rgba(139, 92, 246, 0.1)",
@@ -125,7 +131,17 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             "mainSeriesProperties.areaStyle.color2": "rgba(139, 92, 246, 0.05)",
             "mainSeriesProperties.lineStyle.color": "#8B5CF6",
           },
+          disabled_features: [
+            "header_symbol_search",
+            "use_localstorage_for_settings",
+            "header_saveload",
+            "header_screenshot",
+            "header_compare",
+            ...(isMobile ? ["left_toolbar", "header_indicators", "header_chart_type"] : []),
+          ],
           loading_screen: { backgroundColor: "#0F172A", foregroundColor: "#8B5CF6" },
+          height: isMobile ? "100%" : undefined,
+          width: isMobile ? "100%" : undefined,
         });
       }
     }
@@ -147,7 +163,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   };
 
   return (
-    <AspectRatio ratio={16/9} className={`relative ${containerClassName}`}>
+    <AspectRatio ratio={isMobile ? 4/3 : 16/9} className={`relative ${containerClassName}`}>
       {isLoading && (
         <motion.div 
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/90 to-indigo-950/90 z-10 rounded-xl backdrop-blur-sm"
@@ -166,10 +182,10 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
               }}
               className="p-4 rounded-full"
             >
-              <Loader size={32} className="text-wybe-primary" />
+              <Loader size={isMobile ? 24 : 32} className="text-wybe-primary" />
             </motion.div>
-            <p className="gradient-text text-lg font-bold">Loading Chart Data</p>
-            <div className="w-48 h-2 bg-wybe-background-light rounded-full overflow-hidden">
+            <p className="gradient-text text-base md:text-lg font-bold">Loading Chart Data</p>
+            <div className="w-36 md:w-48 h-2 bg-wybe-background-light rounded-full overflow-hidden">
               <motion.div 
                 className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500"
                 animate={{ 
@@ -197,7 +213,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         transition={{ duration: 0.4 }}
       >
         {!isChartReady && (
-          <Skeleton className="w-full h-full" />
+          <Skeleton className="w-full h-full rounded-xl" />
         )}
         <div 
           id={`tradingview-widget-${symbol}-${timeframe}-${chartType}`} 
