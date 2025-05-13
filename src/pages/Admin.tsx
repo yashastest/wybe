@@ -80,7 +80,8 @@ const Admin = () => {
     <div className="min-h-screen bg-black flex flex-col">
       <Header adminOnly={true} />
       
-      <div className="flex flex-1 w-full max-w-[1400px] mx-auto">
+      {/* Added top padding to create space */}
+      <div className="flex flex-1 w-full max-w-[1400px] mx-auto pt-20">
         {/* Sidebar */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -100,11 +101,11 @@ const Admin = () => {
                       onClick={() => handleNavClick(item.id, item.action)}
                       className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
                         activeTab === item.id && !item.action
-                          ? "bg-wybe-primary/20 text-wybe-primary"
+                          ? "bg-orange-500/20 text-orange-500"
                           : "hover:bg-white/5"
                       }`}
                     >
-                      <span className={activeTab === item.id && !item.action ? "text-wybe-primary" : "text-gray-400"}>
+                      <span className={activeTab === item.id && !item.action ? "text-orange-500" : "text-gray-400"}>
                         {item.icon}
                       </span>
                       <span>{item.label}</span>
@@ -122,21 +123,21 @@ const Admin = () => {
             <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
               <TabsTrigger 
                 value="dashboard" 
-                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
               >
                 <LayoutDashboard size={16} className="mr-1" />
                 Dashboard
               </TabsTrigger>
               <TabsTrigger 
                 value="approvals" 
-                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
               >
                 <Check size={16} className="mr-1" />
                 Approvals
               </TabsTrigger>
               <TabsTrigger 
                 value="settings" 
-                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
               >
                 <Settings size={16} className="mr-1" />
                 Settings
@@ -151,7 +152,7 @@ const Admin = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="flex-1 p-4 md:p-6"
+          className="flex-1 p-4 md:p-6 overflow-y-auto"
         >
           {activeTab === "dashboard" && <AdminDashboard />}
           {activeTab === "approvals" && <PendingApprovals />}
@@ -173,6 +174,9 @@ const Admin = () => {
           )}
         </motion.div>
       </div>
+      
+      {/* Added bottom padding for footer clearance */}
+      <div className="pb-6"></div>
       
       <Footer />
     </div>

@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import TokenPerformanceChart from "@/components/TokenPerformanceChart";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
+import { TypewriterText } from "@/components/ui/typewriter-text";
 
 const Dashboard = () => {
   const { wallet, connect } = useWallet();
@@ -70,25 +71,33 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-12 flex-grow">
+      {/* Added pt-24 instead of py-12 to create more space at the top */}
+      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold">Creator Dashboard</h1>
-          <p className="text-gray-400 mt-2">Track your token performance and claim rewards</p>
+          <h1 className="text-3xl font-bold">
+            <span className="text-white">Creator </span>
+            <span className="text-orange-500">Dashboard</span>
+          </h1>
+          <TypewriterText 
+            text="Track your token performance and claim rewards" 
+            className="text-gray-400 mt-2" 
+            speed={50}
+          />
         </motion.div>
         
         {!isWalletConnected ? (
           <div className="glass-card p-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-wybe-primary/20 flex items-center justify-center mx-auto mb-4">
-              <Wallet className="text-wybe-primary" size={24} />
+            <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-4">
+              <Wallet className="text-orange-500" size={24} />
             </div>
             <h2 className="text-xl font-bold mb-2">Connect Your Wallet</h2>
             <p className="text-gray-400 mb-6">Connect your wallet to view your creator dashboard</p>
-            <Button onClick={handleConnect} className="btn-primary">
+            <Button onClick={handleConnect} className="bg-orange-600 hover:bg-orange-700">
               Connect Wallet
             </Button>
           </div>
@@ -96,19 +105,19 @@ const Dashboard = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <StatsCard 
-                icon={<BarChart className="text-wybe-primary" />}
+                icon={<BarChart className="text-orange-500" />}
                 title="Total Market Cap"
                 value="$133,000"
                 subtitle="Across all tokens"
               />
               <StatsCard 
-                icon={<TrendingUp className="text-wybe-primary" />}
+                icon={<TrendingUp className="text-orange-500" />}
                 title="24h Volume"
                 value="$68,000"
                 subtitle="Across all tokens"
               />
               <StatsCard 
-                icon={<Trophy className="text-wybe-primary" />}
+                icon={<Trophy className="text-orange-500" />}
                 title="Total Rewards"
                 value="4,440 SOL"
                 subtitle="Earned from trading fees"
@@ -136,21 +145,23 @@ const Dashboard = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background"
+                        className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
                       >
                         View Chart
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="bg-wybe-background-light border-wybe-primary/20 text-white hover:bg-wybe-background"
+                        className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
                         onClick={() => window.open(`/trade/${token.symbol.toLowerCase()}`, '_blank')}
                       >
                         Trade
                       </Button>
                       <Button 
                         onClick={() => handleClaim(token.symbol)} 
-                        className="btn-primary"
+                        className={token.eligibilityProgress === 100 
+                          ? "bg-orange-600 hover:bg-orange-700" 
+                          : "bg-gray-600 hover:bg-gray-700"}
                         disabled={token.eligibilityProgress < 100}
                       >
                         {token.eligibilityProgress === 100 ? "Claim Rewards" : "Not Eligible"}
@@ -170,14 +181,16 @@ const Dashboard = () => {
                       <div className="glass-card bg-wybe-background/40 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck size={18} className="text-wybe-primary" />
+                            <ShieldCheck size={18} className="text-orange-500" />
                             <span className="font-medium">Reward Eligibility</span>
                           </div>
-                          <span className="text-sm bg-wybe-primary/20 text-wybe-primary px-2 py-1 rounded">
+                          <span className="text-sm bg-orange-500/20 text-orange-500 px-2 py-1 rounded">
                             {token.eligibilityProgress}%
                           </span>
                         </div>
-                        <Progress value={token.eligibilityProgress} className="h-2 mb-2" />
+                        <Progress value={token.eligibilityProgress} className="h-2 mb-2 bg-gray-700">
+                          <div className="h-full bg-orange-500 transition-all" style={{ width: `${token.eligibilityProgress}%` }}></div>
+                        </Progress>
                         <div className="flex items-center gap-1 text-sm text-gray-400">
                           <Clock size={14} />
                           <span>{token.timeRemaining}</span>
@@ -202,6 +215,7 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
+              className="mb-8" // Added margin bottom to give space for footer
             >
               <div className="glass-card p-6">
                 <h2 className="text-xl font-bold mb-4">Eligibility Requirements</h2>
@@ -228,6 +242,9 @@ const Dashboard = () => {
         )}
       </div>
       
+      {/* Added pb-6 to give space before footer */}
+      <div className="pb-6"></div>
+      
       <Footer />
     </div>
   );
@@ -239,7 +256,7 @@ const StatsCard = ({ icon, title, value, subtitle }) => {
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg">{title}</CardTitle>
-          <div className="w-8 h-8 rounded-full bg-wybe-primary/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
             {icon}
           </div>
         </div>
@@ -264,7 +281,7 @@ const StatsItem = ({ label, value }) => {
 const RequirementCard = ({ title, description, icon }) => {
   return (
     <div className="flex gap-4 items-start p-4 bg-wybe-background/40 rounded-lg">
-      <div className="w-10 h-10 rounded-full bg-wybe-primary/20 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
         {icon}
       </div>
       <div>

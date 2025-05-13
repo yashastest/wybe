@@ -48,7 +48,7 @@ const SmartContractDeployment = () => {
         className="glass-card p-6"
       >
         <h2 className="text-xl font-bold font-poppins mb-6 flex items-center gap-2">
-          <FileCode2 className="text-wybe-primary" size={24} />
+          <FileCode2 className="text-orange-500" size={24} />
           Smart Contract Deployment
         </h2>
 
@@ -70,10 +70,10 @@ const SmartContractDeployment = () => {
           
           <TabsContent value="request" className="space-y-8">
             <div className="space-y-6">
-              <div className="glass-card p-6 bg-gradient-to-br from-wybe-primary/10 to-transparent">
+              <div className="glass-card p-6 bg-gradient-to-br from-orange-500/10 to-transparent">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-wybe-primary/20 p-3 rounded-full">
-                    <Shield className="text-wybe-primary h-6 w-6" />
+                  <div className="bg-orange-500/20 p-3 rounded-full">
+                    <Shield className="text-orange-500 h-6 w-6" />
                   </div>
                   <h3 className="text-xl font-poppins font-bold">Professional Deployment Service</h3>
                 </div>
@@ -107,7 +107,7 @@ const SmartContractDeployment = () => {
                 
                 <div className="bg-wybe-background/80 border border-white/10 p-4 rounded-lg mb-6">
                   <h4 className="flex items-center text-lg font-poppins font-bold mb-3">
-                    <CircleDollarSign className="text-wybe-primary mr-2" />
+                    <CircleDollarSign className="text-orange-500 mr-2" />
                     Pricing
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -158,7 +158,7 @@ const SmartContractDeployment = () => {
                 
                 <Button 
                   className={`w-full py-6 font-poppins font-bold text-base ${
-                    requestSent ? "bg-green-600 hover:bg-green-700" : "btn-primary"
+                    requestSent ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
                   }`}
                   onClick={handleDeploymentRequest}
                   disabled={requestSent}
