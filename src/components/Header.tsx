@@ -67,11 +67,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               className="flex items-center"
             >
               <img 
-                src="/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png" 
+                src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
                 alt="Wybe Logo" 
                 className="h-10 w-10"
               />
-              <span className="ml-2 text-xl font-bold font-poppins tracking-wide text-white">WYBE</span>
+              <span className="ml-2 text-xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
             </motion.div>
           </Link>
           

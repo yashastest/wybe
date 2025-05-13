@@ -1,6 +1,6 @@
 
-import React, { useEffect, useRef } from "react";
-import { motion, useAnimation, useInView } from "framer-motion";
+import React from "react";
+import { motion } from "framer-motion";
 import { Check, ChevronRight, Shield, Rocket, Coins, AlertTriangle, Download, Globe, MessageCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -34,29 +34,10 @@ const LaunchPackage = () => {
 };
 
 const Section = ({ children, className = "" }) => {
-  const controls = useAnimation();
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.2 });
-  
-  useEffect(() => {
-    if (inView) {
-      controls.start("visible");
-    }
-  }, [controls, inView]);
-  
   return (
-    <motion.div 
-      ref={ref}
-      initial="hidden"
-      animate={controls}
-      variants={{
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { duration: 0.6, staggerChildren: 0.2 } }
-      }}
-      className={className}
-    >
+    <div className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -68,20 +49,14 @@ const HeroSection = () => {
       
       <Section className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row items-center gap-8">
-          <motion.div 
-            className="md:w-1/2"
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0, transition: { duration: 0.6 } }
-            }}
-          >
+          <div className="md:w-1/2">
             <div className="flex items-center mb-6">
               <div className="w-16 h-16 mr-4">
                 <AspectRatio ratio={1/1}>
                   <img 
-                    src="/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png" 
+                    src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
                     alt="Wybe Logo" 
-                    className="object-contain animate-pulse-slow"
+                    className="object-contain"
                   />
                 </AspectRatio>
               </div>
@@ -111,15 +86,9 @@ const HeroSection = () => {
                 <ChevronRight size={18} />
               </Button>
             </div>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="md:w-1/2 flex justify-center"
-            variants={{
-              hidden: { opacity: 0, scale: 0.9 },
-              visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } }
-            }}
-          >
+          <div className="md:w-1/2 flex justify-center">
             <div className="bg-gradient-to-br from-wybe-primary/30 to-wybe-secondary/20 glass-card p-6 border-2 border-wybe-primary/40 rounded-2xl shadow-glow-md">
               <div className="flex items-center mb-6">
                 <Coins className="text-wybe-primary mr-3" size={28} />
@@ -145,30 +114,16 @@ const HeroSection = () => {
                   "Launch Strategy & Timing",
                   "Post-Launch Guidance & Monitoring"
                 ].map((item, index) => (
-                  <motion.div 
-                    key={index} 
-                    className="flex items-start gap-3"
-                    variants={{
-                      hidden: { opacity: 0, y: 10 },
-                      visible: { 
-                        opacity: 1, 
-                        y: 0, 
-                        transition: { 
-                          delay: index * 0.1, 
-                          duration: 0.5 
-                        } 
-                      }
-                    }}
-                  >
+                  <div key={index} className="flex items-start gap-3">
                     <div className="mt-1">
                       <Check size={16} className="text-green-400" />
                     </div>
                     <span className="text-white/90">{item}</span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </Section>
     </div>
@@ -179,19 +134,13 @@ const LaunchProcessSection = () => {
   return (
     <div className="bg-wybe-background-light/50 py-16">
       <Section className="container mx-auto px-4">
-        <motion.div 
-          className="text-center mb-12"
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-          }}
-        >
+        <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-gradient">Step-by-Step Launch Process</h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             We've streamlined the process of launching your meme coin to make it simple, secure,
             and effective. Here's how it works:
           </p>
-        </motion.div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {[
@@ -226,20 +175,9 @@ const LaunchProcessSection = () => {
               icon: <Rocket className="text-red-400" size={24} />
             }
           ].map((step, index) => (
-            <motion.div 
+            <div 
               key={index}
               className="glass-card p-6 relative"
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { 
-                  opacity: 1, 
-                  y: 0, 
-                  transition: { 
-                    delay: index * 0.1,
-                    duration: 0.5 
-                  } 
-                }
-              }}
             >
               <div className="absolute -top-4 -left-4 w-9 h-9 rounded-full bg-wybe-background flex items-center justify-center border-2 border-wybe-primary/50">
                 <span className="font-bold">{index + 1}</span>
@@ -251,7 +189,7 @@ const LaunchProcessSection = () => {
               </div>
               
               <p className="text-white/80 text-sm">{step.description}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </Section>
@@ -263,28 +201,16 @@ const CreatorFeesSection = () => {
   return (
     <div className="py-16 bg-gradient-to-br from-wybe-background to-wybe-background-light/60">
       <Section className="container mx-auto px-4">
-        <motion.div 
-          className="text-center mb-12"
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-          }}
-        >
+        <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 gradient-text">How Creator Fees Work</h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Our platform is designed to reward serious creators while maintaining a sustainable ecosystem.
             Here's how the fee structure works for your meme coin:
           </p>
-        </motion.div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
-          <motion.div 
-            className="glass-card p-6"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.1 } }
-            }}
-          >
+          <div className="glass-card p-6">
             <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
               <Coins className="text-purple-400" size={24} />
             </div>
@@ -297,15 +223,9 @@ const CreatorFeesSection = () => {
                 <span className="font-bold text-purple-400">Note:</span> This fee is lower than most DEXs which typically charge 3-5%.
               </p>
             </div>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="glass-card p-6"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.2 } }
-            }}
-          >
+          <div className="glass-card p-6">
             <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
               <Download className="text-green-400" size={24} />
             </div>
@@ -318,15 +238,9 @@ const CreatorFeesSection = () => {
                 <span className="font-bold text-green-400">Benefit:</span> This aligns incentives and rewards creators who build communities, not just launch coins.
               </p>
             </div>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="glass-card p-6"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.3 } }
-            }}
-          >
+          <div className="glass-card p-6">
             <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4">
               <Globe className="text-blue-400" size={24} />
             </div>
@@ -339,16 +253,10 @@ const CreatorFeesSection = () => {
                 <span className="font-bold text-blue-400">Why:</span> Proper community channels increase token credibility and growth potential.
               </p>
             </div>
-          </motion.div>
+          </div>
         </div>
         
-        <motion.div 
-          className="glass-card p-6 md:p-8 border-2 border-wybe-primary/30 max-w-3xl mx-auto"
-          variants={{
-            hidden: { opacity: 0, scale: 0.95 },
-            visible: { opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.4 } }
-          }}
-        >
+        <div className="glass-card p-6 md:p-8 border-2 border-wybe-primary/30 max-w-3xl mx-auto">
           <h3 className="text-2xl font-bold mb-4 text-center">Platform Fee Distribution</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-gradient-to-br from-purple-900/30 to-purple-600/10 rounded-xl border border-purple-500/20">
@@ -369,12 +277,12 @@ const CreatorFeesSection = () => {
               This transparent fee structure ensures that all stakeholders are aligned in creating successful, sustainable meme coins.
             </p>
             <Link to="/launch">
-              <Button className="btn-primary animate-pulse-glow">
+              <Button className="btn-primary">
                 Start Your Coin Launch
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
       </Section>
     </div>
   );
@@ -385,16 +293,10 @@ const EarningsSection = () => {
     <div className="py-16">
       <Section className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row gap-12 items-center">
-          <motion.div 
-            className="md:w-1/2"
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0, transition: { duration: 0.5 } }
-            }}
-          >
+          <div className="md:w-1/2">
             <div className="flex items-center gap-3 mb-6">
               <img 
-                src="/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png" 
+                src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
                 alt="Wybe Logo" 
                 className="w-10 h-10"
               />
@@ -405,7 +307,7 @@ const EarningsSection = () => {
               We're incentivized by your success. Here's how earnings work:
             </p>
             
-            <Card className="bg-gradient-to-br from-green-900/40 to-transparent border-green-500/30 mb-6 animate-pulse-slow">
+            <Card className="bg-gradient-to-br from-green-900/40 to-transparent border-green-500/30 mb-6">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="bg-green-500/20 p-2 rounded-full">
@@ -420,7 +322,7 @@ const EarningsSection = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-orange-900/40 to-transparent border-orange-500/30 animate-pulse-slow">
+            <Card className="bg-gradient-to-br from-orange-900/40 to-transparent border-orange-500/30">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="bg-orange-500/20 p-2 rounded-full">
@@ -438,15 +340,9 @@ const EarningsSection = () => {
             <p className="text-white/70 mt-6">
               This ensures both transparency and performance-based incentives — we only win when you do.
             </p>
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="md:w-1/2"
-            variants={{
-              hidden: { opacity: 0, x: 20 },
-              visible: { opacity: 1, x: 0, transition: { duration: 0.5, delay: 0.2 } }
-            }}
-          >
+          <div className="md:w-1/2">
             <div className="glass-card p-8 border-2 border-white/10">
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="text-wybe-primary" size={28} />
@@ -487,7 +383,7 @@ const EarningsSection = () => {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </Section>
     </div>

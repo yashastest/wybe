@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { Loader } from "lucide-react";
-import AdminPasswordReset from './AdminPasswordReset';
 
 const AdminLoginForm = () => {
   const [username, setUsername] = useState('');
@@ -26,7 +25,7 @@ const AdminLoginForm = () => {
     
     try {
       // Simulate authentication request
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // In production, this would be replaced with an actual API call
       if (username === 'admin' && password === 'password') {
@@ -112,15 +111,14 @@ const AdminLoginForm = () => {
           />
         </motion.div>
         
-        <motion.div className="flex items-center justify-between pt-2" variants={itemVariants}>
-          <AdminPasswordReset />
+        <motion.div className="flex justify-end pt-2" variants={itemVariants}>
           <Button 
             type="submit"
-            className="btn-primary"
+            className="btn-primary w-full"
             disabled={isLoading}
           >
             {isLoading ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}

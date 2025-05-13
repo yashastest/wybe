@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
@@ -11,120 +11,168 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import SmartContractDashboard from "@/components/admin/SmartContractDashboard";
 import SmartContractDeployment from "@/components/admin/SmartContractDeployment";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@/hooks/useWallet";
+import { 
+  LayoutDashboard, 
+  Check, 
+  Settings, 
+  Activity, 
+  Package, 
+  LogOut, 
+  Folder 
+} from "lucide-react";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { connected, address } = useWallet();
   const navigate = useNavigate();
 
-  // Sample admin accounts for demo purposes
-  const adminAccounts = [
-    "8B5CF6FeDfC9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw", 
-    "7C3AEDHj9R5Tender3SbKgX1CnUAaTPyYyXU23WgfST1KFsPJE", 
-    "6E59A53gF2KHp6KkE2HUMvhiL9aVyvyWpBJ2Pu2fGwFeJXdPSS"
-  ];
-  
-  const isAdmin = connected && adminAccounts.includes(address);
-
-  // Redirect if not admin
-  React.useEffect(() => {
-    if (!isAdmin) {
+  // Check if user is logged in
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+    if (!isLoggedIn) {
       navigate("/admin-login");
     }
-  }, [isAdmin, navigate]);
+  }, [navigate]);
 
-  if (!isAdmin) return null;
+  const handleLogout = () => {
+    localStorage.removeItem("wybeAdminLoggedIn");
+    navigate("/admin-login");
+  };
+
+  // Admin sections
+  const adminSections = [
+    {
+      id: "main",
+      label: "Main",
+      items: [
+        { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+        { id: "approvals", label: "Approvals", icon: <Check size={18} /> },
+        { id: "contracts", label: "Smart Contracts", icon: <Folder size={18} /> },
+        { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
+      ]
+    },
+    {
+      id: "platform",
+      label: "Platform",
+      items: [
+        { id: "projects", label: "Projects", icon: <Package size={18} /> },
+        { id: "activity", label: "Activity", icon: <Activity size={18} /> },
+      ]
+    },
+    {
+      id: "system",
+      label: "System",
+      items: [
+        { id: "settings", label: "Settings", icon: <Settings size={18} /> },
+        { id: "logout", label: "Logout", icon: <LogOut size={18} />, action: handleLogout }
+      ]
+    }
+  ];
+
+  const handleNavClick = (tabId, action) => {
+    if (action) {
+      action();
+    } else {
+      setActiveTab(tabId);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      <Header />
+      <Header adminOnly={true} />
       
-      <div className="flex flex-col flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 py-8">
+      <div className="flex flex-1 w-full max-w-[1400px] mx-auto">
+        {/* Sidebar */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8"
+          className="w-64 border-r border-white/10 p-4 hidden md:block"
         >
-          <h1 className="text-3xl font-poppins font-bold text-gradient mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Manage your platform settings, tokens, and analytics</p>
+          {adminSections.map((section) => (
+            <div key={section.id} className="mb-6">
+              <h3 className="text-gray-400 uppercase text-xs font-semibold mb-3 pl-2">
+                {section.label}
+              </h3>
+              <ul className="space-y-1">
+                {section.items.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => handleNavClick(item.id, item.action)}
+                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
+                        activeTab === item.id && !item.action
+                          ? "bg-wybe-primary/20 text-wybe-primary"
+                          : "hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={activeTab === item.id && !item.action ? "text-wybe-primary" : "text-gray-400"}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </motion.div>
         
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="flex-1">
-          <div className="border-b border-white/10 pb-3 mb-6">
-            <TabsList className="space-x-2 bg-transparent">
-              <TabsTrigger 
-                value="dashboard" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Dashboard
-              </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger 
-                value="approvals" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Pending Approvals
-              </TabsTrigger>
-              <TabsTrigger 
-                value="contracts" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Smart Contracts
-              </TabsTrigger>
-              <TabsTrigger 
-                value="deployment" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Contract Deployment
-              </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className="data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary font-poppins font-bold"
-              >
-                Settings
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1"
-          >
-            <TabsContent value="dashboard" className="mt-0">
-              <AdminDashboard />
-            </TabsContent>
-            
-            <TabsContent value="analytics" className="mt-0">
-              <AnalyticsDashboard />
-            </TabsContent>
-            
-            <TabsContent value="approvals" className="mt-0">
-              <PendingApprovals />
-            </TabsContent>
-            
-            <TabsContent value="contracts" className="mt-0">
-              <SmartContractDashboard />
-            </TabsContent>
-            
-            <TabsContent value="deployment" className="mt-0">
-              <SmartContractDeployment />
-            </TabsContent>
-            
-            <TabsContent value="settings" className="mt-0">
-              <AdminSettings />
-            </TabsContent>
-          </motion.div>
-        </Tabs>
+        {/* Mobile Tabs */}
+        <div className="md:hidden w-full px-4 pt-4">
+          <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
+            <TabsTrigger 
+              value="dashboard" 
+              onClick={() => setActiveTab("dashboard")}
+              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+            >
+              <LayoutDashboard size={16} className="mr-1" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger 
+              value="approvals" 
+              onClick={() => setActiveTab("approvals")}
+              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+            >
+              <Check size={16} className="mr-1" />
+              Approvals
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings" 
+              onClick={() => setActiveTab("settings")}
+              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+            >
+              <Settings size={16} className="mr-1" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        
+        {/* Main Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex-1 p-4 md:p-6"
+        >
+          {activeTab === "dashboard" && <AdminDashboard />}
+          {activeTab === "approvals" && <PendingApprovals />}
+          {activeTab === "analytics" && <AnalyticsDashboard />}
+          {activeTab === "contracts" && <SmartContractDashboard />}
+          {activeTab === "deployment" && <SmartContractDeployment />}
+          {activeTab === "settings" && <AdminSettings />}
+          {activeTab === "projects" && (
+            <div className="glass-card p-6">
+              <h2 className="text-xl font-bold mb-4">Projects</h2>
+              <p className="text-gray-300">View and manage platform projects.</p>
+            </div>
+          )}
+          {activeTab === "activity" && (
+            <div className="glass-card p-6">
+              <h2 className="text-xl font-bold mb-4">Activity Log</h2>
+              <p className="text-gray-300">Track platform activity and events.</p>
+            </div>
+          )}
+        </motion.div>
       </div>
       
       <Footer />
