@@ -1,14 +1,22 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
+import { Twitter } from "lucide-react";
 
 const Footer = () => {
+  const currentYear = 2025;
+  
   return (
     <footer className="mt-auto border-t border-white/10 py-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">
+            <h3 className="text-xl font-bold mb-4 flex items-center">
+              <img 
+                src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
+                alt="Wybe Logo" 
+                className="h-8 w-8 mr-2" 
+              />
               <span className="text-wybe-primary">Wybe</span>
             </h3>
             <p className="text-gray-400 mb-4">
@@ -70,16 +78,19 @@ const Footer = () => {
         </div>
         
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">© 2023 Wybe. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© {currentYear} Wybe. All rights reserved.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-              Twitter
+            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
+              <Twitter className="h-4 w-4 mr-1" />
+              <span>Twitter</span>
             </a>
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-              Telegram
+            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
+              <span className="font-mono text-lg mr-1">t</span>
+              <span>Telegram</span>
             </a>
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-              Discord
+            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
+              <span className="font-mono text-lg mr-1">ﾠﾠﾠ</span>
+              <span>Discord</span>
             </a>
           </div>
         </div>

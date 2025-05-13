@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 glass-nav ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 glass-nav ${
         scrolled ? 'py-3 shadow-lg' : 'py-5'
       }`}
     >
@@ -63,15 +63,15 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.3 }}
               className="flex items-center"
             >
               <img 
                 src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
                 alt="Wybe Logo" 
-                className="h-12 w-12 md:h-14 md:w-14" // Increased logo size
+                className="h-8 w-8 md:h-10 md:w-10" 
               />
-              <span className="ml-3 text-2xl md:text-3xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
+              <span className="ml-2 text-xl md:text-2xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
             </motion.div>
           </Link>
           
@@ -82,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                 key={link.to}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
               >
                 <Link
                   to={link.to}
@@ -100,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.3 }}
               className="hidden md:block"
             >
               <Link to="/launch">
@@ -136,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             className="md:hidden mt-4 pb-4"
           >
             <nav className="flex flex-col space-y-4">
