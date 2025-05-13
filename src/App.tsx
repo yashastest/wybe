@@ -20,16 +20,7 @@ import Discover from "./pages/Discover";
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// Add Phantom window type declaration
-declare global {
-  interface Window {
-    solana?: {
-      isPhantom?: boolean;
-      connect?: () => Promise<{ publicKey: { toString: () => string } }>;
-      disconnect?: () => Promise<void>;
-    };
-  }
-}
+// We don't need to redeclare the Phantom window type here since it's in vite-env.d.ts
 
 const App = () => {
   return (
