@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
+import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, ImageIcon, X, Link as LinkIcon } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
