@@ -14,7 +14,7 @@ export function Toaster() {
 
   // Map toast types to variants
   const mapToastTypeToVariant = (type?: string): "default" | "destructive" => {
-    if (type === "error" || type === "destructive") return "destructive"
+    if (type === "destructive") return "destructive"
     return "default"
   }
 

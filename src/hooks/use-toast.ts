@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { 
   type ToastActionElement, 
@@ -7,12 +8,14 @@ import {
 const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
+type ToastType = "default" | "destructive" | "success" | "warning" | "info";
+
 type ToasterToast = ToastPrimitiveProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-  type?: "default" | "destructive" | "success" | "warning" | "info";
+  type?: ToastType;
 };
 
 const actionTypes = {
@@ -188,12 +191,12 @@ function useToast() {
   };
 }
 
-// Helper toast methods
+// Helper toast methods with proper type definitions
 toast.success = (message: string, options: Omit<Toast, "title" | "description" | "type"> = {}) => {
   return toast({
     title: "Success",
     description: message,
-    type: "success",
+    type: "success" as ToastType,
     ...options,
   });
 };
@@ -202,7 +205,7 @@ toast.error = (message: string, options: Omit<Toast, "title" | "description" | "
   return toast({
     title: "Error",
     description: message,
-    type: "destructive",
+    type: "destructive" as ToastType,
     ...options,
   });
 };
@@ -211,7 +214,7 @@ toast.warning = (message: string, options: Omit<Toast, "title" | "description" |
   return toast({
     title: "Warning",
     description: message,
-    type: "warning",
+    type: "warning" as ToastType,
     ...options,
   });
 };
@@ -220,7 +223,7 @@ toast.info = (message: string, options: Omit<Toast, "title" | "description" | "t
   return toast({
     title: "Info",
     description: message,
-    type: "info",
+    type: "info" as ToastType,
     ...options,
   });
 };
