@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -54,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   return (
     <header 
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 glass-nav ${
-        scrolled ? 'py-3 shadow-lg' : 'py-5'
+        scrolled ? 'py-2 shadow-lg' : 'py-3'
       }`}
     >
       <div className="container mx-auto px-4">

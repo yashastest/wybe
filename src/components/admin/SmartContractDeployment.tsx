@@ -38,7 +38,7 @@ const SmartContractDeployment = () => {
           }
         }
       }}
-      className="space-y-6"
+      className="space-y-6 pt-8"
     >
       <motion.div
         variants={{

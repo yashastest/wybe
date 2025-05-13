@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { ChevronDown, Globe, Shield, TrendingUp, Wallet, Rocket, CircleDollarSign } from "lucide-react";
@@ -9,7 +10,7 @@ import HeroSection from "@/components/HeroSection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-black overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-black overflow-x-hidden pt-0">
       <Header />
       
       {/* Hero Section with updated animations */}
