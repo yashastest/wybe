@@ -1,4 +1,5 @@
 
-import { useToast, toast } from "sonner";
+import { toast } from "sonner";
 
-export { useToast, toast };
+// Export only toast from sonner as useToast is not available there
+export { toast };

@@ -118,32 +118,31 @@ const Admin = () => {
         
         {/* Mobile Tabs */}
         <div className="md:hidden w-full px-4 pt-4">
-          <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
-            <TabsTrigger 
-              value="dashboard" 
-              onClick={() => setActiveTab("dashboard")}
-              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
-            >
-              <LayoutDashboard size={16} className="mr-1" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger 
-              value="approvals" 
-              onClick={() => setActiveTab("approvals")}
-              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
-            >
-              <Check size={16} className="mr-1" />
-              Approvals
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              onClick={() => setActiveTab("settings")}
-              className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
-            >
-              <Settings size={16} className="mr-1" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
+              <TabsTrigger 
+                value="dashboard" 
+                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+              >
+                <LayoutDashboard size={16} className="mr-1" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger 
+                value="approvals" 
+                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+              >
+                <Check size={16} className="mr-1" />
+                Approvals
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="flex-1 data-[state=active]:bg-wybe-primary/20 data-[state=active]:text-wybe-primary"
+              >
+                <Settings size={16} className="mr-1" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         
         {/* Main Content */}
