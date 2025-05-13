@@ -86,7 +86,7 @@ const Dashboard = () => {
           <TypewriterText 
             text="Track your token performance and claim rewards" 
             className="text-gray-400 mt-2" 
-            speed={50}
+            delay={50}
           />
         </motion.div>
         
