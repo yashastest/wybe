@@ -192,9 +192,13 @@ function useToast() {
   };
 }
 
-// Fix: Include the type property in ToastOptions
-interface ToastOptions extends Omit<Toast, "title" | "description"> {
-  type?: ToastType;
+// Define ToastOptions correctly without extending from Toast to avoid type conflicts
+interface ToastOptions {
+  action?: ToastActionElement;
+  variant?: "default" | "destructive";
+  duration?: number;
+  className?: string;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Add type to the toast function and explicitly type the helper methods
