@@ -1,54 +1,54 @@
 
-import { useState, useEffect } from "react";
-import { toast as sonnerToast, type ToastT } from "sonner";
+import { useToast as useHookToast, toast as toastHook } from "@radix-ui/react-toast";
 
-// Match the expected structure from sonner
-type ToastProps = ToastT & {
-  id: string | number;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  action?: React.ReactNode;
+type ToastProps = {
+  title?: string;
+  description?: string;
+  variant?: "default" | "destructive" | "success" | "warning" | "info";
+  duration?: number;
 };
 
-export function toast(...args: Parameters<typeof sonnerToast>) {
-  return sonnerToast(...args);
-}
-
-interface UseToastReturn {
-  toast: typeof sonnerToast;
-  dismiss: (toastId?: number | string) => void;
-  toasts: ToastProps[];
-}
-
-export function useToast(): UseToastReturn {
-  const [toasts, setToasts] = useState<ToastProps[]>([]);
-
-  // This monitors the sonner toast state
-  useEffect(() => {
-    // Create a custom event listener for toast events
-    const handleToast = (event: CustomEvent<ToastProps>) => {
-      const toast = event.detail;
-      setToasts((prevToasts) => [...prevToasts, toast]);
-    };
-
-    const handleDismiss = (event: CustomEvent<{ id: string | number }>) => {
-      const { id } = event.detail;
-      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-    };
-
-    // Register event listeners
-    window.addEventListener("toast", handleToast as EventListener);
-    window.addEventListener("toast-dismiss", handleDismiss as EventListener);
-
-    return () => {
-      window.removeEventListener("toast", handleToast as EventListener);
-      window.removeEventListener("toast-dismiss", handleDismiss as EventListener);
-    };
-  }, []);
-
+const useToast = () => {
+  const { toast } = useHookToast();
+  
   return {
-    toast: sonnerToast,
-    dismiss: sonnerToast.dismiss,
-    toasts
+    toast: (props: ToastProps) => toast(props)
   };
-}
+};
+
+const toast = {
+  success: (message: string, options?: Omit<ToastProps, "title" | "variant">) => {
+    toastHook({
+      title: "Success",
+      description: message,
+      variant: "success",
+      duration: options?.duration || 3000,
+    });
+  },
+  error: (message: string, options?: Omit<ToastProps, "title" | "variant">) => {
+    toastHook({
+      title: "Error",
+      description: message,
+      variant: "destructive",
+      duration: options?.duration || 5000,
+    });
+  },
+  warning: (message: string, options?: Omit<ToastProps, "title" | "variant">) => {
+    toastHook({
+      title: "Warning",
+      description: message,
+      variant: "warning",
+      duration: options?.duration || 4000,
+    });
+  },
+  info: (message: string, options?: Omit<ToastProps, "title" | "variant">) => {
+    toastHook({
+      title: "Info",
+      description: message,
+      variant: "info",
+      duration: options?.duration || 3000,
+    });
+  },
+};
+
+export { useToast, toast };
