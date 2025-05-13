@@ -140,6 +140,7 @@ function dispatch(action: Action) {
   });
 }
 
+// Define the Toast type properly
 type Toast = Omit<ToasterToast, "id">;
 
 function toast({ ...props }: Toast) {
@@ -191,7 +192,10 @@ function useToast() {
   };
 }
 
-interface ToastOptions extends Omit<Toast, "title" | "description" | "type"> {}
+// Fix: Include the type property in ToastOptions
+interface ToastOptions extends Omit<Toast, "title" | "description"> {
+  type?: ToastType;
+}
 
 // Add type to the toast function and explicitly type the helper methods
 type ToastFunction = typeof toast & {
