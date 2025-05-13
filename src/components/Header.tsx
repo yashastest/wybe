@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -106,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               className="hidden md:block"
             >
               <Link to="/launch">
-                <Button className="btn-primary">
+                <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
                   Launch a Token
                 </Button>
               </Link>
@@ -146,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`nav-link text-sm font-medium py-2 transition-colors hover:bg-wybe-primary/20 hover:text-white hover:pl-2 rounded ${
+                  className={`nav-link text-sm font-medium py-2 transition-colors hover:bg-wybe-primary/20 hover:text-white hover:pl-2 rounded-full ${
                     location.pathname === link.to ? 'active-nav-link' : ''
                   }`}
                 >
@@ -156,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               
               {!adminOnly && (
                 <Link to="/launch" className="mt-2">
-                  <Button className="btn-primary w-full">
+                  <Button className="btn-primary w-full hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
                     Launch a Token
                   </Button>
                 </Link>

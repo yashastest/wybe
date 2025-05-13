@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, ArrowUp, ArrowDown, ChevronDown, Filter } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, Whale, User, Code, Rocket } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { 
@@ -27,6 +27,13 @@ const discoverCoins = [
     marketCap: 420000000,
     volume24h: 69000000,
     category: ["Meme", "Frog"],
+    holders: 15800,
+    devWallet: "0x3a2d...f5e6",
+    holderStats: {
+      whales: 28,
+      retail: 15320,
+      devs: 3
+    }
   },
   {
     id: "doge",
@@ -39,6 +46,13 @@ const discoverCoins = [
     marketCap: 16000000000,
     volume24h: 980000000,
     category: ["Meme", "Dog"],
+    holders: 45700,
+    devWallet: "0x7c9d...a2b1",
+    holderStats: {
+      whales: 145,
+      retail: 45412,
+      devs: 12
+    }
   },
   {
     id: "shib",
@@ -51,6 +65,13 @@ const discoverCoins = [
     marketCap: 13500000000,
     volume24h: 850000000,
     category: ["Meme", "Dog"],
+    holders: 38900,
+    devWallet: "0x5f4a...d7e2",
+    holderStats: {
+      whales: 98,
+      retail: 38750,
+      devs: 7
+    }
   },
   {
     id: "floki",
@@ -63,6 +84,13 @@ const discoverCoins = [
     marketCap: 1200000000,
     volume24h: 320000000,
     category: ["Meme", "Dog"],
+    holders: 24600,
+    devWallet: "0x2b3c...e9f0",
+    holderStats: {
+      whales: 54,
+      retail: 24520,
+      devs: 5
+    }
   },
   {
     id: "bonk",
@@ -75,6 +103,13 @@ const discoverCoins = [
     marketCap: 950000000,
     volume24h: 210000000,
     category: ["Meme", "Dog", "Solana"],
+    holders: 19800,
+    devWallet: "0x9a8b...c3d4",
+    holderStats: {
+      whales: 32,
+      retail: 19750,
+      devs: 4
+    }
   },
   {
     id: "wojak",
@@ -87,6 +122,13 @@ const discoverCoins = [
     marketCap: 320000000,
     volume24h: 78000000,
     category: ["Meme", "Feels"],
+    holders: 8700,
+    devWallet: "0x4e5f...1a2b",
+    holderStats: {
+      whales: 15,
+      retail: 8670,
+      devs: 2
+    }
   },
 ];
 
@@ -111,6 +153,13 @@ const formatMarketCap = (marketCap) => {
   } else {
     return `$${(marketCap / 1000).toFixed(2)}K`;
   }
+};
+
+const formatNumber = (num) => {
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`;
+  }
+  return num.toString();
 };
 
 const Discover = () => {
@@ -142,13 +191,14 @@ const Discover = () => {
     <div className="min-h-screen flex flex-col bg-black">
       <Header />
       
-      <main className="flex-grow container px-4 py-12">
+      <main className="flex-grow container px-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          className="pt-20 md:pt-24"
         >
-          <h1 className="text-3xl font-poppins font-bold mb-2">Discover <span className="text-gradient">Meme Coins</span></h1>
+          <h1 className="text-3xl font-poppins font-bold mb-2">Discover <span className="text-gradient">Meme Coins</span> 🚀</h1>
           <p className="text-gray-300 mb-8">Explore trending and popular meme coins on the Solana blockchain</p>
         </motion.div>
         
@@ -162,25 +212,25 @@ const Discover = () => {
                 placeholder="Search by name or symbol..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-wybe-background-light/30 border border-white/10 rounded-lg pl-10 pr-4 py-2 w-full text-white focus:outline-none focus:ring-2 focus:ring-wybe-primary"
+                className="bg-wybe-background-light/30 border border-white/10 rounded-full pl-10 pr-4 py-2 w-full text-white focus:outline-none focus:ring-2 focus:ring-wybe-primary"
               />
             </div>
             
             <div className="flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins">
+                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins rounded-full">
                     <Filter size={16} className="mr-2" />
                     Category: {filterCategory}
                     <ChevronDown size={16} className="ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg">
+                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg rounded-xl">
                   {allCategories.map((category) => (
                     <DropdownMenuItem 
                       key={category}
                       onClick={() => setFilterCategory(category)}
-                      className={filterCategory === category ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                      className={filterCategory === category ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                     >
                       {category}
                     </DropdownMenuItem>
@@ -190,39 +240,39 @@ const Discover = () => {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins">
+                  <Button variant="outline" className="flex-1 bg-wybe-background-light/30 border-white/10 font-poppins rounded-full">
                     Sort By
                     <ChevronDown size={16} className="ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg">
+                <DropdownMenuContent className="bg-wybe-background-light/90 border-white/10 backdrop-blur-lg rounded-xl">
                   <DropdownMenuItem 
                     onClick={() => setSortOption("marketCap")} 
-                    className={sortOption === "marketCap" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    className={sortOption === "marketCap" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                   >
                     Market Cap
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setSortOption("volume")}
-                    className={sortOption === "volume" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    className={sortOption === "volume" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                   >
                     Volume
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setSortOption("priceDesc")}
-                    className={sortOption === "priceDesc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    className={sortOption === "priceDesc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                   >
                     Price (High to Low)
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setSortOption("priceAsc")}
-                    className={sortOption === "priceAsc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    className={sortOption === "priceAsc" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                   >
                     Price (Low to High)
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setSortOption("change")}
-                    className={sortOption === "change" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold" : "font-mono"}
+                    className={sortOption === "change" ? "bg-wybe-primary/20 text-wybe-primary font-mono font-bold rounded-lg" : "font-mono"}
                   >
                     24h Change
                   </DropdownMenuItem>
@@ -233,14 +283,14 @@ const Discover = () => {
         </div>
         
         {/* Coins grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
           {filteredCoins.length > 0 ? (
             filteredCoins.map((coin, index) => (
               <CoinCard key={coin.id} coin={coin} index={index} />
             ))
           ) : (
             <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16">
-              <h3 className="text-xl font-poppins font-bold mb-2">No coins found</h3>
+              <h3 className="text-xl font-poppins font-bold mb-2">No coins found 😢</h3>
               <p className="text-gray-400">Try adjusting your search or filter criteria</p>
             </div>
           )}
@@ -262,7 +312,7 @@ const CoinCard = ({ coin, index }) => {
       className="glass-card overflow-hidden hover:shadow-glow-sm transition-all duration-300"
     >
       {/* Banner image */}
-      <div className="w-full h-36 relative">
+      <div className="w-full h-32 md:h-36 relative">
         <AspectRatio ratio={16 / 9}>
           <img
             src={coin.banner}
@@ -273,30 +323,27 @@ const CoinCard = ({ coin, index }) => {
             }}
           />
         </AspectRatio>
-        
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
-        
-        {/* Logo and symbol on banner */}
-        <div className="absolute bottom-0 left-0 p-4 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm p-1">
-            <img
-              src={coin.logo}
-              alt={coin.name}
-              className="w-full h-full object-cover rounded-full"
-              onError={(e) => {
-                e.currentTarget.src = "/placeholder.svg";
-              }}
-            />
-          </div>
-          <div>
-            <h3 className="font-poppins font-bold text-white text-xl">{coin.name}</h3>
-            <p className="text-gray-300 text-sm font-mono">{coin.symbol}</p>
-          </div>
+      </div>
+      
+      {/* Logo and symbol - positioned below banner */}
+      <div className="px-4 pt-4 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm p-1 border-2 border-white/10">
+          <img
+            src={coin.logo}
+            alt={coin.name}
+            className="w-full h-full object-cover rounded-full"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg";
+            }}
+          />
+        </div>
+        <div>
+          <h3 className="font-poppins font-bold text-white text-xl">{coin.name}</h3>
+          <p className="text-gray-300 text-sm font-mono">{coin.symbol}</p>
         </div>
         
         {/* Price change indicator */}
-        <div className="absolute top-4 right-4">
+        <div className="ml-auto">
           <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
             coin.change24h >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
           }`}>
@@ -307,47 +354,64 @@ const CoinCard = ({ coin, index }) => {
       </div>
       
       <div className="p-4">
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-black/20 rounded-xl p-2">
             <p className="text-xs text-gray-400 font-mono">Price</p>
             <p className="font-medium font-mono">${formatPrice(coin.price)}</p>
           </div>
-          <div>
+          <div className="bg-black/20 rounded-xl p-2">
             <p className="text-xs text-gray-400 font-mono">Market Cap</p>
             <p className="font-medium font-mono">{formatMarketCap(coin.marketCap)}</p>
           </div>
-          <div>
+          <div className="bg-black/20 rounded-xl p-2">
             <p className="text-xs text-gray-400 font-mono">Volume (24h)</p>
             <p className="font-medium font-mono">{formatMarketCap(coin.volume24h)}</p>
           </div>
-          <div>
-            <p className="text-xs text-gray-400 font-mono">Categories</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {coin.category.slice(0, 2).map((cat) => (
-                <span
-                  key={cat}
-                  className="text-[10px] px-1.5 py-0.5 bg-wybe-primary/10 text-wybe-primary rounded-full font-mono"
-                >
-                  {cat}
-                </span>
-              ))}
-              {coin.category.length > 2 && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-gray-700/30 text-gray-400 rounded-full">
-                  +{coin.category.length - 2}
-                </span>
-              )}
+          <div className="bg-black/20 rounded-xl p-2">
+            <p className="text-xs text-gray-400 font-mono">Holders</p>
+            <p className="font-medium font-mono">👥 {formatNumber(coin.holders)}</p>
+          </div>
+        </div>
+        
+        {/* Category tags */}
+        <div className="flex flex-wrap gap-1 mb-4">
+          {coin.category.map((cat) => (
+            <span
+              key={cat}
+              className="text-[10px] px-2 py-0.5 bg-wybe-primary/10 text-wybe-primary rounded-full font-mono"
+            >
+              {cat}
+            </span>
+          ))}
+        </div>
+        
+        {/* Holder statistics with emojis */}
+        <div className="mb-4 bg-wybe-background-light/30 rounded-xl p-3">
+          <p className="text-xs text-gray-300 font-mono mb-2">Holder Distribution</p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-black/30 rounded-lg p-2">
+              <p className="text-[10px] text-gray-400 font-mono">🐋 Whales</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.whales)}</p>
+            </div>
+            <div className="bg-black/30 rounded-lg p-2">
+              <p className="text-[10px] text-gray-400 font-mono">👨‍💻 Devs</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.devs)}</p>
+            </div>
+            <div className="bg-black/30 rounded-lg p-2">
+              <p className="text-[10px] text-gray-400 font-mono">👤 Retail</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.retail)}</p>
             </div>
           </div>
         </div>
         
         <div className="flex gap-2">
           <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="flex-1">
-            <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 font-poppins font-bold">
-              Trade
+            <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/80 text-white font-poppins font-bold rounded-full">
+              Trade 💱
             </Button>
           </Link>
-          <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 font-poppins">
-            Details
+          <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 active:bg-wybe-background-light/70 font-poppins rounded-full">
+            Details 📊
           </Button>
         </div>
       </div>

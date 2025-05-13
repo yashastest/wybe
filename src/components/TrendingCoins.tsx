@@ -1,9 +1,10 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Rocket, Users, Whale } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TrendingCoins = () => {
   // Mock data
@@ -16,7 +17,12 @@ const TrendingCoins = () => {
       volume: "$52,000",
       marketCap: "$230,000",
       positive: true,
-      sparkline: [20, 22, 25, 22, 26, 27, 30, 28, 30, 35]
+      sparkline: [20, 22, 25, 22, 26, 27, 30, 28, 30, 35],
+      holderStats: {
+        whales: 12,
+        devs: 2,
+        retail: 4850
+      }
     },
     {
       name: "Doge Sol",
@@ -26,7 +32,12 @@ const TrendingCoins = () => {
       volume: "$120,000",
       marketCap: "$560,000",
       positive: true,
-      sparkline: [40, 42, 45, 42, 46, 44, 48, 52, 50, 55]
+      sparkline: [40, 42, 45, 42, 46, 44, 48, 52, 50, 55],
+      holderStats: {
+        whales: 28,
+        devs: 4,
+        retail: 8750
+      }
     },
     {
       name: "Shiba Solana",
@@ -36,7 +47,12 @@ const TrendingCoins = () => {
       volume: "$32,000",
       marketCap: "$120,000",
       positive: false,
-      sparkline: [25, 22, 20, 18, 20, 22, 18, 16, 18, 15]
+      sparkline: [25, 22, 20, 18, 20, 22, 18, 16, 18, 15],
+      holderStats: {
+        whales: 8,
+        devs: 1,
+        retail: 2450
+      }
     },
     {
       name: "Floki Sun",
@@ -46,7 +62,12 @@ const TrendingCoins = () => {
       volume: "$78,000",
       marketCap: "$340,000",
       positive: true,
-      sparkline: [30, 35, 38, 40, 38, 42, 45, 50, 48, 55]
+      sparkline: [30, 35, 38, 40, 38, 42, 45, 50, 48, 55],
+      holderStats: {
+        whales: 16,
+        devs: 3,
+        retail: 5320
+      }
     }
   ];
 
@@ -78,7 +99,7 @@ const TrendingCoinCard = ({ coin, delay }) => {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
-      className="glass-card p-5 hover:border-wybe-primary/30 transition-colors"
+      className="glass-card p-5 hover:border-wybe-primary/30 hover:shadow-glow-sm transition-all duration-300"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -97,24 +118,47 @@ const TrendingCoinCard = ({ coin, delay }) => {
         </div>
       </div>
       
-      <div className="mb-4 h-16">
+      <div className="mb-4 h-16 rounded-xl overflow-hidden bg-black/20">
         <Sparkline data={coin.sparkline} positive={coin.positive} />
       </div>
       
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div>
-          <p className="text-xs text-gray-400">Price</p>
+        <div className="bg-black/20 rounded-xl p-2">
+          <p className="text-xs text-gray-400">💰 Price</p>
           <p className="font-medium">{coin.price} SOL</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-400">Volume (24h)</p>
+        <div className="bg-black/20 rounded-xl p-2">
+          <p className="text-xs text-gray-400">📊 Volume</p>
           <p className="font-medium">{coin.volume}</p>
         </div>
       </div>
       
+      {/* Holder statistics with emojis */}
+      <div className="mb-4 bg-wybe-background-light/30 rounded-xl p-2">
+        <p className="text-xs text-gray-300 mb-1 flex items-center gap-1">
+          <Users size={12} className="text-wybe-primary" />
+          Holder Stats
+        </p>
+        <div className="grid grid-cols-3 gap-1 text-center">
+          <div className="bg-black/30 rounded-lg p-1">
+            <p className="text-[10px] text-gray-400">🐋 Whales</p>
+            <p className="font-medium text-xs">{coin.holderStats.whales}</p>
+          </div>
+          <div className="bg-black/30 rounded-lg p-1">
+            <p className="text-[10px] text-gray-400">👨‍💻 Devs</p>
+            <p className="font-medium text-xs">{coin.holderStats.devs}</p>
+          </div>
+          <div className="bg-black/30 rounded-lg p-1">
+            <p className="text-[10px] text-gray-400">👤 Retail</p>
+            <p className="font-medium text-xs">{coin.holderStats.retail}</p>
+          </div>
+        </div>
+      </div>
+      
       <Link to={`/trade/${coin.symbol.toLowerCase()}`}>
-        <Button className="w-full btn-primary text-sm py-1 h-8">
-          Trade {coin.symbol}
+        <Button className="w-full btn-primary text-sm py-1 h-8 flex items-center justify-center gap-1 group">
+          <span>Trade {coin.symbol}</span>
+          <Rocket size={14} className="group-hover:translate-x-1 transition-transform" />
         </Button>
       </Link>
     </motion.div>

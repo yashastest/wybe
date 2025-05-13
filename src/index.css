@@ -78,6 +78,11 @@
     font-family: 'Poppins', sans-serif;
   }
   
+  /* Add padding to main content areas to prevent header overlap */
+  main {
+    padding-top: 5rem; /* Ensures content doesn't get hidden under header */
+  }
+  
   h1, h2, h3, h4, h5, h6, .font-poppins {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
@@ -97,13 +102,23 @@
     font-weight: 700;
   }
 
-  /* Button styles with curved corners */
+  /* Button styles with curved corners and improved hover/active states */
   .btn-primary {
-    @apply bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-medium rounded-full transition-all duration-200 shadow-curved;
+    @apply bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 active:from-purple-700 active:to-purple-900 text-white font-medium rounded-full transition-all duration-200 shadow-curved;
+    transform: translateY(0);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(1px);
   }
   
   .btn-secondary {
-    @apply bg-transparent border border-white/20 text-white hover:bg-white/10 transition-all duration-200 font-medium rounded-full shadow-curved;
+    @apply bg-transparent border border-white/20 text-white hover:bg-white/10 active:bg-white/20 transition-all duration-200 font-medium rounded-full shadow-curved;
+    transform: translateY(0);
+  }
+  
+  .btn-secondary:active {
+    transform: translateY(1px);
   }
 
   /* Card styles with curved corners */
@@ -206,5 +221,14 @@
   
   .curved-gradient {
     @apply bg-gradient-to-r from-purple-600 to-pink-600 rounded-full;
+  }
+  
+  /* Button hover and active states */
+  button:hover {
+    @apply brightness-110;
+  }
+  
+  button:active {
+    @apply brightness-90;
   }
 }
