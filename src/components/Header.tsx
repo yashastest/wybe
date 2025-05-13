@@ -69,9 +69,9 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               <img 
                 src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
                 alt="Wybe Logo" 
-                className="h-10 w-10"
+                className="h-12 w-12 md:h-14 md:w-14" // Increased logo size
               />
-              <span className="ml-2 text-xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
+              <span className="ml-3 text-2xl md:text-3xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
             </motion.div>
           </Link>
           

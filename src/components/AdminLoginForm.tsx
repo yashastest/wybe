@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { Loader } from "lucide-react";
-import AdminPasswordReset from '@/components/AdminPasswordReset';
 
 const AdminLoginForm = () => {
   const [username, setUsername] = useState('');
@@ -112,12 +111,10 @@ const AdminLoginForm = () => {
           />
         </motion.div>
         
-        <motion.div className="flex justify-between items-center pt-2" variants={itemVariants}>
-          <AdminPasswordReset />
-          
+        <motion.div className="flex justify-end items-center pt-2" variants={itemVariants}>
           <Button 
             type="submit"
-            className="btn-primary"
+            className="btn-primary w-full"
             disabled={isLoading}
           >
             {isLoading ? (
