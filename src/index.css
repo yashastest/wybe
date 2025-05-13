@@ -85,6 +85,14 @@
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
   }
+  
+  /* Poppins Extra Bold for Wybe branding */
+  .wybe-brand {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800; /* Extra Bold */
+    font-style: italic;
+    color: white;
+  }
 
   /* JetBrains Mono Bold as secondary font */
   code, pre, .font-jetbrains, .font-mono {

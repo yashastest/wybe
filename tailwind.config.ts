@@ -25,6 +25,9 @@ export default {
         mono: ["JetBrains Mono", "monospace"],
         jetbrains: ["JetBrains Mono", "monospace"],
       },
+      fontWeight: {
+        extrabold: '800',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

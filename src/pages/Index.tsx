@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { ChevronDown, Globe, Shield, TrendingUp, Wallet, Rocket, CircleDollarSign } from "lucide-react";
@@ -188,7 +187,7 @@ const CreatorFeesSection = () => {
             className="text-center"
           >
             <Link to="/launch">
-              <Button className="btn-primary font-poppins font-bold">
+              <Button className="btn-primary font-poppins font-extrabold">
                 Apply for Whitelist
               </Button>
             </Link>
@@ -204,7 +203,7 @@ const CreatorFeesSection = () => {
             }}
             className="mt-16 glass-card p-6 md:p-8 backdrop-blur-lg"
           >
-            <h3 className="text-2xl font-bold font-poppins mb-4 text-center">The Wybe <span className="text-gradient">Advantage</span></h3>
+            <h3 className="text-2xl font-bold font-poppins mb-4 text-center">The <span className="text-white font-extrabold font-poppins italic">Wybe</span> <span className="text-gradient">Advantage</span></h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <motion.div className="flex items-start gap-3">
                 <div className="mt-1 bg-wybe-primary/20 p-2 rounded-full">

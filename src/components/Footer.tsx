@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Twitter } from "lucide-react";
@@ -17,7 +16,7 @@ const Footer = () => {
                 alt="Wybe Logo" 
                 className="h-8 w-8 mr-2" 
               />
-              <span className="text-wybe-primary">Wybe</span>
+              <span className="text-white font-poppins font-extrabold italic tracking-wide">Wybe</span>
             </h3>
             <p className="text-gray-400 mb-4">
               The first fully AI-powered, Solana-based meme coin launchpad with built-in bonding curves and creator incentives.
@@ -78,7 +77,7 @@ const Footer = () => {
         </div>
         
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">© {currentYear} Wybe. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© {currentYear} <span className="text-white font-poppins font-extrabold italic">Wybe</span>. All rights reserved.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
               <Twitter className="h-4 w-4 mr-1" />

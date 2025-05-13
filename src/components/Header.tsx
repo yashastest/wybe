@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -71,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                 alt="Wybe Logo" 
                 className="h-8 w-8 md:h-10 md:w-10" 
               />
-              <span className="ml-2 text-xl md:text-2xl font-bold font-poppins tracking-wide text-white italic">Wybe</span>
+              <span className="ml-2 text-xl md:text-2xl text-white font-extrabold font-poppins tracking-wide italic">Wybe</span>
             </motion.div>
           </Link>
           
@@ -96,6 +95,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             ))}
           </nav>
           
+          {/* Mobile Menu Button */}
           {!adminOnly && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
