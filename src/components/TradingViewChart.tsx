@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -145,24 +147,31 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   };
 
   return (
-    <div className={`w-full relative ${containerClassName} glass-card overflow-hidden`} style={{ height: '500px' }}>
+    <AspectRatio ratio={16/9} className={`relative ${containerClassName}`}>
       {isLoading && (
         <motion.div 
-          className="absolute inset-0 flex items-center justify-center bg-wybe-background-light z-10"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/90 to-indigo-950/90 z-10 rounded-xl backdrop-blur-sm"
           animate={{ opacity: isLoading ? 1 : 0 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col items-center gap-4">
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              animate={{ 
+                rotate: 360,
+                boxShadow: ["0 0 10px rgba(139, 92, 246, 0.5)", "0 0 30px rgba(139, 92, 246, 0.8)", "0 0 10px rgba(139, 92, 246, 0.5)"]
+              }}
+              transition={{ 
+                rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                boxShadow: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="p-4 rounded-full"
             >
               <Loader size={32} className="text-wybe-primary" />
             </motion.div>
-            <p className="gradient-text text-lg">Loading Chart</p>
-            <div className="w-32 h-1 bg-wybe-primary/30 rounded-full overflow-hidden">
+            <p className="gradient-text text-lg font-bold">Loading Chart Data</p>
+            <div className="w-48 h-2 bg-wybe-background-light rounded-full overflow-hidden">
               <motion.div 
-                className="h-full bg-wybe-primary"
+                className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500"
                 animate={{ 
                   width: ["0%", "100%", "0%"],
                   x: ["-100%", "0%", "100%"]
@@ -179,20 +188,24 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       )}
       
       <motion.div 
-        className="w-full h-full"
+        className="w-full h-full rounded-xl overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ 
           opacity: isChartReady ? 1 : 0,
           scale: isChartReady ? 1 : 0.98,
         }}
         transition={{ duration: 0.4 }}
       >
+        {!isChartReady && (
+          <Skeleton className="w-full h-full" />
+        )}
         <div 
           id={`tradingview-widget-${symbol}-${timeframe}-${chartType}`} 
           ref={containerRef} 
           className="w-full h-full"
         />
       </motion.div>
-    </div>
+    </AspectRatio>
   );
 };
 
