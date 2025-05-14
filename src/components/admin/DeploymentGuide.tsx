@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,9 +14,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
+// Define the type for deployment status
+type DeploymentStatusType = {
+  status: string;
+  tokenAddress?: string;
+  bondingCurveAddress?: string;
+  treasuryAddress?: string;
+};
+
+// Define the overall deployment state type
+type DeploymentStateType = {
+  testnet: DeploymentStatusType;
+  mainnet: DeploymentStatusType;
+};
+
 const DeploymentGuide = () => {
   const [deploymentNetwork, setDeploymentNetwork] = useState("testnet");
-  const [deploymentStatus, setDeploymentStatus] = useState({
+  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStateType>({
     testnet: {
       status: "success",
       tokenAddress: "FG9SYnttGJKQsHqNPZhwGVkzkJEGnY8kaySvbSSNYNtw",
