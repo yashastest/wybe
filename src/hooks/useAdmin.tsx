@@ -7,12 +7,16 @@ export const useAdmin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminPermissions, setAdminPermissions] = useState<string[]>([]);
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Run auth check only once when component mounts or when pathname changes
   useEffect(() => {
-    checkAdminSession();
-  }, [location.pathname]);
+    if (!authCheckCompleted) {
+      checkAdminSession();
+    }
+  }, [location.pathname, authCheckCompleted]);
 
   const checkAdminSession = () => {
     setIsLoading(true);
@@ -45,6 +49,7 @@ export const useAdmin = () => {
       
       setIsAuthenticated(true);
       setIsLoading(false);
+      setAuthCheckCompleted(true);
     } else {
       console.log("No valid session found, setting authenticated to false");
       setIsAuthenticated(false);
@@ -59,6 +64,7 @@ export const useAdmin = () => {
       }
       
       setIsLoading(false);
+      setAuthCheckCompleted(true);
     }
   };
 
@@ -66,6 +72,7 @@ export const useAdmin = () => {
     localStorage.removeItem("wybeAdminLoggedIn");
     sessionStorage.removeItem("wybeAdminSession");
     setIsAuthenticated(false);
+    setAuthCheckCompleted(false); // Reset auth check on logout
     navigate('/admin-login');
     toast.success("Logged out successfully", {
       duration: 3000, // Shorter duration for toast

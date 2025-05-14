@@ -34,17 +34,21 @@ const LoadingFallback = () => (
 const Admin = () => {
   const { isAuthenticated, isLoading } = useAdmin();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
   useScrollToTop();
 
   useEffect(() => {
-    // If not authenticated and not loading, redirect to login
-    if (!isAuthenticated && !isLoading) {
-      navigate('/admin-login');
+    // Only redirect after initial auth check is complete
+    if (!isLoading) {
+      setInitialAuthCheckDone(true);
+      if (!isAuthenticated) {
+        navigate('/admin-login');
+      }
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
+  // Show loading state only during initial auth check
+  if (isLoading && !initialAuthCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="h-10 w-10 animate-spin text-wybe-primary" />
@@ -52,8 +56,9 @@ const Admin = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Don't render anything if not authenticated (will redirect)
+  // Don't render anything during redirects
+  if (!isAuthenticated && initialAuthCheckDone) {
+    return null;
   }
 
   return (
