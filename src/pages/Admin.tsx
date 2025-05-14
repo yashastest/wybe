@@ -94,12 +94,12 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       <Header adminOnly={true} />
       
-      <div className="flex flex-1 w-full max-w-[1400px] mx-auto pt-16 md:pt-20">
+      <div className="flex flex-1 w-full max-w-[1400px] mx-auto px-4 pt-20">
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center absolute top-20 left-4 z-30">
+        <div className="md:hidden absolute top-20 left-4 z-30">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button className="p-2 bg-orange-500/20 rounded-md">
@@ -172,10 +172,10 @@ const Admin = () => {
           ))}
         </motion.div>
         
-        {/* Mobile Tab Selector (simplified) */}
-        <div className="md:hidden w-full px-4 pt-12">
+        {/* Mobile Tab Navigation */}
+        <div className="md:hidden w-full pb-4">
           <div className="overflow-x-auto pb-2 -mx-4 px-4">
-            <div className="inline-flex min-w-full">
+            <div className="inline-flex min-w-full border-b border-white/10">
               <button 
                 onClick={() => setActiveTab("dashboard")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "dashboard" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
@@ -216,13 +216,13 @@ const Admin = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="flex-1 p-4 md:p-6 overflow-y-auto"
+          className="flex-1 p-4 md:p-6 overflow-y-auto w-full md:ml-4"
         >
           {activeTab === "dashboard" && <AdminDashboard />}
           {activeTab === "approvals" && <PendingApprovals />}
           {activeTab === "analytics" && <AnalyticsDashboard />}
           {activeTab === "contracts" && <SmartContractDashboard />}
-          {activeTab === "deployment" && <DeploymentGuide />}
+          {activeTab === "deployment" && <SmartContractDeployment />}
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "projects" && (
@@ -240,9 +240,9 @@ const Admin = () => {
         </motion.div>
       </div>
       
-      <div className="pb-6"></div>
-      
-      <Footer />
+      <div className="mt-auto">
+        <Footer />
+      </div>
     </div>
   );
 };

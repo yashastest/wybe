@@ -1,253 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+ 
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+ 
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+ 
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+ 
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+ 
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+ 
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+ 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
+ 
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    --wybe-background: 222 47.4% 11.2%;
-    --wybe-background-light: 220 13% 18%;
-    --wybe-primary: 24 100% 50%;  /* Changed to orange */
-    --wybe-secondary: 26 100% 50%;
-    --wybe-accent: 217.2 32.6% 17.5%;
+    --wybe-background: #000000;
+    --wybe-background-light: #111111;
+    --wybe-primary: #F97316;
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
   }
-
-  /* Poppins as primary font */
   body {
-    @apply bg-wybe-background text-white antialiased;
-    font-family: 'Poppins', sans-serif;
+    @apply bg-background text-foreground;
   }
-  
-  /* Add padding to main content areas to prevent header overlap */
-  main {
-    padding-top: 5rem; /* Ensures content doesn't get hidden under header */
-  }
-  
-  h1, h2, h3, h4, h5, h6, .font-poppins {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-  }
-  
-  /* Poppins Extra Bold for Wybe branding */
-  .wybe-brand {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 800; /* Extra Bold */
-    font-style: italic;
-    color: white;
-  }
+}
 
-  /* JetBrains Mono Bold as secondary font */
-  .font-jetbrains {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-  }
-
-  /* Button styles with curved corners and improved hover/active states */
-  .btn-primary {
-    @apply bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 active:to-orange-900 text-white font-medium rounded-full transition-all duration-200 shadow-curved;
-    transform: translateY(0);
-  }
-  
-  .btn-primary:active {
-    transform: translateY(1px);
-  }
-  
-  .btn-secondary {
-    @apply bg-transparent border border-white/20 text-white hover:bg-white/10 active:bg-white/20 transition-all duration-200 font-medium rounded-full shadow-curved;
-    transform: translateY(0);
-  }
-  
-  .btn-secondary:active {
-    transform: translateY(1px);
-  }
-
-  /* Card styles with curved corners */
+@layer components {
   .glass-card {
-    @apply bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl shadow-curved;
+    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg;
+  }
+  
+  .btn-primary {
+    @apply bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md;
   }
 
-  /* Gradient text */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-yellow-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500;
   }
 
-  /* Glass navbar with curved bottom */
-  .glass-nav {
-    @apply bg-black/30 backdrop-blur-md border-b border-white/5 rounded-b-xl;
+  /* Fix for mobile navigation scroll */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-
-  /* Active navigation link */
-  .active-nav-link {
-    @apply text-orange-500 relative;
-  }
-  
-  .nav-link:hover {
-    @apply text-orange-500 transition-colors duration-200;
-  }
-  
-  /* Mobile active navigation link */
-  .md\:hidden .active-nav-link {
-    @apply bg-orange-500/20 pl-2 rounded-full;
-  }
-  
-  /* Animation utilities */
-  .animate-pulse-glow {
-    @apply relative overflow-hidden rounded-full;
-  }
-  
-  .animate-pulse-glow::after {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full rounded-full;
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-  
-  @keyframes pulse-glow {
-    0% {
-      transform: translateX(-100%);
-    }
-    50%, 100% {
-      transform: translateX(100%);
-    }
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse-slow 2s ease-in-out infinite;
-  }
-  
-  @keyframes pulse-slow {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-  
-  /* Specific header navigation hover effects with curved underline */
-  .nav-link {
-    @apply relative;
-  }
-  
-  .nav-link::after {
-    content: '';
-    @apply absolute left-0 bottom-0 w-0 h-1 bg-orange-500 rounded-full transition-all duration-300 ease-in-out;
-  }
-  
-  .nav-link:hover::after,
-  .active-nav-link::after {
-    @apply w-full;
-  }
-  
-  /* New curved styles */
-  .curved-input {
-    @apply rounded-full border-white/10 bg-black/20 backdrop-blur-sm;
-  }
-  
-  .curved-card {
-    @apply rounded-3xl shadow-curved overflow-hidden;
-  }
-  
-  .curved-button {
-    @apply rounded-full px-6 py-2;
-  }
-  
-  .curved-badge {
-    @apply rounded-full px-3 py-1 text-xs;
-  }
-  
-  .curved-avatar {
-    @apply rounded-full border-2 border-white/20 overflow-hidden;
-  }
-  
-  .curved-gradient {
-    @apply bg-gradient-to-r from-purple-600 to-pink-600 rounded-full;
-  }
-  
-  /* Button hover and active states */
-  button:hover {
-    @apply brightness-110;
-  }
-  
-  button:active {
-    @apply brightness-90;
-  }
-
-  /* Typewriter effect */
-  .typewriter {
-    overflow: hidden;
-    border-right: 0.15em solid #f97316;
-    white-space: nowrap;
-    margin: 0 auto;
-    letter-spacing: 0.15em;
-    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
-  }
-
-  @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-  }
-
-  @keyframes blink-caret {
-    from, to { border-color: transparent }
-    50% { border-color: #f97316; }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

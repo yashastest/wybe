@@ -1,86 +1,42 @@
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
-import { Loader } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const AdminLoginForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
-  const handleLogin = async (e: React.FormEvent) => {
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!username || !password) {
-      toast.error('Username and password are required');
-      return;
-    }
-    
     setIsLoading(true);
-    
-    try {
-      // Simulate authentication request
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // In production, this would be replaced with an actual API call
-      if (username === 'admin' && password === 'password') {
-        // Save login state to localStorage for persistence
-        localStorage.setItem("wybeAdminLoggedIn", "true");
-        toast.success('Login successful');
+
+    // For demo purposes - in a real app, this would be an API call
+    setTimeout(() => {
+      // Demo credentials - in production, this would validate against a database
+      if (username === 'admin' && password === 'admin123') {
+        localStorage.setItem('wybeAdminLoggedIn', 'true');
+        toast.success('Login successful!');
         navigate('/admin');
       } else {
         toast.error('Invalid credentials');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Login failed. Please try again.');
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
-  
-  const formVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-  
+
   return (
-    <motion.div 
-      className="glass-card p-8 max-w-md w-full mx-auto shadow-glow-sm"
-      initial="hidden"
-      animate="visible"
-      variants={formVariants}
-    >
-      <motion.div variants={itemVariants} className="mb-8 text-center">
-        <h2 className="text-3xl font-bold mb-2">
-          <span className="text-gradient">Admin Login</span>
-        </h2>
-        <p className="text-gray-400">
-          Sign in to access the admin dashboard
-        </p>
-      </motion.div>
-      
-      <motion.form onSubmit={handleLogin} className="space-y-5" variants={itemVariants}>
-        <motion.div className="space-y-2" variants={itemVariants}>
-          <label htmlFor="username" className="text-sm font-medium">
+    <div className="glass-card p-6 w-full max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="username" className="block text-sm font-medium">
             Username
           </label>
           <Input
@@ -88,60 +44,60 @@ const AdminLoginForm = () => {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter your username"
-            className="bg-wybe-background/40 border-wybe-primary/20 focus-visible:ring-wybe-primary/70"
-            disabled={isLoading}
             required
+            className="w-full"
+            placeholder="Enter your username"
           />
-        </motion.div>
+        </div>
         
-        <motion.div className="space-y-2" variants={itemVariants}>
-          <label htmlFor="password" className="text-sm font-medium">
+        <div className="space-y-2">
+          <label htmlFor="password" className="block text-sm font-medium">
             Password
           </label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            className="bg-wybe-background/40 border-wybe-primary/20 focus-visible:ring-wybe-primary/70"
-            disabled={isLoading}
-            required
-          />
-        </motion.div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full pr-10"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOffIcon className="h-4 w-4 text-gray-400" />
+              ) : (
+                <EyeIcon className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <div className="text-right text-sm">
+            <a href="#" className="text-orange-500 hover:underline">
+              Forgot password?
+            </a>
+          </div>
+        </div>
         
-        <motion.div className="flex justify-end items-center pt-2" variants={itemVariants}>
-          <Button 
-            type="submit"
-            className="btn-primary w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2 justify-center">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Loader size={16} />
-                </motion.div>
-                <span>Logging in...</span>
-              </div>
-            ) : 'Login'}
-          </Button>
-        </motion.div>
-      </motion.form>
-
-      <motion.div 
-        className="mt-6 pt-6 border-t border-white/10 text-center text-sm text-gray-400"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-      >
-        <p>Use the credentials provided by admin</p>
-        <p className="text-xs mt-1">(Default: admin/password)</p>
-      </motion.div>
-    </motion.div>
+        <Button
+          type="submit"
+          className="w-full bg-orange-500 hover:bg-orange-600"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Logging in...' : 'Login'}
+        </Button>
+        
+        <p className="text-sm text-center text-gray-400 mt-4">
+          Demo credentials: <br />
+          Username: <span className="text-white font-mono">admin</span> <br />
+          Password: <span className="text-white font-mono">admin123</span>
+        </p>
+      </form>
+    </div>
   );
 };
 

@@ -21,7 +21,7 @@ const AdminLogin = () => {
   }, [navigate]);
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <Header />
       
       <div className="flex-grow flex items-center justify-center py-16 px-4 mt-16">
