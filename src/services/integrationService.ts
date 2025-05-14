@@ -22,6 +22,23 @@ export interface AdminUserAccess {
   twoFactorEnabled?: boolean;
 }
 
+// Type for deployment step
+export type DeploymentStep = {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  command?: string;
+  prerequisite?: string[];
+  output?: string;
+  verificationSteps?: {
+    id: string;
+    title: string;
+    status: 'pending' | 'success' | 'error';
+    message?: string;
+  }[];
+};
+
 export const integrationService = {
   // Method to get deployment checklist
   getDeploymentChecklist: () => {
@@ -105,6 +122,87 @@ export const integrationService = {
         resolve(newEnvironment);
       }, 3000);
     });
+  },
+  
+  // Get deployment steps for specific network
+  getDeploymentSteps: (network: string): DeploymentStep[] => {
+    // Try to get from localStorage first
+    const key = `deploymentSteps_${network}`;
+    const storedSteps = localStorage.getItem(key);
+    
+    if (storedSteps) {
+      try {
+        return JSON.parse(storedSteps);
+      } catch (error) {
+        console.error("Error parsing deployment steps:", error);
+      }
+    }
+    
+    // Default steps
+    const defaultSteps: DeploymentStep[] = [
+      {
+        id: '1',
+        title: 'Initialize Environment',
+        description: 'Setup necessary development environment for contract deployment',
+        status: 'completed',
+        command: 'anchor init wybe_token_program',
+        output: 'Environment initialized successfully!'
+      },
+      {
+        id: '2',
+        title: 'Build Smart Contract',
+        description: 'Build the smart contract with Anchor framework',
+        status: 'completed',
+        command: 'anchor build',
+        prerequisite: ['1'],
+        output: 'Build completed successfully!'
+      },
+      {
+        id: '3',
+        title: 'Configure Program ID',
+        description: 'Update Anchor.toml and lib.rs files with the program ID',
+        status: 'in-progress',
+        command: 'solana address -k ./target/deploy/wybe_token_program-keypair.json',
+        prerequisite: ['2']
+      },
+      {
+        id: '4',
+        title: 'Deploy to Local Validator',
+        description: 'Deploy the program to a local Solana validator for testing',
+        status: 'pending',
+        command: 'anchor deploy --provider.cluster localnet',
+        prerequisite: ['2', '3']
+      },
+      {
+        id: '5',
+        title: 'Run Tests',
+        description: 'Execute test suite against the deployed program',
+        status: 'pending',
+        command: 'anchor test',
+        prerequisite: ['4']
+      },
+      {
+        id: '6',
+        title: `Deploy to ${network.charAt(0).toUpperCase() + network.slice(1)}`,
+        description: `Deploy the program to ${network}`,
+        status: 'pending',
+        command: `anchor deploy --provider.cluster ${network}`,
+        prerequisite: ['5']
+      },
+      {
+        id: '7',
+        title: 'Verify Deployment',
+        description: 'Confirm deployment status and program functionality',
+        status: 'pending',
+        command: 'npm run verify-deployment',
+        prerequisite: ['6']
+      }
+    ];
+    
+    // Store in localStorage for future use
+    localStorage.setItem(key, JSON.stringify(defaultSteps));
+    
+    return defaultSteps;
   },
   
   // Methods for admin user management

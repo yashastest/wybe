@@ -10,7 +10,6 @@ import { smartContractService } from './services/smartContractService';
 // Sync configurations between services on startup
 const initializeServices = () => {
   const tradingConfig = tradingService.getConfig();
-  const contractConfig = smartContractService.getContractConfig();
   
   // Ensure trading service and smart contract service have consistent settings
   smartContractService.updateContractConfig({
@@ -19,10 +18,13 @@ const initializeServices = () => {
     dexScreenerThreshold: tradingConfig.dexscreenerThreshold
   });
   
+  // Get updated contract config for logging
+  const contractConfig = smartContractService.getContractConfig();
+  
   console.log("Services initialized with the following configuration:");
-  console.log("- Creator fee:", tradingConfig.creatorFeePercentage + "%");
-  console.log("- Reward claim period:", tradingConfig.rewardClaimPeriod + " days");
-  console.log("- DEXScreener threshold: $" + tradingConfig.dexscreenerThreshold);
+  console.log("- Creator fee:", contractConfig.creatorFeePercentage + "%");
+  console.log("- Reward claim period:", contractConfig.rewardClaimPeriodDays + " days");
+  console.log("- DEXScreener threshold: $" + contractConfig.dexScreenerThreshold);
 };
 
 // Mock the solana object for testing
