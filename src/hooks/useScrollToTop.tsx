@@ -4,11 +4,21 @@ import { useLocation } from 'react-router-dom';
 
 /**
  * Custom hook that scrolls the page to the top on route change
+ * with options for smooth scrolling
  */
-export function useScrollToTop() {
+export function useScrollToTop(options = { smooth: false }) {
   const { pathname } = useLocation();
   
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (options.smooth) {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, options.smooth]);
 }
+
+export default useScrollToTop;

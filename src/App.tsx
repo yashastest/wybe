@@ -21,7 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/*" element={<Admin />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/launch" element={<Launch />} />
           <Route path="/package" element={<LaunchPackage />} />

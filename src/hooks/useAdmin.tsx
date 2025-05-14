@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export const useAdmin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminPermissions, setAdminPermissions] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,6 +24,15 @@ export const useAdmin = () => {
     
     if (isLoggedIn && sessionExists) {
       console.log("Valid session found, setting authenticated to true");
+      try {
+        // Load permissions from session
+        const sessionData = JSON.parse(sessionStorage.getItem("wybeAdminSession") || '{}');
+        setAdminPermissions(sessionData.permissions || ['default']);
+      } catch (error) {
+        console.error("Error parsing session data:", error);
+        setAdminPermissions(['default']);
+      }
+      
       setIsAuthenticated(true);
       setIsLoading(false);
     } else {
@@ -52,7 +62,13 @@ export const useAdmin = () => {
     });
   };
 
-  return { isAuthenticated, isLoading, logout, checkAdminSession };
+  return { 
+    isAuthenticated, 
+    isLoading, 
+    logout, 
+    checkAdminSession,
+    adminPermissions
+  };
 };
 
 export default useAdmin;
