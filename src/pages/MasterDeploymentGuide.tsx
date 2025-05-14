@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 // Import DeploymentStep from integrationService
 import { DeploymentStep, integrationService } from '@/services/integrationService';
@@ -97,7 +96,7 @@ const MasterDeploymentGuide = () => {
     setCurrentRunningStep(stepId);
     
     // Mark the step as in-progress
-    const updatedSteps: StepsWithFixedStatus = steps.map(step => {
+    const updatedSteps = steps.map(step => {
       if (step.id === stepId) {
         return {
           ...step,
@@ -106,7 +105,7 @@ const MasterDeploymentGuide = () => {
       }
       return step;
     });
-    setSteps(updatedSteps as DeploymentStep[]);
+    setSteps(updatedSteps);
     
     // Simulate command execution
     setTimeout(() => {
@@ -136,7 +135,7 @@ const MasterDeploymentGuide = () => {
       ];
       
       // Update the step with output and mark as completed
-      const completedSteps: StepsWithFixedStatus = updatedSteps.map(step => {
+      const completedSteps = updatedSteps.map(step => {
         if (step.id === stepId) {
           return {
             ...step,
@@ -148,7 +147,7 @@ const MasterDeploymentGuide = () => {
         return step;
       });
       
-      setSteps(completedSteps as DeploymentStep[]);
+      setSteps(completedSteps);
       setIsRunning(false);
       setCurrentRunningStep(null);
       setExpandedStep(stepId); // Auto-expand to show results

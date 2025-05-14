@@ -31,6 +31,12 @@ export interface SecurityAuditResult {
     description: string;
     location: string;
   }>;
+  issues?: { 
+    severity: 'high' | 'medium' | 'low' | 'info';
+    description: string;
+    location?: string;
+  }[];
+  passedChecks?: string[];
 }
 
 // Gas Analysis Result Type
@@ -42,6 +48,8 @@ export interface GasAnalysisResult {
     gasUsed: number;
     percentage: number;
   }>;
+  gasEstimates?: { [key: string]: number };
+  optimizationSuggestions?: string[];
 }
 
 export interface DeploymentResult {
@@ -58,6 +66,15 @@ interface TestnetContract {
   network: string;
   txHash: string;
   status: string;
+}
+
+interface TestResults {
+  results: {
+    function: string;
+    status: 'failed' | 'passed';
+    error?: string;
+    txHash?: string;
+  }[];
 }
 
 export const smartContractService = {
@@ -275,6 +292,30 @@ Program ID: ${deployedProgramId}
               description: 'The contract does not validate that the bonding curve parameters are within reasonable bounds.',
               location: 'src/bonding_curve.rs:15'
             }
+          ],
+          // Add issues and passedChecks for ContractSecurityAudit.tsx
+          issues: [
+            {
+              severity: 'medium',
+              description: 'Unbounded loop in token distribution',
+              location: 'src/distribution.rs:42'
+            },
+            {
+              severity: 'low',
+              description: 'Missing event for important state change',
+              location: 'src/admin.rs:28'
+            },
+            {
+              severity: 'low',
+              description: 'Lack of input validation',
+              location: 'src/bonding_curve.rs:15'
+            }
+          ],
+          passedChecks: [
+            'Reentrancy Protection',
+            'Integer Overflow/Underflow',
+            'Access Control',
+            'Proper Error Handling'
           ]
         });
       }, 2500);
@@ -311,6 +352,18 @@ Program ID: ${deployedProgramId}
               gasUsed: 15000,
               percentage: 12
             }
+          ],
+          // Add gasEstimates and optimizationSuggestions for ContractSecurityAudit.tsx
+          gasEstimates: {
+            'Token Transfer': 50000,
+            'Bonding Curve Calculation': 35000,
+            'Fee Distribution': 25000,
+            'State Management': 15000
+          },
+          optimizationSuggestions: [
+            'Consider caching calculation results to reduce gas cost',
+            'Optimize loop in token distribution function',
+            'Batch operations where possible to reduce gas overhead'
           ]
         });
       }, 2000);
@@ -318,13 +371,30 @@ Program ID: ${deployedProgramId}
   },
   
   // Test contract on testnet
-  testOnTestnet: async (): Promise<boolean> => {
+  testOnTestnet: async (): Promise<TestResults> => {
     // Simulate testnet deployment and testing with delay
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Return success status (90% chance of success)
-        const success = Math.random() < 0.9;
-        resolve(success);
+        // Return test results
+        resolve({
+          results: [
+            {
+              function: 'Token Creation',
+              status: 'passed',
+              txHash: 'tx_' + Math.random().toString(36).substring(2, 15)
+            },
+            {
+              function: 'Token Transfer',
+              status: 'passed',
+              txHash: 'tx_' + Math.random().toString(36).substring(2, 15)
+            },
+            {
+              function: 'Bonding Curve Pricing',
+              status: 'passed',
+              txHash: 'tx_' + Math.random().toString(36).substring(2, 15)
+            }
+          ]
+        });
       }, 3000);
     });
   },
@@ -334,7 +404,7 @@ Program ID: ${deployedProgramId}
     amount: number, 
     price: number, 
     recipient: string
-  ): Promise<{ success: boolean; tokens: number; cost: number }> => {
+  ): Promise<{ success: boolean; tokens: number; cost: number; message: string }> => {
     console.log(`Minting ${amount} tokens at ${price} SOL each for ${recipient}`);
     
     // Simulate minting process
@@ -346,11 +416,12 @@ Program ID: ${deployedProgramId}
         const bondingFactor = 1 + (amount / 10000); // Increases price as more tokens are purchased
         const totalCost = baseCost * bondingFactor;
         
-        // Return result
+        // Return result with a message property
         resolve({
           success: true,
           tokens: amount,
-          cost: parseFloat(totalCost.toFixed(4))
+          cost: parseFloat(totalCost.toFixed(4)),
+          message: `Successfully minted ${amount} tokens for ${recipient} at a cost of ${parseFloat(totalCost.toFixed(4))} SOL`
         });
       }, 1500);
     });
@@ -363,7 +434,7 @@ Program ID: ${deployedProgramId}
     price: number,
     seller: string,
     buyer: string
-  ): Promise<{ success: boolean; txId: string }> => {
+  ): Promise<{ success: boolean; txId: string; message: string }> => {
     console.log(`Trading ${amount} tokens at ${price} SOL each from ${seller} to ${buyer}`);
     console.log(`Contract address: ${contractAddress}`);
     
@@ -373,10 +444,11 @@ Program ID: ${deployedProgramId}
         // Generate mock transaction ID
         const txId = "tx_" + Math.random().toString(36).substring(2, 15);
         
-        // Return result
+        // Return result with a message property
         resolve({
           success: true,
-          txId
+          txId,
+          message: `Trade executed successfully. ${amount} tokens transferred from ${seller} to ${buyer} at ${price} SOL per token.`
         });
       }, 2000);
     });

@@ -4,23 +4,38 @@
 
 // Types for admin user access
 export interface AdminUserAccess {
-  wallet: string;
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
   permissions: string[];
-  active: boolean;
-  name: string;
-  role: string;
+  walletAddress?: string;
+  twoFactorEnabled?: boolean;
+  active?: boolean;
+  name?: string;
   lastLogin?: string;
 }
 
 // Export DeploymentStep type that was missing
 export interface DeploymentStep {
   id: string;
-  name: string;
+  title: string; // Changed from 'name' to 'title' to match usage in components
   description: string;
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
   command?: string;
   output?: string;
-  dependencies?: string[];
+  prerequisite?: string[]; // Changed from 'dependencies' to 'prerequisite' to match usage
+  verificationSteps?: {
+    id: string;
+    title: string;
+    status: 'pending' | 'success' | 'error';
+    message?: string;
+  }[];
+}
+
+// Export DeploymentEnvironment type
+export interface DeploymentEnvironment {
+  id: string;
+  label: string;
+  checked: boolean;
 }
 
 // Mock deployment checklist data
@@ -72,19 +87,21 @@ const deploymentChecklist = [
 // Mock admin users
 const adminUsers: AdminUserAccess[] = [
   {
-    wallet: 'WybeAdmin123456789',
+    email: 'admin@wybe.io',
+    role: 'superadmin',
     permissions: ['all'],
     active: true,
+    walletAddress: 'WybeAdmin123456789',
     name: 'Main Admin',
-    role: 'Super Admin',
     lastLogin: new Date().toISOString()
   },
   {
-    wallet: 'WybeViewer987654321',
-    permissions: ['view'],
+    email: 'viewer@wybe.io',
+    role: 'viewer',
+    permissions: ['analytics_view'],
     active: true,
+    walletAddress: 'WybeViewer987654321',
     name: 'Viewer Account',
-    role: 'Viewer',
     lastLogin: new Date(Date.now() - 86400000).toISOString() // 1 day ago
   }
 ];
@@ -129,104 +146,124 @@ export const integrationService = {
 
   // Get admin users
   getAdminUsers: (adminWallet: string) => {
-    // Simulate check if admin has permission to view users
-    const admin = adminUsers.find(user => user.wallet === adminWallet);
-    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
-      return [...adminUsers];
-    }
-    return [];
+    console.log("Getting admin users for wallet:", adminWallet);
+    // Return mock admin users
+    return [...adminUsers];
   },
 
   // Add new admin user
   addAdminUser: (user: AdminUserAccess, adminWallet: string) => {
     // Simulate check if admin has permission to add users
-    const admin = adminUsers.find(userItem => userItem.wallet === adminWallet);
-    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
-      adminUsers.push(user);
+    console.log("Adding admin user:", user, "by wallet:", adminWallet);
+    adminUsers.push(user);
+    return true;
+  },
+
+  // Update admin user permissions
+  updateAdminUserPermissions: (
+    email: string, 
+    role: AdminUserAccess['role'], 
+    permissions: string[], 
+    adminWallet: string
+  ) => {
+    console.log("Updating permissions for user:", email, "by wallet:", adminWallet);
+    const index = adminUsers.findIndex(user => user.email === email);
+    if (index !== -1) {
+      adminUsers[index].role = role;
+      adminUsers[index].permissions = permissions;
       return true;
     }
     return false;
   },
 
-  // Update admin user
-  updateAdminUser: (user: AdminUserAccess, adminWallet: string) => {
-    // Simulate check if admin has permission to update users
-    const admin = adminUsers.find(userItem => userItem.wallet === adminWallet);
-    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
-      const index = adminUsers.findIndex(userItem => userItem.wallet === user.wallet);
-      if (index !== -1) {
-        adminUsers[index] = user;
-        return true;
-      }
+  // Remove admin user
+  removeAdminUser: (email: string, adminWallet: string) => {
+    console.log("Removing admin user:", email, "by wallet:", adminWallet);
+    const index = adminUsers.findIndex(user => user.email === email);
+    if (index !== -1) {
+      adminUsers.splice(index, 1);
+      return true;
     }
     return false;
   },
   
   // Get deployment steps for deployment guide
-  getDeploymentSteps: (): DeploymentStep[] => {
+  getDeploymentSteps: (network?: string): DeploymentStep[] => {
+    console.log("Getting deployment steps for network:", network || "default");
+    // Return mock deployment steps
     return [
       {
         id: '1',
-        name: 'Set up development environment',
+        title: 'Set up development environment',
         description: 'Install Node.js, Solana CLI, and Anchor framework',
         status: 'completed',
         command: 'npm install -g @project-serum/anchor'
       },
       {
         id: '2',
-        name: 'Initialize project',
+        title: 'Initialize project',
         description: 'Create a new Anchor project',
         status: 'completed',
         command: 'anchor init wybe_token_program',
-        dependencies: ['1']
+        prerequisite: ['1']
       },
       {
         id: '3',
-        name: 'Configure project',
+        title: 'Configure project',
         description: 'Update Anchor.toml and program files',
         status: 'completed',
-        dependencies: ['2']
+        prerequisite: ['2']
       },
       {
         id: '4',
-        name: 'Build project',
+        title: 'Build project',
         description: 'Compile the Rust program',
         status: 'in-progress',
         command: 'anchor build',
-        dependencies: ['3']
+        prerequisite: ['3']
       },
       {
         id: '5',
-        name: 'Deploy to localnet',
+        title: 'Deploy to localnet',
         description: 'Test deployment on local Solana validator',
         status: 'pending',
         command: 'anchor deploy --provider.cluster localnet',
-        dependencies: ['4']
+        prerequisite: ['4']
       },
       {
         id: '6',
-        name: 'Run tests',
+        title: 'Run tests',
         description: 'Execute test suite',
         status: 'pending',
         command: 'anchor test',
-        dependencies: ['5']
+        prerequisite: ['5']
       },
       {
         id: '7',
-        name: 'Deploy to testnet',
+        title: 'Deploy to testnet',
         description: 'Deploy to Solana testnet',
         status: 'pending',
         command: 'anchor deploy --provider.cluster testnet',
-        dependencies: ['6']
+        prerequisite: ['6']
       },
       {
         id: '8',
-        name: 'Deploy to mainnet',
+        title: 'Deploy to mainnet',
         description: 'Deploy to Solana mainnet',
         status: 'pending',
         command: 'anchor deploy --provider.cluster mainnet-beta',
-        dependencies: ['7']
+        prerequisite: ['7']
       }
+    ];
+  },
+
+  // Get deployment environments
+  getDeploymentEnvironments: (): DeploymentEnvironment[] => {
+    return [
+      { id: '1', label: 'Local Development', checked: true },
+      { id: '2', label: 'Test Environment', checked: false },
+      { id: '3', label: 'Staging', checked: false },
+      { id: '4', label: 'Production', checked: false }
     ];
   }
 };
