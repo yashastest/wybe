@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,15 +39,8 @@ import {
   Lock,
   RefreshCcw
 } from "lucide-react";
-import { integrationService } from '@/services/integrationService';
-
-// Define admin user interface
-interface AdminUser {
-  email: string;
-  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
-  permissions: string[];
-  walletAddress?: string;
-}
+import { integrationService, AdminUserAccess } from '@/services/integrationService';
+import useWallet from '@/hooks/useWallet';
 
 // Available permissions
 const availablePermissions = [
@@ -59,25 +53,31 @@ const availablePermissions = [
 ];
 
 const AdminUserManager = () => {
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [users, setUsers] = useState<AdminUserAccess[]>([]);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUserAccess | null>(null);
+  const { walletAddress } = useWallet();
   
-  const [newUser, setNewUser] = useState<AdminUser>({
+  const [newUser, setNewUser] = useState<AdminUserAccess>({
     email: '',
     role: 'viewer',
     permissions: ['analytics_view'],
     walletAddress: '',
+    twoFactorEnabled: false
   });
   
   const [loading, setLoading] = useState(false);
 
   // Load existing admin users
   useEffect(() => {
-    const adminUsers = integrationService.getAdminUsers();
-    setUsers(adminUsers);
-  }, []);
+    if (walletAddress) {
+      const adminUsers = integrationService.getAdminUsers(walletAddress);
+      if (adminUsers) {
+        setUsers(adminUsers);
+      }
+    }
+  }, [walletAddress]);
 
   // Handle input change for new user form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,7 +146,7 @@ const AdminUserManager = () => {
 
   // Add new user
   const handleAddUser = () => {
-    if (!newUser.email || !newUser.role) {
+    if (!newUser.email || !newUser.role || !walletAddress) {
       toast.error("Email and role are required");
       return;
     }
@@ -160,7 +160,7 @@ const AdminUserManager = () => {
     
     // Simulate API delay
     setTimeout(() => {
-      const success = integrationService.addAdminUser(newUser);
+      const success = integrationService.addAdminUser(newUser, walletAddress);
       
       if (success) {
         setUsers(prev => [...prev, newUser]);
@@ -170,6 +170,7 @@ const AdminUserManager = () => {
           role: 'viewer',
           permissions: ['analytics_view'],
           walletAddress: '',
+          twoFactorEnabled: false
         });
         setIsAddingUser(false);
       } else {
@@ -181,7 +182,7 @@ const AdminUserManager = () => {
   };
 
   // Edit existing user
-  const handleEditUser = (user: AdminUser) => {
+  const handleEditUser = (user: AdminUserAccess) => {
     setSelectedUser(user);
     setNewUser({ ...user });
     setIsEditingUser(true);
@@ -189,7 +190,7 @@ const AdminUserManager = () => {
 
   // Update user
   const handleUpdateUser = () => {
-    if (!selectedUser || !newUser.email || !newUser.role) {
+    if (!selectedUser || !newUser.email || !newUser.role || !walletAddress) {
       toast.error("Invalid user data");
       return;
     }
@@ -201,7 +202,8 @@ const AdminUserManager = () => {
       const success = integrationService.updateAdminUserPermissions(
         selectedUser.email,
         newUser.role,
-        newUser.permissions
+        newUser.permissions,
+        walletAddress
       );
       
       if (success) {
@@ -222,9 +224,17 @@ const AdminUserManager = () => {
 
   // Delete user confirmation
   const handleDeleteUser = (email: string) => {
-    // In a real app this would call an API
-    setUsers(prev => prev.filter(user => user.email !== email));
-    toast.success(`Removed user: ${email}`);
+    if (!walletAddress) {
+      toast.error("Wallet connection required");
+      return;
+    }
+    
+    const success = integrationService.removeAdminUser(email, walletAddress);
+    
+    if (success) {
+      setUsers(prev => prev.filter(user => user.email !== email));
+      toast.success(`Removed user: ${email}`);
+    }
   };
 
   // Check if a permission is selected

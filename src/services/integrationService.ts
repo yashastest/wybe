@@ -317,6 +317,7 @@ class IntegrationService {
   public getAdminUsers(callerWalletAddress: string): AdminUserAccess[] | null {
     // Check if caller has permission to view users
     if (!this.isAuthorizedForAction(callerWalletAddress, 'view_users')) {
+      toast.error("You don't have permission to view users");
       return null;
     }
     
