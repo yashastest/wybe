@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import AdminPasswordReset from "./AdminPasswordReset";
 
 const AdminLoginForm = () => {
   const [username, setUsername] = useState('');
@@ -13,7 +14,7 @@ const AdminLoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -22,6 +23,7 @@ const AdminLoginForm = () => {
       // Demo credentials - in production, this would validate against a database
       if (username === 'admin' && password === 'admin123') {
         localStorage.setItem('wybeAdminLoggedIn', 'true');
+        sessionStorage.setItem('wybeAdminSession', Date.now().toString());
         toast.success('Login successful!');
         navigate('/admin');
       } else {
@@ -77,9 +79,7 @@ const AdminLoginForm = () => {
             </button>
           </div>
           <div className="text-right text-sm">
-            <a href="#" className="text-orange-500 hover:underline">
-              Forgot password?
-            </a>
+            <AdminPasswordReset />
           </div>
         </div>
         

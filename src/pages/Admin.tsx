@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +14,7 @@ import { toast } from "sonner";
 import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
 import DeploymentGuide from "@/components/admin/DeploymentGuide";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useAdmin from "@/hooks/useAdmin";
 import { 
   LayoutDashboard, 
   Check, 
@@ -33,20 +33,24 @@ const Admin = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, isLoading, logout } = useAdmin();
+  
+  // Early return if still loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <div className="animate-pulse text-xl">Loading admin panel...</div>
+      </div>
+    );
+  }
 
-  // Check if user is logged in
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
-    if (!isLoggedIn) {
-      toast.error("Please login to access the admin panel");
-      navigate("/admin-login");
-    }
-  }, [navigate]);
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return null; // useAdmin hook will handle redirection
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem("wybeAdminLoggedIn");
-    toast.success("Logged out successfully");
-    navigate("/admin-login");
+    logout();
   };
 
   // Admin sections

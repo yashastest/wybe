@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -12,8 +11,9 @@ import TradingViewChart from '@/components/TradingViewChart';
 import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
-import { ArrowDownUp, Wallet, ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, Flame, Sparkles, Zap } from 'lucide-react';
+import { ArrowDownUp, Wallet, ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, Flame, Sparkles, Zap, AlertTriangle } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
+import { tradingService } from '@/services/tradingService';
 
 const Trade = () => {
   const { symbol } = useParams();
@@ -22,16 +22,25 @@ const Trade = () => {
   const [receiveAmount, setReceiveAmount] = useState('0.00');
   const [tab, setTab] = useState('buy');
   const [isBondingOpen, setIsBondingOpen] = useState(false);
+  const [isCreator, setIsCreator] = useState(true); // For demo purposes, assuming user is creator
+  const [canClaimRewards, setCanClaimRewards] = useState(false);
+  const [nextClaimDate, setNextClaimDate] = useState<Date | null>(null);
+
+  // Get token info including market cap status
+  const normalizedSymbol = symbol?.toLowerCase() || 'pepes';
+  const tokenStatus = tradingService.getTokenStatus(normalizedSymbol);
+  const isDexscreenerListed = tokenStatus?.listedOnDexscreener || false;
+  const marketCap = tokenStatus?.marketCap || 0;
 
   // Mock data for the selected token
   const token = {
-    id: symbol?.toLowerCase() || 'pepes',
+    id: normalizedSymbol,
     name: (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`) || 'Pepe Solana',
     symbol: symbol?.toUpperCase() || 'PEPES',
-    logo: `/coins/${symbol?.toLowerCase() || 'pepe'}.png`,
+    logo: `/coins/${normalizedSymbol}.png`,
     price: 0.00023,
     change24h: 15.4,
-    marketCap: 230000,
+    marketCap: marketCap,
     volume24h: 52000,
     supply: 1000000000
   };
@@ -69,6 +78,24 @@ const Trade = () => {
     }
   ];
 
+  // Check if creator can claim rewards
+  useEffect(() => {
+    if (isCreator && tokenStatus) {
+      if (!tokenStatus.lastClaimDate) {
+        setCanClaimRewards(true);
+        setNextClaimDate(null);
+      } else if (tokenStatus.nextClaimAvailable) {
+        const now = new Date();
+        if (now >= tokenStatus.nextClaimAvailable) {
+          setCanClaimRewards(true);
+        } else {
+          setCanClaimRewards(false);
+          setNextClaimDate(tokenStatus.nextClaimAvailable);
+        }
+      }
+    }
+  }, [isCreator, tokenStatus]);
+
   // Process trade
   const handleTrade = () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -83,12 +110,58 @@ const Trade = () => {
 
     const transactionType = tab === 'buy' ? 'Purchase' : 'Sale';
     
+    // Update market cap (simulated)
+    const tradeAmount = parseFloat(receiveAmount) || 0;
+    let newMarketCap = marketCap;
+    
+    if (tab === 'buy') {
+      // Buying increases market cap
+      newMarketCap = marketCap + (tradeAmount * token.price);
+    } else {
+      // Selling decreases market cap
+      newMarketCap = Math.max(marketCap - (tradeAmount * token.price), 0);
+    }
+    
+    // Update the token's market cap
+    const listedStatusChanged = tradingService.updateTokenMarketCap(normalizedSymbol, newMarketCap);
+    
+    // If the token just became eligible for DEXScreener, show notification
+    if (listedStatusChanged) {
+      toast.success(`${token.symbol} has reached $50,000 market cap!`, {
+        description: "Now eligible for listing on DEXScreener"
+      });
+    }
+    
     toast.success(`${transactionType} Successful`, {
       description: `${transactionType} of ${receiveAmount} ${token.symbol} completed`
     });
     
     setAmount('');
     setReceiveAmount('0.00');
+  };
+
+  // Handle creator reward claims
+  const handleClaimRewards = () => {
+    if (!connected) {
+      connect();
+      return;
+    }
+
+    const claimResult = tradingService.processCreatorRewardClaim(normalizedSymbol);
+    
+    if (claimResult.success) {
+      toast.success(claimResult.message, { 
+        description: `You received ${claimResult.amount?.toFixed(2)} SOL in rewards`
+      });
+      
+      // Update state
+      setCanClaimRewards(false);
+      if (tokenStatus?.nextClaimAvailable) {
+        setNextClaimDate(tokenStatus.nextClaimAvailable);
+      }
+    } else {
+      toast.error(claimResult.message);
+    }
   };
 
   // Calculate receive amount based on input and selected tab
@@ -175,6 +248,13 @@ const Trade = () => {
                       {token.change24h >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
                       {Math.abs(token.change24h)}%
                     </span>
+                    
+                    {isDexscreenerListed && (
+                      <div className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded flex items-center gap-1">
+                        <Star size={10} />
+                        DEXScreener
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -199,6 +279,82 @@ const Trade = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Market cap progress to DEXScreener */}
+          {!isDexscreenerListed && (
+            <motion.div 
+              initial="hidden"
+              animate="visible"
+              variants={fadeUpVariants}
+              custom={0.05}
+              className="mb-8 p-4 border border-white/10 rounded-xl bg-indigo-900/20 backdrop-blur-sm"
+            >
+              <div className="flex justify-between mb-2">
+                <h3 className="font-poppins font-semibold text-indigo-200 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-amber-400" />
+                  DEXScreener Eligibility Progress
+                </h3>
+                <span className="font-mono text-indigo-200">
+                  ${marketCap.toLocaleString()} / $50,000
+                </span>
+              </div>
+              
+              <div className="w-full h-3 bg-black/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                  style={{ width: `${Math.min(100, (marketCap / 50000) * 100)}%` }}
+                ></div>
+              </div>
+              
+              <p className="text-xs text-gray-300 mt-2">
+                When market cap reaches $50,000, this token will be automatically listed on DEXScreener while continuing to trade on our platform.
+              </p>
+            </motion.div>
+          )}
+
+          {/* Creator rewards banner */}
+          {isCreator && (
+            <motion.div 
+              initial="hidden"
+              animate="visible"
+              variants={fadeUpVariants}
+              custom={0.05}
+              className="mb-8"
+            >
+              <div className="p-4 border border-white/10 rounded-xl bg-gradient-to-r from-amber-900/20 to-orange-900/20 backdrop-blur-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-poppins font-semibold text-amber-200 flex items-center gap-2">
+                      <Star size={16} className="text-amber-400" />
+                      Creator Rewards
+                    </h3>
+                    <p className="text-sm text-gray-300 mt-1">
+                      {canClaimRewards 
+                        ? "You have rewards available to claim!"
+                        : nextClaimDate 
+                          ? `Next claim available ${nextClaimDate.toLocaleString()}`
+                          : "Start earning rewards from your token's trading activity"}
+                    </p>
+                  </div>
+                  <Button 
+                    className={`${canClaimRewards 
+                      ? "bg-amber-600 hover:bg-amber-500 text-white" 
+                      : "bg-amber-600/30 text-amber-200 cursor-not-allowed"}`}
+                    onClick={handleClaimRewards}
+                    disabled={!canClaimRewards}
+                  >
+                    <Star size={16} className="mr-2" />
+                    Claim Rewards
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-amber-200/70 mt-3">
+                  As creator, you earn {tradingService.getConfig().creatorFeePercentage}% of all trading activity.
+                  Rewards can be claimed every {tradingService.getConfig().rewardClaimPeriod} days.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Chart Section */}
@@ -449,6 +605,10 @@ const Trade = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-400">Fee</span>
                         <span className="text-white">2.5%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Creator Fee</span>
+                        <span className="text-white">{tradingService.getConfig().creatorFeePercentage}%</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Slippage Tolerance</span>
