@@ -22,6 +22,14 @@ export const checkAnchorInstalled = async (): Promise<{ installed: boolean; vers
 };
 
 /**
+ * Verify if Anchor CLI is installed (simplified version for browser)
+ */
+export const verifyAnchorInstallation = (): boolean => {
+  // In a browser environment, check localStorage
+  return localStorage.getItem('anchorInstalled') === 'true';
+};
+
+/**
  * Set mock status for Anchor CLI
  */
 export const setMockAnchorStatus = (installed: boolean, version?: string): void => {
@@ -153,4 +161,45 @@ export const runAnchorTests = async (projectPath: string): Promise<{
       });
     }, 4000); // Simulate tests taking 4 seconds
   });
+};
+
+// Additional functions needed for smartContractService.ts
+
+/**
+ * Build Anchor program (simplified for browser)
+ */
+export const buildAnchorProgram = (): { success: boolean; message: string; buildOutput?: string } => {
+  console.log("Building Anchor program (browser simulation)");
+  
+  // For demo purposes, always succeed
+  const buildOutput = `
+Building wybe-token-program...
+Compiling...
+Successfully built @wybe-finance/token-program
+Build completed in 2.4s (simulated)
+  `.trim();
+  
+  return {
+    success: true,
+    message: "Build completed successfully (simulation)",
+    buildOutput
+  };
+};
+
+/**
+ * Deploy Anchor program (simplified for browser)
+ */
+export const deployAnchorProgram = (
+  network: 'mainnet' | 'testnet' | 'devnet'
+): { success: boolean; message: string; programId?: string } => {
+  console.log(`Deploying Anchor program to ${network} (browser simulation)`);
+  
+  // Generate mock program ID
+  const programId = `Wyb${Math.random().toString(36).substring(2, 10)}11111111111111111111111111111`;
+  
+  return {
+    success: true,
+    message: `Program successfully deployed to ${network} (simulation)`,
+    programId
+  };
 };
