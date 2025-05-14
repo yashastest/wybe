@@ -1,4 +1,3 @@
-
 // Smart contract service for admin dashboard
 // This service handles smart contract related operations
 
@@ -16,7 +15,7 @@ export interface ContractConfig {
   rewardClaimPeriodDays: number;
 }
 
-// Security Audit Result Type
+// Security Audit Result Type - ensure issues and passedChecks are always present
 export interface SecurityAuditResult {
   successful: boolean;
   vulnerabilities: {
@@ -31,15 +30,15 @@ export interface SecurityAuditResult {
     description: string;
     location: string;
   }>;
-  issues?: { 
+  issues: { 
     severity: 'high' | 'medium' | 'low' | 'info';
     description: string;
     location?: string;
   }[];
-  passedChecks?: string[];
+  passedChecks: string[];
 }
 
-// Gas Analysis Result Type
+// Gas Analysis Result Type - ensure gasEstimates and optimizationSuggestions are always present
 export interface GasAnalysisResult {
   successful: boolean;
   averageGasUsed: number;
@@ -48,8 +47,8 @@ export interface GasAnalysisResult {
     gasUsed: number;
     percentage: number;
   }>;
-  gasEstimates?: { [key: string]: number };
-  optimizationSuggestions?: string[];
+  gasEstimates: { [key: string]: number };
+  optimizationSuggestions: string[];
 }
 
 export interface DeploymentResult {
@@ -57,6 +56,7 @@ export interface DeploymentResult {
   message: string;
   transactionId?: string;
   signature?: string;
+  timestamp?: string;
 }
 
 interface TestnetContract {
@@ -178,7 +178,8 @@ Deployment successful!
 Program ID: ${deployedProgramId}
           `,
           transactionId: "tx_" + Math.random().toString(36).substring(2, 15),
-          signature: "sig_" + Math.random().toString(36).substring(2, 15)
+          signature: "sig_" + Math.random().toString(36).substring(2, 15),
+          timestamp: new Date().toISOString()
         });
       }, 3000);
     });
@@ -401,22 +402,21 @@ Program ID: ${deployedProgramId}
   
   // Mint tokens using bonding curve
   mintTokensWithBondingCurve: async (
+    contractAddress: string,
     amount: number, 
-    price: number, 
     recipient: string
   ): Promise<{ success: boolean; tokens: number; cost: number; message: string }> => {
-    console.log(`Minting ${amount} tokens at ${price} SOL each for ${recipient}`);
+    console.log(`Minting ${amount} tokens for ${recipient} using contract ${contractAddress}`);
     
     // Simulate minting process
     return new Promise((resolve) => {
       setTimeout(() => {
         // Calculate total cost with bonding curve
-        // Simple linear bonding curve for demo purposes
+        const price = 0.01; // Base price
         const baseCost = amount * price;
         const bondingFactor = 1 + (amount / 10000); // Increases price as more tokens are purchased
         const totalCost = baseCost * bondingFactor;
         
-        // Return result with a message property
         resolve({
           success: true,
           tokens: amount,

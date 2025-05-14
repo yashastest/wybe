@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import {
@@ -143,16 +142,15 @@ const BondingCurveTester = () => {
     
     setIsMinting(true);
     try {
-      // Use smart contract service to mint tokens
+      // Fixed: Remove the fourth argument as the function expects only 3
       const result = await smartContractService.mintTokensWithBondingCurve(
         tokenDetails.contractAddress!,
         mintAmount,
-        address || tokenDetails.creator!,
         address || tokenDetails.creator!
       );
       
       if (result.success) {
-        toast.success(result.message);
+        toast.success(result.message || "Tokens minted successfully");
         
         // Refresh token details
         const token = tradingService.getTokenStatus(selectedToken);
@@ -162,7 +160,7 @@ const BondingCurveTester = () => {
         const tokenTransactions = tradingService.getTokenTransactions(selectedToken);
         setTransactions(tokenTransactions);
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to mint tokens");
       }
     } catch (error: any) {
       toast.error(`Error minting tokens: ${error.message}`);

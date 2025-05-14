@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -52,13 +53,17 @@ const ContractSecurityAudit = () => {
       // Run security audit
       const results = await smartContractService.runSecurityAudit();
       
-      setAuditResults(results);
+      // Fixed: Only extract and set the required properties instead of the full result
+      setAuditResults({
+        issues: results.issues || [],
+        passedChecks: results.passedChecks || []
+      });
       
       // Update checklist
       integrationService.updateChecklistItem('5', true);
       
       // Find high risk issues
-      const highRisks = results.issues.filter(issue => issue.severity === 'high');
+      const highRisks = results.issues?.filter(issue => issue.severity === 'high') || [];
       
       if (highRisks.length > 0) {
         toast.error("Security audit found high risk issues", {
@@ -86,7 +91,11 @@ const ContractSecurityAudit = () => {
       // Analyze gas usage
       const results = await smartContractService.analyzeGasUsage();
       
-      setGasResults(results);
+      // Fixed: Only extract and set the required properties instead of the full result
+      setGasResults({
+        gasEstimates: results.gasEstimates || {},
+        optimizationSuggestions: results.optimizationSuggestions || []
+      });
       
       toast.success("Gas analysis completed");
     } catch (error) {
@@ -106,6 +115,7 @@ const ContractSecurityAudit = () => {
       // Run testnet tests
       const results = await smartContractService.testOnTestnet();
       
+      // Fixed: Set the full test results object
       setTestResults(results);
       
       // Check for failures

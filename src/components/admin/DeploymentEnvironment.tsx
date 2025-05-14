@@ -15,7 +15,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Check, AlertCircle, Settings, RefreshCcw, Server } from "lucide-react";
 import { motion } from "framer-motion";
-import { DeploymentEnvironment, integrationService } from "@/services/integrationService";
+import { integrationService } from "@/services/integrationService";
+
+// Define the DeploymentEnvironment type to match the actual structure
+interface DeploymentEnvironment {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+// Define the expected structure of the deployment result
+interface DeploymentResult {
+  success: boolean;
+  message: string;
+  timestamp?: string;
+}
 
 const DeploymentEnvironmentPage = () => {
   const [activeTab, setActiveTab] = useState<string>("environments");
@@ -33,10 +47,14 @@ const DeploymentEnvironmentPage = () => {
   // Load environments
   useEffect(() => {
     setIsLoading(true);
-    const envs = integrationService.getDeploymentEnvironments();
+    const envs = integrationService.getDeploymentChecklist();
     
     // Convert from the deployment checklist format to our environment format
-    setEnvironments(envs);
+    setEnvironments(envs.map(env => ({
+      id: env.id,
+      label: env.name,
+      checked: env.checked
+    })));
     setIsLoading(false);
   }, []);
 
@@ -62,10 +80,13 @@ const DeploymentEnvironmentPage = () => {
     try {
       const result = await integrationService.deployFullEnvironment(projectName, networkType);
       
+      // Fixed: Cast the result to ensure TypeScript knows it has the expected properties
+      const typedResult = result as DeploymentResult;
+      
       setDeploymentStatus({
-        success: true,
-        message: result.message,
-        timestamp: result.timestamp
+        success: typedResult.success,
+        message: typedResult.message,
+        timestamp: typedResult.timestamp
       });
       
       toast.success("Deployment successful!");
