@@ -18,13 +18,17 @@ const AdminLogin = () => {
     const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
     
     if (isLoggedIn && sessionExists) {
+      // Use replace: true to avoid history issues
       navigate('/admin', { replace: true });
       return;
     }
     
     // Clear any stale session data when arriving at login page
-    localStorage.removeItem("wybeAdminLoggedIn");
-    sessionStorage.removeItem("wybeAdminSession");
+    // but only if we're not already logged in
+    if (!isLoggedIn || !sessionExists) {
+      localStorage.removeItem("wybeAdminLoggedIn");
+      sessionStorage.removeItem("wybeAdminSession");
+    }
   }, [navigate]);
   
   return (

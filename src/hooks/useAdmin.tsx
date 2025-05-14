@@ -13,12 +13,16 @@ export const useAdmin = () => {
 
   // Run auth check only once on initial mount
   useEffect(() => {
-    if (!authCheckCompleted) {
-      checkAdminSession();
-    }
-  }, [authCheckCompleted]);
+    const checkAuth = async () => {
+      if (!authCheckCompleted) {
+        await checkAdminSession();
+      }
+    };
+    
+    checkAuth();
+  }, []); // Empty dependency array to run only once
 
-  const checkAdminSession = () => {
+  const checkAdminSession = async () => {
     setIsLoading(true);
     
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
@@ -27,53 +31,54 @@ export const useAdmin = () => {
     
     console.log("Auth check:", { isLoggedIn, sessionExists, path: location.pathname });
     
-    if (isLoggedIn && sessionExists) {
-      console.log("Valid session found, setting authenticated to true");
-      try {
-        // Load permissions from session
-        const parsedSession = JSON.parse(sessionData || '{}');
-        const permissions = parsedSession.permissions || ['default'];
-        setAdminPermissions(permissions);
-        
-        // Check if session has expired
-        const expiryTime = parsedSession.expiryTime;
-        if (expiryTime && new Date().getTime() > expiryTime) {
-          console.log("Session expired, logging out");
-          logout();
-          return;
+    try {
+      if (isLoggedIn && sessionExists) {
+        console.log("Valid session found, setting authenticated to true");
+        try {
+          // Load permissions from session
+          const parsedSession = JSON.parse(sessionData || '{}');
+          const permissions = parsedSession.permissions || ['default'];
+          setAdminPermissions(permissions);
+          
+          // Check if session has expired
+          const expiryTime = parsedSession.expiryTime;
+          if (expiryTime && new Date().getTime() > expiryTime) {
+            console.log("Session expired, logging out");
+            await logout();
+            return;
+          }
+        } catch (error) {
+          console.error("Error parsing session data:", error);
+          setAdminPermissions(['default']);
         }
-      } catch (error) {
-        console.error("Error parsing session data:", error);
-        setAdminPermissions(['default']);
+        
+        setIsAuthenticated(true);
+      } else {
+        console.log("No valid session found, setting authenticated to false");
+        setIsAuthenticated(false);
+        
+        // Only redirect if we're on an admin page that requires authentication
+        // and not already on the login page
+        if (location.pathname.startsWith('/admin') && 
+            !location.pathname.includes('/admin-login') &&
+            !authCheckCompleted) { // Only redirect on first check
+          console.log("Redirecting to login page");
+          navigate('/admin-login', { replace: true });
+          toast.error("Authentication required. Please login.");
+        }
       }
-      
-      setIsAuthenticated(true);
-      setIsLoading(false);
-      setAuthCheckCompleted(true);
-    } else {
-      console.log("No valid session found, setting authenticated to false");
-      setIsAuthenticated(false);
-      
-      // Only redirect and show message if we're on an admin page that requires authentication
-      // and not already on the login page
-      if (location.pathname.includes('/admin') && 
-          !location.pathname.includes('/admin-login')) {
-        console.log("Redirecting to login page");
-        navigate('/admin-login');
-        toast.error("Authentication required. Please login.");
-      }
-      
+    } finally {
       setIsLoading(false);
       setAuthCheckCompleted(true);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem("wybeAdminLoggedIn");
     sessionStorage.removeItem("wybeAdminSession");
     setIsAuthenticated(false);
-    setAuthCheckCompleted(false); // Reset auth check on logout
-    navigate('/admin-login');
+    setAuthCheckCompleted(true); // Keep auth check completed to prevent loops
+    navigate('/admin-login', { replace: true });
     toast.success("Logged out successfully", {
       duration: 3000, // Shorter duration for toast
     });
@@ -93,7 +98,8 @@ export const useAdmin = () => {
     logout, 
     checkAdminSession,
     adminPermissions,
-    hasPermission
+    hasPermission,
+    authCheckCompleted
   };
 };
 
