@@ -21,13 +21,18 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { integrationService, DeploymentEnvironment } from "@/services/integrationService";
+import { integrationService } from "@/services/integrationService";
+// Use a type-only import for the type to avoid name conflict
+import type { DeploymentEnvironment as DeploymentEnvironmentType } from "@/services/integrationService";
 
 export default function DeploymentEnvironment() {
-  const [deploymentEnvironments, setDeploymentEnvironments] = useState<DeploymentEnvironment[]>([]);
-  const [newEnvironment, setNewEnvironment] = useState({
+  const [deploymentEnvironments, setDeploymentEnvironments] = useState<DeploymentEnvironmentType[]>([]);
+  const [newEnvironment, setNewEnvironment] = useState<{
+    name: string;
+    network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  }>({
     name: '',
-    network: 'testnet' as const
+    network: 'testnet'
   });
   const [isDeploying, setIsDeploying] = useState(false);
   const [deploymentProgress, setDeploymentProgress] = useState(0);
@@ -39,7 +44,7 @@ export default function DeploymentEnvironment() {
     setChecklist(loadedChecklist);
     
     // TODO: Load deployment environments from service when implemented
-    const mockEnvironments: DeploymentEnvironment[] = [
+    const mockEnvironments: DeploymentEnvironmentType[] = [
       {
         name: 'Wybe Token Production',
         url: 'https://mainnet.wybe.io/wybe-token',

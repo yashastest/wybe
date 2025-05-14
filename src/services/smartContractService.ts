@@ -1,6 +1,17 @@
 import { toast } from "sonner";
 import { integrationService, TransactionHistory } from "./integrationService";
 
+export interface SmartContractConfig {
+  creatorFeePercentage: number;
+  platformFeePercentage?: number;
+  rewardClaimPeriodDays: number;
+  dexScreenerThreshold: number;
+  networkType?: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  anchorInstalled?: boolean;
+  anchorVersion?: string;
+  programId?: string;
+}
+
 export interface SecurityAuditResult {
   issues: Array<{
     severity: 'high' | 'medium' | 'low' | 'info';
@@ -88,6 +99,16 @@ class SmartContractService {
   // Track deployment params
   private deploymentParams: DeploymentParams | null = null;
   
+  // Contract configuration
+  private contractConfig: SmartContractConfig = {
+    creatorFeePercentage: 2.5,
+    platformFeePercentage: 2.5,
+    rewardClaimPeriodDays: 5,
+    dexScreenerThreshold: 50000,
+    networkType: 'devnet',
+    anchorInstalled: false
+  };
+  
   // Mock list of recently deployed contracts
   private recentDeployments: SmartContractDeploymentResult[] = [
     {
@@ -132,6 +153,11 @@ class SmartContractService {
     if (storedFeeClaims) {
       this.creatorFeeClaims = JSON.parse(storedFeeClaims);
     }
+    
+    const storedContractConfig = localStorage.getItem('contractConfig');
+    if (storedContractConfig) {
+      this.contractConfig = {...this.contractConfig, ...JSON.parse(storedContractConfig)};
+    }
   }
   
   private saveToStorage(): void {
@@ -147,6 +173,65 @@ class SmartContractService {
     }
     
     localStorage.setItem('creatorFeeClaims', JSON.stringify(this.creatorFeeClaims));
+    localStorage.setItem('contractConfig', JSON.stringify(this.contractConfig));
+  }
+  
+  // Get contract configuration
+  public getContractConfig(): SmartContractConfig {
+    return {...this.contractConfig};
+  }
+  
+  // Update contract configuration
+  public updateContractConfig(config: Partial<SmartContractConfig>): void {
+    this.contractConfig = {...this.contractConfig, ...config};
+    this.saveToStorage();
+  }
+  
+  // Install Anchor CLI
+  public async installAnchorCLI(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this.contractConfig.anchorInstalled = true;
+        this.contractConfig.anchorVersion = 'v0.29.0';
+        this.saveToStorage();
+        resolve('Successfully installed Anchor CLI v0.29.0');
+      }, 3000);
+    });
+  }
+  
+  // Build contract
+  public async buildContract(contractName: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(`Successfully built ${contractName}
+Build output:
+   Compiling program...
+   Finished in 2.3s
+   Rust compilation completed successfully
+   Creating optimized build artifacts...
+   Program size: 342.8KB
+   Program ID: Wyb${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}
+   Build completed successfully!`);
+      }, 3000);
+    });
+  }
+  
+  // Deploy contract
+  public async deployContract(contractName: string, idl: string, programAddress?: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const programId = programAddress || `Wyb${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
+        this.contractConfig.programId = programId;
+        this.saveToStorage();
+        
+        resolve(`Deploying ${contractName} to ${this.contractConfig.networkType}...
+   Sending transaction...
+   Transaction confirmed: ${Math.random().toString(16).substring(2, 40)}
+   Successfully deployed program
+   Program ID: ${programId}
+   Deployment completed successfully!`);
+      }, 5000);
+    });
   }
   
   // Run security audit on smart contract code
@@ -422,8 +507,7 @@ class SmartContractService {
         integrationService.updateTokenClaimDate(tokenSymbol, creatorAddress);
         
         // Record transaction
-        const tx: TransactionHistory = {
-          id: `fee_${Date.now()}`,
+        const tx: Omit<TransactionHistory, 'id'> = {
           type: 'fee_claim',
           from: 'Fee Pool',
           to: creatorAddress,
@@ -499,8 +583,7 @@ class SmartContractService {
         const txHash = `swap_${Date.now().toString(16)}_${params.tokenA.toLowerCase()}_${params.tokenB.toLowerCase()}`;
         
         // Record transaction
-        const tx: TransactionHistory = {
-          id: `swap_${Date.now()}`,
+        const tx: Omit<TransactionHistory, 'id'> = {
           type: 'swap',
           from: 'Swap Pool',
           to: 'User',

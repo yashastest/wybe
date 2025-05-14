@@ -22,16 +22,16 @@ export interface TreasuryWallet {
   }[];
 }
 
-// Type definitions for transaction history
+// Type definition for transaction history
 export interface TransactionHistory {
   id: string;
-  type: 'mint' | 'burn' | 'transfer' | 'swap' | 'claim' | 'fee' | 'fee_claim' | 'deposit' | 'withdraw' | 'unknown';
+  type: 'mint' | 'transfer' | 'swap' | 'fee_claim';
   from: string;
   to: string;
   amount: number;
-  tokenSymbol?: string;
+  tokenSymbol: string;
   timestamp: number;
-  hash?: string;
+  hash: string;
   status: 'pending' | 'confirmed' | 'failed';
   details?: any;
 }
@@ -245,7 +245,7 @@ class IntegrationService {
           marketCap: 500000,
           holders: 120,
           creator: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          programId: 'Wyb1111111111111111111111111111111111111111',
+          programId: 'Wyb11111111111111111111111111111111111111111',
           lastClaimDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
           nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 days ago (eligible to claim)
         },
@@ -407,21 +407,23 @@ class IntegrationService {
   }
   
   // Record a new transaction
-  public recordTransaction(transaction: TransactionHistory): string {
-    const txId = transaction.id || transaction.hash || `tx-${Date.now()}`;
+  public recordTransaction(tx: Omit<TransactionHistory, 'id'>): TransactionHistory {
+    const newTx: TransactionHistory = {
+      id: `tx_${Date.now()}_${Math.random().toString(16).substring(2, 8)}`,
+      ...tx
+    };
     
-    // If id is not provided in transaction, add it
-    if (!transaction.id) {
-      transaction.id = txId;
+    const history = this.getTransactionHistory();
+    history.unshift(newTx);
+    
+    // Keep only last 100 transactions
+    if (history.length > 100) {
+      history.pop();
     }
     
-    // Add to array
-    this.transactionHistory.unshift(transaction);
+    localStorage.setItem('transactionHistory', JSON.stringify(history));
     
-    // Save to localStorage
-    localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
-    
-    return txId;
+    return newTx;
   }
   
   // Get transaction by ID
@@ -780,6 +782,164 @@ class IntegrationService {
         success: false
       };
     }
+  }
+  
+  // Generate mock transaction data for demo purposes
+  private generateMockTransactions(): void {
+    const now = Date.now();
+    const hour = 3600 * 1000;
+    const day = 24 * hour;
+    
+    const transactions: TransactionHistory[] = [
+      {
+        id: `tx-${Date.now() - 3600000}`,
+        type: 'mint',
+        from: 'Token Creator',
+        to: 'Primary Treasury',
+        amount: 1000000,
+        tokenSymbol: 'WYBE',
+        timestamp: Date.now() - 3600000,
+        hash: `tx_${(Date.now() - 3600000).toString(16)}`,
+        status: 'confirmed'
+      },
+      {
+        id: `tx-${Date.now() - 7200000}`,
+        type: 'transfer',
+        from: 'Primary Treasury',
+        to: 'Marketing Fund',
+        amount: 50000,
+        tokenSymbol: 'WYBE',
+        timestamp: Date.now() - 7200000,
+        hash: `tx_${(Date.now() - 7200000).toString(16)}`,
+        status: 'confirmed'
+      },
+      {
+        id: `tx-${Date.now() - 10800000}`,
+        type: 'fee',
+        from: 'Trading Pool',
+        to: 'Primary Treasury',
+        amount: 2.5,
+        tokenSymbol: 'SOL',
+        timestamp: Date.now() - 10800000,
+        hash: `tx_${(Date.now() - 10800000).toString(16)}`,
+        status: 'confirmed'
+      },
+      {
+        id: `tx-${Date.now() - 14400000}`,
+        type: 'mint',
+        from: 'Token Creator',
+        to: 'Primary Treasury',
+        amount: 500000,
+        tokenSymbol: 'WYBE',
+        timestamp: Date.now() - 14400000,
+        hash: `tx_${(Date.now() - 14400000).toString(16)}`,
+        status: 'confirmed'
+      },
+      {
+        id: `tx-${Date.now() - 18000000}`,
+        type: 'transfer',
+        from: 'Primary Treasury',
+        to: 'Marketing Fund',
+        amount: 25000,
+        tokenSymbol: 'WYBE',
+        timestamp: Date.now() - 18000000,
+        hash: `tx_${(Date.now() - 18000000).toString(16)}`,
+        status: 'confirmed'
+      },
+      {
+        id: `tx-${Date.now() - 21600000}`,
+        type: 'fee',
+        from: 'Trading Pool',
+        to: 'Primary Treasury',
+        amount: 1.25,
+        tokenSymbol: 'SOL',
+        timestamp: Date.now() - 21600000,
+        hash: `tx_${(Date.now() - 21600000).toString(16)}`,
+        status: 'confirmed'
+      }
+    ];
+    
+    // Save to localStorage
+    localStorage.setItem('transactionHistory', JSON.stringify(transactions));
+  }
+  
+  // Generate mock token trade data
+  public generateMockTokenTrades(tokenSymbol: string, basePrice: number): void {
+    const trades: TransactionHistory[] = [];
+    
+    // Generate 10 random trades for the last 24 hours
+    for (let i = 0; i < 10; i++) {
+      const hourOffset = Math.floor(Math.random() * 24);
+      const timestamp = Date.now() - (hourOffset * 60 * 60 * 1000);
+      
+      // Price with small variation
+      const price = basePrice * (1 + ((Math.random() - 0.5) / 10)); // +/- 5% variation
+      const amount = Math.floor(Math.random() * 100) + 10; // 10-110 tokens
+      const tradeValue = price * amount;
+      
+      const newTx: TransactionHistory = {
+        id: `trade_${timestamp}_${Math.random().toString(16).substring(2, 8)}`,
+        type: 'transfer',
+        from: `random${Math.floor(Math.random() * 1000)}`,
+        to: `random${Math.floor(Math.random() * 1000)}`,
+        amount,
+        tokenSymbol,
+        timestamp,
+        hash: `tx_${timestamp.toString(16)}`,
+        status: 'confirmed',
+        details: {
+          price,
+          tradeValue
+        }
+      };
+      
+      trades.push(newTx);
+    }
+    
+    // Add trades to transaction history
+    const history = this.getTransactionHistory();
+    const newHistory = [...trades, ...history];
+    localStorage.setItem('transactionHistory', JSON.stringify(newHistory));
+  }
+  
+  // Generate mock token mint data
+  public generateInitialMint(tokenSymbol: string, totalSupply: number): void {
+    const timestamp = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days ago
+    
+    const platformMint: TransactionHistory = {
+      id: `mint_platform_${timestamp}`,
+      type: 'mint',
+      from: 'Token Contract',
+      to: 'Platform Treasury',
+      amount: totalSupply * 0.1, // 10% to platform
+      tokenSymbol,
+      timestamp,
+      hash: `tx_${timestamp.toString(16)}_platform`,
+      status: 'confirmed',
+      details: {
+        mint_type: 'initial_allocation'
+      }
+    };
+    
+    const creatorMint: TransactionHistory = {
+      id: `mint_creator_${timestamp}`,
+      type: 'mint',
+      from: 'Token Contract',
+      to: 'Creator',
+      amount: totalSupply * 0.9, // 90% to creator
+      tokenSymbol,
+      timestamp,
+      hash: `tx_${timestamp.toString(16)}_creator`,
+      status: 'confirmed',
+      details: {
+        mint_type: 'initial_allocation'
+      }
+    };
+    
+    // Add mints to transaction history
+    const history = this.getTransactionHistory();
+    const newHistory = [platformMint, creatorMint, ...history];
+    localStorage.setItem('transactionHistory', JSON.stringify(newHistory));
   }
   
   // Get deployment checklist
