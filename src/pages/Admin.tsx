@@ -39,53 +39,42 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAuthenticated, isLoading, logout } = useAdmin();
   
-  // Force authentication check on mount
-  useEffect(() => {
-    console.log("Admin component mounted, checking authentication...");
-    
-    // Ensure valid session is present
+  // Directly check local storage instead of relying on the hook initially
+  const initialAuthCheck = () => {
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
     const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
-    
-    console.log("Admin direct session check:", { isLoggedIn, sessionExists });
-    
-    if (!isLoggedIn || !sessionExists) {
-      console.log("No valid session found, redirecting to login");
-      navigate('/admin-login');
-      return;
-    }
-  }, [navigate]);
+    return isLoggedIn && sessionExists;
+  };
   
-  // Add a delay before showing content to ensure auth state is correct
+  // If not authenticated on first render, redirect immediately
+  useEffect(() => {
+    if (!initialAuthCheck()) {
+      console.log("Initial check: Not authenticated, redirecting to login");
+      navigate('/admin-login');
+    }
+  }, []);
+  
+  // Now use the hook for subsequent checks and state management
+  const { isAuthenticated, isLoading, logout } = useAdmin();
+
+  // Add a loading state before showing content
   const [showContent, setShowContent] = useState(false);
   useEffect(() => {
+    // Allow time for session check to complete
     const timer = setTimeout(() => {
-      setShowContent(true);
+      if (initialAuthCheck()) {
+        setShowContent(true);
+      } else {
+        navigate('/admin-login');
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, []);
-  
-  // Early return if still loading
-  if (isLoading || !showContent) {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-        <div className="animate-pulse text-xl">Loading admin panel...</div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    console.log("Not authenticated in render phase, redirecting to login");
-    navigate('/admin-login');
-    return null;
-  }
 
   useEffect(() => {
     // Setup event listeners for data-attribute buttons
@@ -113,11 +102,23 @@ const Admin = () => {
     
     // Run setup after a short delay to ensure elements are rendered
     setTimeout(setupEventListeners, 500);
-    
-    return () => {
-      // Clean up listeners if needed
-    };
   }, [activeTab]);
+
+  // Show loading state if loading or content not ready
+  if (isLoading || !showContent) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <div className="animate-pulse text-xl">Loading admin panel...</div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (this is a backup check)
+  if (!isAuthenticated && !initialAuthCheck()) {
+    console.log("Secondary check: Not authenticated, redirecting to login");
+    navigate('/admin-login');
+    return null;
+  }
 
   const handleLogout = () => {
     logout();

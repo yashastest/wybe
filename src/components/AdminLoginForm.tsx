@@ -18,37 +18,32 @@ const AdminLoginForm = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // For demo purposes - in a real app, this would be an API call
-    setTimeout(() => {
-      // Demo credentials - in production, this would validate against a database
-      if (username === 'admin' && password === 'admin123') {
-        console.log("Credentials valid, setting session data");
-        
-        // First, clear any existing session data
-        localStorage.removeItem('wybeAdminLoggedIn');
-        sessionStorage.removeItem('wybeAdminSession');
-        
-        // Then set fresh session data
-        localStorage.setItem('wybeAdminLoggedIn', 'true');
-        sessionStorage.setItem('wybeAdminSession', Date.now().toString());
-        
-        console.log("Session data set:", {
-          isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),
-          sessionExists: sessionStorage.getItem('wybeAdminSession')
-        });
-        
-        toast.success('Login successful!');
-        
-        // Force a longer delay before navigation to ensure session data is properly set
-        setTimeout(() => {
-          console.log("Redirecting to admin panel now...");
-          window.location.href = '/admin'; // Using direct URL change instead of navigate
-        }, 300);
-      } else {
-        toast.error('Invalid credentials. Please check username and password.');
-        setIsLoading(false);
-      }
-    }, 1000);
+    // Simple hardcoded authentication
+    // In a real application, this would be an API call
+    if (username === 'admin' && password === 'password') {
+      console.log("Credentials valid, setting session data");
+      
+      // Clear any existing session data
+      localStorage.removeItem('wybeAdminLoggedIn');
+      sessionStorage.removeItem('wybeAdminSession');
+      
+      // Set fresh session data
+      localStorage.setItem('wybeAdminLoggedIn', 'true');
+      sessionStorage.setItem('wybeAdminSession', Date.now().toString());
+      
+      console.log("Session data set:", {
+        isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),
+        sessionExists: !!sessionStorage.getItem('wybeAdminSession')
+      });
+      
+      toast.success('Login successful!');
+      
+      // Use window.location for a hard redirect
+      window.location.href = '/admin';
+    } else {
+      toast.error('Invalid credentials. Please check username and password.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -112,7 +107,7 @@ const AdminLoginForm = () => {
         <p className="text-sm text-center text-gray-400 mt-4">
           Demo credentials: <br />
           Username: <span className="text-white font-mono">admin</span> <br />
-          Password: <span className="text-white font-mono">admin123</span>
+          Password: <span className="text-white font-mono">password</span>
         </p>
       </form>
     </div>
