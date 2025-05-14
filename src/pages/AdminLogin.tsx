@@ -15,7 +15,12 @@ const AdminLogin = () => {
   // If already logged in, redirect to admin panel
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
-    if (isLoggedIn) {
+    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+    
+    console.log("Login page check:", { isLoggedIn, sessionExists });
+    
+    if (isLoggedIn && sessionExists) {
+      console.log("User is already logged in, redirecting to admin");
       navigate('/admin');
     }
   }, [navigate]);

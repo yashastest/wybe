@@ -14,19 +14,26 @@ export const useAdmin = () => {
 
   const checkAdminSession = () => {
     setIsLoading(true);
+    
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
     const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+    
+    console.log("Auth check:", { isLoggedIn, sessionExists });
     
     if (isLoggedIn && sessionExists) {
       setIsAuthenticated(true);
     } else {
       setIsAuthenticated(false);
+      
+      // Only redirect and show message if we're on an admin page that requires authentication
+      // and not already on the login page
       if (window.location.pathname.includes('/admin') && 
           !window.location.pathname.includes('/admin-login')) {
         navigate('/admin-login');
-        toast.error("Your session has expired. Please login again.");
+        toast.error("Authentication required. Please login.");
       }
     }
+    
     setIsLoading(false);
   };
 
@@ -38,7 +45,7 @@ export const useAdmin = () => {
     toast.success("Logged out successfully");
   };
 
-  return { isAuthenticated, isLoading, logout };
+  return { isAuthenticated, isLoading, logout, checkAdminSession };
 };
 
 export default useAdmin;
