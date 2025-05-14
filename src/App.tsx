@@ -24,6 +24,7 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/launch" element={<Launch />} />
+          <Route path="/package" element={<LaunchPackage />} />
           <Route path="/launch/:packageId" element={<LaunchPackage />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/trade" element={<Trade />} />

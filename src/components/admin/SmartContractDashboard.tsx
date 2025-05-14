@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileCode2, Check, ArrowUpRight, Settings, BarChart4, ChevronRight } from "lucide-react";
+import { FileCode2, Check, ArrowUpRight, Settings, BarChart4, ChevronRight, ExternalLink, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 import { smartContractService, SmartContractConfig } from "@/services/smartContractService";
 import AnchorStatusCard from "./AnchorStatusCard";
@@ -42,6 +44,8 @@ const SmartContractDashboard = () => {
       programId: "Prog123456789"
     }
   ]);
+  
+  const [copiedText, setCopiedText] = useState("");
 
   useEffect(() => {
     // Get the current configuration from the service
@@ -50,6 +54,22 @@ const SmartContractDashboard = () => {
 
   const handleConfigureClick = () => {
     navigate("/admin/smart-contract-deployment");
+  };
+  
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedText(text);
+      toast.success(`${type} copied to clipboard!`);
+      
+      // Reset copy state after 2 seconds
+      setTimeout(() => {
+        setCopiedText("");
+      }, 2000);
+    });
+  };
+  
+  const handleViewContracts = () => {
+    navigate("/admin/smart-contract-testnet");
   };
 
   return (
@@ -66,14 +86,24 @@ const SmartContractDashboard = () => {
           </h2>
           <p className="text-gray-400 mt-1">Manage and monitor smart contract deployments</p>
         </div>
-        <Button 
-          onClick={handleConfigureClick} 
-          variant="orange" 
-          className="flex items-center gap-2"
-        >
-          <Settings size={14} />
-          Configure Deployment
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            onClick={handleViewContracts} 
+            variant="outline" 
+            className="flex items-center gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+          >
+            <Code size={14} />
+            View Contracts
+          </Button>
+          <Button 
+            onClick={handleConfigureClick} 
+            variant="orange" 
+            className="flex items-center gap-2"
+          >
+            <Settings size={14} />
+            Configure Deployment
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -172,16 +202,39 @@ const SmartContractDashboard = () => {
             <Separator className="bg-white/10" />
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-400">Program ID</span>
-              <span className="font-mono text-sm truncate max-w-[200px]">{contractConfig.programId || "Not deployed"}</span>
+              <div className="flex items-center">
+                <span className="font-mono text-sm truncate max-w-[150px]">{contractConfig.programId || "Not deployed"}</span>
+                {contractConfig.programId && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-1 h-6 w-6 p-0"
+                    onClick={() => copyToClipboard(contractConfig.programId || "", "Program ID")}
+                  >
+                    {copiedText === contractConfig.programId ? <Check size={12} /> : <Copy size={12} />}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>
       </div>
       
       <div className="glass-card p-5 border-wybe-primary/20">
-        <h3 className="text-lg font-bold font-poppins flex items-center mb-4">
-          Recent Deployments
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold font-poppins flex items-center">
+            Recent Deployments
+          </h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-xs border-wybe-primary/30 text-wybe-primary hover:bg-wybe-primary/10"
+            onClick={handleViewContracts}
+          >
+            View All Contracts
+            <ChevronRight size={14} className="ml-1" />
+          </Button>
+        </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -221,14 +274,36 @@ const SmartContractDashboard = () => {
                     </Badge>
                   </td>
                   <td className="py-3">
-                    <span className="font-mono text-xs">{deployment.txHash}</span>
+                    <div className="flex items-center">
+                      <span className="font-mono text-xs">{deployment.txHash}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="ml-1 h-6 w-6 p-0"
+                        onClick={() => copyToClipboard(deployment.txHash, "Transaction Hash")}
+                      >
+                        {copiedText === deployment.txHash ? <Check size={12} /> : <Copy size={12} />}
+                      </Button>
+                    </div>
                   </td>
                   <td className="py-3">
-                    <span className="font-mono text-xs">{deployment.programId || "N/A"}</span>
+                    <div className="flex items-center">
+                      <span className="font-mono text-xs">{deployment.programId || "N/A"}</span>
+                      {deployment.programId && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="ml-1 h-6 w-6 p-0"
+                          onClick={() => copyToClipboard(deployment.programId || "", "Program ID")}
+                        >
+                          {copiedText === deployment.programId ? <Check size={12} /> : <Copy size={12} />}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 text-right">
                     <Button variant="ghost" size="sm" className="h-8 px-2 text-gray-400">
-                      <ArrowUpRight size={14} />
+                      <ExternalLink size={14} />
                     </Button>
                   </td>
                 </tr>

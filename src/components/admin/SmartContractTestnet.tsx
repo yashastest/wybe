@@ -9,11 +9,25 @@ import {
   Check, 
   ArrowRight, 
   Download, 
-  Terminal 
+  Terminal,
+  Code,
+  ExternalLink,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { smartContractService } from "@/services/smartContractService";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 interface DeployedContract {
   name: string;
@@ -22,12 +36,15 @@ interface DeployedContract {
   deployDate: string;
   txHash: string;
   status: "active" | "pending" | "failed";
+  code?: string;
 }
 
 const SmartContractTestnet = () => {
   const [deployedContracts, setDeployedContracts] = useState<DeployedContract[]>([]);
   const [copiedProgramId, setCopiedProgramId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedContract, setSelectedContract] = useState<DeployedContract | null>(null);
+  const [showContractDialog, setShowContractDialog] = useState(false);
 
   useEffect(() => {
     // Load deployed contracts
@@ -43,7 +60,7 @@ const SmartContractTestnet = () => {
       let contracts: DeployedContract[] = storedContracts ? JSON.parse(storedContracts) : [];
       
       if (contracts.length === 0) {
-        // Add a sample contract if none exist
+        // Add sample contracts if none exist
         const config = smartContractService.getContractConfig();
         contracts = [
           {
@@ -52,7 +69,96 @@ const SmartContractTestnet = () => {
             network: "testnet",
             deployDate: new Date().toISOString().split('T')[0],
             txHash: "tx_" + Date.now().toString(16),
-            status: "active"
+            status: "active",
+            code: `// Sample token program code
+module Token {
+  public struct TokenData has key, store {
+    supply: u64,
+    symbol: vector<u8>,
+    decimals: u8,
+    name: vector<u8>,
+    creator: address,
+    is_frozen: bool,
+  }
+
+  public fun initialize(creator: &signer, supply: u64, symbol: vector<u8>, 
+                        name: vector<u8>, decimals: u8) {
+    // Token initialization logic
+    // Creates new token with initial supply
+  }
+
+  public fun mint(token_admin: &signer, amount: u64): TokenData {
+    // Minting logic
+    // Returns newly minted tokens
+  }
+
+  public fun transfer(from: &signer, to: address, amount: u64) {
+    // Transfer logic
+    // Moves tokens from sender to recipient
+  }
+}`
+          },
+          {
+            name: "Wybe Reward Distribution",
+            programId: "RWD222222222222222222222222222222222222222",
+            network: "testnet",
+            deployDate: new Date().toISOString().split('T')[0],
+            txHash: "tx_" + Date.now().toString(16).substring(2),
+            status: "active",
+            code: `// Reward distribution program
+module RewardDistribution {
+  public struct RewardConfig has key {
+    claim_period_days: u64,
+    fee_percentage: u64,
+    last_distribution: u64,
+    treasury: address,
+  }
+
+  public fun initialize(admin: &signer, claim_period: u64, fee: u64) {
+    // Initialize reward distribution parameters
+  }
+
+  public fun distribute_rewards(admin: &signer) {
+    // Check eligibility and distribute rewards to stakeholders
+  }
+
+  public fun update_config(admin: &signer, new_period: u64, new_fee: u64) {
+    // Update reward configuration parameters
+  }
+}`
+          },
+          {
+            name: "Wybe Treasury Manager",
+            programId: "TRS333333333333333333333333333333333333333",
+            network: "testnet",
+            deployDate: new Date().toISOString().split('T')[0],
+            txHash: "tx_" + Date.now().toString(16).substring(3),
+            status: "active",
+            code: `// Treasury management program
+module TreasuryManager {
+  public struct Treasury has key {
+    balance: u64,
+    admin: address,
+    withdrawal_limit: u64,
+    last_withdrawal_time: u64,
+  }
+
+  public fun initialize(admin: &signer, withdrawal_limit: u64) {
+    // Set up treasury with initial parameters
+  }
+
+  public fun deposit(sender: &signer, amount: u64) {
+    // Handle deposits to the treasury
+  }
+
+  public fun withdraw(admin: &signer, amount: u64) {
+    // Process withdrawals with proper authorization
+  }
+
+  public fun update_withdrawal_limit(admin: &signer, new_limit: u64) {
+    // Modify withdrawal restrictions
+  }
+}`
           }
         ];
         localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
@@ -112,6 +218,17 @@ const SmartContractTestnet = () => {
     downloadAnchorElement.remove();
     
     toast.success("Contract details downloaded");
+  };
+  
+  const viewContractCode = (contract: DeployedContract) => {
+    setSelectedContract(contract);
+    setShowContractDialog(true);
+  };
+  
+  const copyContractCode = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      toast.success("Contract code copied to clipboard!");
+    });
   };
 
   return (
@@ -212,15 +329,27 @@ const SmartContractTestnet = () => {
                       </div>
                       
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-                        <Button
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          size="sm"
-                          onClick={() => downloadContractDetails(contract)}
-                        >
-                          <Download size={16} className="mr-2" />
-                          Download Details
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                            size="sm"
+                            onClick={() => downloadContractDetails(contract)}
+                          >
+                            <Download size={16} className="mr-2" />
+                            Download Details
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-auto bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                            size="sm"
+                            onClick={() => viewContractCode(contract)}
+                          >
+                            <Code size={16} className="mr-2" />
+                            View Contract
+                          </Button>
+                        </div>
                         
                         <Button
                           variant="orange"
@@ -268,6 +397,128 @@ const SmartContractTestnet = () => {
           </Alert>
         </CardContent>
       </Card>
+      
+      {/* Contract Code Dialog */}
+      <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
+        <DialogContent className="sm:max-w-4xl bg-wybe-background-light border-wybe-primary/20">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedContract?.name} - Contract Code
+            </DialogTitle>
+            <DialogDescription>
+              View and copy the smart contract code for development purposes
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="code" className="w-full">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="code">Contract Code</TabsTrigger>
+              <TabsTrigger value="details">Contract Details</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="code" className="mt-4">
+              <div className="bg-black/50 rounded-md p-4 relative">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute right-2 top-2 h-8 w-8 p-0" 
+                  onClick={() => selectedContract?.code && copyContractCode(selectedContract.code)}
+                >
+                  <Copy size={16} />
+                </Button>
+                <pre className="text-xs overflow-x-auto font-mono text-gray-300 max-h-[400px] overflow-y-auto p-2">
+                  {selectedContract?.code || "// No code available for this contract"}
+                </pre>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">Click the copy button in the top right to copy the entire contract code.</p>
+            </TabsContent>
+            
+            <TabsContent value="details">
+              {selectedContract && (
+                <div className="space-y-4 py-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <h4 className="text-sm text-gray-400">Contract Name</h4>
+                      <p className="font-medium">{selectedContract.name}</p>
+                      <Separator className="my-2 bg-white/10" />
+                      
+                      <h4 className="text-sm text-gray-400">Program ID</h4>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-xs bg-black/30 p-2 rounded flex-1">{selectedContract.programId}</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-8 w-8 p-0" 
+                          onClick={() => copyToClipboard(selectedContract.programId, selectedContract.programId)}
+                        >
+                          {copiedProgramId === selectedContract.programId ? <Check size={14} /> : <Copy size={14} />}
+                        </Button>
+                      </div>
+                      <Separator className="my-2 bg-white/10" />
+                      
+                      <h4 className="text-sm text-gray-400">Network</h4>
+                      <p>{selectedContract.network.charAt(0).toUpperCase() + selectedContract.network.slice(1)}</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="text-sm text-gray-400">Deployment Date</h4>
+                      <p>{selectedContract.deployDate}</p>
+                      <Separator className="my-2 bg-white/10" />
+                      
+                      <h4 className="text-sm text-gray-400">Transaction Hash</h4>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-xs bg-black/30 p-2 rounded flex-1">{selectedContract.txHash}</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-8 w-8 p-0" 
+                          onClick={() => copyToClipboard(selectedContract.txHash, "txhash")}
+                        >
+                          <Copy size={14} />
+                        </Button>
+                      </div>
+                      <Separator className="my-2 bg-white/10" />
+                      
+                      <h4 className="text-sm text-gray-400">Status</h4>
+                      <p className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                        selectedContract.status === 'active' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : selectedContract.status === 'pending' 
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {selectedContract.status.charAt(0).toUpperCase() + selectedContract.status.slice(1)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <Button 
+                      onClick={() => downloadContractDetails(selectedContract)} 
+                      variant="outline" 
+                      className="mr-2"
+                    >
+                      <Download size={16} className="mr-2" />
+                      Download Full Details
+                    </Button>
+                    
+                    <Button variant="ghost" className="text-blue-400">
+                      <ExternalLink size={16} className="mr-2" />
+                      View on Explorer
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
