@@ -1,21 +1,23 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { 
-  ArrowRight, 
-  CheckCircle2, 
-  AlertCircle, 
-  Loader2, 
-  Play, 
-  Server, 
-  Globe, 
-  Database, 
-  Code, 
-  ExternalLink, 
-  ChevronRight, 
-  Box, 
-  RefreshCw,
+  FileText,
+  Download,
+  GitBranch,
+  Server,
+  Database,
+  Code,
+  ChevronRight,
+  ArrowRight,
+  ArrowUpRight,
+  FileCheck,
+  Copy,
+  CheckCircle,
+  Tag,
+  Network,
   Landmark,
   AlertTriangle,
   CheckCheck,
@@ -24,1296 +26,1025 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import useAdmin from '@/hooks/useAdmin';
 
-// Define types for the deployment steps
-interface DeploymentStep {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'error';
-  substeps: {
-    id: string;
-    title: string;
-    description: string;
-    status: 'pending' | 'in-progress' | 'completed' | 'error';
-  }[];
+interface MasterDeploymentGuideProps {
+  isAdminPanel?: boolean;
 }
 
-interface DeploymentConfig {
-  networkType: 'mainnet' | 'testnet' | 'devnet';
-  frontendDeployment: 'vercel' | 'netlify' | 'github-pages';
-  databaseSync: boolean;
-  analyticsEnabled: boolean;
-  programIdMapping: Record<string, string>; // testnet to mainnet mapping
-}
-
-const MasterDeploymentGuide = () => {
-  const { isAuthenticated } = useAdmin();
+const MasterDeploymentGuide: React.FC<MasterDeploymentGuideProps> = ({ isAdminPanel = false }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [deploymentSteps, setDeploymentSteps] = useState<DeploymentStep[]>([
+  
+  // Define the Guide sections
+  const stages = [
     {
-      id: 'contracts',
-      title: 'Smart Contract Deployment',
-      description: 'Deploy smart contracts from testnet to mainnet',
-      status: 'pending',
-      substeps: [
-        { id: 'contracts-verify', title: 'Verify testnet contracts', description: 'Check testnet contract functionality and structure', status: 'pending' },
-        { id: 'contracts-migrate', title: 'Migrate to mainnet', description: 'Deploy equivalent contracts to mainnet', status: 'pending' },
-        { id: 'contracts-validate', title: 'Validate deployments', description: 'Verify successful deployment and record addresses', status: 'pending' }
-      ]
+      id: "preparation",
+      title: "Preparation & Environment Setup",
+      icon: <Server className="h-5 w-5 text-orange-500" />,
+      description: "Setting up your development and deployment environment"
     },
     {
-      id: 'integration',
-      title: 'Frontend & Backend Integration',
-      description: 'Connect the frontend and backend with the blockchain',
-      status: 'pending',
-      substeps: [
-        { id: 'integration-map', title: 'Map contract addresses', description: 'Update contract address mappings', status: 'pending' },
-        { id: 'integration-config', title: 'Configure services', description: 'Set up network configurations', status: 'pending' },
-        { id: 'integration-test', title: 'Integration testing', description: 'Test end-to-end functionality', status: 'pending' }
-      ]
+      id: "testnet",
+      title: "Testnet Smart Contract Deployment",
+      icon: <Network className="h-5 w-5 text-blue-500" />,
+      description: "Testing your contracts on testnet before mainnet launch"
     },
     {
-      id: 'database',
-      title: 'Database Synchronization',
-      description: 'Set up database for transaction syncing',
-      status: 'pending',
-      substeps: [
-        { id: 'database-schema', title: 'Prepare schema', description: 'Create tables and indexes for transaction data', status: 'pending' },
-        { id: 'database-sync', title: 'Configure sync service', description: 'Set up blockchain event listeners', status: 'pending' },
-        { id: 'database-test', title: 'Test data flow', description: 'Verify transaction recording', status: 'pending' }
-      ]
+      id: "mainnet",
+      title: "Mainnet Smart Contract Deployment",
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      description: "Deploying verified contracts to the mainnet"
     },
     {
-      id: 'deployment',
-      title: 'Final Deployment',
-      description: 'Deploy the complete application',
-      status: 'pending',
-      substeps: [
-        { id: 'deployment-build', title: 'Build application', description: 'Compile production-ready build', status: 'pending' },
-        { id: 'deployment-host', title: 'Deploy hosting', description: 'Upload to hosting provider', status: 'pending' },
-        { id: 'deployment-verify', title: 'Verify deployment', description: 'Final end-to-end testing', status: 'pending' }
-      ]
-    }
-  ]);
+      id: "integration",
+      title: "Backend & Frontend Integration",
+      icon: <Code className="h-5 w-5 text-purple-500" />,
+      description: "Connecting your frontend and backend with smart contracts"
+    },
+    {
+      id: "database",
+      title: "Database Synchronization",
+      icon: <Database className="h-5 w-5 text-blue-400" />,
+      description: "Setting up data flows between blockchain and database"
+    },
+    {
+      id: "verification",
+      title: "Testing & Verification",
+      icon: <FileCheck className="h-5 w-5 text-yellow-500" />,
+      description: "Final verification of all system components"
+    },
+    {
+      id: "deployment",
+      title: "Production Deployment",
+      icon: <UploadCloud className="h-5 w-5 text-green-400" />,
+      description: "Final production deployment and monitoring setup"
+    },
+  ];
   
-  const [deploymentConfig, setDeploymentConfig] = useState<DeploymentConfig>({
-    networkType: 'mainnet',
-    frontendDeployment: 'vercel',
-    databaseSync: true,
-    analyticsEnabled: true,
-    programIdMapping: {}
-  });
-  
-  const [deploymentProgress, setDeploymentProgress] = useState<number>(0);
-  const [isDeploying, setIsDeploying] = useState<boolean>(false);
-  const [deploymentComplete, setDeploymentComplete] = useState<boolean>(false);
-  
-  // Load testnet contracts
-  const testnetContracts = JSON.parse(localStorage.getItem('deployedTestnetContracts') || '[]');
-  
-  // Calculate total progress based on completed steps
-  const calculateProgress = () => {
-    const totalSubsteps = deploymentSteps.reduce(
-      (acc, step) => acc + step.substeps.length, 0
-    );
-    
-    const completedSubsteps = deploymentSteps.reduce(
-      (acc, step) => acc + step.substeps.filter(substep => substep.status === 'completed').length, 0
-    );
-    
-    return Math.round((completedSubsteps / totalSubsteps) * 100);
+  const copyCommand = (command: string) => {
+    navigator.clipboard.writeText(command);
+    toast.success("Command copied to clipboard!");
   };
   
-  // Update program ID mapping
-  const updateProgramIdMapping = (testnetId: string, mainnetId: string) => {
-    setDeploymentConfig(prev => ({
-      ...prev,
-      programIdMapping: {
-        ...prev.programIdMapping,
-        [testnetId]: mainnetId
-      }
-    }));
-  };
-  
-  // Start deployment process
-  const startDeployment = async () => {
-    if (isDeploying) return;
-    
-    if (deploymentConfig.programIdMapping && Object.keys(deploymentConfig.programIdMapping).length === 0) {
-      toast.error("Please map testnet program IDs to mainnet program IDs first");
-      return;
-    }
-    
-    setIsDeploying(true);
-    setDeploymentComplete(false);
-    
-    // Simulate deployment process
-    await simulateDeployment();
-    
-    setIsDeploying(false);
-    setDeploymentComplete(true);
-    toast.success("Deployment completed successfully!");
-  };
-  
-  // Simulate the deployment process
-  const simulateDeployment = async () => {
-    // Update step 1: Contract verification
-    await updateStepStatus('contracts', 'in-progress');
-    await simulateSubstep('contracts', 'contracts-verify');
-    await simulateSubstep('contracts', 'contracts-migrate');
-    await simulateSubstep('contracts', 'contracts-validate');
-    await updateStepStatus('contracts', 'completed');
-    
-    // Update step 2: Integration
-    await updateStepStatus('integration', 'in-progress');
-    await simulateSubstep('integration', 'integration-map');
-    await simulateSubstep('integration', 'integration-config');
-    await simulateSubstep('integration', 'integration-test');
-    await updateStepStatus('integration', 'completed');
-    
-    // Update step 3: Database sync
-    await updateStepStatus('database', 'in-progress');
-    await simulateSubstep('database', 'database-schema');
-    await simulateSubstep('database', 'database-sync');
-    await simulateSubstep('database', 'database-test');
-    await updateStepStatus('database', 'completed');
-    
-    // Update step 4: Final deployment
-    await updateStepStatus('deployment', 'in-progress');
-    await simulateSubstep('deployment', 'deployment-build');
-    await simulateSubstep('deployment', 'deployment-host');
-    await simulateSubstep('deployment', 'deployment-verify');
-    await updateStepStatus('deployment', 'completed');
-  };
-  
-  // Update the status of a main step
-  const updateStepStatus = async (stepId: string, status: 'pending' | 'in-progress' | 'completed' | 'error') => {
-    setDeploymentSteps(prev => 
-      prev.map(step => 
-        step.id === stepId ? { ...step, status } : step
-      )
-    );
-    
-    // Update progress
-    setDeploymentProgress(calculateProgress());
-    
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 500));
-  };
-  
-  // Update the status of a substep
-  const simulateSubstep = async (stepId: string, substepId: string) => {
-    // Set to in-progress
-    setDeploymentSteps(prev => 
-      prev.map(step => 
-        step.id === stepId 
-          ? {
-              ...step,
-              substeps: step.substeps.map(substep => 
-                substep.id === substepId 
-                  ? { ...substep, status: 'in-progress' } 
-                  : substep
-              )
-            } 
-          : step
-      )
-    );
-    
-    // Simulate processing time (random between 1-3 seconds)
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    // Set to completed
-    setDeploymentSteps(prev => 
-      prev.map(step => 
-        step.id === stepId 
-          ? {
-              ...step,
-              substeps: step.substeps.map(substep => 
-                substep.id === substepId 
-                  ? { ...substep, status: 'completed' } 
-                  : substep
-              )
-            } 
-          : step
-      )
-    );
-    
-    // Update progress
-    setDeploymentProgress(calculateProgress());
-  };
-  
-  // Navigate to appropriate pages
-  const handleNavigation = (route: string) => {
-    navigate(route);
-  };
-  
-  // Reset the deployment process
-  const resetDeployment = () => {
-    // Reset all steps to pending
-    setDeploymentSteps(prev => 
-      prev.map(step => ({
-        ...step,
-        status: 'pending',
-        substeps: step.substeps.map(substep => ({
-          ...substep,
-          status: 'pending'
-        }))
-      }))
-    );
-    
-    setDeploymentProgress(0);
-    setDeploymentComplete(false);
-    toast.info("Deployment process reset");
-  };
-  
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <Card className="w-[350px] glass-card">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Please log in to access the deployment guide</p>
-            <Button onClick={() => navigate('/admin-login')} className="w-full">
-              Go to Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-8 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-poppins">Master Deployment Guide</h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Complete end-to-end deployment process from testnet to production
-            </p>
+    <>
+      {!isAdminPanel && (
+        <>
+          <Header />
+          <div className="py-20 bg-black">
+            <div className="container mx-auto px-4 max-w-7xl">
+              <div className="text-center mb-12">
+                <motion.h1 
+                  initial={{ opacity: 0, y: -10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ duration: 0.5 }}
+                  className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent mb-6"
+                >
+                  Master Deployment Guide
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-gray-300 text-lg max-w-3xl mx-auto"
+                >
+                  Complete step-by-step guide for deploying your blockchain application from development to production
+                </motion.p>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-              onClick={() => handleNavigation('/admin/smart-contract-testnet')}
-            >
-              <Code size={16} />
-              View Testnet Contracts
-            </Button>
-            <Button 
-              variant="orange" 
-              className="flex items-center gap-2"
-              onClick={startDeployment}
-              disabled={isDeploying || deploymentComplete}
-            >
-              {isDeploying ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Deploying...
-                </>
-              ) : deploymentComplete ? (
-                <>
-                  <CheckCheck size={16} />
-                  Deployed
-                </>
-              ) : (
-                <>
-                  <UploadCloud size={16} />
-                  Start Deployment
-                </>
-              )}
-            </Button>
+        </>
+      )}
+
+      {isAdminPanel ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold font-poppins flex items-center">
+                <FileText className="mr-2 text-orange-500" size={22} />
+                Master Deployment Guide
+              </h2>
+              <p className="text-gray-400 mt-1">Complete step-by-step guide for deploying your application</p>
+            </div>
           </div>
-        </div>
-        
-        {testnetContracts.length === 0 && (
-          <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No testnet contracts found</AlertTitle>
-            <AlertDescription>
-              You need to deploy contracts to testnet before proceeding with mainnet deployment.
-              <Button 
-                variant="link" 
-                className="text-red-400 p-0 h-auto mt-2"
-                onClick={() => handleNavigation('/admin/smart-contract-deployment')}
-              >
-                Go to Smart Contract Deployment <ChevronRight size={14} />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="checklist">Checklist</TabsTrigger>
-            <TabsTrigger value="config">Configuration</TabsTrigger>
-            <TabsTrigger value="deployment">Deployment</TabsTrigger>
-            <TabsTrigger value="verification">Verification</TabsTrigger>
-          </TabsList>
           
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <Card className="glass-card border-wybe-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xl font-poppins flex items-center">
-                  <Server className="mr-2 text-orange-500" size={20} />
-                  Deployment Process Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">End-to-End Deployment Flow</h3>
-                  <p className="text-gray-300 mb-4">
-                    This guide provides a comprehensive process for deploying your Wybe application from 
-                    development to production. Follow these steps to ensure a smooth deployment.
-                  </p>
-                  
-                  <div className="relative">
-                    {/* Progress line */}
-                    <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-gray-700"></div>
-                    
-                    {deploymentSteps.map((step, index) => (
-                      <div key={step.id} className="relative pl-10 pb-8">
-                        {/* Step indicator */}
-                        <div className={`absolute left-0 rounded-full h-7 w-7 flex items-center justify-center border ${
-                          step.status === 'completed' ? 'bg-green-500 border-green-600' :
-                          step.status === 'in-progress' ? 'bg-blue-500 border-blue-600' :
-                          step.status === 'error' ? 'bg-red-500 border-red-600' :
-                          'bg-gray-800 border-gray-700'
-                        }`}>
-                          {step.status === 'completed' ? (
-                            <CheckCircle2 size={14} />
-                          ) : step.status === 'in-progress' ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : step.status === 'error' ? (
-                            <AlertCircle size={14} />
-                          ) : (
-                            <span className="text-xs">{index + 1}</span>
-                          )}
-                        </div>
-                        
-                        <h4 className="text-lg font-medium">{step.title}</h4>
-                        <p className="text-gray-400 mt-1">{step.description}</p>
-                        
-                        <div className="mt-3 space-y-2">
-                          {step.substeps.map(substep => (
-                            <div key={substep.id} className="flex items-center gap-2 text-sm pl-2">
-                              <div className={`h-4 w-4 rounded-full flex items-center justify-center ${
-                                substep.status === 'completed' ? 'text-green-500' :
-                                substep.status === 'in-progress' ? 'text-blue-500' :
-                                substep.status === 'error' ? 'text-red-500' :
-                                'text-gray-500'
-                              }`}>
-                                {substep.status === 'completed' ? (
-                                  <CheckCircle2 size={12} />
-                                ) : substep.status === 'in-progress' ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : substep.status === 'error' ? (
-                                  <AlertCircle size={12} />
-                                ) : (
-                                  <div className="h-1.5 w-1.5 rounded-full bg-current"></div>
-                                )}
-                              </div>
-                              <span>{substep.title}</span>
-                            </div>
-                          ))}
-                        </div>
+          <GuideContent stages={stages} copyCommand={copyCommand} />
+        </motion.div>
+      ) : (
+        <div className="container mx-auto px-4 max-w-7xl pb-20">
+          <GuideContent stages={stages} copyCommand={copyCommand} />
+        </div>
+      )}
+
+      {!isAdminPanel && <Footer />}
+    </>
+  );
+};
+
+// Separate component for guide content to avoid duplication
+const GuideContent = ({ stages, copyCommand }) => {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <Card className="glass-card border-orange-500/20 lg:col-span-1">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center">
+            <FileText className="mr-2 text-orange-500" />
+            Deployment Stages
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ScrollArea className="h-[calc(100vh-300px)]">
+            <div className="px-4 py-2">
+              <ul className="space-y-1">
+                {stages.map((stage) => (
+                  <li key={stage.id}>
+                    <a
+                      href={`#${stage.id}`}
+                      className="flex items-center gap-3 px-2 py-3 rounded-md hover:bg-white/5 transition-colors"
+                    >
+                      {stage.icon}
+                      <div>
+                        <div className="font-medium text-sm">{stage.title}</div>
+                        <div className="text-xs text-gray-400">{stage.description}</div>
                       </div>
-                    ))}
+                    </a>
+                    <Separator className="bg-white/5" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <div className="lg:col-span-3 space-y-8">
+        <div id="preparation" className="scroll-mt-24">
+          <Card className="glass-card border-orange-500/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <Server className="mr-2 text-orange-500" />
+                  1. Preparation & Environment Setup
+                </CardTitle>
+                <Badge variant="outline" className="border-orange-500 text-orange-400">Stage 1</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">1.1 System Requirements</h3>
+                <ul className="list-disc pl-5 space-y-1 text-gray-300">
+                  <li>Node.js v16+ and npm v8+</li>
+                  <li>Git 2.20+</li>
+                  <li>Rust and Cargo for Solana development</li>
+                  <li>Docker and Docker Compose for containerization</li>
+                  <li>Solana CLI tools for blockchain interaction</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">1.2 Repository Setup</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>git clone https://github.com/your-org/wybe-token-platform.git</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("git clone https://github.com/your-org/wybe-token-platform.git")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>cd wybe-token-platform</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("cd wybe-token-platform")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>npm install</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("npm install")}
+                    >
+                      <Copy size={14} />
+                    </Button>
                   </div>
                 </div>
-                
-                <Alert className="bg-blue-500/10 border-blue-500/20">
-                  <AlertTriangle className="h-4 w-4 text-blue-500" />
-                  <AlertTitle>Production Deployment</AlertTitle>
-                  <AlertDescription>
-                    Always perform a full testing cycle before deploying to production. This ensures all components 
-                    work together correctly and minimizes the risk of issues in the live environment.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="glass-card border-wybe-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white font-poppins text-lg flex items-center">
-                    <Code className="mr-2 text-orange-500" size={18} />
-                    Smart Contracts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-300 mb-3">
-                    Deploy your testnet contracts to mainnet while preserving all functionality.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-sm"
-                    onClick={() => setActiveTab('checklist')}
-                  >
-                    View Contract Checklist <ChevronRight size={14} className="ml-1" />
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="glass-card border-wybe-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white font-poppins text-lg flex items-center">
-                    <Globe className="mr-2 text-orange-500" size={18} />
-                    Frontend Deployment
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-300 mb-3">
-                    Deploy your application to Vercel, Netlify, or other hosting providers.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-sm"
-                    onClick={() => setActiveTab('config')}
-                  >
-                    Configure Deployment <ChevronRight size={14} className="ml-1" />
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card className="glass-card border-wybe-primary/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white font-poppins text-lg flex items-center">
-                    <Database className="mr-2 text-orange-500" size={18} />
-                    Database Sync
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-300 mb-3">
-                    Configure database synchronization with blockchain events.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full text-sm"
-                    onClick={() => setActiveTab('deployment')}
-                  >
-                    Setup Sync Service <ChevronRight size={14} className="ml-1" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="checklist" className="space-y-6 mt-6">
-            <Card className="glass-card border-wybe-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xl font-poppins flex items-center">
-                  <CheckCircle2 className="mr-2 text-orange-500" size={20} />
-                  Deployment Checklist
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">1.3 Environment Configuration</h3>
+                <p className="text-gray-300 mb-2">Create a <code>.env</code> file in the root directory:</p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    VITE_API_URL=https://api.wybe.io<br />
+                    VITE_SOLANA_NETWORK=devnet<br />
+                    VITE_TREASURY_WALLET=your-treasury-wallet-address<br />
+                    VITE_DEFAULT_FEE_PERCENTAGE=2.5
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">1.4 Anchor Installation</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>npm install -g @coral-xyz/anchor</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("npm install -g @coral-xyz/anchor")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>anchor --version</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor --version")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('testnet')?.scrollIntoView({ behavior: 'smooth' })}>
+                Next Stage: Testnet Deployment
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="testnet" className="scroll-mt-24">
+          <Card className="glass-card border-blue-500/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <Network className="mr-2 text-blue-500" />
+                  2. Testnet Smart Contract Deployment
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible className="space-y-4">
-                  <AccordionItem value="contracts" className="border-gray-700">
-                    <AccordionTrigger className="text-lg font-medium hover:no-underline">
-                      Smart Contract Migration
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Testnet Contracts Review</h4>
-                        <div className="bg-black/20 p-4 rounded-md max-h-60 overflow-y-auto">
-                          {testnetContracts.length > 0 ? (
-                            <div className="space-y-4">
-                              {testnetContracts.map((contract: any, idx: number) => (
-                                <div key={idx} className="flex flex-col space-y-2 pb-3 border-b border-gray-800">
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">{contract.name}</span>
-                                    <Badge
-                                      variant={contract.status === 'active' ? 'default' : 'outline'}
-                                      className={contract.status === 'active' ? 'bg-green-500/50' : ''}
-                                    >
-                                      {contract.status}
-                                    </Badge>
-                                  </div>
-                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                      <span className="text-gray-400">Program ID:</span>
-                                      <div className="font-mono text-xs mt-1 bg-black/40 p-1.5 rounded">
-                                        {contract.programId}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-400">Mainnet ID:</span>
-                                      <div className="flex items-center mt-1">
-                                        <Input
-                                          placeholder="Enter mainnet program ID"
-                                          className="h-8 text-xs font-mono bg-black/40 border-gray-700"
-                                          value={deploymentConfig.programIdMapping[contract.programId] || ''}
-                                          onChange={(e) => updateProgramIdMapping(contract.programId, e.target.value)}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-400">
-                              <AlertTriangle size={24} className="mx-auto mb-2" />
-                              <p>No testnet contracts found</p>
-                              <Button 
-                                variant="link" 
-                                className="text-wybe-primary mt-2 p-0 h-auto"
-                                onClick={() => handleNavigation('/admin/smart-contract-deployment')}
-                              >
-                                Deploy Testnet Contracts First
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Alert className="bg-amber-500/10 border-amber-500/20">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        <AlertTitle>Program ID Mapping</AlertTitle>
-                        <AlertDescription>
-                          You must provide the matching mainnet program IDs for each testnet contract. These will be used
-                          to update your application configuration during deployment.
-                        </AlertDescription>
-                      </Alert>
-                      
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Migration Checklist</h4>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span>Verify contract functionality on testnet</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span>Audit contract security</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span>Deploy to mainnet with the same parameters</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span>Record mainnet program IDs</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span>Verify mainnet transactions</span>
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="frontend" className="border-gray-700">
-                    <AccordionTrigger className="text-lg font-medium hover:no-underline">
-                      Frontend & Backend Integration
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Configuration Updates</h4>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Update network RPC endpoints to mainnet</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Update program IDs to mainnet addresses</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Configure environment variables</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Update API endpoints for backend services</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-800/50 p-4 rounded-md border border-gray-700">
-                        <h4 className="font-medium mb-2">Vercel Deployment Configuration</h4>
-                        <div className="space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Build Command</span>
-                            <code className="bg-black/30 px-2 py-1 rounded text-xs">npm run build</code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Output Directory</span>
-                            <code className="bg-black/30 px-2 py-1 rounded text-xs">dist</code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Install Command</span>
-                            <code className="bg-black/30 px-2 py-1 rounded text-xs">npm install</code>
-                          </div>
-                          <Separator className="bg-gray-700/50" />
-                          <div>
-                            <span className="text-gray-300">Environment Variables</span>
-                            <div className="mt-2 space-y-2">
-                              <div className="grid grid-cols-2 gap-2">
-                                <code className="bg-black/30 px-2 py-1 rounded text-xs">VITE_NETWORK_TYPE</code>
-                                <code className="bg-black/30 px-2 py-1 rounded text-xs">mainnet</code>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <code className="bg-black/30 px-2 py-1 rounded text-xs">VITE_MAIN_PROGRAM_ID</code>
-                                <code className="bg-black/30 px-2 py-1 rounded text-xs">[Your Mainnet ID]</code>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Button variant="outline" className="w-full">
-                        View Full Configuration Guide
-                      </Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                  
-                  <AccordionItem value="database" className="border-gray-700">
-                    <AccordionTrigger className="text-lg font-medium hover:no-underline">
-                      Database & Transaction Sync
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Database Schema</h4>
-                        <div className="bg-black/20 p-4 rounded-md font-mono text-xs overflow-x-auto">
-                          <pre>{`
-CREATE TABLE transactions (
+                <Badge variant="outline" className="border-blue-500 text-blue-400">Stage 2</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.1 Configure Solana for Testnet</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>solana config set --url https://api.devnet.solana.com</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana config set --url https://api.devnet.solana.com")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.2 Generate New Keypair</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>solana-keygen new --outfile ./keypair.json</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana-keygen new --outfile ./keypair.json")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-gray-300 mt-2 text-sm">
+                  <span className="text-yellow-400 mr-1"><AlertTriangle className="inline h-4 w-4 mr-1" /></span>
+                  Keep your keypair secure and never commit it to version control
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.3 Fund Testnet Wallet</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>solana airdrop 2 $(solana address)</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana airdrop 2 $(solana address)")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.4 Build and Deploy Anchor Program</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>cd anchor-program</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("cd anchor-program")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>anchor build</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor build")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>anchor deploy</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor deploy")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.5 Update Program ID in Configs</h3>
+                <p className="text-gray-300 mb-2">Update the <code>Anchor.toml</code> and <code>lib.rs</code> files with the new Program ID</p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    # Get your program ID<br />
+                    solana address -k target/deploy/wybe_token_program-keypair.json
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">2.6 Run Tests on Testnet</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>anchor test --provider.cluster devnet</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor test --provider.cluster devnet")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('mainnet')?.scrollIntoView({ behavior: 'smooth' })}>
+                Next Stage: Mainnet Deployment
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="mainnet" className="scroll-mt-24">
+          <Card className="glass-card border-green-500/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <CheckCircle className="mr-2 text-green-500" />
+                  3. Mainnet Smart Contract Deployment
+                </CardTitle>
+                <Badge variant="outline" className="border-green-500 text-green-400">Stage 3</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-2 text-yellow-400 flex items-center">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  Mainnet Deployment Warning
+                </h3>
+                <p className="text-gray-300">
+                  Mainnet deployment involves real funds and irreversible transactions. Ensure you have:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-gray-300 mt-2">
+                  <li>Completed thorough testing on testnet</li>
+                  <li>Performed security audits on the code</li>
+                  <li>Secured adequate SOL for deployment fees</li>
+                  <li>Made a backup of all keypairs</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3.1 Configure for Mainnet</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>solana config set --url https://api.mainnet-beta.solana.com</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana config set --url https://api.mainnet-beta.solana.com")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3.2 Prepare Mainnet Wallet</h3>
+                <p className="text-gray-300 mb-2">
+                  For mainnet deployment, use a dedicated wallet with sufficient SOL balance. Never use test wallets.
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>solana address</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana address")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>solana balance</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("solana balance")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3.3 Update Configuration for Mainnet</h3>
+                <p className="text-gray-300 mb-2">
+                  Update <code>Anchor.toml</code> with mainnet configuration:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    [provider]<br />
+                    cluster = "mainnet"<br />
+                    wallet = "/path/to/mainnet-wallet.json"
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3.4 Deploy to Mainnet</h3>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>anchor build</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor build")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <code>anchor deploy</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("anchor deploy")}
+                    >
+                      <Copy size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">3.5 Verify Deployment</h3>
+                <p className="text-gray-300 mb-2">
+                  Verify the program ID on the Solana Explorer:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm flex items-center justify-between">
+                  <code>https://explorer.solana.com/address/YOUR_PROGRAM_ID</code>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 w-6 p-0"
+                    onClick={() => copyCommand("https://explorer.solana.com/address/YOUR_PROGRAM_ID")}
+                  >
+                    <Copy size={14} />
+                  </Button>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('integration')?.scrollIntoView({ behavior: 'smooth' })}>
+                Next Stage: Backend & Frontend Integration
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="integration" className="scroll-mt-24">
+          <Card className="glass-card border-purple-500/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <Code className="mr-2 text-purple-500" />
+                  4. Backend & Frontend Integration
+                </CardTitle>
+                <Badge variant="outline" className="border-purple-500 text-purple-400">Stage 4</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">4.1 Update Environment Variables</h3>
+                <p className="text-gray-300 mb-2">
+                  Update the <code>.env</code> file with the mainnet program ID and configuration:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    VITE_API_URL=https://api.wybe.io<br />
+                    VITE_SOLANA_NETWORK=mainnet-beta<br />
+                    VITE_PROGRAM_ID=your-mainnet-program-id<br />
+                    VITE_TREASURY_WALLET=your-treasury-wallet-address<br />
+                    VITE_DEFAULT_FEE_PERCENTAGE=2.5
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">4.2 Configure Frontend Client</h3>
+                <p className="text-gray-300 mb-2">
+                  Update the web3 configuration in your frontend:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// src/services/smartContractService.ts
+const programID = import.meta.env.VITE_PROGRAM_ID;
+const network = import.meta.env.VITE_SOLANA_NETWORK;
+
+export const initializeConnection = () => {
+  return new Connection(
+    network === 'mainnet-beta' 
+      ? 'https://api.mainnet-beta.solana.com' 
+      : 'https://api.devnet.solana.com'
+  );
+};`}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">4.3 Configure Backend Services</h3>
+                <p className="text-gray-300 mb-2">
+                  Update backend API services to interact with mainnet:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// backend/services/blockchainService.js
+const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const PROGRAM_ID = process.env.PROGRAM_ID;
+
+const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
+
+async function getTokenMetadata(tokenAddress) {
+  // Implementation to fetch token metadata
+}`}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">4.4 Implement Transaction Webhooks</h3>
+                <p className="text-gray-300 mb-2">
+                  Set up webhooks to listen for blockchain events:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// backend/webhooks/transactionWebhook.js
+async function setupTransactionWebhook() {
+  // Subscribe to program events
+  connection.onProgramAccountChange(
+    new PublicKey(PROGRAM_ID),
+    async (accountInfo, context) => {
+      // Process transaction data
+      await processTransaction(accountInfo, context);
+    },
+    'confirmed'
+  );
+}`}
+                  </code>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('database')?.scrollIntoView({ behavior: 'smooth' })}>
+                Next Stage: Database Synchronization
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="database" className="scroll-mt-24">
+          <Card className="glass-card border-blue-400/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <Database className="mr-2 text-blue-400" />
+                  5. Database Synchronization
+                </CardTitle>
+                <Badge variant="outline" className="border-blue-400 text-blue-400">Stage 5</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">5.1 Database Schema Setup</h3>
+                <p className="text-gray-300 mb-2">
+                  Create the necessary database tables for blockchain data:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`CREATE TABLE tokens (
   id SERIAL PRIMARY KEY,
-  transaction_hash VARCHAR(64) UNIQUE NOT NULL,
-  block_number BIGINT NOT NULL,
-  timestamp TIMESTAMP NOT NULL,
-  from_address VARCHAR(44) NOT NULL,
-  to_address VARCHAR(44) NOT NULL,
-  token_amount NUMERIC(20, 9) NOT NULL,
-  token_price NUMERIC(20, 9) NOT NULL,
-  usd_value NUMERIC(20, 2),
-  transaction_type VARCHAR(20) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  program_id VARCHAR(44) NOT NULL,
+  address VARCHAR(44) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  symbol VARCHAR(10) NOT NULL,
+  decimals INTEGER NOT NULL,
+  total_supply NUMERIC NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_transactions_timestamp ON transactions(timestamp);
-CREATE INDEX idx_transactions_from_address ON transactions(from_address);
-CREATE INDEX idx_transactions_to_address ON transactions(to_address);
-CREATE INDEX idx_transactions_program_id ON transactions(program_id);
-`}</pre>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Blockchain Event Listener</h4>
-                        <p className="text-sm text-gray-300">
-                          The listener service connects to the Solana RPC endpoint and captures all relevant
-                          transactions for your smart contracts.
-                        </p>
-                        <div className="bg-black/20 p-4 rounded-md font-mono text-xs overflow-x-auto">
-                          <pre>{`
-// Sample Solana event listener pseudo-code
-const connection = new Connection(MAINNET_RPC_URL);
+CREATE TABLE transactions (
+  id SERIAL PRIMARY KEY,
+  tx_hash VARCHAR(64) UNIQUE NOT NULL,
+  token_id INTEGER REFERENCES tokens(id),
+  sender VARCHAR(44) NOT NULL,
+  recipient VARCHAR(44) NOT NULL,
+  amount NUMERIC NOT NULL,
+  fee NUMERIC NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  status VARCHAR(20) NOT NULL
+);`}
+                  </code>
+                </div>
+              </div>
 
-// Listen for program transaction signatures
-connection.onProgramAccountChange(
-  new PublicKey(PROGRAM_ID),
-  async (accountInfo, context) => {
-    // Process transaction data
-    const signature = context.slot.toString();
-    const txData = await connection.getTransaction(signature);
-    
-    // Write to database
-    await db.insertTransaction({
-      transaction_hash: signature,
-      block_number: context.slot,
-      timestamp: new Date(),
-      // Additional data extracted from txData
-    });
+              <div>
+                <h3 className="text-lg font-semibold mb-2">5.2 Implement Data Synchronization Service</h3>
+                <p className="text-gray-300 mb-2">
+                  Create a service to sync blockchain data with your database:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// backend/services/syncService.js
+async function syncBlockchainData() {
+  // Get latest blockchain transactions
+  const recentTransactions = await fetchRecentTransactions();
+  
+  // Process and store in database
+  for (const tx of recentTransactions) {
+    await db.query(
+      'INSERT INTO transactions (tx_hash, token_id, sender, recipient, amount, fee, timestamp, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (tx_hash) DO NOTHING',
+      [tx.signature, tx.tokenId, tx.sender, tx.recipient, tx.amount, tx.fee, tx.timestamp, tx.status]
+    );
   }
-);
-`}</pre>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Integration Checklist</h4>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Set up database with proper schema</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Configure blockchain event listeners</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Test data flow with sample transactions</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                            </div>
-                            <span>Set up transaction API for frontend</span>
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="config" className="space-y-6 mt-6">
-            <Card className="glass-card border-wybe-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xl font-poppins flex items-center">
-                  <Settings className="mr-2 text-orange-500" size={20} />
-                  Deployment Configuration
+}`}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">5.3 Configure Scheduled Jobs</h3>
+                <p className="text-gray-300 mb-2">
+                  Set up cron jobs to regularly sync blockchain data:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// backend/cron.js
+const cron = require('node-cron');
+const syncService = require('./services/syncService');
+
+// Run every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+  console.log('Running blockchain sync job...');
+  await syncService.syncBlockchainData();
+});`}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">5.4 Implement API Endpoints</h3>
+                <p className="text-gray-300 mb-2">
+                  Create API endpoints to serve the synced blockchain data:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`// backend/routes/transactions.js
+router.get('/api/transactions', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, token } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = 'SELECT * FROM transactions';
+    const params = [];
+    
+    if (token) {
+      query += ' WHERE token_id = $1';
+      params.push(token);
+    }
+    
+    query += ' ORDER BY timestamp DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    params.push(limit, offset);
+    
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});`}
+                  </code>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('verification')?.scrollIntoView({ behavior: 'smooth' })}>
+                Next Stage: Testing & Verification
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="verification" className="scroll-mt-24">
+          <Card className="glass-card border-yellow-500/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <FileCheck className="mr-2 text-yellow-500" />
+                  6. Testing & Verification
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="networkType">Network Type</Label>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="mainnet"
-                            name="networkType"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.networkType === 'mainnet'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, networkType: 'mainnet' }))}
-                          />
-                          <Label htmlFor="mainnet" className="text-sm font-normal">Mainnet</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="testnet"
-                            name="networkType"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.networkType === 'testnet'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, networkType: 'testnet' }))}
-                          />
-                          <Label htmlFor="testnet" className="text-sm font-normal">Testnet</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="devnet"
-                            name="networkType"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.networkType === 'devnet'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, networkType: 'devnet' }))}
-                          />
-                          <Label htmlFor="devnet" className="text-sm font-normal">Devnet</Label>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="frontendDeployment">Frontend Deployment</Label>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="vercel"
-                            name="frontendDeployment"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.frontendDeployment === 'vercel'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, frontendDeployment: 'vercel' }))}
-                          />
-                          <Label htmlFor="vercel" className="text-sm font-normal">Vercel</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="netlify"
-                            name="frontendDeployment"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.frontendDeployment === 'netlify'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, frontendDeployment: 'netlify' }))}
-                          />
-                          <Label htmlFor="netlify" className="text-sm font-normal">Netlify</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="github-pages"
-                            name="frontendDeployment"
-                            className="h-4 w-4 text-wybe-primary"
-                            checked={deploymentConfig.frontendDeployment === 'github-pages'}
-                            onChange={() => setDeploymentConfig(prev => ({ ...prev, frontendDeployment: 'github-pages' }))}
-                          />
-                          <Label htmlFor="github-pages" className="text-sm font-normal">GitHub Pages</Label>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between space-x-2">
-                      <Label htmlFor="databaseSync" className="flex-grow">Database Sync</Label>
-                      <Switch
-                        id="databaseSync"
-                        checked={deploymentConfig.databaseSync}
-                        onCheckedChange={(checked) =>
-                          setDeploymentConfig(prev => ({ ...prev, databaseSync: checked }))
-                        }
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between space-x-2">
-                      <Label htmlFor="analyticsEnabled" className="flex-grow">Enable Analytics</Label>
-                      <Switch
-                        id="analyticsEnabled"
-                        checked={deploymentConfig.analyticsEnabled}
-                        onCheckedChange={(checked) =>
-                          setDeploymentConfig(prev => ({ ...prev, analyticsEnabled: checked }))
-                        }
-                      />
-                    </div>
+                <Badge variant="outline" className="border-yellow-500 text-yellow-400">Stage 6</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">6.1 Frontend Integration Testing</h3>
+                <p className="text-gray-300 mb-2">
+                  Verify all frontend components interact correctly with the blockchain:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 space-y-2">
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Wallet connection and disconnection</span>
                   </div>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Network Configuration</Label>
-                      <Card className="bg-black/30 border-gray-700">
-                        <CardContent className="pt-4 space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">RPC Endpoint:</span>
-                            <code className="text-xs">
-                              {deploymentConfig.networkType === 'mainnet' 
-                                ? 'https://api.mainnet-beta.solana.com' 
-                                : deploymentConfig.networkType === 'testnet'
-                                  ? 'https://api.testnet.solana.com'
-                                  : 'https://api.devnet.solana.com'}
-                            </code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Explorer URL:</span>
-                            <code className="text-xs">
-                              {deploymentConfig.networkType === 'mainnet' 
-                                ? 'https://explorer.solana.com' 
-                                : deploymentConfig.networkType === 'testnet'
-                                  ? 'https://explorer.solana.com/?cluster=testnet'
-                                  : 'https://explorer.solana.com/?cluster=devnet'}
-                            </code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Commitment:</span>
-                            <code className="text-xs">confirmed</code>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Frontend Build Configuration</Label>
-                      <Card className="bg-black/30 border-gray-700">
-                        <CardContent className="pt-4 space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Build Command:</span>
-                            <code className="text-xs">npm run build</code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Output Directory:</span>
-                            <code className="text-xs">dist</code>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Node Version:</span>
-                            <code className="text-xs">18.x</code>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    
-                    <Alert className="bg-blue-500/10 border-blue-500/20">
-                      <AlertTitle>Deployment Configuration</AlertTitle>
-                      <AlertDescription className="text-sm">
-                        These settings will be used to generate the deployment configuration for your chosen platform.
-                        Make sure all settings are correct before proceeding.
-                      </AlertDescription>
-                    </Alert>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Token creation flow</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Trading interface</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Transaction signing</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Fee calculation and display</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="deployment" className="space-y-6 mt-6">
-            <Card className="glass-card border-wybe-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xl font-poppins flex items-center">
-                  <UploadCloud className="mr-2 text-orange-500" size={20} />
-                  Deployment Process
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">6.2 Backend Integration Testing</h3>
+                <p className="text-gray-300 mb-2">
+                  Verify all backend services function correctly:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 space-y-2">
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Blockchain event listeners</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Database synchronization</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>API endpoints</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Authentication and authorization</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">6.3 End-to-End Transaction Testing</h3>
+                <p className="text-gray-300 mb-2">
+                  Test complete transaction flows from end to end:
+                </p>
+                <ol className="list-decimal pl-5 space-y-2 text-gray-300">
+                  <li>Create a test token on mainnet</li>
+                  <li>Execute trades between test wallets</li>
+                  <li>Verify transaction appears in blockchain explorer</li>
+                  <li>Verify transaction synced to database</li>
+                  <li>Verify transaction appears in frontend UI</li>
+                  <li>Verify fees are correctly calculated and distributed</li>
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">6.4 Performance Testing</h3>
+                <p className="text-gray-300 mb-2">
+                  Test system performance under load:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 space-y-2">
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>API response times under load</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Database query performance</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Frontend rendering performance</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Blockchain transaction throughput</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button variant="outline" className="ml-auto flex" onClick={() => document.getElementById('deployment')?.scrollIntoView({ behavior: 'smooth' })}>
+                Final Stage: Production Deployment
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div id="deployment" className="scroll-mt-24">
+          <Card className="glass-card border-green-400/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white flex items-center">
+                  <UploadCloud className="mr-2 text-green-400" />
+                  7. Production Deployment
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="w-full bg-gray-800/50 rounded-full h-4 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-orange-500 to-amber-500 h-full transition-all duration-500 ease-in-out"
-                    style={{ width: `${deploymentProgress}%` }}
-                  ></div>
-                </div>
-                <div className="text-center text-sm">
-                  <span className="font-medium">{deploymentProgress}% Complete</span>
-                  {isDeploying && (
-                    <p className="text-gray-400 animate-pulse mt-1">Deployment in progress...</p>
-                  )}
-                  {deploymentComplete && (
-                    <p className="text-green-400 mt-1">Deployment completed successfully!</p>
-                  )}
-                </div>
-                
-                <div className="space-y-4">
-                  {deploymentSteps.map(step => (
-                    <Card 
-                      key={step.id} 
-                      className={`border ${
-                        step.status === 'completed' ? 'border-green-500/30' : 
-                        step.status === 'in-progress' ? 'border-blue-500/30' : 
-                        step.status === 'error' ? 'border-red-500/30' : 
-                        'border-gray-700'
-                      }`}
+                <Badge variant="outline" className="border-green-400 text-green-400">Final Stage</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">7.1 Frontend Deployment</h3>
+                <p className="text-gray-300 mb-2">
+                  Deploy the frontend application to Vercel or other hosting provider:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <div className="flex items-center justify-between">
+                    <code>npm run build</code>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => copyCommand("npm run build")}
                     >
-                      <CardHeader className="py-3 px-4">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base font-medium flex items-center">
-                            {step.status === 'completed' ? (
-                              <CheckCircle2 size={18} className="mr-2 text-green-500" />
-                            ) : step.status === 'in-progress' ? (
-                              <Loader2 size={18} className="mr-2 text-blue-500 animate-spin" />
-                            ) : step.status === 'error' ? (
-                              <AlertCircle size={18} className="mr-2 text-red-500" />
-                            ) : (
-                              <div className="w-[18px] h-[18px] mr-2"></div>
-                            )}
-                            {step.title}
-                          </CardTitle>
-                          <Badge
-                            variant="outline"
-                            className={`${
-                              step.status === 'completed' ? 'border-green-500 text-green-500' : 
-                              step.status === 'in-progress' ? 'border-blue-500 text-blue-500 animate-pulse' : 
-                              step.status === 'error' ? 'border-red-500 text-red-500' : 
-                              'border-gray-500 text-gray-500'
-                            }`}
-                          >
-                            {step.status === 'completed' ? 'Completed' : 
-                             step.status === 'in-progress' ? 'In Progress' : 
-                             step.status === 'error' ? 'Error' : 'Pending'}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="px-4 py-3 pt-0">
-                        <div className="space-y-2">
-                          {step.substeps.map(substep => (
-                            <div key={substep.id} className="flex items-center">
-                              <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-2 ${
-                                substep.status === 'completed' ? 'text-green-500' : 
-                                substep.status === 'in-progress' ? 'text-blue-500' : 
-                                substep.status === 'error' ? 'text-red-500' : 
-                                'text-gray-500'
-                              }`}>
-                                {substep.status === 'completed' ? (
-                                  <CheckCircle2 size={14} />
-                                ) : substep.status === 'in-progress' ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : substep.status === 'error' ? (
-                                  <AlertCircle size={14} />
-                                ) : (
-                                  <div className="w-2 h-2 rounded-full bg-current"></div>
-                                )}
-                              </div>
-                              <span className="text-sm">{substep.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                <div className="flex gap-3 justify-center">
-                  {!isDeploying && !deploymentComplete && (
-                    <Button
-                      variant="orange"
-                      className="px-8"
-                      onClick={startDeployment}
-                    >
-                      <Play size={16} className="mr-2" />
-                      Start Deployment
+                      <Copy size={14} />
                     </Button>
-                  )}
-                  
-                  {isDeploying && (
-                    <Button
-                      disabled
-                      className="px-8 opacity-50"
-                    >
-                      <Loader2 size={16} className="mr-2 animate-spin" />
-                      Deploying...
-                    </Button>
-                  )}
-                  
-                  {deploymentComplete && (
-                    <>
-                      <Button
-                        variant="default"
-                        className="px-8 bg-green-500 hover:bg-green-600"
-                        onClick={() => window.open('https://example.com', '_blank')}
-                      >
-                        <ExternalLink size={16} className="mr-2" />
-                        View Deployed App
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="px-8"
-                        onClick={resetDeployment}
-                      >
-                        <RefreshCw size={16} className="mr-2" />
-                        Reset Process
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="verification" className="space-y-6 mt-6">
-            <Card className="glass-card border-wybe-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xl font-poppins flex items-center">
-                  <CheckCheck className="mr-2 text-orange-500" size={20} />
-                  Deployment Verification
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Final Checklist</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="border-gray-700">
-                      <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-base font-medium flex items-center">
-                          <Landmark size={18} className="mr-2 text-orange-500" />
-                          Smart Contract Verification
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 py-3 pt-0 space-y-2">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Contract addresses are correct</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Functions execute correctly</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Fee parameters match expectations</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Events emit properly</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="border-gray-700">
-                      <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-base font-medium flex items-center">
-                          <Globe size={18} className="mr-2 text-orange-500" />
-                          Frontend Verification
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 py-3 pt-0 space-y-2">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">All pages load correctly</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Wallet connection works</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Transaction functionality works</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">UI is responsive on all devices</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="border-gray-700">
-                      <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-base font-medium flex items-center">
-                          <Database size={18} className="mr-2 text-orange-500" />
-                          Database & Backend
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 py-3 pt-0 space-y-2">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Transaction sync is operational</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">APIs return correct data</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Error handling is implemented</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Data consistency verified</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="border-gray-700">
-                      <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-base font-medium flex items-center">
-                          <Box size={18} className="mr-2 text-orange-500" />
-                          Security & Performance
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 py-3 pt-0 space-y-2">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">SSL is properly configured</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Frontend performance is optimized</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">API rate limiting is in place</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 text-green-500">
-                            <CheckCircle2 size={14} />
-                          </div>
-                          <span className="text-sm">Input validation is implemented</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  </div>
+                  <div className="mt-2">
+                    <code>npx vercel --prod</code>
                   </div>
                 </div>
-                
-                <Alert className="bg-green-500/10 border-green-500/20">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <AlertTitle>Deployment Complete</AlertTitle>
-                  <AlertDescription>
-                    Your application has been successfully deployed and verified. All systems are operational and ready for use.
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="flex gap-3 justify-center">
-                  <Button
-                    variant="orange"
-                    className="px-8"
-                    onClick={() => window.open('https://example.com', '_blank')}
-                  >
-                    <ExternalLink size={16} className="mr-2" />
-                    Visit Live Application
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="px-8"
-                    onClick={() => handleNavigation('/admin')}
-                  >
-                    Return to Dashboard
-                  </Button>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">7.2 Backend Deployment</h3>
+                <p className="text-gray-300 mb-2">
+                  Deploy the backend services to your cloud provider:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`# Example Docker deployment
+docker build -t wybe-backend .
+docker tag wybe-backend:latest registry.example.com/wybe-backend:latest
+docker push registry.example.com/wybe-backend:latest
+
+# Deploy to Kubernetes
+kubectl apply -f k8s/deployment.yaml`}
+                  </code>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">7.3 Database Migration</h3>
+                <p className="text-gray-300 mb-2">
+                  Apply database migrations to production:
+                </p>
+                <div className="bg-gray-900 rounded-md p-3 font-mono text-sm">
+                  <code>
+                    {`# Using a migration tool like Flyway or Liquibase
+npx sequelize-cli db:migrate --env production
+
+# Or manually apply SQL scripts
+psql -h production-db-host -U db-user -d wybe-db -f migrations/001_initial_schema.sql`}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">7.4 Final Verification Checklist</h3>
+                <div className="bg-gray-900 rounded-md p-3 space-y-2">
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>All environment variables correctly set in production</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>SSL certificates properly configured</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Database backups enabled</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Monitoring and alerting set up</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>Load balancing and scaling configured</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCheck className="h-5 w-5 text-green-500 mr-2" />
+                    <span>CORS and security headers configured</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">7.5 Launch!</h3>
+                <div className="bg-green-900/30 border border-green-700/50 rounded-md p-4">
+                  <p className="text-gray-300">
+                    Once all checks pass, your application is ready for public launch. Monitor performance and transactions closely during the initial launch period.
+                  </p>
+                  <div className="mt-4">
+                    <Button variant="green" className="w-full sm:w-auto">
+                      <CheckCheck className="mr-2 h-5 w-5" />
+                      Complete Master Deployment
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

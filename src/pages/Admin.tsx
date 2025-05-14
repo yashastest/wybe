@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +17,7 @@ import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
 import DeploymentGuide from "@/components/admin/DeploymentGuide";
 import DeploymentEnvironment from "@/components/admin/DeploymentEnvironment";
 import AboutProject from "@/components/admin/AboutProject";
+import MasterDeploymentGuide from "@/pages/MasterDeploymentGuide";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useAdmin from "@/hooks/useAdmin";
 import AdminUserManager from "@/components/admin/AdminUserManager";
@@ -33,7 +35,8 @@ import {
   Info,
   Shield,
   Users,
-  Network
+  Network,
+  FileCode
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -67,10 +70,18 @@ const Admin = () => {
     };
     
     checkAuth();
+
+    // Check if there's an active tab stored in localStorage
+    const storedActiveTab = localStorage.getItem('admin-active-tab');
+    if (storedActiveTab) {
+      setActiveTab(storedActiveTab);
+      // Clear it after use
+      localStorage.removeItem('admin-active-tab');
+    }
   }, [navigate]);
 
   useEffect(() => {
-    // Setup event listeners for data-attribute buttons
+    // Setup event listeners for data-attribute buttons and custom events
     const setupEventListeners = () => {
       // Environment button (from deployment page)
       document.querySelectorAll('[data-environment-btn]').forEach(btn => {
@@ -91,11 +102,23 @@ const Admin = () => {
       document.querySelectorAll('[data-testnet-btn]').forEach(btn => {
         btn.addEventListener('click', () => setActiveTab('testnet'));
       });
+
+      // Setup custom event listeners for tab changes
+      document.addEventListener('deployment-tab-request', () => setActiveTab('deployment'));
+      document.addEventListener('testnet-tab-request', () => setActiveTab('testnet'));
+      document.addEventListener('guide-tab-request', () => setActiveTab('guide'));
     };
     
     // Run setup after a short delay to ensure elements are rendered
     setTimeout(setupEventListeners, 500);
-  }, [activeTab]);
+
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener('deployment-tab-request', () => setActiveTab('deployment'));
+      document.removeEventListener('testnet-tab-request', () => setActiveTab('testnet'));
+      document.removeEventListener('guide-tab-request', () => setActiveTab('guide'));
+    };
+  }, []);
 
   // Show loading state if loading or content not ready
   if (isLoading || !showContent) {
@@ -129,6 +152,7 @@ const Admin = () => {
         { id: "deployment", label: "Contract Deployment", icon: <Package size={18} />, dataAttr: "deployment" },
         { id: "testnet", label: "Testnet Contracts", icon: <Network size={18} />, dataAttr: "testnet" },
         { id: "environment", label: "Deployment Environment", icon: <Cloud size={18} />, dataAttr: "environment" },
+        { id: "guide", label: "Master Deployment Guide", icon: <FileCode size={18} />, dataAttr: "guide" },
         { id: "treasury", label: "Treasury Management", icon: <Wallet size={18} /> },
         { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
         { id: "about", label: "About Project", icon: <Info size={18} /> },
@@ -282,6 +306,13 @@ const Admin = () => {
                 Environment
               </button>
               <button 
+                onClick={() => setActiveTab("guide")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "guide" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+                data-tab="guide"
+              >
+                Guide
+              </button>
+              <button 
                 onClick={() => setActiveTab("treasury")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "treasury" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
@@ -312,6 +343,7 @@ const Admin = () => {
           {activeTab === "deployment" && <SmartContractDeployment />}
           {activeTab === "environment" && <DeploymentEnvironment />}
           {activeTab === "testnet" && <SmartContractTestnet />}
+          {activeTab === "guide" && <MasterDeploymentGuide isAdminPanel={true} />}
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "about" && <AboutProject />}

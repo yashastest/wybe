@@ -52,7 +52,17 @@ const SmartContractDashboard = () => {
   }, []);
 
   const handleConfigureClick = () => {
-    navigate("/admin/smart-contract-deployment");
+    // Using data-tab attribute to trigger the tab change in Admin.tsx
+    const deploymentTabBtn = document.querySelector('[data-tab="deployment"]');
+    if (deploymentTabBtn) {
+      (deploymentTabBtn as HTMLElement).click();
+    } else {
+      // Fallback in case the button isn't found
+      const event = new CustomEvent('deployment-tab-request');
+      document.dispatchEvent(event);
+      // Set the activeTab in localStorage to be picked up by Admin component
+      localStorage.setItem('admin-active-tab', 'deployment');
+    }
   };
   
   const copyToClipboard = (text: string, type: string) => {
@@ -68,11 +78,31 @@ const SmartContractDashboard = () => {
   };
   
   const handleViewContracts = () => {
-    navigate("/admin/smart-contract-testnet");
+    // Using data-tab attribute to trigger the tab change in Admin.tsx
+    const testnetTabBtn = document.querySelector('[data-tab="testnet"]');
+    if (testnetTabBtn) {
+      (testnetTabBtn as HTMLElement).click();
+    } else {
+      // Fallback in case the button isn't found
+      const event = new CustomEvent('testnet-tab-request');
+      document.dispatchEvent(event);
+      // Set the activeTab in localStorage to be picked up by Admin component
+      localStorage.setItem('admin-active-tab', 'testnet');
+    }
   };
   
   const handleViewDeploymentGuide = () => {
-    navigate("/master-deployment-guide");
+    // Using data-tab attribute to trigger the tab change in Admin.tsx
+    const guideTabBtn = document.querySelector('[data-tab="guide"]');
+    if (guideTabBtn) {
+      (guideTabBtn as HTMLElement).click();
+    } else {
+      // Fallback in case the button isn't found
+      const event = new CustomEvent('guide-tab-request');
+      document.dispatchEvent(event);
+      // Set the activeTab in localStorage to be picked up by Admin component  
+      localStorage.setItem('admin-active-tab', 'guide');
+    }
   };
 
   return (
