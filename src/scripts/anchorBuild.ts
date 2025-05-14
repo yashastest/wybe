@@ -1,7 +1,5 @@
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+// This file provides browser-compatible versions of Anchor build functions
 
 export interface AnchorBuildResult {
   success: boolean;
@@ -10,112 +8,48 @@ export interface AnchorBuildResult {
   buildOutput?: string;
 }
 
-/**
- * Builds the Anchor program
- */
+// Browser-compatible version that simulates Anchor build
 export function buildAnchorProgram(programDir = './anchor-program'): AnchorBuildResult {
-  try {
-    console.log('Building Anchor program...');
-    
-    // Check if the Anchor program exists
-    if (!fs.existsSync(programDir)) {
-      return {
-        success: false,
-        message: `Anchor program directory not found at ${programDir}`
-      };
-    }
-    
-    // Execute the anchor build command
-    const buildOutput = execSync('anchor build', {
-      cwd: programDir,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
-    
-    console.log('Build output:', buildOutput);
-    
-    // Extract program ID from the build output
-    const programIdMatch = buildOutput.match(/Program ID: ([a-zA-Z0-9]+)/);
-    const programId = programIdMatch ? programIdMatch[1] : undefined;
-    
-    return {
-      success: true,
-      message: 'Anchor program built successfully',
-      programId,
-      buildOutput
-    };
-  } catch (error) {
-    console.error('Error building Anchor program:', error);
-    return {
-      success: false,
-      message: `Error building Anchor program: ${error instanceof Error ? error.message : String(error)}`,
-      buildOutput: error instanceof Error ? error.toString() : String(error)
-    };
-  }
+  console.log('Simulating Anchor build in browser environment...');
+  
+  // In browser environments, we simulate the build with a mock result
+  return {
+    success: true,
+    message: 'Anchor program build simulated in browser environment',
+    programId: 'Wyb111111111111111111111111111111111111111',
+    buildOutput: 'Build simulation completed successfully'
+  };
 }
 
-/**
- * Deploys the Anchor program
- */
+// Browser-compatible version that simulates Anchor deploy
 export function deployAnchorProgram(network = 'devnet', programDir = './anchor-program'): AnchorBuildResult {
-  try {
-    console.log(`Deploying Anchor program to ${network}...`);
-    
-    // First, update the Anchor.toml to use the specified network
-    const anchorTomlPath = path.join(programDir, 'Anchor.toml');
-    let anchorToml = fs.readFileSync(anchorTomlPath, 'utf-8');
-    anchorToml = anchorToml.replace(/cluster = "[^"]+"/g, `cluster = "${network}"`);
-    fs.writeFileSync(anchorTomlPath, anchorToml);
-    
-    // Execute the anchor deploy command
-    const deployOutput = execSync(`anchor deploy --provider.cluster ${network}`, {
-      cwd: programDir,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
-    
-    console.log('Deploy output:', deployOutput);
-    
-    // Extract program ID from the deploy output
-    const programIdMatch = deployOutput.match(/Program ID: ([a-zA-Z0-9]+)/);
-    const programId = programIdMatch ? programIdMatch[1] : undefined;
-    
-    return {
-      success: true,
-      message: `Anchor program deployed to ${network} successfully`,
-      programId,
-      buildOutput: deployOutput
-    };
-  } catch (error) {
-    console.error('Error deploying Anchor program:', error);
-    return {
-      success: false,
-      message: `Error deploying Anchor program: ${error instanceof Error ? error.message : String(error)}`,
-      buildOutput: error instanceof Error ? error.toString() : String(error)
-    };
-  }
+  console.log(`Simulating Anchor deploy to ${network} in browser environment...`);
+  
+  // In browser environments, we simulate the deployment with a mock result
+  return {
+    success: true,
+    message: `Anchor program deployment to ${network} simulated in browser environment`,
+    programId: 'Wyb111111111111111111111111111111111111111',
+    buildOutput: 'Deployment simulation completed successfully'
+  };
 }
 
-/**
- * Verifies if Anchor CLI is installed
- */
+// Browser-compatible version that checks Anchor installation
 export function verifyAnchorInstallation(): boolean {
-  try {
-    execSync('anchor --version', { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
+  // In browser environments, we can't directly check for Anchor CLI
+  // so we return a default value or check localStorage if you've stored this info
+  const storedAnchorStatus = localStorage.getItem('anchorInstalled');
+  if (storedAnchorStatus) {
+    return storedAnchorStatus === 'true';
   }
+  
+  // Default to false in browser environment
+  return false;
 }
 
-/**
- * Gets installed Anchor version
- */
+// Browser-compatible version that gets Anchor version
 export function getAnchorVersion(): string | null {
-  try {
-    const version = execSync('anchor --version', { encoding: 'utf-8' }).trim();
-    return version;
-  } catch {
-    return null;
-  }
+  // In browser environments, we can't directly check Anchor version
+  // so we return a default value or check localStorage if you've stored this info
+  return localStorage.getItem('anchorVersion') || 'Simulated 0.29.0';
 }

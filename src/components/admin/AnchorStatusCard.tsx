@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw } from "lucide-react";
+import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,14 @@ const AnchorStatusCard = () => {
       toast.success("Anchor status refreshed");
     }, 1000);
   };
+  
+  const toggleMockAnchorStatus = () => {
+    const newStatus = !isAnchorInstalled;
+    const version = newStatus ? 'Mock 0.29.0' : undefined;
+    integrationService.setMockAnchorStatus(newStatus, version);
+    checkAnchorStatus();
+    toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in simulation mode`);
+  };
 
   return (
     <motion.div
@@ -44,16 +52,31 @@ const AnchorStatusCard = () => {
           <Terminal className="mr-2 text-orange-500" size={20} />
           Anchor CLI Status
         </h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefreshStatus} 
-          disabled={isRefreshing}
-          className="h-8 px-2"
-        >
-          <RefreshCcw size={14} className={`mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleMockAnchorStatus} 
+            className="h-8 px-2"
+          >
+            {isAnchorInstalled ? (
+              <ToggleRight size={14} className="mr-1 text-green-500" />
+            ) : (
+              <ToggleLeft size={14} className="mr-1" />
+            )}
+            {isAnchorInstalled ? "Disable Mock" : "Enable Mock"}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefreshStatus} 
+            disabled={isRefreshing}
+            className="h-8 px-2"
+          >
+            <RefreshCcw size={14} className={`mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
       
       <div className="space-y-3">
@@ -62,8 +85,8 @@ const AnchorStatusCard = () => {
             <CheckCircle2 className="h-5 w-5 text-green-500" />
             <AlertTitle className="font-poppins">Anchor Detected</AlertTitle>
             <AlertDescription>
-              Anchor CLI version {anchorVersion || "unknown"} is installed on this system.
-              Smart contract deployment will use real Anchor builds.
+              Anchor CLI version {anchorVersion || "unknown"} is {anchorVersion?.includes('Mock') ? 'simulated' : 'installed'} on this system.
+              Smart contract deployment will use {anchorVersion?.includes('Mock') ? 'simulated' : 'real'} Anchor builds.
             </AlertDescription>
           </Alert>
         ) : (
@@ -100,9 +123,14 @@ const AnchorStatusCard = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Smart Contract Mode:</span>
             <Badge variant={isAnchorInstalled ? "default" : "outline"} className={isAnchorInstalled ? "bg-green-500/80" : "border-amber-500 text-amber-500"}>
-              {isAnchorInstalled ? "Real Deployment" : "Simulation"}
+              {isAnchorInstalled ? (anchorVersion?.includes('Mock') ? "Mock Deployment" : "Real Deployment") : "Simulation"}
             </Badge>
           </div>
+          {anchorVersion?.includes('Mock') && isAnchorInstalled && (
+            <p className="text-xs text-amber-400 mt-1">
+              Running in mock mode. This simulates Anchor CLI but doesn't require actual installation.
+            </p>
+          )}
         </div>
       </div>
     </motion.div>

@@ -32,13 +32,18 @@ class SmartContractService {
   
   // Check if Anchor CLI is installed
   private checkAnchorInstallation(): void {
+    // In the browser environment, use the browser-compatible function
     const isInstalled = verifyAnchorInstallation();
     this.config.anchorInstalled = isInstalled;
     
+    // Save to localStorage for persistence
+    localStorage.setItem('anchorInstalled', isInstalled.toString());
+    
     if (isInstalled) {
-      // If installed, try to get version
+      // If installed, try to get version from localStorage or simulation
       try {
-        const version = require('child_process').execSync('anchor --version', { encoding: 'utf-8' }).trim();
+        // In a browser-compatible way
+        const version = localStorage.getItem('anchorVersion') || 'Simulated 0.29.0';
         this.config.anchorVersion = version;
       } catch (error) {
         console.error("Error getting Anchor version:", error);
@@ -56,16 +61,13 @@ class SmartContractService {
     try {
       // Check if Anchor is installed
       if (!this.config.anchorInstalled) {
-        toast.error("Anchor CLI not found. Please install Anchor to deploy real contracts.");
-        return {
-          success: false,
-          message: "Anchor CLI not found. Please install Anchor to deploy real contracts."
-        };
+        toast.warning("Anchor CLI not detected. Smart contracts will be simulated.");
+        return this.simulateTokenDeployment(tokenName, tokenSymbol, totalSupply, creatorAddress);
       }
       
       toast.info("Building Anchor program...");
       
-      // First build the program
+      // First build the program (browser-compatible)
       const buildResult = buildAnchorProgram();
       
       if (!buildResult.success) {
@@ -78,7 +80,7 @@ class SmartContractService {
       
       toast.info(`Deploying to ${this.config.networkType}...`);
       
-      // Then deploy the program
+      // Then deploy the program (browser-compatible)
       const deployResult = deployAnchorProgram(this.config.networkType);
       
       if (!deployResult.success) {

@@ -187,6 +187,22 @@ class IntegrationService {
     const contractConfig = smartContractService.getContractConfig();
     return contractConfig.anchorVersion;
   }
+  
+  /**
+   * Set mock Anchor installation status (for development testing in browser)
+   */
+  public setMockAnchorStatus(isInstalled: boolean, version?: string): void {
+    localStorage.setItem('anchorInstalled', isInstalled.toString());
+    if (version) {
+      localStorage.setItem('anchorVersion', version);
+    }
+    
+    // Refresh the service's status
+    smartContractService.updateContractConfig({
+      anchorInstalled: isInstalled,
+      anchorVersion: version
+    });
+  }
 }
 
 // Export singleton instance
