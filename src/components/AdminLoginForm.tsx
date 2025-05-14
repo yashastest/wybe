@@ -22,6 +22,8 @@ const AdminLoginForm = () => {
     setTimeout(() => {
       // Demo credentials - in production, this would validate against a database
       if (username === 'admin' && password === 'admin123') {
+        console.log("Credentials valid, setting session data");
+        
         // Clear any previous session data first
         localStorage.removeItem('wybeAdminLoggedIn');
         sessionStorage.removeItem('wybeAdminSession');
@@ -31,7 +33,12 @@ const AdminLoginForm = () => {
         sessionStorage.setItem('wybeAdminSession', Date.now().toString());
         
         toast.success('Login successful!');
-        navigate('/admin');
+        
+        // Force a small delay before navigation to ensure session data is set
+        setTimeout(() => {
+          console.log("Redirecting to admin panel");
+          navigate('/admin');
+        }, 100);
       } else {
         toast.error('Invalid credentials. Please check username and password.');
       }

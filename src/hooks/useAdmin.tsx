@@ -21,14 +21,17 @@ export const useAdmin = () => {
     console.log("Auth check:", { isLoggedIn, sessionExists });
     
     if (isLoggedIn && sessionExists) {
+      console.log("Valid session found, setting authenticated to true");
       setIsAuthenticated(true);
     } else {
+      console.log("No valid session found, setting authenticated to false");
       setIsAuthenticated(false);
       
       // Only redirect and show message if we're on an admin page that requires authentication
       // and not already on the login page
       if (window.location.pathname.includes('/admin') && 
           !window.location.pathname.includes('/admin-login')) {
+        console.log("Redirecting to login page");
         navigate('/admin-login');
         toast.error("Authentication required. Please login.");
       }

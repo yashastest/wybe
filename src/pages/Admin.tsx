@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,6 +44,23 @@ const Admin = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, logout } = useAdmin();
   
+  // Force authentication check on initial load and whenever the component remounts
+  useEffect(() => {
+    console.log("Admin panel authentication state:", { isAuthenticated, isLoading });
+    
+    // Ensure valid session is present
+    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+    
+    console.log("Admin direct session check:", { isLoggedIn, sessionExists });
+    
+    if (!isLoggedIn || !sessionExists) {
+      console.log("No valid session found, redirecting to login");
+      navigate('/admin-login');
+      return;
+    }
+  }, []);
+  
   // Early return if still loading
   if (isLoading) {
     return (
@@ -56,7 +72,9 @@ const Admin = () => {
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
-    return null; // useAdmin hook will handle redirection
+    console.log("Not authenticated, redirecting to login");
+    navigate('/admin-login');
+    return null;
   }
 
   useEffect(() => {
