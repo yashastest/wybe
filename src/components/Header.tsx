@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useWallet } from "@/hooks/useWallet";
 
 interface HeaderProps {
   adminOnly?: boolean;
@@ -19,6 +20,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { connected, address, connect, disconnect, isConnecting, isSolanaAvailable } = useWallet();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -39,6 +41,14 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     setIsOpen(false);
   }, [location]);
 
+  const handleWalletConnection = async () => {
+    if (connected) {
+      disconnect();
+    } else {
+      await connect();
+    }
+  };
+
   // Regular navigation links
   const navLinks = [
     { to: "/", label: "Home" },
@@ -56,6 +66,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
 
   // Choose which links to display
   const linksToDisplay = adminOnly ? adminNavLinks : navLinks;
+
+  // Truncate address for display
+  const truncatedAddress = address ? 
+    `${address.substring(0, 4)}...${address.substring(address.length - 4)}` : 
+    '';
 
   return (
     <header 
@@ -104,20 +119,43 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             ))}
           </nav>
           
-          {/* Mobile Menu Button */}
+          {/* Wallet Connection Button - Desktop */}
           {!adminOnly && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-              className="hidden md:block"
-            >
-              <Link to="/launch">
-                <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                  Launch a Token
+            <div className="hidden md:flex items-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Button 
+                  onClick={handleWalletConnection} 
+                  className={connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}
+                  disabled={isConnecting}
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  {isConnecting ? (
+                    "Connecting..."
+                  ) : connected ? (
+                    truncatedAddress
+                  ) : (
+                    "Connect Wallet"
+                  )}
                 </Button>
-              </Link>
-            </motion.div>
+              </motion.div>
+              
+              {/* Launch Token Button - Desktop */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <Link to="/launch">
+                  <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
+                    Launch a Token
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
           )}
           
           {/* Mobile Menu Button */}
@@ -148,51 +186,39 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                   </DropdownMenuItem>
                 ))}
                 {!adminOnly && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/launch" className="w-full">
-                      <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                        Launch a Token
+                  <>
+                    {/* Wallet Button - Mobile */}
+                    <DropdownMenuItem asChild>
+                      <Button 
+                        onClick={handleWalletConnection} 
+                        className={`w-full mt-2 ${connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}`}
+                        disabled={isConnecting}
+                      >
+                        <Wallet className="mr-2 h-4 w-4" />
+                        {isConnecting ? (
+                          "Connecting..."
+                        ) : connected ? (
+                          truncatedAddress
+                        ) : (
+                          "Connect Wallet"
+                        )}
                       </Button>
-                    </Link>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                    
+                    {/* Launch Button - Mobile */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/launch" className="w-full">
+                        <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
+                          Launch a Token
+                        </Button>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           </motion.div>
         </div>
-        
-        {/* Old Mobile Navigation - removing since we've replaced with DropdownMenu */}
-        {/* {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden mt-4 pb-4"
-          >
-            <nav className="flex flex-col space-y-4">
-              {linksToDisplay.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`nav-link text-sm font-medium py-2 transition-colors hover:bg-wybe-primary/20 hover:text-white hover:pl-2 rounded-full ${
-                    location.pathname === link.to ? 'active-nav-link' : ''
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              
-              {!adminOnly && (
-                <Link to="/launch" className="mt-2">
-                  <Button className="btn-primary w-full hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                    Launch a Token
-                  </Button>
-                </Link>
-              )}
-            </nav>
-          </motion.div>
-        )} */}
       </div>
     </header>
   );

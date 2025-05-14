@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { toast } from "sonner";
 
-// Mock wallet context
+// Wallet context type
 interface WalletContextType {
   wallet: string | null;
   isConnecting: boolean;
@@ -47,10 +47,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const connect = async () => {
+    // If Phantom is available, use it as default; otherwise use mock
+    if (window.solana && window.solana.isPhantom) {
+      return connectPhantom();
+    }
+    
+    // Fallback to mock connection if Phantom isn't available
     setIsConnecting(true);
     try {
-      // In a real app, this would call the Phantom/Solflare wallet adapter
-      // For now, we'll mock the connection
+      // Mock the connection
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       // Generate a mock wallet address
@@ -78,16 +83,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // In a real app, this would request connection to the Phantom wallet
-      // For demonstration, we'll simulate it
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Connecting to Phantom wallet...");
       
-      // In a real app, we would get the connected wallet from Phantom
-      const phantomWallet = "Phantom" + Math.random().toString(36).substring(2, 10);
-      
-      setWallet(phantomWallet);
-      localStorage.setItem("wybeWallet", phantomWallet);
-      toast.success("Phantom wallet connected!");
+      try {
+        // Actually connect to the wallet
+        const response = await window.solana.connect();
+        const address = response.publicKey.toString();
+        console.log("Connected to Phantom wallet:", address);
+        
+        // Save the wallet address
+        setWallet(address);
+        localStorage.setItem("wybeWallet", address);
+        toast.success("Phantom wallet connected!");
+      } catch (err) {
+        console.error("User rejected the connection", err);
+        toast.error("Connection rejected. Please try again.");
+      }
     } catch (error) {
       console.error("Failed to connect Phantom wallet:", error);
       toast.error("Failed to connect Phantom wallet. Please try again.");
@@ -97,6 +108,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const disconnect = () => {
+    // If we have a Phantom connection, disconnect it
+    if (window.solana && window.solana.isPhantom) {
+      try {
+        window.solana.disconnect();
+      } catch (error) {
+        console.error("Error disconnecting from Phantom:", error);
+      }
+    }
+    
+    // Clear local state
     setWallet(null);
     localStorage.removeItem("wybeWallet");
     toast.success("Wallet disconnected");
