@@ -16,7 +16,8 @@ import {
   Plus,
   Save,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -651,47 +652,36 @@ const SmartContractTestnet = () => {
       )}
       
       {isDeletingContractId && (
-        
-        
-          
-            
-              
-                Are you sure you want to delete this contract?
-              
-            
-            
-              
-                This action cannot be undone.
-              
-            
-          
-          
-            
-              
-                
-                  
-                    
-                      
-                    
-                    
-                      Deleting...
-                    
-                  
-                
-                
-                  
-                    
-                      
-                    
-                    
-                      Cancel
-                    
-                  
-                
-              
-            
-          
-        
+        <Alert variant="destructive" className="glass-card border-red-500/50">
+          <AlertTitle className="flex items-center">
+            <AlertTriangle className="mr-2" size={18} />
+            Are you sure you want to delete this contract?
+          </AlertTitle>
+          <AlertDescription>
+            This action cannot be undone.
+          </AlertDescription>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button 
+              variant="destructive" 
+              className="bg-red-500/90 hover:bg-red-600"
+              disabled={isDeleting}
+              onClick={confirmDeleteContract}
+            >
+              {isDeleting ? (
+                <>
+                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : "Delete"}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={cancelDeleteContract}
+            >
+              Cancel
+            </Button>
+          </div>
+        </Alert>
       )}
       
       {isImporting && (
@@ -708,12 +698,12 @@ const SmartContractTestnet = () => {
             </Alert>
             <div className="space-y-2">
               <Label htmlFor="import-data">Import Data</Label>
-              <Input.TextArea
+              <textarea
                 id="import-data"
                 placeholder="Paste your JSON data here"
                 value={importData}
-                onChange={handleImportDataChange}
-                className="bg-black/30 min-h-[150px] font-mono text-xs"
+                onChange={(e) => handleImportDataChange(e)}
+                className="bg-black/30 min-h-[150px] font-mono text-xs w-full rounded-md border border-input p-2"
               />
               {!isImportValid && (
                 <p className="text-red-500 text-sm">Invalid JSON format</p>
@@ -730,11 +720,7 @@ const SmartContractTestnet = () => {
                     <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
                     Loading Sample...
                   </>
-                ) : (
-                  <>
-                    Load Sample
-                  </>
-                )}
+                ) : "Load Sample"}
               </Button>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" onClick={handleCancelImport}>Cancel</Button>
