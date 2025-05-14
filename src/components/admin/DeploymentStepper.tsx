@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   CheckCircle2, 
@@ -8,7 +7,7 @@ import {
   PlayCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DeploymentStep } from "@/pages/MasterDeploymentGuide";
+import { DeploymentStep } from "@/services/integrationService";
 
 interface DeploymentStepperProps {
   steps: DeploymentStep[];

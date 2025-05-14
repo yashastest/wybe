@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-// Import DeploymentStep from integrationService instead of defining it here
-import { DeploymentStep } from '@/services/integrationService';
+// Import DeploymentStep from integrationService
+import { DeploymentStep, integrationService } from '@/services/integrationService';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { 

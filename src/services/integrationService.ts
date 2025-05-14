@@ -628,4 +628,6 @@ export const integrationService = {
       localStorage.removeItem('anchorVersion');
     }
   }
+
+  // Removed the duplicate setMockAnchorStatus method that was here
 };
