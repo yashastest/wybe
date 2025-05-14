@@ -361,7 +361,7 @@ export const integrationService = {
     return true;
   },
 
-  // Set mock Anchor status - add this method for AnchorStatusCard
+  // Set mock Anchor status - for AnchorStatusCard
   setMockAnchorStatus: (installed: boolean, version?: string): void => {
     console.log(`Setting mock Anchor status: ${installed ? 'installed' : 'not installed'}, version: ${version || 'none'}`);
     localStorage.setItem('anchorInstalled', String(installed));
@@ -616,18 +616,7 @@ export const integrationService = {
       console.error("Failed to import contracts:", error);
       return false;
     }
-  },
-  
-  // Add this method for AnchorStatusCard component
-  setMockAnchorStatus: (installed: boolean, version?: string): void => {
-    console.log(`Setting mock Anchor status: ${installed ? 'installed' : 'not installed'}, version: ${version || 'none'}`);
-    localStorage.setItem('anchorInstalled', String(installed));
-    if (version) {
-      localStorage.setItem('anchorVersion', version);
-    } else {
-      localStorage.removeItem('anchorVersion');
-    }
   }
 
-  // Removed the duplicate setMockAnchorStatus method that was here
+  // Removed the duplicate setMockAnchorStatus method
 };
