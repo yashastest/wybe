@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +31,9 @@ const SmartContractDashboard = () => {
     rewardClaimPeriodDays: 5,
     dexScreenerThreshold: 50000,
     networkType: 'devnet',
-    anchorInstalled: false
+    anchorInstalled: false,
+    bondingCurveEnabled: true,
+    bondingCurveLimit: 50000
   });
   
   const [deploymentHistory, setDeploymentHistory] = useState<TokenDeploymentStatus[]>([

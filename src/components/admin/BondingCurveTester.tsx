@@ -250,7 +250,7 @@ const BondingCurveTester = () => {
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium mb-2">Bonding Curve Status</label>
               <div className="flex flex-wrap gap-2">
-                <Badge variant={config.bondingCurveEnabled ? "success" : "destructive"}>
+                <Badge variant={config.bondingCurveEnabled ? "default" : "destructive"}>
                   {config.bondingCurveEnabled ? "Enabled" : "Disabled"}
                 </Badge>
                 <Badge variant="outline">
@@ -457,7 +457,15 @@ const BondingCurveTester = () => {
                         dataKey="marketCap"
                         name="Market Cap (USD)"
                         stroke="#10b981"
-                        dot={({ isTransition }) => (isTransition ? { r: 6, fill: "#ef4444" } : false)}
+                        // Fix the dot property to use proper ReactNode format
+                        dot={false}
+                        activeDot={(props) => {
+                          const { isTransition, cx, cy } = props;
+                          if (isTransition) {
+                            return <circle cx={cx} cy={cy} r={6} fill="#ef4444" />;
+                          }
+                          return null;
+                        }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
