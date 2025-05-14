@@ -12,11 +12,14 @@ import {
   Terminal,
   Code,
   ExternalLink,
-  Eye
+  Eye,
+  Coins,
+  Clock
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { smartContractService } from "@/services/smartContractService";
+import { integrationService } from "@/services/integrationService";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { format, formatDistanceToNow } from "date-fns";
 
 interface DeployedContract {
   name: string;
@@ -37,6 +41,10 @@ interface DeployedContract {
   txHash: string;
   status: "active" | "pending" | "failed";
   code?: string;
+  symbol?: string;
+  creatorAddress?: string;
+  lastClaim?: number;
+  nextClaimAvailable?: number;
 }
 
 const SmartContractTestnet = () => {
@@ -45,6 +53,8 @@ const SmartContractTestnet = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedContract, setSelectedContract] = useState<DeployedContract | null>(null);
   const [showContractDialog, setShowContractDialog] = useState(false);
+  const [isClaimingFees, setIsClaimingFees] = useState(false);
+  const [showClaimDialog, setShowClaimDialog] = useState(false);
 
   useEffect(() => {
     // Load deployed contracts
@@ -62,6 +72,10 @@ const SmartContractTestnet = () => {
       if (contracts.length === 0) {
         // Add sample contracts if none exist
         const config = smartContractService.getContractConfig();
+        
+        // Get token trade details to enhance the contracts with additional data
+        const tokenDetails = integrationService.getAllTokenTradeDetails();
+        
         contracts = [
           {
             name: "Wybe Token Program",
@@ -70,6 +84,10 @@ const SmartContractTestnet = () => {
             deployDate: new Date().toISOString().split('T')[0],
             txHash: "tx_" + Date.now().toString(16),
             status: "active",
+            symbol: "WYBE",
+            creatorAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD",
+            lastClaim: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
+            nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago (eligible for claim)
             code: `// Sample token program code
 module Token {
   public struct TokenData has key, store {
@@ -105,6 +123,10 @@ module Token {
             deployDate: new Date().toISOString().split('T')[0],
             txHash: "tx_" + Date.now().toString(16).substring(2),
             status: "active",
+            symbol: "DEGEN",
+            creatorAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD",
+            lastClaim: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 days ago
+            nextClaimAvailable: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago (eligible for claim)
             code: `// Reward distribution program
 module RewardDistribution {
   public struct RewardConfig has key {
@@ -134,6 +156,10 @@ module RewardDistribution {
             deployDate: new Date().toISOString().split('T')[0],
             txHash: "tx_" + Date.now().toString(16).substring(3),
             status: "active",
+            symbol: "PEPE",
+            creatorAddress: "9YmLrwRiYQBJiruKjtLzGMC5KPBgCVCL3MxEMVLZi2xU",
+            lastClaim: Date.now() - 6 * 24 * 60 * 60 * 1000, // 6 days ago
+            nextClaimAvailable: Date.now() + 1 * 24 * 60 * 60 * 1000, // 1 day from now (not eligible yet)
             code: `// Treasury management program
 module TreasuryManager {
   public struct Treasury has key {
@@ -161,6 +187,22 @@ module TreasuryManager {
 }`
           }
         ];
+        
+        // Enhance contracts with token trading details
+        contracts = contracts.map(contract => {
+          if (contract.symbol) {
+            const tokenDetail = tokenDetails.find(t => t.symbol.toLowerCase() === contract.symbol?.toLowerCase());
+            if (tokenDetail) {
+              return {
+                ...contract,
+                lastClaim: tokenDetail.lastClaimDate,
+                nextClaimAvailable: tokenDetail.nextClaimAvailable
+              };
+            }
+          }
+          return contract;
+        });
+        
         localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
       }
       
@@ -230,6 +272,79 @@ module TreasuryManager {
       toast.success("Contract code copied to clipboard!");
     });
   };
+  
+  const handleClaimFees = async (contract: DeployedContract) => {
+    if (!contract.symbol || !contract.creatorAddress) {
+      toast.error("Missing token symbol or creator address");
+      return;
+    }
+    
+    setSelectedContract(contract);
+    setShowClaimDialog(true);
+  };
+  
+  const executeFeeClaim = async () => {
+    if (!selectedContract || !selectedContract.symbol || !selectedContract.creatorAddress) {
+      toast.error("Invalid contract selection");
+      return;
+    }
+    
+    setIsClaimingFees(true);
+    
+    try {
+      // Call the claim creator fees function
+      const result = await smartContractService.claimCreatorFees(
+        selectedContract.symbol,
+        selectedContract.creatorAddress,
+        selectedContract.programId
+      );
+      
+      if (result.success) {
+        // Update the contract's last claim date
+        const updatedContracts = deployedContracts.map(contract => {
+          if (contract.programId === selectedContract.programId) {
+            return {
+              ...contract,
+              lastClaim: Date.now(),
+              nextClaimAvailable: Date.now() + 5 * 24 * 60 * 60 * 1000 // 5 days from now
+            };
+          }
+          return contract;
+        });
+        
+        // Save to localStorage
+        localStorage.setItem('deployedTestnetContracts', JSON.stringify(updatedContracts));
+        
+        // Update state
+        setDeployedContracts(updatedContracts);
+        
+        toast.success(`Successfully claimed ${result.amount.toFixed(4)} SOL in creator fees!`);
+        setShowClaimDialog(false);
+      } else {
+        toast.error("Failed to claim creator fees");
+      }
+    } catch (error) {
+      console.error("Error claiming creator fees:", error);
+      toast.error("Error processing fee claim");
+    } finally {
+      setIsClaimingFees(false);
+    }
+  };
+  
+  const isClaimable = (contract: DeployedContract): boolean => {
+    if (!contract.nextClaimAvailable) return true;
+    return Date.now() > contract.nextClaimAvailable;
+  };
+  
+  const getNextClaimTime = (nextClaimAvailable?: number): string => {
+    if (!nextClaimAvailable) return "Now";
+    
+    if (Date.now() > nextClaimAvailable) {
+      return "Now";
+    }
+    
+    return formatDistanceToNow(nextClaimAvailable, { addSuffix: true });
+  };
 
   return (
     <motion.div
@@ -293,6 +408,11 @@ module TreasuryManager {
                         }`}>
                           {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
                         </span>
+                        {contract.symbol && (
+                          <span className="px-2 py-1 text-xs bg-purple-500/20 text-purple-400 rounded-full">
+                            {contract.symbol}
+                          </span>
+                        )}
                       </div>
                       <span className="text-sm text-gray-400">{contract.deployDate}</span>
                     </div>
@@ -327,6 +447,32 @@ module TreasuryManager {
                         <div className="text-sm text-gray-400">Transaction Hash</div>
                         <div className="font-mono text-sm truncate bg-black/20 p-2 rounded">{contract.txHash}</div>
                       </div>
+                      
+                      {contract.symbol && contract.creatorAddress && (
+                        <div className="p-3 border border-orange-500/20 bg-orange-500/5 rounded-md">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Coins className="text-orange-500" size={16} />
+                              <span className="text-sm font-medium">Creator Fee Rewards</span>
+                            </div>
+                            <div className="flex items-center text-xs bg-black/30 px-2 py-1 rounded">
+                              <Clock className="text-gray-400 mr-1" size={12} />
+                              <span>Next Claim: {getNextClaimTime(contract.nextClaimAvailable)}</span>
+                            </div>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant={isClaimable(contract) ? "orange" : "outline"}
+                            className="w-full" 
+                            onClick={() => handleClaimFees(contract)}
+                            disabled={!isClaimable(contract)}
+                          >
+                            {isClaimable(contract) 
+                              ? "Claim Creator Fees" 
+                              : `Claim Available ${getNextClaimTime(contract.nextClaimAvailable)}`}
+                          </Button>
+                        </div>
+                      )}
                       
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                         <div className="flex flex-wrap gap-2">
@@ -458,6 +604,14 @@ module TreasuryManager {
                       
                       <h4 className="text-sm text-gray-400">Network</h4>
                       <p>{selectedContract.network.charAt(0).toUpperCase() + selectedContract.network.slice(1)}</p>
+                      
+                      {selectedContract.symbol && (
+                        <>
+                          <Separator className="my-2 bg-white/10" />
+                          <h4 className="text-sm text-gray-400">Token Symbol</h4>
+                          <p>{selectedContract.symbol.toUpperCase()}</p>
+                        </>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
@@ -489,6 +643,14 @@ module TreasuryManager {
                       }`}>
                         {selectedContract.status.charAt(0).toUpperCase() + selectedContract.status.slice(1)}
                       </p>
+                      
+                      {selectedContract.lastClaim && (
+                        <>
+                          <Separator className="my-2 bg-white/10" />
+                          <h4 className="text-sm text-gray-400">Last Fee Claim</h4>
+                          <p>{format(selectedContract.lastClaim, 'PPP')}</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   
@@ -516,6 +678,70 @@ module TreasuryManager {
             <DialogClose asChild>
               <Button variant="outline">Close</Button>
             </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Fee Claim Dialog */}
+      <Dialog open={showClaimDialog} onOpenChange={setShowClaimDialog}>
+        <DialogContent className="sm:max-w-md bg-wybe-background-light border-wybe-primary/20">
+          <DialogHeader>
+            <DialogTitle>
+              Claim Creator Fees
+            </DialogTitle>
+            <DialogDescription>
+              Claim accumulated trading fees for {selectedContract?.symbol} token
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-md">
+              <div className="flex items-center gap-2 text-orange-400 mb-2">
+                <Coins size={18} />
+                <span className="font-medium">Creator Fee Rewards</span>
+              </div>
+              <p className="text-sm text-gray-300 mb-3">
+                As the creator of this token, you're entitled to collect trading fees from all transactions.
+                These fees are accumulated and can be claimed periodically.
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-black/30 p-2 rounded">
+                  <span className="text-gray-400 block">Token</span>
+                  <span className="font-medium">{selectedContract?.symbol}</span>
+                </div>
+                <div className="bg-black/30 p-2 rounded">
+                  <span className="text-gray-400 block">Program ID</span>
+                  <span className="font-mono text-xs truncate block">{selectedContract?.programId.substring(0, 10)}...</span>
+                </div>
+              </div>
+            </div>
+            
+            <Alert variant="default" className="bg-blue-500/10 border-blue-500/30">
+              <AlertDescription className="text-sm">
+                Creator fees are calculated as {smartContractService.getContractConfig().creatorFeePercentage}% of all trading volume 
+                since your last claim.
+              </AlertDescription>
+            </Alert>
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button 
+              variant="orange" 
+              onClick={executeFeeClaim}
+              disabled={isClaimingFees}
+            >
+              {isClaimingFees ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  Processing...
+                </>
+              ) : (
+                <>Claim Fees</>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

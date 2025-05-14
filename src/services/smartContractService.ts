@@ -655,40 +655,65 @@ Program logs:
    */
   public async claimCreatorFees(
     tokenSymbol: string,
-    creatorAddress: string
-  ): Promise<{ success: boolean; amount: number; txHash?: string }> {
+    creatorAddress: string,
+    tokenProgramId?: string
+  ): Promise<{ success: boolean; amount: number; txHash?: string; details?: any }> {
     // Simulate blockchain delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     try {
-      // In a real implementation, this would interact with the on-chain program
-      // For simulation, calculate a reasonable fee amount based on recent activity
+      // Check if program ID is provided, if not use the configured one
+      const programId = tokenProgramId || this.config.programId || "Wyb111111111111111111111111111111111111111";
       
-      // Mock fee amount based on token "popularity"
-      const mockFeeAmount = Math.random() * 10 + 1; // Between 1-11 SOL
+      console.log(`Claiming creator fees for ${tokenSymbol} by ${creatorAddress} from program ${programId}`);
       
-      // Mock transaction hash
-      const txHash = `claim_${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}`;
+      // In a real implementation, this would use the Anchor program to call the claim_creator_fees instruction
+      // For simulation, calculate fees based on token trading volume and creator fee percentage
+      
+      // Get token trading data
+      const tokenDetails = await integrationService.getTokenTradeDetails(tokenSymbol);
+      const tradingVolume = tokenDetails?.tradingVolume || Math.random() * 10000 + 5000; // Fallback to random if no data
+      
+      // Calculate accumulated creator fees (creator fee % of trading volume)
+      const mockFeeAmount = tradingVolume * (this.config.creatorFeePercentage / 100) / 10;
+      
+      // Generate transaction hash
+      const txHash = `claim_${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}_${creatorAddress.slice(0, 6)}`;
       
       // Record the transaction
       integrationService.recordTransaction({
         id: `tx-claim-${Date.now()}`,
-        type: 'claim',
+        type: 'fee_claim',
         from: 'Fee Pool',
         to: creatorAddress,
         amount: mockFeeAmount,
         tokenSymbol: 'SOL', // Fees paid in SOL
         timestamp: Date.now(),
         hash: txHash,
-        status: 'confirmed'
+        status: 'confirmed',
+        details: {
+          programId,
+          tradingVolume,
+          feePercentage: this.config.creatorFeePercentage,
+          claimType: 'creator_fee'
+        }
       });
       
-      toast.success(`Claimed ${mockFeeAmount.toFixed(2)} SOL in creator fees!`);
+      // Update the token's last claim date
+      integrationService.updateTokenClaimDate(tokenSymbol, creatorAddress);
+      
+      toast.success(`Successfully claimed ${mockFeeAmount.toFixed(4)} SOL in creator fees!`);
       
       return {
         success: true,
         amount: mockFeeAmount,
-        txHash
+        txHash,
+        details: {
+          programId,
+          timestamp: Date.now(),
+          tradingVolume,
+          tokenSymbol
+        }
       };
     } catch (error) {
       console.error("Fee claim error:", error);
