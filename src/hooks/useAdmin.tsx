@@ -47,7 +47,9 @@ export const useAdmin = () => {
     sessionStorage.removeItem("wybeAdminSession");
     setIsAuthenticated(false);
     navigate('/admin-login');
-    toast.success("Logged out successfully");
+    toast.success("Logged out successfully", {
+      duration: 3000, // Shorter duration for toast
+    });
   };
 
   return { isAuthenticated, isLoading, logout, checkAdminSession };
