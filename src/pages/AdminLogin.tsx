@@ -18,7 +18,7 @@ const AdminLogin = () => {
     const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
     
     if (isLoggedIn && sessionExists) {
-      navigate('/admin');
+      navigate('/admin', { replace: true });
       return;
     }
     

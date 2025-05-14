@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAdmin } from '@/hooks/useAdmin';
@@ -34,21 +34,23 @@ const LoadingFallback = () => (
 const Admin = () => {
   const { isAuthenticated, isLoading } = useAdmin();
   const navigate = useNavigate();
-  const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   useScrollToTop();
 
   useEffect(() => {
-    // Only redirect after initial auth check is complete
+    // Set initialized to true once we've checked authentication status
     if (!isLoading) {
-      setInitialAuthCheckDone(true);
+      setInitialized(true);
+      
+      // Redirect to login if not authenticated
       if (!isAuthenticated) {
-        navigate('/admin-login');
+        navigate('/admin-login', { replace: true });
       }
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  // Show loading state only during initial auth check
-  if (isLoading && !initialAuthCheckDone) {
+  // Show loading state only during initial load
+  if (isLoading || !initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="h-10 w-10 animate-spin text-wybe-primary" />
@@ -56,8 +58,8 @@ const Admin = () => {
     );
   }
 
-  // Don't render anything during redirects
-  if (!isAuthenticated && initialAuthCheckDone) {
+  // Don't render anything if not authenticated (prevents flash of content)
+  if (!isAuthenticated) {
     return null;
   }
 

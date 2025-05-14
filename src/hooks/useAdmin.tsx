@@ -11,12 +11,12 @@ export const useAdmin = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Run auth check only once when component mounts or when pathname changes
+  // Run auth check only once on initial mount
   useEffect(() => {
     if (!authCheckCompleted) {
       checkAdminSession();
     }
-  }, [location.pathname, authCheckCompleted]);
+  }, [authCheckCompleted]);
 
   const checkAdminSession = () => {
     setIsLoading(true);

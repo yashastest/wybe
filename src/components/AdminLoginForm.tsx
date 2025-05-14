@@ -43,9 +43,9 @@ const AdminLoginForm = () => {
         
         toast.success('Login successful!');
         
-        // Navigate to admin page
+        // Navigate to admin page with replace to prevent back navigation to login
         setTimeout(() => {
-          navigate('/admin');
+          navigate('/admin', { replace: true });
           setIsLoading(false);
         }, 500);
       } catch (error) {
