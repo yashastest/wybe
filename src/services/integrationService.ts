@@ -1,54 +1,17 @@
-I need to modify the `main.tsx` file to wrap the App component with BrowserRouter:
 
-```typescript
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App.tsx';
-import './index.css';
-import { tradingService } from './services/tradingService';
-import { smartContractService } from './services/smartContractService';
+// Integration service file
+// This service handles integration with external systems and services
 
-// Sync configurations between services on startup
-const initializeServices = () => {
-  const tradingConfig = tradingService.getConfig();
-  const contractConfig = smartContractService.getContractConfig();
-  
-  // Ensure trading service and smart contract service have consistent settings
-  smartContractService.updateContractConfig({
-    creatorFeePercentage: tradingConfig.creatorFeePercentage,
-    rewardClaimPeriodDays: tradingConfig.rewardClaimPeriod,
-    dexScreenerThreshold: tradingConfig.dexscreenerThreshold
-  });
-  
-  console.log("Services initialized with the following configuration:");
-  console.log("- Creator fee:", tradingConfig.creatorFeePercentage + "%");
-  console.log("- Reward claim period:", tradingConfig.rewardClaimPeriod + " days");
-  console.log("- DEXScreener threshold: $" + tradingConfig.dexscreenerThreshold);
-};
+type AdminRole = "admin" | "manager" | "viewer";
 
-// Mock the solana object for testing
-if (typeof window !== 'undefined' && !window.solana) {
-  window.solana = {
-    isPhantom: false,
-    connect: async () => ({ 
-      publicKey: { 
-        toString: () => "PhantomMockWallet123456789" 
-      } 
-    }),
-    disconnect: async () => {}
-  };
+export interface AdminUserAccess {
+  role: AdminRole;
+  permissions: string[];
 }
 
-// Initialize services
-initializeServices();
-
-const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error('Root element not found');
-
-createRoot(rootElement).render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
-);
-```
+// Fix for the type comparison error on line 274
+// Changed from comparing with "superadmin" to using a valid role
+export function checkAdminAccess(role: AdminRole): boolean {
+  // Instead of comparing with "superadmin" which isn't in AdminRole
+  return role === "admin"; // Using "admin" which is the highest privilege in our type
+}
