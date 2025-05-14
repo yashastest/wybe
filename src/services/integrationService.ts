@@ -9,6 +9,7 @@
 import { toast } from "sonner";
 import { smartContractService } from "./smartContractService";
 import { tradingService } from "./tradingService";
+import { treasuryService } from "./treasuryService";
 
 interface DeploymentConfig {
   networkType: 'mainnet' | 'testnet' | 'devnet';
@@ -18,11 +19,13 @@ interface DeploymentConfig {
   platformFeePercentage: number;
 }
 
-interface AdminUserAccess {
+export interface AdminUserAccess {
   email: string;
   role: 'superadmin' | 'admin' | 'manager' | 'viewer';
   permissions: string[];
   walletAddress?: string;
+  lastLogin?: Date;
+  twoFactorEnabled: boolean;
 }
 
 class IntegrationService {
@@ -39,7 +42,9 @@ class IntegrationService {
       email: "wybefun@gmail.com",
       role: 'superadmin',
       permissions: ['all'],
-      walletAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD"
+      walletAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD",
+      lastLogin: new Date(),
+      twoFactorEnabled: true
     }
   ];
   
@@ -55,6 +60,14 @@ class IntegrationService {
     const deploymentConfig = { ...this.defaultConfig, ...config };
     
     try {
+      // First, verify that the caller has permission
+      if (!this.isAuthorizedForAction(walletAddress, 'deploy_environment')) {
+        return {
+          success: false,
+          message: "You don't have permission to deploy the full environment"
+        };
+      }
+      
       // 1. Set network type in trading service
       tradingService.setNetworkType(deploymentConfig.networkType);
       
@@ -124,6 +137,14 @@ class IntegrationService {
     creatorAddress: string
   ): Promise<{ success: boolean; message: string; contractAddress?: string; programId?: string }> {
     try {
+      // Verify the user has permission to deploy tokens
+      if (!this.isAuthorizedForAction(creatorAddress, 'deploy_token')) {
+        return {
+          success: false,
+          message: "You don't have permission to deploy tokens"
+        };
+      }
+      
       // Check if Anchor is installed
       const contractConfig = smartContractService.getContractConfig();
       let contractResult;
@@ -179,11 +200,12 @@ class IntegrationService {
    */
   public async updateTreasuryWallet(
     newTreasuryWallet: string,
-    callerWalletAddress: string
+    callerWalletAddress: string,
+    otpVerified: boolean = false
   ): Promise<{ success: boolean; message: string; transactionHash?: string }> {
     try {
       // Check if user has permission to update treasury
-      const hasPermission = this.verifyAdminPermission(callerWalletAddress, 'treasury_update');
+      const hasPermission = this.isAuthorizedForAction(callerWalletAddress, 'treasury_update');
       if (!hasPermission) {
         return {
           success: false,
@@ -191,34 +213,29 @@ class IntegrationService {
         };
       }
       
-      // Check if Anchor is installed for real contract interaction
-      const contractConfig = smartContractService.getContractConfig();
-      
-      if (contractConfig.anchorInstalled) {
-        // In a real app, this would call a real smart contract method
-        // For now we'll simulate it
-        
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Generate mock transaction hash
-        const txHash = `treasury_update_${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 8)}`;
-        
+      // Verify OTP for high-security operations
+      if (!otpVerified) {
         return {
-          success: true,
-          message: "Treasury wallet updated successfully on the blockchain",
-          transactionHash: txHash
-        };
-      } else {
-        // Simulation mode
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        return {
-          success: true,
-          message: "[SIMULATION] Treasury wallet updated successfully",
-          transactionHash: `sim_treasury_${Date.now().toString(16)}`
+          success: false,
+          message: "OTP verification required for this operation"
         };
       }
+      
+      // Update treasury using the treasury service
+      const treasuryResult = await treasuryService.updateTreasuryWallet(
+        newTreasuryWallet, 
+        callerWalletAddress,
+        otpVerified
+      );
+      
+      // If successful, also update in the smart contract service
+      if (treasuryResult.success) {
+        smartContractService.updateContractConfig({
+          treasuryAddress: newTreasuryWallet
+        });
+      }
+      
+      return treasuryResult;
     } catch (error) {
       console.error("Error updating treasury wallet:", error);
       return {
@@ -231,7 +248,9 @@ class IntegrationService {
   /**
    * Verify if a user has specific admin permission
    */
-  private verifyAdminPermission(walletAddress: string, permission: string): boolean {
+  public isAuthorizedForAction(walletAddress: string, permission: string): boolean {
+    if (!walletAddress) return false;
+    
     // Find admin user by wallet address
     const adminUser = this.adminUsers.find(user => user.walletAddress === walletAddress);
     
@@ -244,6 +263,27 @@ class IntegrationService {
       return true;
     }
     
+    // Role-based authorization
+    if (permission === 'treasury_update') {
+      // Only superadmin and admin can update treasury
+      return ['superadmin', 'admin'].includes(adminUser.role);
+    }
+    
+    if (permission === 'deploy_environment') {
+      // Only superadmin can deploy the full environment
+      return adminUser.role === 'superadmin';
+    }
+    
+    if (permission === 'deploy_token') {
+      // Superadmin, admin and manager can deploy tokens
+      return ['superadmin', 'admin', 'manager'].includes(adminUser.role);
+    }
+    
+    if (permission === 'view_analytics') {
+      // All roles can view analytics
+      return true;
+    }
+    
     // Check if user has the specific permission
     return adminUser.permissions.includes(permission);
   }
@@ -251,22 +291,35 @@ class IntegrationService {
   /**
    * Add a new admin user
    */
-  public addAdminUser(adminUser: AdminUserAccess): boolean {
+  public addAdminUser(adminUser: AdminUserAccess, callerWalletAddress: string): boolean {
+    // Check if caller has permission to manage users
+    if (!this.isAuthorizedForAction(callerWalletAddress, 'manage_users')) {
+      toast.error("You don't have permission to manage users");
+      return false;
+    }
+    
     // Check if user already exists
     const existingUser = this.adminUsers.find(user => user.email === adminUser.email);
     if (existingUser) {
+      toast.error("User with this email already exists");
       return false;
     }
     
     // Add new user
     this.adminUsers.push(adminUser);
+    toast.success(`User ${adminUser.email} added successfully`);
     return true;
   }
   
   /**
    * Get all admin users
    */
-  public getAdminUsers(): AdminUserAccess[] {
+  public getAdminUsers(callerWalletAddress: string): AdminUserAccess[] | null {
+    // Check if caller has permission to view users
+    if (!this.isAuthorizedForAction(callerWalletAddress, 'view_users')) {
+      return null;
+    }
+    
     return [...this.adminUsers];
   }
   
@@ -274,19 +327,70 @@ class IntegrationService {
    * Update admin user permissions
    */
   public updateAdminUserPermissions(
-    email: string, 
+    email: string,
     newRole: 'superadmin' | 'admin' | 'manager' | 'viewer',
-    newPermissions: string[]
+    newPermissions: string[],
+    callerWalletAddress: string
   ): boolean {
+    // Check if caller has permission to manage users
+    if (!this.isAuthorizedForAction(callerWalletAddress, 'manage_users')) {
+      toast.error("You don't have permission to manage users");
+      return false;
+    }
+    
+    // Find the caller's role
+    const caller = this.adminUsers.find(user => user.walletAddress === callerWalletAddress);
+    if (!caller) {
+      toast.error("Caller not found in admin users");
+      return false;
+    }
+    
+    // Only superadmins can create other superadmins
+    if (newRole === 'superadmin' && caller.role !== 'superadmin') {
+      toast.error("Only superadmins can assign the superadmin role");
+      return false;
+    }
+    
     const userIndex = this.adminUsers.findIndex(user => user.email === email);
     if (userIndex === -1) {
+      toast.error("User not found");
       return false;
     }
     
     // Update user role and permissions
     this.adminUsers[userIndex].role = newRole;
     this.adminUsers[userIndex].permissions = newPermissions;
+    toast.success(`User ${email} role updated to ${newRole}`);
     return true;
+  }
+  
+  /**
+   * Remove an admin user
+   */
+  public removeAdminUser(email: string, callerWalletAddress: string): boolean {
+    // Check if caller has permission to manage users
+    if (!this.isAuthorizedForAction(callerWalletAddress, 'manage_users')) {
+      toast.error("You don't have permission to manage users");
+      return false;
+    }
+    
+    // Can't remove yourself
+    const caller = this.adminUsers.find(user => user.walletAddress === callerWalletAddress);
+    if (caller?.email === email) {
+      toast.error("You cannot remove yourself");
+      return false;
+    }
+    
+    const initialLength = this.adminUsers.length;
+    this.adminUsers = this.adminUsers.filter(user => user.email !== email);
+    
+    if (this.adminUsers.length < initialLength) {
+      toast.success(`User ${email} removed successfully`);
+      return true;
+    } else {
+      toast.error(`User ${email} not found`);
+      return false;
+    }
   }
   
   /**

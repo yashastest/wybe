@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Copy, CheckCircle2, Wallet, ArrowRight, RefreshCcw, Mail } from "lucide-react";
+import { Copy, CheckCircle2, Wallet, ArrowRight, RefreshCcw, Mail, PieChart } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import OTPVerification from './OTPVerification';
 import { integrationService } from '@/services/integrationService';
+import { treasuryService, TransferHistory } from '@/services/treasuryService';
 
 const TreasuryWalletManager = () => {
   const [treasuryWallet, setTreasuryWallet] = useState("8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD");
@@ -28,6 +29,8 @@ const TreasuryWalletManager = () => {
   const [loading, setLoading] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [transferHistory, setTransferHistory] = useState<TransferHistory[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const isMobile = useIsMobile();
 
   // Admin email for OTP
@@ -108,18 +111,21 @@ const TreasuryWalletManager = () => {
     try {
       // Call integration service to update treasury wallet
       // In a real app, this would update the smart contract
+      const result = await integrationService.updateTreasuryWallet(
+        newTreasuryWallet,
+        "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD", // Mock wallet address
+        true // OTP is verified
+      );
       
-      // Simulate blockchain transaction
-      toast.info("Updating treasury wallet on blockchain...");
-      
-      // Wait for the "transaction" to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update state with new wallet address
-      setTreasuryWallet(newTreasuryWallet);
-      setNewTreasuryWallet("");
-      
-      toast.success("Treasury wallet updated successfully");
+      if (result.success) {
+        // Update state with new wallet address
+        setTreasuryWallet(newTreasuryWallet);
+        setNewTreasuryWallet("");
+        
+        toast.success("Treasury wallet updated successfully");
+      } else {
+        toast.error(`Failed to update treasury wallet: ${result.message}`);
+      }
     } catch (error) {
       console.error("Treasury update error:", error);
       toast.error("Failed to update treasury wallet");
@@ -129,6 +135,23 @@ const TreasuryWalletManager = () => {
       setVerifyingOtp(false);
       setOtpVerified(false);
     }
+  };
+  
+  // Load transfer history
+  const loadTransferHistory = () => {
+    setShowHistory(true);
+    setTransferHistory(treasuryService.getTransferHistory());
+  };
+  
+  // Format date for display
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
   };
 
   return (
@@ -178,6 +201,18 @@ const TreasuryWalletManager = () => {
                 <span className="ml-1">{copied ? "Copied" : "Copy"}</span>
               </Button>
             </div>
+            
+            <div className="mt-3 flex justify-end">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-gray-400 hover:text-white"
+                onClick={loadTransferHistory}
+              >
+                <PieChart size={14} className="mr-1" />
+                View Transaction History
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
@@ -201,6 +236,62 @@ const TreasuryWalletManager = () => {
               </Button>
             </div>
           </div>
+
+          {showHistory && (
+            <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
+              <h3 className="text-base md:text-lg font-medium mb-3 flex items-center gap-2">
+                <PieChart size={18} className="text-orange-500" />
+                Treasury Transaction History
+              </h3>
+              
+              {transferHistory.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-gray-400">
+                      <tr className="border-b border-white/10">
+                        <th className="py-2 px-3 text-left">Type</th>
+                        <th className="py-2 px-3 text-left">Amount</th>
+                        <th className="py-2 px-3 text-left">Token</th>
+                        <th className="py-2 px-3 text-left">Date</th>
+                        <th className="py-2 px-3 text-left">Transaction</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transferHistory.map((tx, index) => (
+                        <tr key={tx.id} className={index % 2 === 0 ? 'bg-black/20' : ''}>
+                          <td className="py-2 px-3 capitalize">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                              tx.type === 'fee' 
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : tx.type === 'platform' 
+                                  ? 'bg-purple-500/20 text-purple-400'
+                                  : tx.type === 'creator' 
+                                    ? 'bg-green-500/20 text-green-400'
+                                    : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {tx.type}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3">{tx.amount}</td>
+                          <td className="py-2 px-3">{tx.tokenSymbol}</td>
+                          <td className="py-2 px-3">{formatDate(tx.timestamp)}</td>
+                          <td className="py-2 px-3">
+                            <span className="font-mono text-xs text-orange-500/80 bg-black/30 px-1 py-0.5 rounded">
+                              {tx.txHash.substring(0, 8)}...
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-400">
+                  No transaction history available
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
             <h3 className="text-base md:text-lg font-medium mb-2">Treasury Management Guide</h3>

@@ -1,59 +1,35 @@
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
+import Launch from './pages/Launch';
+import LaunchPackage from './pages/LaunchPackage';
+import Discover from './pages/Discover';
+import Trade from './pages/Trade';
+import NotFound from './pages/NotFound';
+import { Toaster } from "sonner";
+import SecurityReport from './pages/SecurityReport';
 
-import React from "react";
-import { Toaster as ShadcnToaster } from "@/components/ui/toaster"; // Using the shadcn toaster
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { WalletProvider } from "./hooks/useWallet";
-import { useScrollToTop } from "./hooks/useScrollToTop";
-
-// Pages
-import Index from "./pages/Index";
-import Launch from "./pages/Launch";
-import Trade from "./pages/Trade";
-import Dashboard from "./pages/Dashboard";
-import Admin from "./pages/Admin";
-import AdminLogin from "./pages/AdminLogin";
-import NotFound from "./pages/NotFound";
-import LaunchPackage from "./pages/LaunchPackage";
-import Discover from "./pages/Discover";
-
-// Create a new QueryClient instance
-const queryClient = new QueryClient();
-
-// ScrollToTop component will ensure all pages start at the top
-const ScrollToTop = () => {
-  useScrollToTop();
-  return null;
-};
-
-const App = () => {
+function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ShadcnToaster />
-          <WalletProvider>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/launch" element={<Launch />} />
-                <Route path="/trade" element={<Trade />} />
-                <Route path="/trade/:symbol" element={<Trade />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/package" element={<LaunchPackage />} />
-                <Route path="/discover" element={<Discover />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </WalletProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <div className="min-h-screen bg-black text-white">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/launch" element={<Launch />} />
+        <Route path="/launch/:packageId" element={<LaunchPackage />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="/trade" element={<Trade />} />
+        <Route path="/security-report" element={<SecurityReport />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster position="top-center" />
+    </div>
   );
-};
+}
 
 export default App;
