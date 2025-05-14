@@ -1,7 +1,56 @@
+
 import { integrationService } from "./integrationService";
+
+// Define the SmartContractConfig interface
+export interface SmartContractConfig {
+  creatorFeePercentage: number;
+  platformFeePercentage: number;
+  rewardClaimPeriodDays: number;
+  dexScreenerThreshold: number;
+  networkType: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  anchorInstalled: boolean;
+  anchorVersion?: string;
+  programId?: string;
+}
+
+// Define the SecurityAuditResult interface
+export interface SecurityAuditResult {
+  issues: Array<{
+    severity: 'high' | 'medium' | 'low' | 'info';
+    description: string;
+    location?: string;
+  }>;
+  passedChecks: string[];
+}
+
+// Define the GasUsageResult interface
+export interface GasUsageResult {
+  gasEstimates: { [key: string]: number };
+  optimizationSuggestions: string[];
+}
+
+// Define the TestnetResult interface
+export interface TestnetResult {
+  results: Array<{
+    function: string;
+    status: 'passed' | 'failed';
+    error?: string;
+    txHash?: string;
+  }>;
+}
 
 // Smart contract service file
 // This service handles smart contract related operations
+
+// Default contract configuration
+const defaultContractConfig: SmartContractConfig = {
+  creatorFeePercentage: 2.5,
+  platformFeePercentage: 2.5,
+  rewardClaimPeriodDays: 5,
+  dexScreenerThreshold: 50000,
+  networkType: 'devnet',
+  anchorInstalled: false,
+};
 
 export const smartContractService = {
   // Method to compile smart contract
@@ -30,6 +79,47 @@ export const smartContractService = {
         const contractAddress = "0x456def..."; // Mock contract address
         resolve(contractAddress);
       }, 3000);
+    });
+  },
+
+  // Overloaded deployContract method to handle IDL deployment
+  deployContract: async (
+    contractName: string,
+    idlContent: string,
+    programAddress?: string
+  ): Promise<string> => {
+    console.log(`Deploying contract: ${contractName} with IDL...`);
+    
+    // Placeholder logic - replace with actual deployment process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const output = `
+Successfully deployed contract ${contractName}
+Program ID: Wyb${Math.random().toString(36).substring(2, 10)}Token111111111111111111111111
+Transaction: tx_${Math.random().toString(36).substring(2, 15)}
+Network: testnet
+Status: confirmed
+        `;
+        resolve(output);
+      }, 3000);
+    });
+  },
+
+  // Method to build contract
+  buildContract: async (contractName: string): Promise<string> => {
+    console.log(`Building contract: ${contractName}...`);
+    
+    // Placeholder logic - replace with actual build process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const output = `
+Building ${contractName}...
+Compiling Rust code...
+Generating IDL...
+Successfully built ${contractName}
+        `;
+        resolve(output);
+      }, 2500);
     });
   },
 
@@ -149,11 +239,150 @@ export const smartContractService = {
       amount: 0.01,
       tokenSymbol: 'SOL',
       type: 'transfer',
-      status: 'completed', // Changed from 'confirmed' to allowed 'completed'
+      status: 'completed',
       description: `Smart contract deployment of ${data.contractType}`,
       hash: `tx_${Math.random().toString(36).substring(2, 10)}`,
     });
   },
+
+  // Get contract configuration
+  getContractConfig: (): SmartContractConfig => {
+    // In a real app, this would retrieve from storage/backend
+    return {
+      ...defaultContractConfig,
+      anchorInstalled: localStorage.getItem('anchorInstalled') === 'true',
+      anchorVersion: localStorage.getItem('anchorVersion') || undefined,
+      programId: localStorage.getItem('programId') || undefined,
+    };
+  },
+
+  // Update contract configuration
+  updateContractConfig: (config: Partial<SmartContractConfig>): void => {
+    // In a real app, this would persist to storage/backend
+    Object.entries(config).forEach(([key, value]) => {
+      if (value !== undefined) {
+        localStorage.setItem(key, String(value));
+      }
+    });
+  },
+
+  // Install Anchor CLI
+  installAnchorCLI: async (): Promise<boolean> => {
+    console.log("Installing Anchor CLI...");
+    
+    // Simulate installation
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        localStorage.setItem('anchorInstalled', 'true');
+        localStorage.setItem('anchorVersion', 'v0.29.0');
+        resolve(true);
+      }, 3000);
+    });
+  },
+
+  // Run security audit
+  runSecurityAudit: async (): Promise<SecurityAuditResult> => {
+    console.log("Running security audit...");
+    
+    // Simulate audit process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          issues: [
+            {
+              severity: 'medium',
+              description: 'Potential reentrancy vulnerability in withdraw function',
+              location: 'contracts/Token.sol:156'
+            },
+            {
+              severity: 'low',
+              description: 'Unchecked return value from external call',
+              location: 'contracts/Token.sol:203'
+            },
+            {
+              severity: 'info',
+              description: 'Consider using SafeMath for arithmetic operations',
+              location: 'contracts/Token.sol:78-92'
+            }
+          ],
+          passedChecks: [
+            'No critical vulnerabilities found',
+            'No hardcoded secret keys detected',
+            'No unbounded loops found',
+            'No floating pragma',
+            'Proper access control implemented'
+          ]
+        });
+      }, 4000);
+    });
+  },
+
+  // Analyze gas usage
+  analyzeGasUsage: async (): Promise<GasUsageResult> => {
+    console.log("Analyzing gas usage...");
+    
+    // Simulate analysis process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          gasEstimates: {
+            'initialize': 150000,
+            'mint': 75000,
+            'transfer': 65000,
+            'burn': 60000,
+            'updateMetadata': 45000
+          },
+          optimizationSuggestions: [
+            'Consider using packed structs to save storage',
+            'Replace multiple storage writes with a single write',
+            'Use events for less critical data instead of storage',
+            'Consider using assembly for gas-intensive operations'
+          ]
+        });
+      }, 3500);
+    });
+  },
+
+  // Test on testnet
+  testOnTestnet: async (): Promise<TestnetResult> => {
+    console.log("Running testnet validation...");
+    
+    // Simulate test process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          results: [
+            {
+              function: 'initialize',
+              status: 'passed',
+              txHash: 'tx_abc123'
+            },
+            {
+              function: 'mint',
+              status: 'passed',
+              txHash: 'tx_def456'
+            },
+            {
+              function: 'transfer',
+              status: 'passed',
+              txHash: 'tx_ghi789'
+            },
+            {
+              function: 'updateFees',
+              status: 'failed',
+              error: 'Unauthorized: Only owner can update fees',
+              txHash: 'tx_jkl012'
+            },
+            {
+              function: 'withdrawFunds',
+              status: 'passed',
+              txHash: 'tx_mno345'
+            }
+          ]
+        });
+      }, 5000);
+    });
+  }
 };
 
 export default smartContractService;
