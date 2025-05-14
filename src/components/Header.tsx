@@ -4,6 +4,12 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   adminOnly?: boolean;
@@ -120,21 +126,43 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             animate={{ opacity: 1 }}
             className="md:hidden"
           >
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-white focus:outline-none"
-            >
-              {isOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2 text-white focus:outline-none"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-black/95 border border-white/10 mr-4">
+                {linksToDisplay.map((link) => (
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link
+                      to={link.to}
+                      className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md ${
+                        location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                {!adminOnly && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/launch" className="w-full">
+                      <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
+                        Launch a Token
+                      </Button>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </motion.div>
         </div>
         
-        {/* Mobile Navigation */}
-        {isOpen && (
+        {/* Old Mobile Navigation - removing since we've replaced with DropdownMenu */}
+        {/* {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -164,7 +192,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               )}
             </nav>
           </motion.div>
-        )}
+        )} */}
       </div>
     </header>
   );
