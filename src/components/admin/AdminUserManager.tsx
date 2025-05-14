@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +39,7 @@ import {
   RefreshCcw
 } from "lucide-react";
 import { integrationService, AdminUserAccess } from '@/services/integrationService';
-import useWallet from '@/hooks/useWallet';
+import { useWallet } from '@/hooks/useWallet';
 
 // Available permissions
 const availablePermissions = [
@@ -57,7 +56,7 @@ const AdminUserManager = () => {
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUserAccess | null>(null);
-  const { walletAddress } = useWallet();
+  const { address: walletAddress } = useWallet();
   
   const [newUser, setNewUser] = useState<AdminUserAccess>({
     email: '',
