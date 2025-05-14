@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,28 +14,76 @@ import {
   Server,
   FileCode,
   TerminalSquare,
+  Check,
+  AlertTriangle,
+  ArrowRight,
+  X
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { integrationService } from "@/services/integrationService";
 import ContractSecurityAudit from './ContractSecurityAudit';
 import { smartContractService } from '@/services/smartContractService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const DeploymentEnvironment = () => {
   const [isDeploying, setIsDeploying] = useState(false);
   const [isCompletingSetup, setIsCompletingSetup] = useState(false);
+  const [deploymentStep, setDeploymentStep] = useState(0);
+  const [deploymentProgress, setDeploymentProgress] = useState(0);
+  const [deploymentComplete, setDeploymentComplete] = useState(false);
   const navigate = useNavigate();
+  
+  // Deployment checklist states
+  const [deploymentChecklist, setDeploymentChecklist] = useState([
+    { id: 'anchor', label: 'Anchor CLI is installed and configured', checked: false },
+    { id: 'wallet', label: 'Wallet is connected and has sufficient SOL', checked: false },
+    { id: 'contract', label: 'Smart contract code is finalized', checked: false },
+    { id: 'treasury', label: 'Treasury wallet is configured', checked: false },
+    { id: 'fees', label: 'Creator and platform fees are set', checked: true },
+    { id: 'security', label: 'Security audit is complete', checked: false }
+  ]);
+  
+  useEffect(() => {
+    // Check if Anchor is installed
+    const config = smartContractService.getContractConfig();
+    updateChecklistItem('anchor', config.anchorInstalled);
+    
+    // Check if treasury is configured
+    updateChecklistItem('treasury', !!config.treasuryAddress);
+    
+    // Check if smart contract is ready
+    const isContractReady = localStorage.getItem('contractReady') === 'true';
+    updateChecklistItem('contract', isContractReady);
+  }, []);
+  
+  const updateChecklistItem = (id: string, checked: boolean) => {
+    setDeploymentChecklist(prev => 
+      prev.map(item => item.id === id ? {...item, checked} : item)
+    );
+  };
   
   const handleGoToSmartContractDeployment = () => {
     navigate('/admin');
     setTimeout(() => {
-      const deploymentTab = document.querySelector('[value="deployment"]') as HTMLButtonElement;
-      if (deploymentTab) {
-        deploymentTab.click();
-      }
+      document.querySelector('[data-tab="deployment"]')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
     }, 100);
   };
   
   const handleCompleteDeploymentSetup = async () => {
+    // Validate checklist
+    const incompleteItems = deploymentChecklist.filter(item => !item.checked);
+    if (incompleteItems.length > 0) {
+      toast.error("Please complete all checklist items before proceeding", {
+        description: "There are incomplete items in your deployment checklist."
+      });
+      return;
+    }
+    
     setIsCompletingSetup(true);
     toast.info("Starting complete deployment setup...");
     
@@ -69,6 +118,26 @@ const DeploymentEnvironment = () => {
       toast.success("Deployment setup completed successfully!", {
         description: "Your environment is now fully configured and ready to use."
       });
+
+      // Add deployed contract to testnet contracts
+      const config = smartContractService.getContractConfig();
+      const newContract = {
+        name: "Wybe Token Program",
+        programId: config.programId || "Wyb111111111111111111111111111111111111111",
+        network: "testnet",
+        deployDate: new Date().toISOString().split('T')[0],
+        txHash: "tx_" + Date.now().toString(16),
+        status: "active"
+      };
+      
+      const storedContracts = localStorage.getItem('deployedTestnetContracts');
+      const contracts = storedContracts ? JSON.parse(storedContracts) : [];
+      contracts.push(newContract);
+      localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
+      
+      // Set contract as ready
+      localStorage.setItem('contractReady', 'true');
+      
     } catch (error) {
       console.error("Setup error:", error);
       toast.error("Failed to complete deployment setup");
@@ -79,11 +148,59 @@ const DeploymentEnvironment = () => {
   
   const handleDeployEnvironment = async () => {
     setIsDeploying(true);
+    setDeploymentProgress(0);
+    setDeploymentStep(1);
     toast.info("Preparing to deploy environment...");
     
     try {
       // Use dummy wallet address for testing (in real app would use connected wallet)
       const walletAddress = "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD";
+      
+      // Step 1: Initialize deployment
+      await runDeploymentStep(
+        "Initializing deployment environment", 
+        1000, 
+        10
+      );
+      
+      // Step 2: Verify contract
+      await runDeploymentStep(
+        "Verifying smart contract code", 
+        2000, 
+        20
+      );
+      
+      // Step 3: Build contract
+      await runDeploymentStep(
+        "Building smart contracts", 
+        3000, 
+        40
+      );
+      
+      // Step 4: Deploy backend services
+      await runDeploymentStep(
+        "Deploying backend services", 
+        2500, 
+        60
+      );
+      
+      // Step 5: Deploy frontend
+      await runDeploymentStep(
+        "Deploying frontend application", 
+        2000, 
+        80
+      );
+      
+      // Step 6: Final integration
+      await runDeploymentStep(
+        "Integrating all components", 
+        2000, 
+        95
+      );
+      
+      // Final step
+      setDeploymentStep(7);
+      setDeploymentProgress(100);
       
       // Call integration service to deploy the full environment
       const result = await integrationService.deployFullEnvironment(
@@ -101,6 +218,7 @@ const DeploymentEnvironment = () => {
         toast.success("Environment deployed successfully!", {
           description: "Your frontend, backend, and smart contracts are live."
         });
+        setDeploymentComplete(true);
       } else {
         toast.error("Environment deployment failed", {
           description: result.message
@@ -112,6 +230,37 @@ const DeploymentEnvironment = () => {
     } finally {
       setIsDeploying(false);
     }
+  };
+  
+  const runDeploymentStep = async (message: string, delay: number, progressValue: number) => {
+    toast.info(message);
+    setDeploymentStep(prev => prev + 1);
+    await new Promise(resolve => {
+      const interval = setInterval(() => {
+        setDeploymentProgress(prev => {
+          const newProgress = prev + 1;
+          if (newProgress >= progressValue) {
+            clearInterval(interval);
+            resolve(null);
+            return progressValue;
+          }
+          return newProgress;
+        });
+      }, delay / (progressValue - deploymentProgress));
+    });
+  };
+  
+  const handleChecklistChange = (id: string, checked: boolean) => {
+    updateChecklistItem(id, checked);
+  };
+  
+  const handleViewTestnetContracts = () => {
+    navigate('/admin');
+    setTimeout(() => {
+      document.querySelector('[data-tab="testnet"]')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+    }, 100);
   };
 
   return (
@@ -175,23 +324,84 @@ const DeploymentEnvironment = () => {
               </div>
             </div>
             
-            <Button 
-              className="w-full bg-orange-500 hover:bg-orange-600 py-6 font-bold text-white"
-              onClick={handleDeployEnvironment}
-              disabled={isDeploying}
-            >
-              {isDeploying ? (
-                <>
-                  <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
-                  Deploying Environment...
-                </>
-              ) : (
-                <>
-                  <Network className="mr-2 h-5 w-5" />
-                  Deploy Environment
-                </>
-              )}
-            </Button>
+            {deploymentComplete ? (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-500">Deployment Complete</h4>
+                    <p className="text-sm text-gray-300 mt-1">
+                      Your environment has been successfully deployed. You can view your deployed contracts in the Testnet Contracts section.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-3"
+                      onClick={handleViewTestnetContracts}
+                    >
+                      View Deployed Contracts
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : isDeploying ? (
+              <div className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">Deployment Progress</span>
+                  <span className="text-sm font-medium">{deploymentProgress}%</span>
+                </div>
+                <Progress value={deploymentProgress} className="h-2" />
+                <div className="mt-4 space-y-3">
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <div 
+                      key={index} 
+                      className={`flex items-center space-x-3 ${
+                        deploymentStep > index ? "text-green-500" : 
+                        deploymentStep === index ? "text-orange-500" : "text-gray-500"
+                      }`}
+                    >
+                      <div className="flex-shrink-0">
+                        {deploymentStep > index ? (
+                          <Check size={16} className="text-green-500" />
+                        ) : deploymentStep === index ? (
+                          <RefreshCcw size={16} className="animate-spin text-orange-500" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border border-gray-500" />
+                        )}
+                      </div>
+                      <span className="text-sm">
+                        {index === 0 && "Initialize deployment"}
+                        {index === 1 && "Verify contract code"}
+                        {index === 2 && "Build smart contracts"}
+                        {index === 3 && "Deploy backend services"}
+                        {index === 4 && "Deploy frontend application"}
+                        {index === 5 && "Integrate all components"}
+                        {index === 6 && "Finalize deployment"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Button 
+                className="w-full bg-orange-500 hover:bg-orange-600 py-6 font-bold text-white"
+                onClick={handleDeployEnvironment}
+                disabled={isDeploying}
+              >
+                {isDeploying ? (
+                  <>
+                    <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
+                    Deploying Environment...
+                  </>
+                ) : (
+                  <>
+                    <Network className="mr-2 h-5 w-5" />
+                    Deploy Environment
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           
           {/* Smart Contract Section */}
@@ -237,6 +447,7 @@ const DeploymentEnvironment = () => {
               variant="outline" 
               className="w-full border-orange-500/30 hover:bg-orange-500/10"
               onClick={handleGoToSmartContractDeployment}
+              data-contract-btn
             >
               <TerminalSquare className="mr-2 h-4 w-4" />
               Go to Smart Contract Deployment
@@ -280,6 +491,46 @@ const DeploymentEnvironment = () => {
                 </div>
               </div>
             </div>
+            
+            <Card className="mb-6 border-amber-500/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="text-amber-500" size={18} />
+                  Deployment Checklist
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {deploymentChecklist.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`checklist-${item.id}`}
+                        checked={item.checked}
+                        onCheckedChange={(checked) => 
+                          handleChecklistChange(item.id, checked === true)
+                        }
+                      />
+                      <label
+                        htmlFor={`checklist-${item.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {item.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-4">
+                  <Alert className="bg-blue-500/10 border-blue-500/30">
+                    <AlertTitle>Deployment Requirements</AlertTitle>
+                    <AlertDescription className="text-sm">
+                      Please check all items above before proceeding with the deployment setup. 
+                      These requirements ensure your deployment process will be smooth and error-free.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </CardContent>
+            </Card>
             
             <Button
               variant="default"

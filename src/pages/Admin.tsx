@@ -10,6 +10,7 @@ import PendingApprovals from "@/components/admin/PendingApprovals";
 import AdminSettings from "@/components/admin/AdminSettings";
 import SmartContractDashboard from "@/components/admin/SmartContractDashboard";
 import SmartContractDeployment from "@/components/admin/SmartContractDeployment";
+import SmartContractTestnet from "@/components/admin/SmartContractTestnet";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
@@ -32,7 +33,8 @@ import {
   Cloud,
   Info,
   Shield,
-  Users
+  Users,
+  Network
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -57,6 +59,38 @@ const Admin = () => {
     return null; // useAdmin hook will handle redirection
   }
 
+  useEffect(() => {
+    // Setup event listeners for data-attribute buttons
+    const setupEventListeners = () => {
+      // Environment button (from deployment page)
+      document.querySelectorAll('[data-environment-btn]').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab('environment'));
+      });
+      
+      // Contract deployment button (from environment page)
+      document.querySelectorAll('[data-contract-btn]').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab('deployment'));
+      });
+      
+      // Deployment env button (from contract page)
+      document.querySelectorAll('[data-deployment-env-btn]').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab('environment'));
+      });
+      
+      // Testnet contracts button (from contract page)
+      document.querySelectorAll('[data-testnet-btn]').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab('testnet'));
+      });
+    };
+    
+    // Run setup after a short delay to ensure elements are rendered
+    setTimeout(setupEventListeners, 500);
+    
+    return () => {
+      // Clean up listeners if needed
+    };
+  }, [activeTab]);
+
   const handleLogout = () => {
     logout();
   };
@@ -70,8 +104,9 @@ const Admin = () => {
         { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
         { id: "approvals", label: "Approvals", icon: <Check size={18} /> },
         { id: "contracts", label: "Smart Contracts", icon: <Folder size={18} /> },
-        { id: "deployment", label: "Deployment Guide", icon: <Package size={18} /> },
-        { id: "environment", label: "Deployment Environment", icon: <Cloud size={18} /> },
+        { id: "deployment", label: "Contract Deployment", icon: <Package size={18} />, dataAttr: "deployment" },
+        { id: "testnet", label: "Testnet Contracts", icon: <Network size={18} />, dataAttr: "testnet" },
+        { id: "environment", label: "Deployment Environment", icon: <Cloud size={18} />, dataAttr: "environment" },
         { id: "treasury", label: "Treasury Management", icon: <Wallet size={18} /> },
         { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
         { id: "about", label: "About Project", icon: <Info size={18} /> },
@@ -81,8 +116,6 @@ const Admin = () => {
       id: "platform",
       label: "Platform",
       items: [
-        { id: "projects", label: "Projects", icon: <Package size={18} /> },
-        { id: "activity", label: "Activity", icon: <Activity size={18} /> },
         { id: "permissions", label: "User Access", icon: <Shield size={18} /> },
       ]
     },
@@ -137,6 +170,7 @@ const Admin = () => {
                               ? "bg-orange-500/20 text-orange-500"
                               : "hover:bg-white/5"
                           }`}
+                          data-tab={item.dataAttr || item.id}
                         >
                           <span className={activeTab === item.id && !item.action ? "text-orange-500" : "text-gray-400"}>
                             {item.icon}
@@ -174,6 +208,7 @@ const Admin = () => {
                           ? "bg-orange-500/20 text-orange-500"
                           : "hover:bg-white/5"
                       }`}
+                      data-tab={item.dataAttr || item.id}
                     >
                       <span className={activeTab === item.id && !item.action ? "text-orange-500" : "text-gray-400"}>
                         {item.icon}
@@ -198,12 +233,6 @@ const Admin = () => {
                 Dashboard
               </button>
               <button 
-                onClick={() => setActiveTab("approvals")}
-                className={`px-4 py-2 whitespace-nowrap ${activeTab === "approvals" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
-              >
-                Approvals
-              </button>
-              <button 
                 onClick={() => setActiveTab("contracts")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "contracts" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
@@ -212,12 +241,21 @@ const Admin = () => {
               <button 
                 onClick={() => setActiveTab("deployment")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "deployment" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+                data-tab="deployment"
               >
                 Deploy
               </button>
               <button 
+                onClick={() => setActiveTab("testnet")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "testnet" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+                data-tab="testnet"
+              >
+                Testnet
+              </button>
+              <button 
                 onClick={() => setActiveTab("environment")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "environment" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+                data-tab="environment"
               >
                 Environment
               </button>
@@ -228,16 +266,10 @@ const Admin = () => {
                 Treasury
               </button>
               <button 
-                onClick={() => setActiveTab("permissions")}
-                className={`px-4 py-2 whitespace-nowrap ${activeTab === "permissions" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+                onClick={() => setActiveTab("settings")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "settings" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
-                Access
-              </button>
-              <button 
-                onClick={() => setActiveTab("about")}
-                className={`px-4 py-2 whitespace-nowrap ${activeTab === "about" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
-              >
-                About
+                Settings
               </button>
             </div>
           </div>
@@ -257,22 +289,11 @@ const Admin = () => {
           {activeTab === "contracts" && <SmartContractDashboard />}
           {activeTab === "deployment" && <SmartContractDeployment />}
           {activeTab === "environment" && <DeploymentEnvironment />}
+          {activeTab === "testnet" && <SmartContractTestnet />}
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "about" && <AboutProject />}
           {activeTab === "permissions" && <AdminUserManager />}
-          {activeTab === "projects" && (
-            <div className="glass-card p-6">
-              <h2 className="text-xl font-bold mb-4">Projects</h2>
-              <p className="text-gray-300">View and manage platform projects.</p>
-            </div>
-          )}
-          {activeTab === "activity" && (
-            <div className="glass-card p-6">
-              <h2 className="text-xl font-bold mb-4">Activity Log</h2>
-              <p className="text-gray-300">Track platform activity and events.</p>
-            </div>
-          )}
         </motion.div>
       </div>
       

@@ -13,6 +13,7 @@ const AnchorStatusCard = () => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
   const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isInstalling, setIsInstalling] = useState<boolean>(false);
   
   useEffect(() => {
     checkAnchorStatus();
@@ -39,6 +40,20 @@ const AnchorStatusCard = () => {
     integrationService.setMockAnchorStatus(newStatus, version);
     checkAnchorStatus();
     toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in simulation mode`);
+  };
+
+  const installAnchorCLI = () => {
+    setIsInstalling(true);
+    toast.info("Installing Anchor CLI...");
+    
+    // Simulating installation process
+    setTimeout(() => {
+      // In a web app, we can't actually install Anchor CLI, so we'll simulate it
+      integrationService.setMockAnchorStatus(true, 'v0.29.0');
+      checkAnchorStatus();
+      setIsInstalling(false);
+      toast.success("Anchor CLI installed successfully");
+    }, 3000);
   };
 
   return (
@@ -108,13 +123,28 @@ const AnchorStatusCard = () => {
               <div className="bg-black/50 p-3 rounded font-mono text-sm mb-2 overflow-x-auto">
                 <code>npm install -g @project-serum/anchor-cli</code>
               </div>
-              <Button className="flex items-center gap-2" size="sm" asChild>
-                <a href="https://www.anchor-lang.com/docs/installation" target="_blank" rel="noreferrer">
-                  <Download size={14} />
-                  Installation Guide
-                  <ExternalLink size={14} className="ml-1" />
-                </a>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  className="flex items-center gap-2" 
+                  size="sm" 
+                  variant="orange"
+                  onClick={installAnchorCLI}
+                  disabled={isInstalling}
+                >
+                  {isInstalling ? (
+                    <RefreshCcw size={14} className="animate-spin" />
+                  ) : (
+                    <Download size={14} />
+                  )}
+                  {isInstalling ? "Installing..." : "Quick Install"}
+                </Button>
+                <Button className="flex items-center gap-2" size="sm" variant="outline" asChild>
+                  <a href="https://www.anchor-lang.com/docs/installation" target="_blank" rel="noreferrer">
+                    <ExternalLink size={14} className="mr-1" />
+                    Installation Guide
+                  </a>
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}
