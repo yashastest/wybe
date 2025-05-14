@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
 import DeploymentGuide from "@/components/admin/DeploymentGuide";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   LayoutDashboard, 
   Check, 
@@ -22,12 +23,16 @@ import {
   Package, 
   LogOut, 
   Folder,
-  Wallet
+  Wallet,
+  Menu
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Check if user is logged in
   useEffect(() => {
@@ -82,14 +87,57 @@ const Admin = () => {
     } else {
       setActiveTab(tabId);
     }
+    
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <Header adminOnly={true} />
       
-      <div className="flex flex-1 w-full max-w-[1400px] mx-auto pt-20">
-        {/* Sidebar */}
+      <div className="flex flex-1 w-full max-w-[1400px] mx-auto pt-16 md:pt-20">
+        {/* Mobile Menu Button */}
+        <div className="md:hidden flex items-center absolute top-20 left-4 z-30">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <button className="p-2 bg-orange-500/20 rounded-md">
+                <Menu size={24} />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[250px] pt-16 bg-black border-r border-white/10">
+              {adminSections.map((section) => (
+                <div key={section.id} className="mb-6">
+                  <h3 className="text-gray-400 uppercase text-xs font-semibold mb-3 pl-2">
+                    {section.label}
+                  </h3>
+                  <ul className="space-y-1">
+                    {section.items.map((item) => (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => handleNavClick(item.id, item.action)}
+                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
+                            activeTab === item.id && !item.action
+                              ? "bg-orange-500/20 text-orange-500"
+                              : "hover:bg-white/5"
+                          }`}
+                        >
+                          <span className={activeTab === item.id && !item.action ? "text-orange-500" : "text-gray-400"}>
+                            {item.icon}
+                          </span>
+                          <span>{item.label}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </SheetContent>
+          </Sheet>
+        </div>
+        
+        {/* Sidebar - Desktop Only */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -124,40 +172,42 @@ const Admin = () => {
           ))}
         </motion.div>
         
-        {/* Mobile Tabs */}
-        <div className="md:hidden w-full px-4 pt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
-              <TabsTrigger 
-                value="dashboard" 
-                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
+        {/* Mobile Tab Selector (simplified) */}
+        <div className="md:hidden w-full px-4 pt-12">
+          <div className="overflow-x-auto pb-2 -mx-4 px-4">
+            <div className="inline-flex min-w-full">
+              <button 
+                onClick={() => setActiveTab("dashboard")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "dashboard" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
-                <LayoutDashboard size={16} className="mr-1" />
                 Dashboard
-              </TabsTrigger>
-              <TabsTrigger 
-                value="approvals" 
-                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
+              </button>
+              <button 
+                onClick={() => setActiveTab("approvals")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "approvals" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
-                <Check size={16} className="mr-1" />
                 Approvals
-              </TabsTrigger>
-              <TabsTrigger 
-                value="contracts" 
-                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
+              </button>
+              <button 
+                onClick={() => setActiveTab("contracts")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "contracts" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
-                <Folder size={16} className="mr-1" />
                 Contracts
-              </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
+              </button>
+              <button 
+                onClick={() => setActiveTab("deployment")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "deployment" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
-                <Settings size={16} className="mr-1" />
-                Settings
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+                Deploy
+              </button>
+              <button 
+                onClick={() => setActiveTab("treasury")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "treasury" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+              >
+                Treasury
+              </button>
+            </div>
+          </div>
         </div>
         
         {/* Main Content */}

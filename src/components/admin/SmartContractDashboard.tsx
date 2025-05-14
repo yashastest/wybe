@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   FileCode2, 
   Download, 
@@ -28,6 +29,7 @@ const SmartContractDashboard = () => {
     bondingCurveContract: false,
     treasuryContract: false
   });
+  const isMobile = useIsMobile();
   
   // Sample contract data with state for editing
   const [contractData, setContractData] = useState({
@@ -95,37 +97,38 @@ const SmartContractDashboard = () => {
           hidden: { opacity: 0, y: 20 },
           visible: { opacity: 1, y: 0 }
         }}
-        className="glass-card p-6"
+        className="glass-card p-4 md:p-6"
       >
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <FileCode2 className="text-orange-500" size={24} />
+        <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2">
+          <FileCode2 className="text-orange-500" size={20} />
           Smart Contract Management
         </h2>
 
         <Tabs defaultValue="contracts">
-          <TabsList className="mb-6">
-            <TabsTrigger value="contracts" className="flex items-center gap-2">
-              <FileCog size={16} />
-              Deployed Contracts
+          <TabsList className="mb-4 md:mb-6 flex w-full overflow-x-auto pb-1 -mx-1 px-1 hide-scrollbar">
+            <TabsTrigger value="contracts" className="flex items-center gap-2 text-xs md:text-sm flex-1">
+              <FileCog size={14} className="hidden sm:inline" />
+              Contracts
             </TabsTrigger>
-            <TabsTrigger value="implementation" className="flex items-center gap-2">
-              <Terminal size={16} />
+            <TabsTrigger value="implementation" className="flex items-center gap-2 text-xs md:text-sm flex-1">
+              <Terminal size={14} className="hidden sm:inline" />
               Implementation
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="contracts" className="space-y-6">
-            <div className="space-y-4">
-              <div className="bg-white/5 p-4 rounded-lg border border-orange-500/20">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium">Token Contract</h3>
-                  <div className="flex gap-2">
+          <TabsContent value="contracts" className="space-y-4 md:space-y-6">
+            <div className="space-y-3 md:space-y-4">
+              {/* Token Contract */}
+              <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                  <h3 className="font-medium text-sm md:text-base">Token Contract</h3>
+                  <div className="flex flex-wrap gap-2">
                     {!editMode.tokenContract ? (
                       <>
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => copyToClipboard(contractData.tokenContract)}
                         >
                           {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
@@ -134,7 +137,7 @@ const SmartContractDashboard = () => {
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => downloadContract('Token')}
                         >
                           <Download size={14} />
@@ -142,7 +145,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-blue-600 h-8 hover:bg-blue-700"
+                          className="bg-blue-600 h-7 md:h-8 hover:bg-blue-700 text-xs"
                           onClick={() => toggleEditMode('tokenContract')}
                         >
                           <Edit size={14} />
@@ -153,7 +156,7 @@ const SmartContractDashboard = () => {
                       <>
                         <Button 
                           size="sm"
-                          className="bg-red-600 h-8 hover:bg-red-700"
+                          className="bg-red-600 h-7 md:h-8 hover:bg-red-700 text-xs"
                           onClick={() => cancelEdit('tokenContract')}
                         >
                           <X size={14} />
@@ -161,7 +164,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-green-600 h-8 hover:bg-green-700"
+                          className="bg-green-600 h-7 md:h-8 hover:bg-green-700 text-xs"
                           onClick={() => toggleEditMode('tokenContract')}
                         >
                           <Save size={14} />
@@ -172,7 +175,7 @@ const SmartContractDashboard = () => {
                   </div>
                 </div>
                 {!editMode.tokenContract ? (
-                  <div className="p-3 bg-black/30 rounded text-sm font-mono overflow-x-auto">
+                  <div className="p-2 md:p-3 bg-black/30 rounded text-xs md:text-sm font-mono overflow-x-auto break-all">
                     <a
                       href={`https://solscan.io/token/${contractData.tokenContract}`}
                       target="_blank"
@@ -180,28 +183,29 @@ const SmartContractDashboard = () => {
                       className="text-orange-500 hover:underline flex items-center gap-1"
                     >
                       {contractData.tokenContract}
-                      <Link size={14} />
+                      <Link size={12} />
                     </a>
                   </div>
                 ) : (
                   <Input 
                     value={tempContractData.tokenContract}
                     onChange={(e) => handleInputChange('tokenContract', e.target.value)}
-                    className="bg-black/30 text-orange-500 font-mono text-sm"
+                    className="bg-black/30 text-orange-500 font-mono text-xs md:text-sm"
                   />
                 )}
               </div>
               
-              <div className="bg-white/5 p-4 rounded-lg border border-orange-500/20">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium">Bonding Curve Contract</h3>
-                  <div className="flex gap-2">
+              {/* Bonding Curve Contract */}
+              <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                  <h3 className="font-medium text-sm md:text-base">Bonding Curve Contract</h3>
+                  <div className="flex flex-wrap gap-2">
                     {!editMode.bondingCurveContract ? (
                       <>
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => copyToClipboard(contractData.bondingCurveContract)}
                         >
                           {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
@@ -210,7 +214,7 @@ const SmartContractDashboard = () => {
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => downloadContract('Bonding Curve')}
                         >
                           <Download size={14} />
@@ -218,7 +222,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-blue-600 h-8 hover:bg-blue-700"
+                          className="bg-blue-600 h-7 md:h-8 hover:bg-blue-700 text-xs"
                           onClick={() => toggleEditMode('bondingCurveContract')}
                         >
                           <Edit size={14} />
@@ -229,7 +233,7 @@ const SmartContractDashboard = () => {
                       <>
                         <Button 
                           size="sm"
-                          className="bg-red-600 h-8 hover:bg-red-700"
+                          className="bg-red-600 h-7 md:h-8 hover:bg-red-700 text-xs"
                           onClick={() => cancelEdit('bondingCurveContract')}
                         >
                           <X size={14} />
@@ -237,7 +241,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-green-600 h-8 hover:bg-green-700"
+                          className="bg-green-600 h-7 md:h-8 hover:bg-green-700 text-xs"
                           onClick={() => toggleEditMode('bondingCurveContract')}
                         >
                           <Save size={14} />
@@ -248,7 +252,7 @@ const SmartContractDashboard = () => {
                   </div>
                 </div>
                 {!editMode.bondingCurveContract ? (
-                  <div className="p-3 bg-black/30 rounded text-sm font-mono overflow-x-auto">
+                  <div className="p-2 md:p-3 bg-black/30 rounded text-xs md:text-sm font-mono overflow-x-auto break-all">
                     <a
                       href={`https://solscan.io/account/${contractData.bondingCurveContract}`}
                       target="_blank"
@@ -256,28 +260,29 @@ const SmartContractDashboard = () => {
                       className="text-orange-500 hover:underline flex items-center gap-1"
                     >
                       {contractData.bondingCurveContract}
-                      <Link size={14} />
+                      <Link size={12} />
                     </a>
                   </div>
                 ) : (
                   <Input 
                     value={tempContractData.bondingCurveContract}
                     onChange={(e) => handleInputChange('bondingCurveContract', e.target.value)}
-                    className="bg-black/30 text-orange-500 font-mono text-sm"
+                    className="bg-black/30 text-orange-500 font-mono text-xs md:text-sm"
                   />
                 )}
               </div>
               
-              <div className="bg-white/5 p-4 rounded-lg border border-orange-500/20">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium">Treasury Contract</h3>
-                  <div className="flex gap-2">
+              {/* Treasury Contract */}
+              <div className="bg-white/5 p-3 md:p-4 rounded-lg border border-orange-500/20">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                  <h3 className="font-medium text-sm md:text-base">Treasury Contract</h3>
+                  <div className="flex flex-wrap gap-2">
                     {!editMode.treasuryContract ? (
                       <>
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => copyToClipboard(contractData.treasuryContract)}
                         >
                           {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
@@ -286,7 +291,7 @@ const SmartContractDashboard = () => {
                         <Button 
                           size="sm"
                           variant="outline"
-                          className="bg-wybe-background/50 border-orange-500/20 h-8"
+                          className="bg-wybe-background/50 border-orange-500/20 h-7 md:h-8 text-xs"
                           onClick={() => downloadContract('Treasury')}
                         >
                           <Download size={14} />
@@ -294,7 +299,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-blue-600 h-8 hover:bg-blue-700"
+                          className="bg-blue-600 h-7 md:h-8 hover:bg-blue-700 text-xs"
                           onClick={() => toggleEditMode('treasuryContract')}
                         >
                           <Edit size={14} />
@@ -305,7 +310,7 @@ const SmartContractDashboard = () => {
                       <>
                         <Button 
                           size="sm"
-                          className="bg-red-600 h-8 hover:bg-red-700"
+                          className="bg-red-600 h-7 md:h-8 hover:bg-red-700 text-xs"
                           onClick={() => cancelEdit('treasuryContract')}
                         >
                           <X size={14} />
@@ -313,7 +318,7 @@ const SmartContractDashboard = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="bg-green-600 h-8 hover:bg-green-700"
+                          className="bg-green-600 h-7 md:h-8 hover:bg-green-700 text-xs"
                           onClick={() => toggleEditMode('treasuryContract')}
                         >
                           <Save size={14} />
@@ -324,7 +329,7 @@ const SmartContractDashboard = () => {
                   </div>
                 </div>
                 {!editMode.treasuryContract ? (
-                  <div className="p-3 bg-black/30 rounded text-sm font-mono overflow-x-auto">
+                  <div className="p-2 md:p-3 bg-black/30 rounded text-xs md:text-sm font-mono overflow-x-auto break-all">
                     <a
                       href={`https://solscan.io/account/${contractData.treasuryContract}`}
                       target="_blank"
@@ -332,23 +337,23 @@ const SmartContractDashboard = () => {
                       className="text-orange-500 hover:underline flex items-center gap-1"
                     >
                       {contractData.treasuryContract}
-                      <Link size={14} />
+                      <Link size={12} />
                     </a>
                   </div>
                 ) : (
                   <Input 
                     value={tempContractData.treasuryContract}
                     onChange={(e) => handleInputChange('treasuryContract', e.target.value)}
-                    className="bg-black/30 text-orange-500 font-mono text-sm"
+                    className="bg-black/30 text-orange-500 font-mono text-xs md:text-sm"
                   />
                 )}
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/5 p-4 rounded-lg">
-                <h3 className="font-medium mb-3">Contract Statistics</h3>
-                <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+              <div className="bg-white/5 p-3 md:p-4 rounded-lg">
+                <h3 className="font-medium mb-2 md:mb-3 text-sm md:text-base">Contract Statistics</h3>
+                <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Total Deployments</span>
                     <span>247</span>
@@ -368,33 +373,33 @@ const SmartContractDashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white/5 p-4 rounded-lg">
-                <h3 className="font-medium mb-3">Recent Deployments</h3>
-                <div className="space-y-3">
+              <div className="bg-white/5 p-3 md:p-4 rounded-lg">
+                <h3 className="font-medium mb-2 md:mb-3 text-sm md:text-base">Recent Deployments</h3>
+                <div className="space-y-2 md:space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Pepe Solana</p>
-                      <p className="text-xs text-gray-400">2 days ago</p>
+                      <p className="font-medium text-xs md:text-sm">Pepe Solana</p>
+                      <p className="text-xxs md:text-xs text-gray-400">2 days ago</p>
                     </div>
-                    <Button size="sm" variant="outline" className="h-8">
+                    <Button size="sm" variant="outline" className="h-6 md:h-8 text-xs">
                       View
                     </Button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Doge Sol</p>
-                      <p className="text-xs text-gray-400">3 days ago</p>
+                      <p className="font-medium text-xs md:text-sm">Doge Sol</p>
+                      <p className="text-xxs md:text-xs text-gray-400">3 days ago</p>
                     </div>
-                    <Button size="sm" variant="outline" className="h-8">
+                    <Button size="sm" variant="outline" className="h-6 md:h-8 text-xs">
                       View
                     </Button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Floki Fortune</p>
-                      <p className="text-xs text-gray-400">5 days ago</p>
+                      <p className="font-medium text-xs md:text-sm">Floki Fortune</p>
+                      <p className="text-xxs md:text-xs text-gray-400">5 days ago</p>
                     </div>
-                    <Button size="sm" variant="outline" className="h-8">
+                    <Button size="sm" variant="outline" className="h-6 md:h-8 text-xs">
                       View
                     </Button>
                   </div>

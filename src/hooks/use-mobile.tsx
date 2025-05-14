@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
@@ -16,4 +17,28 @@ export function useIsMobile() {
   }, [])
 
   return !!isMobile
+}
+
+// Add this to index.css
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .hide-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    
+    /* Extra small font size */
+    .text-xxs {
+      font-size: 0.65rem;
+      line-height: 0.9rem;
+    }
+  `;
+  document.head.appendChild(style);
 }
