@@ -1,6 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const HeroCoins = () => {
   return (
@@ -152,6 +153,10 @@ interface CoinFloatProps {
 }
 
 const CoinFloat = ({ size, md_size, symbol, top, bottom, left, right, delay, className }: CoinFloatProps) => {
+  // Get current screen size to apply appropriate size
+  const isMobile = useIsMobile();
+  const coinSize = isMobile ? size : md_size;
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -177,12 +182,8 @@ const CoinFloat = ({ size, md_size, symbol, top, bottom, left, right, delay, cla
         <motion.div 
           className={`rounded-full flex items-center justify-center border border-white/20 ${className}`}
           style={{ 
-            width: `${size}px`, 
-            height: `${size}px`,
-            '@media (min-width: 768px)': {
-              width: `${md_size}px`,
-              height: `${md_size}px`,
-            }
+            width: `${coinSize}px`, 
+            height: `${coinSize}px`,
           }}
           animate={{ 
             boxShadow: [
