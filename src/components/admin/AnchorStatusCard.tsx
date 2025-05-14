@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
-import { installAnchorCLI, setMockAnchorStatus } from "../scripts/anchorBuild";
+import { installAnchorCLI } from "@/scripts/anchorBuild";
 
 const AnchorStatusCard = () => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
@@ -38,7 +37,7 @@ const AnchorStatusCard = () => {
   const toggleMockAnchorStatus = () => {
     const newStatus = !isAnchorInstalled;
     const version = newStatus ? 'v0.29.0' : undefined;
-    setMockAnchorStatus(newStatus, version);
+    integrationService.setMockAnchorStatus(newStatus, version);
     
     // Update smart contract service configuration
     smartContractService.updateContractConfig({
