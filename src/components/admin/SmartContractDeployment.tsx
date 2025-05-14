@@ -23,6 +23,7 @@ import { integrationService } from "@/services/integrationService";
 import AnchorStatusCard from "@/components/admin/AnchorStatusCard";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 // Sample IDL for easier testing
 const SAMPLE_IDL = `{
@@ -89,6 +90,7 @@ const SmartContractDeployment = () => {
   const [lastBuiltContract, setLastBuiltContract] = useState<string | null>(null);
   const [copiedProgram, setCopiedProgram] = useState<boolean>(false);
   const [deploymentSuccess, setDeploymentSuccess] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAnchorStatus();
@@ -144,6 +146,17 @@ const SmartContractDeployment = () => {
       toast.success("Contract built successfully", {
         description: "Your smart contract has been built and is ready for deployment."
       });
+      
+      // Mark contract as ready
+      localStorage.setItem('contractReady', 'true');
+      
+      // Update checklist
+      const deploymentChecklist = JSON.parse(localStorage.getItem('deploymentChecklist') || '[]');
+      const updatedChecklist = deploymentChecklist.map((item: any) => 
+        item.id === 'contract' ? {...item, checked: true} : item
+      );
+      localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
+      
     } catch (error: any) {
       console.error("Error building contract:", error);
       setBuildOutput(`Error building contract: ${error.message}`);
@@ -193,6 +206,22 @@ const SmartContractDeployment = () => {
       if (programIdMatch && programIdMatch[1]) {
         setProgramAddress(programIdMatch[1]);
       }
+      
+      // Add deployed contract to testnet contracts
+      const newContract = {
+        name: contractName,
+        programId: programIdMatch ? programIdMatch[1] : programAddress || "Wyb111111111111111111111111111111111111111",
+        network: "testnet",
+        deployDate: new Date().toISOString().split('T')[0],
+        txHash: "tx_" + Date.now().toString(16),
+        status: "active"
+      };
+      
+      const storedContracts = localStorage.getItem('deployedTestnetContracts');
+      const contracts = storedContracts ? JSON.parse(storedContracts) : [];
+      contracts.push(newContract);
+      localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
+      
     } catch (error: any) {
       console.error("Error deploying contract:", error);
       setDeploymentOutput(`Error deploying contract: ${error.message}`);
@@ -219,6 +248,19 @@ const SmartContractDeployment = () => {
   const loadSampleIdl = () => {
     setIdlContent(SAMPLE_IDL);
     toast.success("Sample IDL loaded");
+  };
+  
+  const handleGoToDeploymentEnvironment = () => {
+    navigate('/admin/deployment');
+  };
+  
+  const handleViewTestnetContracts = () => {
+    navigate('/admin');
+    setTimeout(() => {
+      document.querySelector('[data-tab="testnet"]')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      );
+    }, 100);
   };
 
   return (
@@ -361,7 +403,7 @@ const SmartContractDeployment = () => {
               <Button
                 className="bg-green-500 hover:bg-green-600 w-full justify-start gap-2"
                 onClick={handleDeployContract}
-                disabled={!isAnchorInstalled && !buildOutput || isDeploying}
+                disabled={!buildOutput || isDeploying}
               >
                 {isDeploying ? (
                   <>
@@ -375,16 +417,6 @@ const SmartContractDeployment = () => {
                   </>
                 )}
               </Button>
-              
-              {deploymentSuccess && (
-                <Alert className="bg-green-500/10 border-green-500/30">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <AlertTitle>Deployment Successful</AlertTitle>
-                  <AlertDescription>
-                    Your contract has been successfully deployed. You can now use it in your application.
-                  </AlertDescription>
-                </Alert>
-              )}
               
               {!isAnchorInstalled && (
                 <div className="mt-4">
@@ -439,10 +471,18 @@ const SmartContractDeployment = () => {
             </Alert>
             
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="orange" className="flex-1" data-deployment-env-btn>
+              <Button 
+                variant="orange" 
+                className="flex-1" 
+                onClick={handleGoToDeploymentEnvironment}
+              >
                 Go to Deployment Environment
               </Button>
-              <Button variant="outline" className="flex-1" data-testnet-btn>
+              <Button 
+                variant="outline" 
+                className="flex-1" 
+                onClick={handleViewTestnetContracts}
+              >
                 View Testnet Contracts
               </Button>
             </div>

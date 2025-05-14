@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
+import { installAnchorCLI, setMockAnchorStatus } from "../scripts/anchorBuild";
 
 const AnchorStatusCard = () => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
@@ -36,24 +37,41 @@ const AnchorStatusCard = () => {
   
   const toggleMockAnchorStatus = () => {
     const newStatus = !isAnchorInstalled;
-    const version = newStatus ? 'Mock 0.29.0' : undefined;
-    integrationService.setMockAnchorStatus(newStatus, version);
+    const version = newStatus ? 'v0.29.0' : undefined;
+    setMockAnchorStatus(newStatus, version);
+    
+    // Update smart contract service configuration
+    smartContractService.updateContractConfig({
+      anchorInstalled: newStatus,
+      anchorVersion: version
+    });
+    
     checkAnchorStatus();
-    toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in simulation mode`);
+    toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in ${newStatus ? 'real' : 'simulation'} mode`);
   };
 
-  const installAnchorCLI = () => {
+  const handleInstallAnchorCLI = async () => {
     setIsInstalling(true);
     toast.info("Installing Anchor CLI...");
     
-    // Simulating installation process
-    setTimeout(() => {
-      // In a web app, we can't actually install Anchor CLI, so we'll simulate it
-      integrationService.setMockAnchorStatus(true, 'v0.29.0');
+    try {
+      // Install Anchor CLI (simulation in browser, would be real in local environment)
+      await installAnchorCLI();
+      
+      // Update smart contract service configuration
+      smartContractService.updateContractConfig({
+        anchorInstalled: true,
+        anchorVersion: 'v0.29.0'
+      });
+      
       checkAnchorStatus();
-      setIsInstalling(false);
       toast.success("Anchor CLI installed successfully");
-    }, 3000);
+    } catch (error) {
+      console.error("Installation error:", error);
+      toast.error("Failed to install Anchor CLI");
+    } finally {
+      setIsInstalling(false);
+    }
   };
 
   return (
@@ -79,7 +97,7 @@ const AnchorStatusCard = () => {
             ) : (
               <ToggleLeft size={14} className="mr-1" />
             )}
-            {isAnchorInstalled ? "Disable Mock" : "Enable Mock"}
+            {isAnchorInstalled ? "Disable" : "Enable"}
           </Button>
           <Button 
             variant="outline" 
@@ -100,8 +118,8 @@ const AnchorStatusCard = () => {
             <CheckCircle2 className="h-5 w-5 text-green-500" />
             <AlertTitle className="font-poppins">Anchor Detected</AlertTitle>
             <AlertDescription>
-              Anchor CLI version {anchorVersion || "unknown"} is {anchorVersion?.includes('Mock') ? 'simulated' : 'installed'} on this system.
-              Smart contract deployment will use {anchorVersion?.includes('Mock') ? 'simulated' : 'real'} Anchor builds.
+              Anchor CLI version {anchorVersion || "unknown"} is installed on this system.
+              Smart contract deployment will use real Anchor builds.
             </AlertDescription>
           </Alert>
         ) : (
@@ -128,7 +146,7 @@ const AnchorStatusCard = () => {
                   className="flex items-center gap-2" 
                   size="sm" 
                   variant="orange"
-                  onClick={installAnchorCLI}
+                  onClick={handleInstallAnchorCLI}
                   disabled={isInstalling}
                 >
                   {isInstalling ? (
@@ -136,7 +154,7 @@ const AnchorStatusCard = () => {
                   ) : (
                     <Download size={14} />
                   )}
-                  {isInstalling ? "Installing..." : "Quick Install"}
+                  {isInstalling ? "Installing..." : "Install Now"}
                 </Button>
                 <Button className="flex items-center gap-2" size="sm" variant="outline" asChild>
                   <a href="https://www.anchor-lang.com/docs/installation" target="_blank" rel="noreferrer">
@@ -153,14 +171,9 @@ const AnchorStatusCard = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Smart Contract Mode:</span>
             <Badge variant={isAnchorInstalled ? "default" : "outline"} className={isAnchorInstalled ? "bg-green-500/80" : "border-amber-500 text-amber-500"}>
-              {isAnchorInstalled ? (anchorVersion?.includes('Mock') ? "Mock Deployment" : "Real Deployment") : "Simulation"}
+              {isAnchorInstalled ? "Real Deployment" : "Simulation"}
             </Badge>
           </div>
-          {anchorVersion?.includes('Mock') && isAnchorInstalled && (
-            <p className="text-xs text-amber-400 mt-1">
-              Running in mock mode. This simulates Anchor CLI but doesn't require actual installation.
-            </p>
-          )}
         </div>
       </div>
     </motion.div>

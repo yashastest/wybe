@@ -47,6 +47,21 @@ const DeploymentEnvironment = () => {
   ]);
   
   useEffect(() => {
+    // Check if deployment was already completed
+    const envDeployed = localStorage.getItem('environmentDeployed') === 'true';
+    setDeploymentComplete(envDeployed);
+    
+    // Load saved checklist
+    const savedChecklist = integrationService.getDeploymentChecklist();
+    if (savedChecklist && savedChecklist.length > 0) {
+      setDeploymentChecklist(savedChecklist);
+    } else {
+      // Initialize with default checks
+      checkInitialStatus();
+    }
+  }, []);
+  
+  const checkInitialStatus = () => {
     // Check if Anchor is installed
     const config = smartContractService.getContractConfig();
     updateChecklistItem('anchor', config.anchorInstalled);
@@ -57,12 +72,26 @@ const DeploymentEnvironment = () => {
     // Check if smart contract is ready
     const isContractReady = localStorage.getItem('contractReady') === 'true';
     updateChecklistItem('contract', isContractReady);
-  }, []);
+    
+    // Check if wallet is connected
+    const isWalletConnected = localStorage.getItem('wybeWallet') !== null;
+    updateChecklistItem('wallet', isWalletConnected);
+    
+    // Save the initial checklist state
+    saveChecklistState();
+  };
   
   const updateChecklistItem = (id: string, checked: boolean) => {
     setDeploymentChecklist(prev => 
       prev.map(item => item.id === id ? {...item, checked} : item)
     );
+    
+    // Also update in integration service
+    integrationService.updateChecklistItem(id, checked);
+  };
+  
+  const saveChecklistState = () => {
+    localStorage.setItem('deploymentChecklist', JSON.stringify(deploymentChecklist));
   };
   
   const handleGoToSmartContractDeployment = () => {
@@ -135,8 +164,10 @@ const DeploymentEnvironment = () => {
       contracts.push(newContract);
       localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
       
-      // Set contract as ready
+      // Set contract as ready and mark environment as deployed
       localStorage.setItem('contractReady', 'true');
+      localStorage.setItem('environmentDeployed', 'true');
+      setDeploymentComplete(true);
       
     } catch (error) {
       console.error("Setup error:", error);
@@ -154,7 +185,7 @@ const DeploymentEnvironment = () => {
     
     try {
       // Use dummy wallet address for testing (in real app would use connected wallet)
-      const walletAddress = "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD";
+      const walletAddress = localStorage.getItem('wybeWallet') || "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD";
       
       // Step 1: Initialize deployment
       await runDeploymentStep(
@@ -219,6 +250,12 @@ const DeploymentEnvironment = () => {
           description: "Your frontend, backend, and smart contracts are live."
         });
         setDeploymentComplete(true);
+        
+        // Update checklist status
+        updateAllChecklistItems(true);
+        
+        // Mark environment as deployed
+        localStorage.setItem('environmentDeployed', 'true');
       } else {
         toast.error("Environment deployment failed", {
           description: result.message
@@ -230,6 +267,12 @@ const DeploymentEnvironment = () => {
     } finally {
       setIsDeploying(false);
     }
+  };
+  
+  const updateAllChecklistItems = (checked: boolean) => {
+    const updatedChecklist = deploymentChecklist.map(item => ({ ...item, checked }));
+    setDeploymentChecklist(updatedChecklist);
+    localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
   };
   
   const runDeploymentStep = async (message: string, delay: number, progressValue: number) => {
@@ -252,6 +295,7 @@ const DeploymentEnvironment = () => {
   
   const handleChecklistChange = (id: string, checked: boolean) => {
     updateChecklistItem(id, checked);
+    saveChecklistState();
   };
   
   const handleViewTestnetContracts = () => {
@@ -261,6 +305,26 @@ const DeploymentEnvironment = () => {
         new MouseEvent('click', { bubbles: true })
       );
     }, 100);
+  };
+  
+  const handleRunSecurityAudit = () => {
+    // Navigate to contract security audit section
+    const securityAuditSection = document.getElementById('security-audit-section');
+    if (securityAuditSection) {
+      securityAuditSection.scrollIntoView({ behavior: 'smooth' });
+      
+      // Find and click the run audit button
+      const runAuditButton = document.querySelector('[data-run-audit-btn]');
+      if (runAuditButton) {
+        setTimeout(() => {
+          (runAuditButton as HTMLButtonElement).click();
+        }, 500);
+      }
+    }
+    
+    // Mark security audit as complete in checklist
+    updateChecklistItem('security', true);
+    saveChecklistState();
   };
 
   return (
@@ -447,7 +511,6 @@ const DeploymentEnvironment = () => {
               variant="outline" 
               className="w-full border-orange-500/30 hover:bg-orange-500/10"
               onClick={handleGoToSmartContractDeployment}
-              data-contract-btn
             >
               <TerminalSquare className="mr-2 h-4 w-4" />
               Go to Smart Contract Deployment
@@ -516,6 +579,16 @@ const DeploymentEnvironment = () => {
                       >
                         {item.label}
                       </label>
+                      {item.id === 'security' && !item.checked && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="ml-auto text-xs h-6 px-2"
+                          onClick={handleRunSecurityAudit}
+                        >
+                          Run Audit
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -536,7 +609,7 @@ const DeploymentEnvironment = () => {
               variant="default"
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={handleCompleteDeploymentSetup}
-              disabled={isCompletingSetup}
+              disabled={isCompletingSetup || deploymentChecklist.some(item => !item.checked)}
             >
               {isCompletingSetup ? (
                 <>
@@ -556,6 +629,7 @@ const DeploymentEnvironment = () => {
 
       {/* Security Audit Section */}
       <motion.div
+        id="security-audit-section"
         variants={{
           hidden: { opacity: 0, y: 20 },
           visible: { opacity: 1, y: 0 }
