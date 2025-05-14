@@ -32,10 +32,10 @@ import {
   ArrowUpDown,
   Coins
 } from "lucide-react";
-import { integrationService } from "@/services/integrationService";
+import { integrationService, TreasuryWallet as ServiceTreasuryWallet } from "@/services/integrationService";
 import { useWallet } from '@/hooks/useWallet';
 
-// Treasury wallet types
+// Treasury wallet types that matches the component's requirements
 interface TreasuryWallet {
   id: string;
   name: string;
@@ -90,8 +90,15 @@ const TreasuryWalletManager = () => {
     setRefreshing(true);
     try {
       // In a real app, this would be an API call
-      const treasuryWallets = await integrationService.getTreasuryWallets(connectedWallet);
-      setWallets(treasuryWallets);
+      const treasuryWallets = await integrationService.getTreasuryWallets();
+      
+      // Convert service wallet format to component format, ensuring isMultisig is always defined
+      const formattedWallets: TreasuryWallet[] = treasuryWallets.map(wallet => ({
+        ...wallet,
+        isMultisig: wallet.isMultisig || false,  // Default to false if undefined
+      }));
+      
+      setWallets(formattedWallets);
     } catch (error) {
       console.error("Failed to load treasury wallets:", error);
       toast.error("Failed to load treasury wallets");
@@ -151,13 +158,20 @@ const TreasuryWalletManager = () => {
     setLoading(true);
     
     try {
-      // In a real app, this would be an API call
-      const success = await integrationService.addTreasuryWallet({
-        ...newWallet,
+      // Create wallet with the component's required structure
+      const walletToAdd: TreasuryWallet = {
         id: `wallet-${Date.now()}`,
+        name: newWallet.name,
+        address: newWallet.address,
         balance: 0,
+        isMultisig: newWallet.isMultisig,
+        signers: newWallet.isMultisig ? newWallet.signers : undefined,
+        threshold: newWallet.isMultisig ? newWallet.threshold : undefined,
         tokenBalance: []
-      }, connectedWallet || '');
+      };
+      
+      // In a real app, this would be an API call
+      const success = await integrationService.addTreasuryWallet(walletToAdd);
       
       if (success) {
         toast.success(`Added new treasury wallet: ${newWallet.name}`);
@@ -188,7 +202,7 @@ const TreasuryWalletManager = () => {
     }
     
     try {
-      const success = await integrationService.removeTreasuryWallet(id, connectedWallet);
+      const success = await integrationService.removeTreasuryWallet(id);
       
       if (success) {
         setWallets(prev => prev.filter(wallet => wallet.id !== id));
@@ -216,8 +230,7 @@ const TreasuryWalletManager = () => {
         transferDetails.fromWallet,
         transferDetails.toWallet,
         transferDetails.amount,
-        transferDetails.token,
-        connectedWallet || ''
+        transferDetails.token
       );
       
       if (success) {

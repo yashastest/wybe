@@ -18,87 +18,70 @@ export function setMockAnchorStatus(installed: boolean, version: string = '0.26.
 }
 
 // Verify if Anchor CLI is installed
-export function verifyAnchorInstallation(): Promise<{ success: boolean; message: string; version: string }> {
+export function verifyAnchorInstallation(): boolean {
+  // For browser compatibility, return a simple boolean instead of a Promise
+  return anchorInstalled;
+}
+
+// Install Anchor CLI
+export async function installAnchorCLI(): Promise<boolean> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(verifyResult);
-    }, 800);
+      anchorInstalled = true;
+      anchorVersion = '0.29.0';
+      resolve(true);
+    }, 2000);
   });
 }
 
 // Build Anchor program
-export function buildAnchorProgram(options?: { verbose?: boolean }): Promise<{ success: boolean; message: string; logs: string[] }> {
-  return new Promise((resolve) => {
-    const logs: string[] = [];
-    
-    // Simulate build process with logs
-    const steps = [
-      'Compiling program...',
-      'Building Rust program...',
-      'Checking dependencies...',
-      'Running cargo build...',
-      buildSuccess ? 'Build completed successfully!' : 'Build failed with errors.'
-    ];
-    
-    let currentStep = 0;
-    
-    // Simulate build process with periodic log updates
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        logs.push(steps[currentStep]);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-        
-        resolve({
-          success: buildSuccess,
-          message: buildSuccess ? 'Program built successfully' : 'Build failed',
-          logs
-        });
-      }
-    }, 500);
-  });
+export function buildAnchorProgram(options?: { verbose?: boolean }): { success: boolean; message: string; logs: string[] } {
+  const logs: string[] = [];
+  
+  // Simulate build process with logs
+  const steps = [
+    'Compiling program...',
+    'Building Rust program...',
+    'Checking dependencies...',
+    'Running cargo build...',
+    buildSuccess ? 'Build completed successfully!' : 'Build failed with errors.'
+  ];
+  
+  for (const step of steps) {
+    logs.push(step);
+  }
+  
+  return {
+    success: buildSuccess,
+    message: buildSuccess ? 'Program built successfully' : 'Build failed',
+    logs
+  };
 }
 
 // Deploy Anchor program
-export function deployAnchorProgram(options?: { 
-  network?: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-  keypair?: string;
-  verbose?: boolean;
-}): Promise<{ success: boolean; message: string; programId?: string; logs: string[] }> {
-  return new Promise((resolve) => {
-    const network = options?.network || 'devnet';
-    const logs: string[] = [];
-    
-    // Simulate deployment process with logs
-    const steps = [
-      `Deploying to ${network}...`,
-      'Preparing program for deployment...',
-      'Connecting to Solana cluster...',
-      'Submitting transaction...',
-      'Confirming transaction...',
-      deploySuccess ? 'Program deployed successfully!' : 'Deployment failed with errors.'
-    ];
-    
-    let currentStep = 0;
-    
-    // Simulate deployment process with periodic log updates
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        logs.push(steps[currentStep]);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-        
-        resolve({
-          success: deploySuccess,
-          message: deploySuccess ? 'Program deployed successfully' : 'Deployment failed',
-          programId: deploySuccess ? 'Wyb111111111111111111111111111111111111111' : undefined,
-          logs
-        });
-      }
-    }, 600);
-  });
+export function deployAnchorProgram(network: string = 'devnet'): { success: boolean; message: string; programId?: string; logs: string[] } {
+  const logs: string[] = [];
+  
+  // Simulate deployment process with logs
+  const steps = [
+    `Deploying to ${network}...`,
+    'Preparing program for deployment...',
+    'Connecting to Solana cluster...',
+    'Submitting transaction...',
+    'Confirming transaction...',
+    deploySuccess ? 'Program deployed successfully!' : 'Deployment failed with errors.'
+  ];
+  
+  for (const step of steps) {
+    logs.push(step);
+  }
+  
+  return {
+    success: deploySuccess,
+    message: deploySuccess ? 'Program deployed successfully' : 'Deployment failed',
+    programId: deploySuccess ? 'Wyb111111111111111111111111111111111111111' : undefined,
+    logs
+  };
 }
 
 // Set build success/failure for testing
@@ -112,39 +95,31 @@ export function setMockDeployResult(success: boolean): void {
 }
 
 // Get program size for verification
-export function getProgramSize(): Promise<{ size: number; sizeLimit: number }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        size: 287423,  // Sample program size in bytes
-        sizeLimit: 400000  // Solana program size limit
-      });
-    }, 300);
-  });
+export function getProgramSize(): { size: number; sizeLimit: number } {
+  return {
+    size: 287423,  // Sample program size in bytes
+    sizeLimit: 400000  // Solana program size limit
+  };
 }
 
 // Validate program code for security issues
-export function validateProgramSecurity(): Promise<{
+export function validateProgramSecurity(): {
   issues: { severity: 'high' | 'medium' | 'low'; description: string; location?: string }[];
   score: number;
-}> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        issues: [
-          {
-            severity: 'low',
-            description: 'Recommend adding explicit checks for account ownership',
-            location: 'programs/wybe_token_program/src/lib.rs:42'
-          },
-          {
-            severity: 'low',
-            description: 'Consider adding rate limiting for token creation',
-            location: 'programs/wybe_token_program/src/lib.rs:78'
-          }
-        ],
-        score: 85 // Security score out of 100
-      });
-    }, 1200);
-  });
+} {
+  return {
+    issues: [
+      {
+        severity: 'low',
+        description: 'Recommend adding explicit checks for account ownership',
+        location: 'programs/wybe_token_program/src/lib.rs:42'
+      },
+      {
+        severity: 'low',
+        description: 'Consider adding rate limiting for token creation',
+        location: 'programs/wybe_token_program/src/lib.rs:78'
+      }
+    ],
+    score: 85 // Security score out of 100
+  };
 }

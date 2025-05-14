@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation, installAnchorCLI as installAnchor } from "../scripts/anchorBuild";
+import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation, installAnchorCLI } from "../scripts/anchorBuild";
 import { treasuryService } from "./treasuryService";
 
 // Interface for the smart contract configuration
@@ -74,7 +74,7 @@ class SmartContractService {
   public async installAnchorCLI(): Promise<boolean> {
     try {
       // Use the function from anchorBuild
-      const result = await installAnchor();
+      const result = await installAnchorCLI();
       
       // Update configuration
       if (result) {
@@ -180,7 +180,7 @@ Program logs:
     try {
       toast.info("Building Anchor program...");
       
-      // Call the browser-compatible build function
+      // Call the browser-compatible build function - no longer a Promise
       const buildResult = buildAnchorProgram();
       
       // Update build status
@@ -194,7 +194,11 @@ Program logs:
         toast.error(`Build failed: ${buildResult.message}`);
       }
       
-      return buildResult;
+      return {
+        success: buildResult.success,
+        message: buildResult.message,
+        buildOutput: buildResult.logs.join('\n')
+      };
     } catch (error) {
       console.error("Build error:", error);
       
@@ -319,7 +323,7 @@ Program logs:
       
       toast.info(`Deploying contract to ${this.config.networkType}...`);
       
-      // Deploy to selected network
+      // Deploy to selected network - no longer a Promise
       const deployResult = deployAnchorProgram(this.config.networkType);
       
       if (deployResult.success) {
@@ -333,7 +337,11 @@ Program logs:
         toast.error(`Deployment failed: ${deployResult.message}`);
       }
       
-      return deployResult;
+      return {
+        success: deployResult.success,
+        message: deployResult.message,
+        programId: deployResult.programId
+      };
     } catch (error) {
       console.error("Deployment error:", error);
       toast.error("Failed to deploy contract");
