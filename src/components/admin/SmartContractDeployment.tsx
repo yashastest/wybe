@@ -21,11 +21,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
 import AnchorStatusCard from "./AnchorStatusCard";
+import { useNavigate } from "react-router-dom";
 
 const SmartContractDeployment = () => {
-  const [requestSent, setRequestSent] = useState(false);
   const [isAnchorInstalled, setIsAnchorInstalled] = useState(false);
   const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     checkAnchorInstallation();
@@ -36,11 +38,44 @@ const SmartContractDeployment = () => {
     setAnchorVersion(integrationService.getAnchorVersion());
   };
   
-  const handleDeploymentRequest = () => {
-    setRequestSent(true);
-    toast.success("Deployment request submitted successfully", {
-      description: "Our team will contact you within 24 hours."
-    });
+  const handleDeployContract = async () => {
+    if (!isAnchorInstalled) {
+      toast.error("Anchor CLI is required for contract deployment. Please install it first.");
+      return;
+    }
+    
+    setIsDeploying(true);
+    toast.info("Starting smart contract deployment process...");
+    
+    try {
+      // Get connected wallet address (would be implemented in a real app)
+      const walletAddress = "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD"; // Mock address
+      
+      // Deploy via integration service
+      const result = await integrationService.deployFullEnvironment(
+        {
+          networkType: 'devnet',
+          creatorFeePercentage: 2.5,
+          platformFeePercentage: 2.5
+        },
+        walletAddress
+      );
+      
+      if (result.success) {
+        toast.success("Smart contract deployed successfully!", {
+          description: "Your contract is now live on the blockchain."
+        });
+      } else {
+        toast.error("Deployment failed", {
+          description: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Deployment error:", error);
+      toast.error("An unexpected error occurred during deployment");
+    } finally {
+      setIsDeploying(false);
+    }
   };
 
   return (
@@ -80,14 +115,37 @@ const SmartContractDeployment = () => {
               <Terminal size={16} />
               Deployment Status
             </TabsTrigger>
-            <TabsTrigger value="request" className="flex items-center gap-2 font-poppins font-bold">
-              <Rocket size={16} />
-              Request Deployment
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="guide">
             <SmartContractSteps className="bg-transparent" />
+            
+            <div className="mt-8">
+              <Button
+                className="w-full py-6 font-poppins font-bold text-base bg-orange-600 hover:bg-orange-700"
+                onClick={handleDeployContract}
+                disabled={isDeploying || !isAnchorInstalled}
+              >
+                {isDeploying ? (
+                  <>
+                    <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
+                    Deploying Contract...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="mr-2 h-5 w-5" />
+                    Deploy Smart Contract
+                  </>
+                )}
+              </Button>
+              
+              {!isAnchorInstalled && (
+                <p className="text-amber-400 text-sm mt-2 flex items-center">
+                  <AlertTriangle size={16} className="mr-1" />
+                  Anchor CLI must be installed before deployment. See the Deployment Status tab.
+                </p>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="status">
@@ -169,133 +227,6 @@ const SmartContractDeployment = () => {
                 </Button>
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="request" className="space-y-8">
-            <div className="glass-card p-6 bg-gradient-to-br from-orange-500/10 to-transparent">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="bg-orange-500/20 p-3 rounded-full">
-                  <Shield className="text-orange-500 h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-poppins font-bold">Professional Deployment Service</h3>
-              </div>
-              <p className="text-gray-300 leading-relaxed mb-6">
-                Our expert team will handle all aspects of your token deployment and smart contract setup, ensuring a smooth and secure launch on the Solana blockchain. We take care of the technical details so you can focus on building your community.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-black/30 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <CheckCircle2 className="text-green-500 mr-2 h-5 w-5" />
-                    <h4 className="font-poppins font-bold">Security Audited</h4>
-                  </div>
-                  <p className="text-sm text-gray-400">All contracts undergo multi-layer security audits before deployment</p>
-                </div>
-                <div className="bg-black/30 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <CheckCircle2 className="text-green-500 mr-2 h-5 w-5" />
-                    <h4 className="font-poppins font-bold">Custom Parameters</h4>
-                  </div>
-                  <p className="text-sm text-gray-400">Configure tokenomics, supply, and bonding curve parameters</p>
-                </div>
-                <div className="bg-black/30 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <CheckCircle2 className="text-green-500 mr-2 h-5 w-5" />
-                    <h4 className="font-poppins font-bold">Full Support</h4>
-                  </div>
-                  <p className="text-sm text-gray-400">Dedicated technical support during and after deployment</p>
-                </div>
-              </div>
-              
-              <div className="bg-wybe-background/80 border border-white/10 p-4 rounded-lg mb-6">
-                <h4 className="flex items-center text-lg font-poppins font-bold mb-3">
-                  <CircleDollarSign className="text-orange-500 mr-2" />
-                  Pricing
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="font-mono font-bold mb-1">Standard Package</p>
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-2xl font-bold">2 SOL</span>
-                      <span className="text-gray-400 text-sm">+ gas fees</span>
-                    </div>
-                    <ul className="text-sm space-y-1 text-gray-300">
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Basic token setup
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Linear bonding curve
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Standard fee model
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="font-mono font-bold mb-1">Premium Package</p>
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-2xl font-bold">5 SOL</span>
-                      <span className="text-gray-400 text-sm">+ gas fees</span>
-                    </div>
-                    <ul className="text-sm space-y-1 text-gray-300">
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Advanced tokenomics
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Custom bonding curve
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle2 className="text-green-500 mr-2 h-3 w-3" />
-                        Advanced features (staking, etc.)
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                className={`w-full py-6 font-poppins font-bold text-base ${
-                  requestSent ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
-                }`}
-                onClick={handleDeploymentRequest}
-                disabled={requestSent}
-              >
-                {requestSent ? (
-                  <>
-                    <CheckCircle2 className="mr-2 h-5 w-5" />
-                    Request Submitted
-                  </>
-                ) : (
-                  <>
-                    Request Deployment Assistance
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            {requestSent && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-6 border-green-500/30"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-green-500/20 p-2 rounded-full">
-                    <CheckCircle2 className="text-green-500" />
-                  </div>
-                  <h3 className="text-xl font-poppins font-bold">Request Received</h3>
-                </div>
-                <p className="text-gray-300">
-                  Your deployment request has been successfully submitted. Our team will review your request and contact you within 24 hours to discuss next steps. Please ensure your contact information is up-to-date in your account settings.
-                </p>
-              </motion.div>
-            )}
           </TabsContent>
         </Tabs>
       </motion.div>

@@ -18,6 +18,7 @@ import DeploymentEnvironment from "@/components/admin/DeploymentEnvironment";
 import AboutProject from "@/components/admin/AboutProject";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useAdmin from "@/hooks/useAdmin";
+import AdminUserManager from "@/components/admin/AdminUserManager";
 import { 
   LayoutDashboard, 
   Check, 
@@ -29,7 +30,9 @@ import {
   Wallet,
   Menu,
   Cloud,
-  Info
+  Info,
+  Shield,
+  Users
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -80,6 +83,7 @@ const Admin = () => {
       items: [
         { id: "projects", label: "Projects", icon: <Package size={18} /> },
         { id: "activity", label: "Activity", icon: <Activity size={18} /> },
+        { id: "permissions", label: "User Access", icon: <Shield size={18} /> },
       ]
     },
     {
@@ -224,6 +228,12 @@ const Admin = () => {
                 Treasury
               </button>
               <button 
+                onClick={() => setActiveTab("permissions")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "permissions" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+              >
+                Access
+              </button>
+              <button 
                 onClick={() => setActiveTab("about")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "about" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
@@ -250,6 +260,7 @@ const Admin = () => {
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "about" && <AboutProject />}
+          {activeTab === "permissions" && <AdminUserManager />}
           {activeTab === "projects" && (
             <div className="glass-card p-6">
               <h2 className="text-xl font-bold mb-4">Projects</h2>

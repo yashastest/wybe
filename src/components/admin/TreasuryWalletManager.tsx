@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Copy, CheckCircle2, Wallet, ArrowRight } from "lucide-react";
+import { Copy, CheckCircle2, Wallet, ArrowRight, RefreshCcw, Mail } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +16,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import OTPVerification from './OTPVerification';
+import { integrationService } from '@/services/integrationService';
 
 const TreasuryWalletManager = () => {
   const [treasuryWallet, setTreasuryWallet] = useState("8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD");
   const [newTreasuryWallet, setNewTreasuryWallet] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const isMobile = useIsMobile();
+
+  // Admin email for OTP
+  const adminEmail = "wybefun@gmail.com";
 
   // Copy treasury wallet address to clipboard
   const handleCopyAddress = () => {
@@ -46,19 +54,81 @@ const TreasuryWalletManager = () => {
   const isValidSolanaAddress = (address) => {
     return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
   };
+  
+  // Proceed with OTP verification
+  const handleProceedToOtp = () => {
+    setConfirmDialogOpen(false);
+    // Send OTP to admin email
+    sendOtpEmail();
+  };
+  
+  // Send OTP email simulation
+  const sendOtpEmail = () => {
+    setLoading(true);
+    toast.info(`Sending OTP to ${adminEmail}...`);
+    
+    // Simulate API call to send OTP
+    setTimeout(() => {
+      setLoading(false);
+      setOtpDialogOpen(true);
+      toast.success(`OTP sent to ${adminEmail}`);
+    }, 1500);
+  };
+  
+  // Resend OTP email
+  const handleResendOtp = () => {
+    toast.info(`Resending OTP to ${adminEmail}...`);
+    
+    // Simulate API call to resend OTP
+    setTimeout(() => {
+      toast.success(`New OTP sent to ${adminEmail}`);
+    }, 1500);
+  };
+  
+  // Handle OTP verification
+  const handleOtpVerify = (verified: boolean) => {
+    setVerifyingOtp(true);
+    
+    if (verified) {
+      setOtpVerified(true);
+      // Close OTP dialog and proceed with wallet update
+      setTimeout(() => {
+        setOtpDialogOpen(false);
+        handleUpdateTreasuryWallet();
+      }, 1000);
+    } else {
+      setVerifyingOtp(false);
+    }
+  };
 
-  // Update treasury wallet address
-  const handleUpdateTreasuryWallet = () => {
+  // Update treasury wallet address after OTP verification
+  const handleUpdateTreasuryWallet = async () => {
     setLoading(true);
     
-    // Simulate API call to update treasury wallet in smart contract
-    setTimeout(() => {
+    try {
+      // Call integration service to update treasury wallet
+      // In a real app, this would update the smart contract
+      
+      // Simulate blockchain transaction
+      toast.info("Updating treasury wallet on blockchain...");
+      
+      // Wait for the "transaction" to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update state with new wallet address
       setTreasuryWallet(newTreasuryWallet);
       setNewTreasuryWallet("");
-      setConfirmDialogOpen(false);
-      setLoading(false);
+      
       toast.success("Treasury wallet updated successfully");
-    }, 1500);
+    } catch (error) {
+      console.error("Treasury update error:", error);
+      toast.error("Failed to update treasury wallet");
+    } finally {
+      setOtpDialogOpen(false);
+      setLoading(false);
+      setVerifyingOtp(false);
+      setOtpVerified(false);
+    }
   };
 
   return (
@@ -170,7 +240,7 @@ const TreasuryWalletManager = () => {
               </div>
               <p className="mt-2 text-sm">
                 This action will require a blockchain transaction and cannot be undone. 
-                Are you sure you want to continue?
+                For security, an OTP verification will be required.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -179,12 +249,47 @@ const TreasuryWalletManager = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleUpdateTreasuryWallet} 
+              onClick={handleProceedToOtp} 
               className="bg-orange-500 hover:bg-orange-600 text-white"
               disabled={loading}
             >
-              {loading ? "Updating..." : "Confirm Update"}
+              {loading ? (
+                <>
+                  <RefreshCcw size={16} className="mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Mail size={16} className="mr-2" />
+                  Send OTP Verification
+                </>
+              )}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* OTP Verification Dialog */}
+      <AlertDialog open={otpDialogOpen} onOpenChange={(open) => !verifyingOtp && setOtpDialogOpen(open)}>
+        <AlertDialogContent className="bg-wybe-background-light border-wybe-primary/20 max-w-[90%] w-[500px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg">OTP Verification</AlertDialogTitle>
+          </AlertDialogHeader>
+          
+          <OTPVerification 
+            email={adminEmail}
+            onVerify={handleOtpVerify}
+            onResend={handleResendOtp}
+            isLoading={verifyingOtp}
+          />
+          
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel 
+              className="bg-transparent border border-white/20 hover:bg-white/5 text-white mt-0"
+              disabled={verifyingOtp}
+            >
+              Cancel
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

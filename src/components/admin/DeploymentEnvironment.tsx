@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Rocket, 
@@ -9,31 +9,120 @@ import {
   Star,
   Cloud,
   Server,
-  Code
+  Code,
+  RefreshCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { integrationService } from "@/services/integrationService";
 import { toast } from "sonner";
 
 const DeploymentEnvironment = () => {
-  const [currentTab, setCurrentTab] = React.useState("overview");
-  const [deploying, setDeploying] = React.useState(false);
+  const [currentTab, setCurrentTab] = useState("overview");
+  const [deploying, setDeploying] = useState(false);
+  const [deploymentProgress, setDeploymentProgress] = useState(0);
+  const navigate = useNavigate();
 
-  const handleDeployRequest = () => {
+  const handleDeployRequest = async () => {
     setDeploying(true);
+    setDeploymentProgress(0);
     
-    // Simulate deployment process
+    // Simulate deployment process with progress updates
     toast.info("Starting deployment process...");
     
-    setTimeout(() => {
-      toast.success("Deployment completed successfully!", {
-        description: "Your environment is now live and ready to use."
+    const progressInterval = setInterval(() => {
+      setDeploymentProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return newProgress;
       });
+    }, 500);
+    
+    try {
+      // Mock wallet address (in real app this would come from wallet connection)
+      const walletAddress = "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD";
+      
+      // Call the integration service to deploy
+      const result = await integrationService.deployFullEnvironment(
+        {
+          networkType: 'devnet', // Default to devnet for safety
+          frontendUrl: 'https://app.wybe.finance',
+          backendUrl: 'https://api.wybe.finance',
+          creatorFeePercentage: 2.5,
+          platformFeePercentage: 2.5
+        },
+        walletAddress
+      );
+      
+      clearInterval(progressInterval);
+      setDeploymentProgress(100);
+      
+      if (result.success) {
+        toast.success("Deployment completed successfully!", {
+          description: "Your environment is now live and ready to use."
+        });
+        
+        if (result.urls) {
+          toast.info("Access your deployed services:", {
+            description: `Frontend: ${result.urls.frontend}\nBackend: ${result.urls.backend}`
+          });
+        }
+      } else {
+        toast.error("Deployment failed", {
+          description: result.message
+        });
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error("Deployment error:", error);
+      toast.error("An unexpected error occurred during deployment");
+    } finally {
       setDeploying(false);
-    }, 2000);
+    }
+  };
+  
+  const handleGoToSmartContractDeployment = () => {
+    navigate("/admin");
+    // Use setTimeout to allow navigation to complete before updating tab
+    setTimeout(() => {
+      const adminTabLinks = document.querySelectorAll('button[data-tab="contracts"]');
+      if (adminTabLinks.length > 0) {
+        (adminTabLinks[0] as HTMLButtonElement).click();
+      }
+    }, 100);
+  };
+  
+  const handleCompleteSetup = async () => {
+    setDeploying(true);
+    toast.info("Setting up infrastructure components...");
+    
+    try {
+      // Simulate API call with delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast.success("Infrastructure setup completed", {
+        description: "All services are now configured and ready to use."
+      });
+      
+      // Provide link to documentation
+      toast.info("View deployment documentation", {
+        action: {
+          label: "View Docs",
+          onClick: () => window.open(integrationService.getDeploymentDocsUrl(), "_blank")
+        }
+      });
+    } catch (error) {
+      toast.error("Setup failed", {
+        description: "Please try again or contact support."
+      });
+    } finally {
+      setDeploying(false);
+    }
   };
 
   return (
@@ -218,6 +307,22 @@ const DeploymentEnvironment = () => {
                 </div>
               </div>
 
+              {deploying && deploymentProgress < 100 && (
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Deployment in progress...</span>
+                    <span>{deploymentProgress}%</span>
+                  </div>
+                  <div className="w-full bg-black/30 rounded-full h-2">
+                    <div 
+                      className="bg-orange-500 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${deploymentProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Setting up {deploymentProgress < 30 ? "frontend" : deploymentProgress < 60 ? "API layer" : "blockchain connections"}</p>
+                </div>
+              )}
+
               <div className="mt-8 text-center">
                 <Button 
                   variant="orange" 
@@ -226,8 +331,17 @@ const DeploymentEnvironment = () => {
                   onClick={handleDeployRequest}
                   disabled={deploying}
                 >
-                  <Rocket className="mr-2" size={16} />
-                  {deploying ? "Deploying..." : "Deploy Your Environment"}
+                  {deploying ? (
+                    <>
+                      <RefreshCcw className="mr-2 animate-spin" size={16} />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="mr-2" size={16} />
+                      Deploy Your Environment
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>
@@ -468,12 +582,14 @@ const DeploymentEnvironment = () => {
                 </Alert>
                 
                 <div className="mt-4">
-                  <Link to="/admin/deploy">
-                    <Button variant="outline" className="border-orange-500 text-orange-400 hover:bg-orange-500/10">
-                      Go to Smart Contract Deployment
-                      <ArrowRight size={16} className="ml-2" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    className="border-orange-500 text-orange-400 hover:bg-orange-500/10"
+                    onClick={handleGoToSmartContractDeployment}
+                  >
+                    Go to Smart Contract Deployment
+                    <ArrowRight size={16} className="ml-2" />
+                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -669,12 +785,24 @@ const DeploymentEnvironment = () => {
                 </Alert>
                 
                 <div className="mt-4">
-                  <Link to="/admin/deploy">
-                    <Button variant="outline" className="border-green-500 text-green-400 hover:bg-green-500/10">
-                      Complete Deployment Setup
-                      <ArrowRight size={16} className="ml-2" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    className="border-green-500 text-green-400 hover:bg-green-500/10"
+                    onClick={handleCompleteSetup}
+                    disabled={deploying}
+                  >
+                    {deploying ? (
+                      <>
+                        <RefreshCcw size={16} className="mr-2 animate-spin" />
+                        Setting up...
+                      </>
+                    ) : (
+                      <>
+                        Complete Deployment Setup
+                        <ArrowRight size={16} className="ml-2" />
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </motion.div>

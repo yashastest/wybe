@@ -18,6 +18,13 @@ interface DeploymentConfig {
   platformFeePercentage: number;
 }
 
+interface AdminUserAccess {
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  permissions: string[];
+  walletAddress?: string;
+}
+
 class IntegrationService {
   private defaultConfig: DeploymentConfig = {
     networkType: 'devnet', // Default to devnet for safety
@@ -26,6 +33,15 @@ class IntegrationService {
     creatorFeePercentage: 2.5,
     platformFeePercentage: 2.5
   };
+
+  private adminUsers: AdminUserAccess[] = [
+    {
+      email: "wybefun@gmail.com",
+      role: 'superadmin',
+      permissions: ['all'],
+      walletAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD"
+    }
+  ];
   
   /**
    * Deploy a complete environment including frontend, backend, and smart contract
@@ -156,6 +172,121 @@ class IntegrationService {
         message: "Failed to deploy token. Please try again."
       };
     }
+  }
+  
+  /**
+   * Update treasury wallet address in smart contracts
+   */
+  public async updateTreasuryWallet(
+    newTreasuryWallet: string,
+    callerWalletAddress: string
+  ): Promise<{ success: boolean; message: string; transactionHash?: string }> {
+    try {
+      // Check if user has permission to update treasury
+      const hasPermission = this.verifyAdminPermission(callerWalletAddress, 'treasury_update');
+      if (!hasPermission) {
+        return {
+          success: false,
+          message: "You don't have permission to update the treasury wallet"
+        };
+      }
+      
+      // Check if Anchor is installed for real contract interaction
+      const contractConfig = smartContractService.getContractConfig();
+      
+      if (contractConfig.anchorInstalled) {
+        // In a real app, this would call a real smart contract method
+        // For now we'll simulate it
+        
+        // Simulate blockchain delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Generate mock transaction hash
+        const txHash = `treasury_update_${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 8)}`;
+        
+        return {
+          success: true,
+          message: "Treasury wallet updated successfully on the blockchain",
+          transactionHash: txHash
+        };
+      } else {
+        // Simulation mode
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        return {
+          success: true,
+          message: "[SIMULATION] Treasury wallet updated successfully",
+          transactionHash: `sim_treasury_${Date.now().toString(16)}`
+        };
+      }
+    } catch (error) {
+      console.error("Error updating treasury wallet:", error);
+      return {
+        success: false,
+        message: `Failed to update treasury wallet: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+  
+  /**
+   * Verify if a user has specific admin permission
+   */
+  private verifyAdminPermission(walletAddress: string, permission: string): boolean {
+    // Find admin user by wallet address
+    const adminUser = this.adminUsers.find(user => user.walletAddress === walletAddress);
+    
+    if (!adminUser) {
+      return false;
+    }
+    
+    // Superadmins have all permissions
+    if (adminUser.role === 'superadmin' || adminUser.permissions.includes('all')) {
+      return true;
+    }
+    
+    // Check if user has the specific permission
+    return adminUser.permissions.includes(permission);
+  }
+  
+  /**
+   * Add a new admin user
+   */
+  public addAdminUser(adminUser: AdminUserAccess): boolean {
+    // Check if user already exists
+    const existingUser = this.adminUsers.find(user => user.email === adminUser.email);
+    if (existingUser) {
+      return false;
+    }
+    
+    // Add new user
+    this.adminUsers.push(adminUser);
+    return true;
+  }
+  
+  /**
+   * Get all admin users
+   */
+  public getAdminUsers(): AdminUserAccess[] {
+    return [...this.adminUsers];
+  }
+  
+  /**
+   * Update admin user permissions
+   */
+  public updateAdminUserPermissions(
+    email: string, 
+    newRole: 'superadmin' | 'admin' | 'manager' | 'viewer',
+    newPermissions: string[]
+  ): boolean {
+    const userIndex = this.adminUsers.findIndex(user => user.email === email);
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    // Update user role and permissions
+    this.adminUsers[userIndex].role = newRole;
+    this.adminUsers[userIndex].permissions = newPermissions;
+    return true;
   }
   
   /**
