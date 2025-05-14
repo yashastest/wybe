@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
 import DeploymentGuide from "@/components/admin/DeploymentGuide";
+import DeploymentEnvironment from "@/components/admin/DeploymentEnvironment";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useAdmin from "@/hooks/useAdmin";
 import { 
@@ -24,7 +26,8 @@ import {
   LogOut, 
   Folder,
   Wallet,
-  Menu
+  Menu,
+  Cloud
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -63,6 +66,7 @@ const Admin = () => {
         { id: "approvals", label: "Approvals", icon: <Check size={18} /> },
         { id: "contracts", label: "Smart Contracts", icon: <Folder size={18} /> },
         { id: "deployment", label: "Deployment Guide", icon: <Package size={18} /> },
+        { id: "environment", label: "Deployment Environment", icon: <Cloud size={18} /> },
         { id: "treasury", label: "Treasury Management", icon: <Wallet size={18} /> },
         { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
       ]
@@ -205,6 +209,12 @@ const Admin = () => {
                 Deploy
               </button>
               <button 
+                onClick={() => setActiveTab("environment")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "environment" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+              >
+                Environment
+              </button>
+              <button 
                 onClick={() => setActiveTab("treasury")}
                 className={`px-4 py-2 whitespace-nowrap ${activeTab === "treasury" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
               >
@@ -227,6 +237,7 @@ const Admin = () => {
           {activeTab === "analytics" && <AnalyticsDashboard />}
           {activeTab === "contracts" && <SmartContractDashboard />}
           {activeTab === "deployment" && <SmartContractDeployment />}
+          {activeTab === "environment" && <DeploymentEnvironment />}
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "projects" && (

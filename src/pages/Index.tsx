@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
-import DeploymentEnvironment from "@/components/DeploymentEnvironment";
 import { TypewriterHeading } from "@/components/ui/typewriter-text";
 
 const Index = () => {
@@ -22,9 +21,6 @@ const Index = () => {
       
       {/* Hero Section with updated animations */}
       <HeroSection />
-      
-      {/* Deployment Environment Section */}
-      <DeploymentEnvironment />
       
       {/* Creator Fees Section */}
       <CreatorFeesSection />
