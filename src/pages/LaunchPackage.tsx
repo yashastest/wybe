@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Check, ChevronRight, Shield, Rocket, Coins, AlertTriangle, Download, Globe, MessageCircle } from "lucide-react";
@@ -8,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const LaunchPackage = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -42,6 +44,8 @@ const Section = ({ children, className = "" }) => {
 };
 
 const HeroSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="relative py-16 md:py-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-wybe-background via-wybe-primary/20 to-wybe-background z-0"></div>
@@ -51,7 +55,7 @@ const HeroSection = () => {
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="md:w-1/2">
             <div className="flex items-center mb-6">
-              <div className="w-16 h-16 mr-4">
+              <div className="w-12 h-12 mr-4 md:w-16 md:h-16">
                 <AspectRatio ratio={1/1}>
                   <img 
                     src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
@@ -60,12 +64,12 @@ const HeroSection = () => {
                   />
                 </AspectRatio>
               </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gradient">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gradient">
                 Launch Your Meme Coin with Wybe
               </h1>
             </div>
             
-            <h2 className="text-xl md:text-2xl font-medium text-white/90 mb-6">
+            <h2 className="text-xl md:text-2xl font-medium enhanced-text-visibility mb-6">
               $500 All-In Package for Serious Creators
             </h2>
             
@@ -76,23 +80,23 @@ const HeroSection = () => {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/launch">
-                <Button className="btn-primary flex gap-2 w-full sm:w-auto">
+                <Button variant="orange" className="flex gap-2 w-full sm:w-auto">
                   <Rocket size={18} />
                   Apply for Whitelist
                 </Button>
               </Link>
-              <Button variant="outline" className="btn-secondary flex gap-2 w-full sm:w-auto">
+              <Button variant="secondary" className="flex gap-2 w-full sm:w-auto">
                 Contact Us
                 <ChevronRight size={18} />
               </Button>
             </div>
           </div>
           
-          <div className="md:w-1/2 flex justify-center">
-            <div className="bg-gradient-to-br from-wybe-primary/30 to-wybe-secondary/20 glass-card p-6 border-2 border-wybe-secondary/40 rounded-2xl shadow-glow-md">
+          <div className="md:w-1/2 flex justify-center mt-8 md:mt-0">
+            <div className="bg-gradient-to-br from-black/80 to-black/60 glass-card p-6 border-2 border-wybe-primary/30 rounded-2xl shadow-glow-md w-full max-w-md">
               <div className="flex items-center mb-6">
-                <Coins className="text-wybe-secondary mr-3" size={28} />
-                <h2 className="text-2xl font-bold">Pricing</h2>
+                <Coins className="text-wybe-primary mr-3" size={28} />
+                <h2 className="text-2xl font-bold enhanced-text-visibility">Pricing</h2>
               </div>
               
               <div className="flex items-center justify-between mb-4">
@@ -100,7 +104,7 @@ const HeroSection = () => {
                 <span className="text-2xl font-bold text-white">$500</span>
               </div>
               
-              <p className="text-white/70 mb-4 text-sm">
+              <p className="text-white/80 mb-4 text-sm">
                 One-time fee includes all services listed below.
                 We do not take equity or ownership in your project. You own your coin 100%.
               </p>
@@ -116,7 +120,7 @@ const HeroSection = () => {
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="mt-1">
-                      <Check size={16} className="text-wybe-success" />
+                      <Check size={16} className="text-green-400" />
                     </div>
                     <span className="text-white/90">{item}</span>
                   </div>
@@ -131,6 +135,8 @@ const HeroSection = () => {
 };
 
 const LaunchProcessSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="bg-wybe-background-light/70 py-16">
       <Section className="container mx-auto px-4">
@@ -142,7 +148,7 @@ const LaunchProcessSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
           {[
             {
               title: "Submit Whitelist Request",
@@ -198,58 +204,60 @@ const LaunchProcessSection = () => {
 };
 
 const CreatorFeesSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="py-16 bg-gradient-to-br from-wybe-background to-wybe-background-light/60">
       <Section className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 gradient-text">How Creator Fees Work</h2>
+          <h2 className="text-3xl font-bold mb-4 text-gradient">How Creator Fees Work</h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Our platform is designed to reward serious creators while maintaining a sustainable ecosystem.
             Here's how the fee structure works for your meme coin:
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
-          <div className="glass-card p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-10">
+          <div className="glass-card p-5 md:p-6">
             <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mb-4">
               <Coins className="text-purple-400" size={24} />
             </div>
-            <h3 className="text-xl font-bold mb-2">Platform Fee</h3>
-            <p className="text-white/70 text-sm mb-3">
+            <h3 className="text-xl font-bold mb-2 enhanced-text-visibility">Platform Fee</h3>
+            <p className="text-white/80 text-sm mb-3">
               A 2.5% fee is applied to all trading transactions on the platform to maintain operation and liquidity.
             </p>
-            <div className="bg-purple-500/10 p-3 rounded-lg border border-purple-500/20">
-              <p className="text-sm text-white/80">
+            <div className="bg-purple-900/30 p-3 rounded-lg border border-purple-500/30">
+              <p className="text-sm text-white/90">
                 <span className="font-bold text-purple-400">Note:</span> This fee is lower than most DEXs which typically charge 3-5%.
               </p>
             </div>
           </div>
           
-          <div className="glass-card p-6">
+          <div className="glass-card p-5 md:p-6">
             <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
               <Download className="text-green-400" size={24} />
             </div>
-            <h3 className="text-xl font-bold mb-2">Creator Share</h3>
-            <p className="text-white/70 text-sm mb-3">
+            <h3 className="text-xl font-bold mb-2 enhanced-text-visibility">Creator Share</h3>
+            <p className="text-white/80 text-sm mb-3">
               As a creator, you earn up to 40% of all trading fees generated by your coin when performance targets are met.
             </p>
-            <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20">
-              <p className="text-sm text-white/80">
+            <div className="bg-green-900/30 p-3 rounded-lg border border-green-500/30">
+              <p className="text-sm text-white/90">
                 <span className="font-bold text-green-400">Benefit:</span> This aligns incentives and rewards creators who build communities, not just launch coins.
               </p>
             </div>
           </div>
           
-          <div className="glass-card p-6">
+          <div className="glass-card p-5 md:p-6">
             <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4">
               <Globe className="text-blue-400" size={24} />
             </div>
-            <h3 className="text-xl font-bold mb-2">Social Requirements</h3>
-            <p className="text-white/70 text-sm mb-3">
+            <h3 className="text-xl font-bold mb-2 enhanced-text-visibility">Social Requirements</h3>
+            <p className="text-white/80 text-sm mb-3">
               Creators are required to provide social channels (Telegram, Twitter) and optionally a website for community building.
             </p>
-            <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
-              <p className="text-sm text-white/80">
+            <div className="bg-blue-900/30 p-3 rounded-lg border border-blue-500/30">
+              <p className="text-sm text-white/90">
                 <span className="font-bold text-blue-400">Why:</span> Proper community channels increase token credibility and growth potential.
               </p>
             </div>
@@ -257,27 +265,27 @@ const CreatorFeesSection = () => {
         </div>
         
         <div className="glass-card p-6 md:p-8 border-2 border-wybe-primary/30 max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold mb-4 text-center">Platform Fee Distribution</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-gradient-to-br from-purple-900/30 to-purple-600/10 rounded-xl border border-purple-500/20">
+          <h3 className="text-2xl font-bold mb-4 text-center enhanced-text-visibility">Platform Fee Distribution</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="text-center p-4 bg-gradient-to-br from-black/70 to-purple-900/20 rounded-xl border border-purple-500/30">
               <p className="text-2xl font-bold text-gradient mb-2">40%</p>
-              <p className="text-sm text-white/80">To Creator<br />(Performance-based)</p>
+              <p className="text-sm text-white/90">To Creator<br />(Performance-based)</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-blue-900/30 to-blue-600/10 rounded-xl border border-blue-500/20">
+            <div className="text-center p-4 bg-gradient-to-br from-black/70 to-blue-900/20 rounded-xl border border-blue-500/30">
               <p className="text-2xl font-bold text-gradient mb-2">30%</p>
-              <p className="text-sm text-white/80">To Liquidity<br />Pool</p>
+              <p className="text-sm text-white/90">To Liquidity<br />Pool</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-indigo-900/30 to-indigo-600/10 rounded-xl border border-indigo-500/20">
+            <div className="text-center p-4 bg-gradient-to-br from-black/70 to-indigo-900/20 rounded-xl border border-indigo-500/30">
               <p className="text-2xl font-bold text-gradient mb-2">30%</p>
-              <p className="text-sm text-white/80">To Platform<br />Operations</p>
+              <p className="text-sm text-white/90">To Platform<br />Operations</p>
             </div>
           </div>
           <div className="mt-8 text-center">
-            <p className="text-white/70 mb-4">
+            <p className="text-white/80 mb-4">
               This transparent fee structure ensures that all stakeholders are aligned in creating successful, sustainable meme coins.
             </p>
             <Link to="/launch">
-              <Button className="btn-primary">
+              <Button variant="orange" className="animate-pulse-glow">
                 Start Your Coin Launch
               </Button>
             </Link>
@@ -289,10 +297,12 @@ const CreatorFeesSection = () => {
 };
 
 const EarningsSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="py-16">
       <Section className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row gap-12 items-center">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
           <div className="md:w-1/2">
             <div className="flex items-center gap-3 mb-6">
               <img 
@@ -307,79 +317,79 @@ const EarningsSection = () => {
               We're incentivized by your success. Here's how earnings work:
             </p>
             
-            <Card className="bg-gradient-to-br from-green-900/40 to-transparent border-green-500/30 mb-6">
-              <CardContent className="p-6">
+            <Card className="bg-gradient-to-br from-black/80 to-green-900/20 border-green-500/30 mb-6">
+              <CardContent className="p-5 md:p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="bg-green-500/20 p-2 rounded-full">
                     <Check className="text-green-400" size={20} />
                   </div>
-                  <h3 className="text-xl font-medium text-green-300">High Performance Path</h3>
+                  <h3 className="text-xl font-medium enhanced-text-visibility">High Performance Path</h3>
                 </div>
-                <p className="text-white/80 ml-11">
+                <p className="text-white/90 ml-11">
                   If your token reaches $50K market cap within 4 days and sustains it for 48 hours,
                   <span className="font-bold text-green-300 block mt-1">→ You earn 40% of the trading fees generated by your project.</span>
                 </p>
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-orange-900/40 to-transparent border-orange-500/30">
-              <CardContent className="p-6">
+            <Card className="bg-gradient-to-br from-black/80 to-orange-900/20 border-orange-500/30">
+              <CardContent className="p-5 md:p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="bg-orange-500/20 p-2 rounded-full">
                     <AlertTriangle className="text-orange-400" size={20} />
                   </div>
-                  <h3 className="text-xl font-medium text-orange-300">Standard Path</h3>
+                  <h3 className="text-xl font-medium enhanced-text-visibility">Standard Path</h3>
                 </div>
-                <p className="text-white/80 ml-11">
+                <p className="text-white/90 ml-11">
                   If the $50K cap is not met or sustained,
                   <span className="font-bold text-orange-300 block mt-1">→ You'll receive 20% of the trading fees generated by your project after 7 days from launch.</span>
                 </p>
               </CardContent>
             </Card>
             
-            <p className="text-white/70 mt-6">
+            <p className="text-white/80 mt-6">
               This ensures both transparency and performance-based incentives — we only win when you do.
             </p>
           </div>
           
-          <div className="md:w-1/2">
-            <div className="glass-card p-8 border-2 border-white/10">
+          <div className="md:w-1/2 mt-6 md:mt-0">
+            <div className="glass-card p-6 md:p-8 border-2 border-white/10">
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="text-wybe-primary" size={28} />
-                <h2 className="text-2xl font-bold">Why We Do This</h2>
+                <h2 className="text-2xl font-bold enhanced-text-visibility">Why We Do This</h2>
               </div>
               
-              <p className="text-white/80 mb-6">
+              <p className="text-white/90 mb-6">
                 Rugpulls have made meme coins risky. We're changing that.
               </p>
               
-              <p className="text-white/80 mb-6">
+              <p className="text-white/90 mb-6">
                 By vetting every project, providing a safe launch process, and aligning incentives through 
                 fair rewards, Wybe is building a reliable launch ecosystem for meme coins to become legitimate, 
                 wealth-generating assets — not pump-and-dump scams.
               </p>
 
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="flex-1 bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center">
-                  <MessageCircle className="text-wybe-secondary mb-2" size={24} />
-                  <h4 className="font-semibold mb-1">Community Focus</h4>
-                  <p className="text-xs text-center text-white/70">Active engagement with holders</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex-1 bg-black/50 border border-white/10 rounded-lg p-4 flex flex-col items-center">
+                  <MessageCircle className="text-wybe-primary mb-2" size={24} />
+                  <h4 className="font-semibold mb-1 enhanced-text-visibility">Community Focus</h4>
+                  <p className="text-xs text-center text-white/80">Active engagement with holders</p>
                 </div>
                 
-                <div className="flex-1 bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col items-center">
+                <div className="flex-1 bg-black/50 border border-white/10 rounded-lg p-4 flex flex-col items-center">
                   <Shield className="text-wybe-primary mb-2" size={24} />
-                  <h4 className="font-semibold mb-1">No Rugpulls</h4>
-                  <p className="text-xs text-center text-white/70">Verified team & locked liquidity</p>
+                  <h4 className="font-semibold mb-1 enhanced-text-visibility">No Rugpulls</h4>
+                  <p className="text-xs text-center text-white/80">Verified team & locked liquidity</p>
                 </div>
               </div>
               
-              <div className="bg-wybe-primary/10 border border-wybe-primary/30 rounded-xl p-6 text-center">
-                <h3 className="text-xl font-bold mb-4">Ready to Launch?</h3>
-                <p className="text-white/80 mb-6">
+              <div className="bg-gradient-to-br from-black/80 to-wybe-primary/5 border border-wybe-primary/30 rounded-xl p-5 md:p-6 text-center">
+                <h3 className="text-xl font-bold mb-4 enhanced-text-visibility">Ready to Launch?</h3>
+                <p className="text-white/90 mb-6">
                   Submit your project and take the first step towards a real, successful meme coin launch — backed by Wybe.
                 </p>
                 <Link to="/launch">
-                  <Button className="btn-primary w-full">Apply for Whitelist Now</Button>
+                  <Button variant="orange" className="w-full md:w-auto px-8">Apply for Whitelist Now</Button>
                 </Link>
               </div>
             </div>

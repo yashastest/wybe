@@ -35,6 +35,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { Link } from "react-router-dom";
 import { Shimmer } from "@/components/ui/shimmer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Launch = () => {
   const { wallet, connect } = useWallet();
@@ -52,6 +53,7 @@ const Launch = () => {
   const [whitelistDescription, setWhitelistDescription] = useState("");
   const [website, setWebsite] = useState("");
   const [telegramChannel, setTelegramChannel] = useState("");
+  const isMobile = useIsMobile();
   
   // Image upload states
   const [tokenLogo, setTokenLogo] = useState<File | null>(null);
@@ -221,15 +223,15 @@ const Launch = () => {
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  {/* Package Banner */}
-                  <div className="mb-6 p-3 glass-card bg-gradient-to-r from-orange-600/30 to-purple-600/30 border border-purple-500/30">
+                  {/* Package Banner - Updated with better contrast and theme-matching */}
+                  <div className="mb-6 p-4 glass-card bg-black/70 border border-orange-500/30 shadow-md">
                     <div className="flex justify-between items-center">
                       <div className="flex-1">
-                        <h3 className="text-sm font-medium text-white">Need full launch support?</h3>
+                        <h3 className="text-sm font-medium enhanced-text-visibility">Need full launch support?</h3>
                         <p className="text-xs text-gray-300">All-in $500 package with marketing and support</p>
                       </div>
                       <Link to="/package">
-                        <Button size="sm" className="btn-primary text-xs flex items-center gap-1 animate-pulse-slow">
+                        <Button size="sm" variant="orange" className="text-xs flex items-center gap-1">
                           Learn More
                           <ChevronRight size={12} />
                         </Button>
