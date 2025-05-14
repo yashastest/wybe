@@ -1,205 +1,150 @@
 
-/**
- * Utility functions for working with Anchor CLI in the browser
- * In a real environment, these would interact with the local machine's CLI
- */
+// Mock implementations of Anchor CLI functions for browser development
 
-/**
- * Check if Anchor CLI is installed
- */
-export const checkAnchorInstalled = async (): Promise<{ installed: boolean; version?: string }> => {
-  // In a real environment, this would run `anchor --version` and parse the result
-  // For the browser demo, we check localStorage
-  const mockInstalled = localStorage.getItem('anchorInstalled') === 'true';
-  const mockVersion = localStorage.getItem('anchorVersion');
-  
-  console.log("Checking for Anchor CLI:", { mockInstalled, mockVersion });
-  
-  return { 
-    installed: mockInstalled,
-    version: mockVersion || undefined
-  };
-};
+// State for mock Anchor installation status
+let anchorInstalled = false;
+let anchorVersion = '0.26.0';
+let buildSuccess = true;
+let deploySuccess = true;
+let verifyResult = { success: false, message: 'Anchor not installed', version: '' };
 
-/**
- * Verify if Anchor CLI is installed (simplified version for browser)
- */
-export const verifyAnchorInstallation = (): boolean => {
-  // In a browser environment, check localStorage
-  return localStorage.getItem('anchorInstalled') === 'true';
-};
+// Set mock Anchor CLI status for testing
+export function setMockAnchorStatus(installed: boolean, version: string = '0.26.0'): void {
+  anchorInstalled = installed;
+  anchorVersion = version;
+  verifyResult = installed 
+    ? { success: true, message: 'Anchor CLI is installed', version } 
+    : { success: false, message: 'Anchor CLI is not installed', version: '' };
+}
 
-/**
- * Set mock status for Anchor CLI
- */
-export const setMockAnchorStatus = (installed: boolean, version?: string): void => {
-  localStorage.setItem('anchorInstalled', installed.toString());
-  
-  if (version && installed) {
-    localStorage.setItem('anchorVersion', version);
-  } else if (!installed) {
-    localStorage.removeItem('anchorVersion');
-  }
-  
-  console.log(`Set mock Anchor status: installed=${installed}, version=${version || 'none'}`);
-};
-
-/**
- * Install Anchor CLI
- */
-export const installAnchorCLI = async (): Promise<boolean> => {
-  // In a real environment, this would execute the install script
-  // For the browser demo, we simulate installation with a delay
-  
-  console.log("Installing Anchor CLI...");
-  
-  return new Promise((resolve, reject) => {
+// Verify if Anchor CLI is installed
+export function verifyAnchorInstallation(): Promise<{ success: boolean; message: string; version: string }> {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      try {
-        // Set mock status after "installation"
-        setMockAnchorStatus(true, 'v0.29.0');
-        console.log("Anchor CLI installed successfully");
-        resolve(true);
-      } catch (error) {
-        console.error("Failed to install Anchor CLI:", error);
-        reject(error);
+      resolve(verifyResult);
+    }, 800);
+  });
+}
+
+// Build Anchor program
+export function buildAnchorProgram(options?: { verbose?: boolean }): Promise<{ success: boolean; message: string; logs: string[] }> {
+  return new Promise((resolve) => {
+    const logs: string[] = [];
+    
+    // Simulate build process with logs
+    const steps = [
+      'Compiling program...',
+      'Building Rust program...',
+      'Checking dependencies...',
+      'Running cargo build...',
+      buildSuccess ? 'Build completed successfully!' : 'Build failed with errors.'
+    ];
+    
+    let currentStep = 0;
+    
+    // Simulate build process with periodic log updates
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        logs.push(steps[currentStep]);
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        
+        resolve({
+          success: buildSuccess,
+          message: buildSuccess ? 'Program built successfully' : 'Build failed',
+          logs
+        });
       }
-    }, 2000); // Simulate installation taking 2 seconds
+    }, 500);
   });
-};
+}
 
-/**
- * Build Anchor project
- */
-export const buildAnchorProject = async (projectPath: string): Promise<boolean> => {
-  // In a real environment, this would run `anchor build` in the specified path
-  // For the browser demo, we simulate building with a delay
-  
-  console.log(`Building Anchor project at: ${projectPath}`);
-  
+// Deploy Anchor program
+export function deployAnchorProgram(options?: { 
+  network?: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  keypair?: string;
+  verbose?: boolean;
+}): Promise<{ success: boolean; message: string; programId?: string; logs: string[] }> {
+  return new Promise((resolve) => {
+    const network = options?.network || 'devnet';
+    const logs: string[] = [];
+    
+    // Simulate deployment process with logs
+    const steps = [
+      `Deploying to ${network}...`,
+      'Preparing program for deployment...',
+      'Connecting to Solana cluster...',
+      'Submitting transaction...',
+      'Confirming transaction...',
+      deploySuccess ? 'Program deployed successfully!' : 'Deployment failed with errors.'
+    ];
+    
+    let currentStep = 0;
+    
+    // Simulate deployment process with periodic log updates
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        logs.push(steps[currentStep]);
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        
+        resolve({
+          success: deploySuccess,
+          message: deploySuccess ? 'Program deployed successfully' : 'Deployment failed',
+          programId: deploySuccess ? 'Wyb111111111111111111111111111111111111111' : undefined,
+          logs
+        });
+      }
+    }, 600);
+  });
+}
+
+// Set build success/failure for testing
+export function setMockBuildResult(success: boolean): void {
+  buildSuccess = success;
+}
+
+// Set deploy success/failure for testing
+export function setMockDeployResult(success: boolean): void {
+  deploySuccess = success;
+}
+
+// Get program size for verification
+export function getProgramSize(): Promise<{ size: number; sizeLimit: number }> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      console.log("Anchor project built successfully");
-      resolve(true);
-    }, 3000); // Simulate build taking 3 seconds
-  });
-};
-
-/**
- * Deploy Anchor project
- */
-export const deployAnchorProject = async (
-  projectPath: string, 
-  network: 'localnet' | 'devnet' | 'testnet' | 'mainnet'
-): Promise<{ success: boolean; programId?: string; error?: string }> => {
-  // In a real environment, this would run `anchor deploy --network ${network}` 
-  // For the browser demo, we simulate deployment with a delay
-  
-  console.log(`Deploying Anchor project to ${network}`);
-  
-  // Check if Anchor is installed
-  const { installed } = await checkAnchorInstalled();
-  if (!installed) {
-    return { 
-      success: false, 
-      error: 'Anchor CLI is not installed. Please install Anchor before deploying.'
-    };
-  }
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Generate mock program ID
-      const programId = `Wyb${Math.random().toString(36).substring(2, 10)}11111111111111111111111111111`;
-      
-      console.log(`Anchor project deployed successfully to ${network}. Program ID: ${programId}`);
       resolve({
-        success: true,
-        programId
+        size: 287423,  // Sample program size in bytes
+        sizeLimit: 400000  // Solana program size limit
       });
-    }, 5000); // Simulate deployment taking 5 seconds
+    }, 300);
   });
-};
+}
 
-/**
- * Run Anchor tests
- */
-export const runAnchorTests = async (projectPath: string): Promise<{ 
-  success: boolean; 
-  results?: { name: string; passed: boolean; error?: string }[]; 
-  error?: string;
-}> => {
-  // In a real environment, this would run `anchor test` in the specified path
-  // For the browser demo, we simulate tests with a delay
-  
-  console.log(`Running Anchor tests for project at: ${projectPath}`);
-  
-  // Check if Anchor is installed
-  const { installed } = await checkAnchorInstalled();
-  if (!installed) {
-    return { 
-      success: false, 
-      error: 'Anchor CLI is not installed. Please install Anchor before running tests.'
-    };
-  }
-  
+// Validate program code for security issues
+export function validateProgramSecurity(): Promise<{
+  issues: { severity: 'high' | 'medium' | 'low'; description: string; location?: string }[];
+  score: number;
+}> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Generate mock test results
-      const results = [
-        { name: 'initialize', passed: true },
-        { name: 'createBondingCurve', passed: true },
-        { name: 'updateFees', passed: true },
-        { name: 'updateTreasury', passed: true },
-        { name: 'emergencyFreeze', passed: true },
-        { name: 'emergencyUnfreeze', passed: true }
-      ];
-      
-      console.log("Anchor tests completed successfully", results);
       resolve({
-        success: true,
-        results
+        issues: [
+          {
+            severity: 'low',
+            description: 'Recommend adding explicit checks for account ownership',
+            location: 'programs/wybe_token_program/src/lib.rs:42'
+          },
+          {
+            severity: 'low',
+            description: 'Consider adding rate limiting for token creation',
+            location: 'programs/wybe_token_program/src/lib.rs:78'
+          }
+        ],
+        score: 85 // Security score out of 100
       });
-    }, 4000); // Simulate tests taking 4 seconds
+    }, 1200);
   });
-};
-
-// Additional functions needed for smartContractService.ts
-
-/**
- * Build Anchor program (simplified for browser)
- */
-export const buildAnchorProgram = (): { success: boolean; message: string; buildOutput?: string } => {
-  console.log("Building Anchor program (browser simulation)");
-  
-  // For demo purposes, always succeed
-  const buildOutput = `
-Building wybe-token-program...
-Compiling...
-Successfully built @wybe-finance/token-program
-Build completed in 2.4s (simulated)
-  `.trim();
-  
-  return {
-    success: true,
-    message: "Build completed successfully (simulation)",
-    buildOutput
-  };
-};
-
-/**
- * Deploy Anchor program (simplified for browser)
- */
-export const deployAnchorProgram = (
-  network: 'mainnet' | 'testnet' | 'devnet'
-): { success: boolean; message: string; programId?: string } => {
-  console.log(`Deploying Anchor program to ${network} (browser simulation)`);
-  
-  // Generate mock program ID
-  const programId = `Wyb${Math.random().toString(36).substring(2, 10)}11111111111111111111111111111`;
-  
-  return {
-    success: true,
-    message: `Program successfully deployed to ${network} (simulation)`,
-    programId
-  };
-};
+}
