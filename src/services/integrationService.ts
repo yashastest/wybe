@@ -3,13 +3,36 @@ import { smartContractService } from "./smartContractService";
 export interface TransactionHistory {
   id: string;
   timestamp: number;
-  type: 'transfer' | 'mint' | 'burn' | 'swap';
+  type: 'transfer' | 'mint' | 'burn' | 'swap' | 'fee_claim';
   amount: number;
-  token: string;
-  wallet: string;
-  status: 'completed' | 'pending' | 'failed';
+  tokenSymbol: string;
+  from?: string;
+  to?: string;
+  wallet?: string;
+  status: 'completed' | 'pending' | 'failed' | 'confirmed';
   hash?: string;
   fee?: number;
+  details?: any;
+}
+
+export interface AdminUserAccess {
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  permissions: string[];
+  walletAddress?: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface TreasuryWallet {
+  id: string;
+  name: string;
+  walletAddress: string;
+  balance: number;
+  tokenBalance?: { [key: string]: number };
+  type: 'hot' | 'cold' | 'fee' | 'treasury';
+  lastActivity?: number;
+  threshold?: number;
+  signers?: string[];
 }
 
 export interface SmartContract {
@@ -80,6 +103,40 @@ export interface TestnetContract {
 }
 
 class IntegrationService {
+  private adminUsers: Record<string, AdminUserAccess[]> = {};
+  private treasuryWallets: TreasuryWallet[] = [
+    {
+      id: '1',
+      name: 'Main Treasury',
+      walletAddress: 'WybeFinance111111111111111111111111111111',
+      balance: 15246.75,
+      tokenBalance: { 'WYBE': 1000000, 'SOL': 500 },
+      type: 'treasury',
+      lastActivity: Date.now() - 86400000
+    },
+    {
+      id: '2',
+      name: 'Hot Wallet',
+      walletAddress: 'WybeHotWallet1111111111111111111111111111',
+      balance: 1250.5,
+      tokenBalance: { 'WYBE': 50000, 'SOL': 100 },
+      type: 'hot',
+      lastActivity: Date.now() - 3600000
+    },
+    {
+      id: '3',
+      name: 'Fee Collector',
+      walletAddress: 'WybeFeeCollect1111111111111111111111111111',
+      balance: 8756.25,
+      tokenBalance: { 'WYBE': 25000, 'SOL': 200 },
+      type: 'fee',
+      lastActivity: Date.now() - 172800000
+    }
+  ];
+  private mockAnchorStatus = false;
+  private mockAnchorVersion: string | undefined = undefined;
+  private tokenClaimDates: Record<string, Record<string, number>> = {};
+
   public getRecentTransactions(limit: number = 5): TransactionHistory[] {
     // Mock data for recent transactions
     const transactions: TransactionHistory[] = [
@@ -88,8 +145,9 @@ class IntegrationService {
         timestamp: Date.now() - 10000,
         type: 'transfer',
         amount: 100,
-        token: 'WYBE',
-        wallet: '0x123...',
+        tokenSymbol: 'WYBE',
+        from: '0x123...',
+        to: '0x456...',
         status: 'completed',
         hash: '0xabc...'
       },
@@ -98,8 +156,9 @@ class IntegrationService {
         timestamp: Date.now() - 60000,
         type: 'mint',
         amount: 1000,
-        token: 'WYBE',
-        wallet: '0x456...',
+        tokenSymbol: 'WYBE',
+        from: '0x456...',
+        to: '0x789...',
         status: 'completed',
         hash: '0xdef...'
       },
@@ -108,8 +167,9 @@ class IntegrationService {
         timestamp: Date.now() - 120000,
         type: 'swap',
         amount: 50,
-        token: 'WYBE',
-        wallet: '0x789...',
+        tokenSymbol: 'WYBE',
+        from: '0x789...',
+        to: '0xabc...',
         status: 'pending'
       },
       {
@@ -117,8 +177,9 @@ class IntegrationService {
         timestamp: Date.now() - 180000,
         type: 'burn',
         amount: 25,
-        token: 'WYBE',
-        wallet: '0xabc...',
+        tokenSymbol: 'WYBE',
+        from: '0xabc...',
+        to: '0xdef...',
         status: 'failed'
       },
       {
@@ -126,8 +187,9 @@ class IntegrationService {
         timestamp: Date.now() - 240000,
         type: 'transfer',
         amount: 75,
-        token: 'WYBE',
-        wallet: '0xdef...',
+        tokenSymbol: 'WYBE',
+        from: '0xdef...',
+        to: '0x123...',
         status: 'completed'
       }
     ];
@@ -280,6 +342,198 @@ class IntegrationService {
     console.log("Transaction recorded:", newTransaction);
     
     return newTransaction;
+  }
+
+  public setMockAnchorStatus(status: boolean, version?: string): void {
+    this.mockAnchorStatus = status;
+    this.mockAnchorVersion = version;
+  }
+
+  public getAdminUsers(walletAddress: string): AdminUserAccess[] {
+    if (!this.adminUsers[walletAddress]) {
+      // Initialize with default admin user if none exists
+      this.adminUsers[walletAddress] = [
+        {
+          email: 'admin@wybe.finance',
+          role: 'superadmin',
+          permissions: ['all'],
+          walletAddress: walletAddress,
+          twoFactorEnabled: true
+        },
+        {
+          email: 'developer@wybe.finance',
+          role: 'admin',
+          permissions: ['user_management', 'contract_deployment', 'analytics_view'],
+          twoFactorEnabled: false
+        },
+        {
+          email: 'viewer@wybe.finance',
+          role: 'viewer',
+          permissions: ['analytics_view'],
+          twoFactorEnabled: false
+        }
+      ];
+    }
+    
+    return this.adminUsers[walletAddress];
+  }
+
+  public addAdminUser(user: AdminUserAccess, adminWalletAddress: string): boolean {
+    if (!this.adminUsers[adminWalletAddress]) {
+      this.adminUsers[adminWalletAddress] = [];
+    }
+    
+    // Check if email already exists
+    if (this.adminUsers[adminWalletAddress].some(u => u.email === user.email)) {
+      return false;
+    }
+    
+    this.adminUsers[adminWalletAddress].push(user);
+    return true;
+  }
+
+  public updateAdminUserPermissions(
+    email: string,
+    role: AdminUserAccess['role'],
+    permissions: string[],
+    adminWalletAddress: string
+  ): boolean {
+    if (!this.adminUsers[adminWalletAddress]) {
+      return false;
+    }
+    
+    const userIndex = this.adminUsers[adminWalletAddress].findIndex(u => u.email === email);
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    this.adminUsers[adminWalletAddress][userIndex].role = role;
+    this.adminUsers[adminWalletAddress][userIndex].permissions = permissions;
+    
+    return true;
+  }
+
+  public removeAdminUser(email: string, adminWalletAddress: string): boolean {
+    if (!this.adminUsers[adminWalletAddress]) {
+      return false;
+    }
+    
+    const initialLength = this.adminUsers[adminWalletAddress].length;
+    this.adminUsers[adminWalletAddress] = this.adminUsers[adminWalletAddress].filter(u => u.email !== email);
+    
+    return this.adminUsers[adminWalletAddress].length < initialLength;
+  }
+
+  public getTreasuryWallets(): TreasuryWallet[] {
+    return [...this.treasuryWallets];
+  }
+
+  public addTreasuryWallet(wallet: Omit<TreasuryWallet, 'id'>): TreasuryWallet {
+    const id = crypto.randomUUID();
+    const newWallet: TreasuryWallet = {
+      id,
+      ...wallet
+    };
+    
+    this.treasuryWallets.push(newWallet);
+    return newWallet;
+  }
+
+  public removeTreasuryWallet(id: string): boolean {
+    const initialLength = this.treasuryWallets.length;
+    this.treasuryWallets = this.treasuryWallets.filter(w => w.id !== id);
+    
+    return this.treasuryWallets.length < initialLength;
+  }
+
+  public transferBetweenTreasuryWallets(
+    fromId: string,
+    toId: string,
+    amount: number,
+    tokenSymbol: string = 'SOL'
+  ): { success: boolean; txHash?: string; error?: string } {
+    const fromWallet = this.treasuryWallets.find(w => w.id === fromId);
+    const toWallet = this.treasuryWallets.find(w => w.id === toId);
+    
+    if (!fromWallet || !toWallet) {
+      return {
+        success: false,
+        error: 'Wallet not found'
+      };
+    }
+    
+    if (tokenSymbol === 'SOL') {
+      if (fromWallet.balance < amount) {
+        return {
+          success: false,
+          error: 'Insufficient balance'
+        };
+      }
+      
+      fromWallet.balance -= amount;
+      toWallet.balance += amount;
+    } else {
+      if (!fromWallet.tokenBalance || !fromWallet.tokenBalance[tokenSymbol] || fromWallet.tokenBalance[tokenSymbol] < amount) {
+        return {
+          success: false,
+          error: 'Insufficient token balance'
+        };
+      }
+      
+      if (!fromWallet.tokenBalance) fromWallet.tokenBalance = {};
+      if (!toWallet.tokenBalance) toWallet.tokenBalance = {};
+      
+      fromWallet.tokenBalance[tokenSymbol] -= amount;
+      if (!toWallet.tokenBalance[tokenSymbol]) toWallet.tokenBalance[tokenSymbol] = 0;
+      toWallet.tokenBalance[tokenSymbol] += amount;
+    }
+    
+    // Update last activity
+    fromWallet.lastActivity = Date.now();
+    toWallet.lastActivity = Date.now();
+    
+    return {
+      success: true,
+      txHash: `tx_${Date.now().toString(16)}`
+    };
+  }
+
+  public canCreatorClaimFees(
+    tokenSymbol: string,
+    creatorAddress: string
+  ): {
+    canClaim: boolean;
+    nextClaimTime?: number;
+    reason?: string;
+  } {
+    // Mock implementation for token claim checks
+    if (!this.tokenClaimDates[creatorAddress]) {
+      this.tokenClaimDates[creatorAddress] = {};
+    }
+    
+    const lastClaim = this.tokenClaimDates[creatorAddress][tokenSymbol] || 0;
+    const claimPeriod = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const nextClaimTime = lastClaim + claimPeriod;
+    
+    if (Date.now() < nextClaimTime) {
+      return {
+        canClaim: false,
+        nextClaimTime,
+        reason: 'Too soon since last claim'
+      };
+    }
+    
+    return {
+      canClaim: true
+    };
+  }
+
+  public updateTokenClaimDate(tokenSymbol: string, creatorAddress: string): void {
+    if (!this.tokenClaimDates[creatorAddress]) {
+      this.tokenClaimDates[creatorAddress] = {};
+    }
+    
+    this.tokenClaimDates[creatorAddress][tokenSymbol] = Date.now();
   }
 
   public getDeploymentSteps(network: string): DeploymentStep[] {

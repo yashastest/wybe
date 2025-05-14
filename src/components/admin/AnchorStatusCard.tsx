@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
@@ -21,7 +20,7 @@ const AnchorStatusCard = () => {
   
   const checkAnchorStatus = () => {
     const config = smartContractService.getContractConfig();
-    setIsAnchorInstalled(config.anchorInstalled);
+    setIsAnchorInstalled(config.anchorInstalled || false);
     setAnchorVersion(config.anchorVersion);
   };
   
@@ -48,7 +47,7 @@ const AnchorStatusCard = () => {
     checkAnchorStatus();
     toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in ${newStatus ? 'real' : 'simulation'} mode`);
   };
-
+  
   const handleInstallAnchorCLI = async () => {
     setIsInstalling(true);
     toast.info("Installing Anchor CLI...");

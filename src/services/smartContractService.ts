@@ -112,7 +112,7 @@ class SmartContractService {
   // Mock list of recently deployed contracts
   private recentDeployments: SmartContractDeploymentResult[] = [
     {
-      programId: 'Wyb1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8',
+      programId: 'Wyb1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8h',
       deployedAt: Date.now() - 86400000, // 1 day ago
       network: 'devnet',
       version: '1.0.0',
@@ -509,13 +509,13 @@ Build output:
         // Record transaction
         const tx: Omit<TransactionHistory, 'id'> = {
           type: 'fee_claim',
-          from: 'Fee Pool',
-          to: creatorAddress,
           amount: claimAmount,
           tokenSymbol: 'SOL', // Fees are in SOL
           timestamp: Date.now(),
           hash: txHash,
-          status: 'confirmed',
+          status: 'completed',
+          from: 'Fee Pool',
+          to: creatorAddress,
           details: {
             sourceToken: tokenSymbol
           }
@@ -585,13 +585,13 @@ Build output:
         // Record transaction
         const tx: Omit<TransactionHistory, 'id'> = {
           type: 'swap',
-          from: 'Swap Pool',
-          to: 'User',
           amount: params.amountA,
           tokenSymbol: params.tokenA,
           timestamp: Date.now(),
           hash: txHash,
-          status: 'confirmed',
+          status: 'completed',
+          from: 'Swap Pool',
+          to: 'User',
           details: {
             tokenOut: params.tokenB,
             amountOut: amountOut,

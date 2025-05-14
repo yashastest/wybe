@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { 
@@ -28,7 +27,7 @@ import { DeploymentStepper } from "@/components/admin/DeploymentStepper";
 import { DeploymentConsole } from "@/components/admin/DeploymentConsole";
 import { DeploymentTests } from "@/components/admin/DeploymentTests";
 import { DeploymentStatus } from "@/components/admin/DeploymentStatus";
-import { integrationService } from "@/services/integrationService";
+import { integrationService, DeploymentStep } from "@/services/integrationService";
 import { smartContractService } from "@/services/smartContractService";
 
 export interface DeploymentStep {
