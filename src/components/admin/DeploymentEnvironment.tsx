@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import {
   TerminalSquare,
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { integrationService } from '@/services/integrationService';
+import { integrationService } from "@/services/integrationService";
 import ContractSecurityAudit from './ContractSecurityAudit';
 import { smartContractService } from '@/services/smartContractService';
 

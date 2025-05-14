@@ -105,7 +105,7 @@ const AdminUserManager = () => {
       
       return {
         ...prev,
-        role: role as 'superadmin' | 'admin' | 'manager' | 'viewer',
+        role: role as AdminUserAccess['role'],
         permissions
       };
     });

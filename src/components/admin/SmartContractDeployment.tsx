@@ -1,78 +1,74 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { 
+  PackagePlus, 
+  Terminal, 
   FileCode2, 
-  Code, 
-  CheckCircle2, 
-  Shield, 
-  Rocket,
-  ArrowRight,
-  CircleDollarSign,
-  Terminal,
-  AlertTriangle,
-  RefreshCcw
+  ArrowRight, 
+  RefreshCcw,
+  Play,
+  StopCircle,
+  AlertTriangle
 } from "lucide-react";
-import SmartContractSteps from "@/components/SmartContractSteps";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
-import AnchorStatusCard from "./AnchorStatusCard";
-import { useNavigate } from "react-router-dom";
+import AnchorStatusCard from "@/components/admin/AnchorStatusCard";
 
 const SmartContractDeployment = () => {
-  const [isAnchorInstalled, setIsAnchorInstalled] = useState(false);
+  const [contractName, setContractName] = useState<string>('');
+  const [idlContent, setIdlContent] = useState<string>('');
+  const [programAddress, setProgramAddress] = useState<string>('');
+  const [isBuilding, setIsBuilding] = useState<boolean>(false);
+  const [isDeploying, setIsDeploying] = useState<boolean>(false);
+  const [buildOutput, setBuildOutput] = useState<string>('');
+  const [deploymentOutput, setDeploymentOutput] = useState<string>('');
+  const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
   const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const navigate = useNavigate();
   
   useEffect(() => {
-    checkAnchorInstallation();
+    checkAnchorStatus();
   }, []);
   
-  const checkAnchorInstallation = () => {
-    setIsAnchorInstalled(integrationService.isAnchorInstalled());
-    setAnchorVersion(integrationService.getAnchorVersion());
+  const checkAnchorStatus = () => {
+    const config = smartContractService.getContractConfig();
+    setIsAnchorInstalled(config.anchorInstalled);
+    setAnchorVersion(config.anchorVersion);
   };
-  
-  const handleDeployContract = async () => {
-    if (!isAnchorInstalled) {
-      toast.error("Anchor CLI is required for contract deployment. Please install it first.");
-      return;
-    }
-    
-    setIsDeploying(true);
-    toast.info("Starting smart contract deployment process...");
+
+  const handleBuildContract = async () => {
+    setIsBuilding(true);
+    setBuildOutput('');
     
     try {
-      // Get connected wallet address (would be implemented in a real app)
-      const walletAddress = "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD"; // Mock address
-      
-      // Deploy via integration service
-      const result = await integrationService.deployFullEnvironment(
-        {
-          networkType: 'devnet',
-          creatorFeePercentage: 2.5,
-          platformFeePercentage: 2.5
-        },
-        walletAddress
-      );
-      
-      if (result.success) {
-        toast.success("Smart contract deployed successfully!", {
-          description: "Your contract is now live on the blockchain."
-        });
-      } else {
-        toast.error("Deployment failed", {
-          description: result.message
-        });
-      }
-    } catch (error) {
-      console.error("Deployment error:", error);
-      toast.error("An unexpected error occurred during deployment");
+      const buildResult = await smartContractService.buildContract(contractName);
+      setBuildOutput(buildResult);
+      toast.success("Contract built successfully");
+    } catch (error: any) {
+      console.error("Error building contract:", error);
+      setBuildOutput(`Error building contract: ${error.message}`);
+      toast.error("Failed to build contract");
+    } finally {
+      setIsBuilding(false);
+    }
+  };
+
+  const handleDeployContract = async () => {
+    setIsDeploying(true);
+    setDeploymentOutput('');
+    
+    try {
+      const deployResult = await smartContractService.deployContract(contractName, idlContent, programAddress);
+      setDeploymentOutput(deployResult);
+      toast.success("Contract deployed successfully");
+    } catch (error: any) {
+      console.error("Error deploying contract:", error);
+      setDeploymentOutput(`Error deploying contract: ${error.message}`);
+      toast.error("Failed to deploy contract");
     } finally {
       setIsDeploying(false);
     }
@@ -80,156 +76,158 @@ const SmartContractDeployment = () => {
 
   return (
     <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            staggerChildren: 0.1
-          }
-        }
-      }}
-      className="space-y-6 pt-8"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
     >
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 }
-        }}
-        className="glass-card p-6"
-      >
-        <h2 className="text-xl font-bold font-poppins mb-6 flex items-center gap-2">
-          <FileCode2 className="text-orange-500" size={24} />
-          Smart Contract Deployment
-        </h2>
-
-        <Tabs defaultValue="guide">
-          <TabsList className="mb-6">
-            <TabsTrigger value="guide" className="flex items-center gap-2 font-poppins font-bold">
-              <Code size={16} />
-              Implementation Guide
-            </TabsTrigger>
-            <TabsTrigger value="status" className="flex items-center gap-2 font-poppins font-bold">
-              <Terminal size={16} />
-              Deployment Status
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-1/2 space-y-6">
+          <AnchorStatusCard />
           
-          <TabsContent value="guide">
-            <SmartContractSteps className="bg-transparent" />
-            
-            <div className="mt-8">
+          <Card className="glass-card border-wybe-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h3 className="text-lg font-semibold font-poppins flex items-center">
+                <PackagePlus className="mr-2 text-orange-500" size={20} />
+                Contract Details
+              </h3>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Contract Name</label>
+                <Input
+                  placeholder="MyTokenContract"
+                  value={contractName}
+                  onChange={(e) => setContractName(e.target.value)}
+                  className="bg-black/30"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Program Address</label>
+                <Input
+                  placeholder="auto-generated"
+                  value={programAddress}
+                  onChange={(e) => setProgramAddress(e.target.value)}
+                  className="bg-black/30"
+                />
+                <p className="text-xs text-gray-400">Leave blank for auto-generation</p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">IDL Content</label>
+                <Textarea
+                  placeholder="Paste your IDL JSON here"
+                  value={idlContent}
+                  onChange={(e) => setIdlContent(e.target.value)}
+                  className="bg-black/30 min-h-[150px] font-mono text-xs"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="w-full md:w-1/2 space-y-6">
+          <Card className="glass-card border-wybe-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h3 className="text-lg font-semibold font-poppins flex items-center">
+                <Terminal className="mr-2 text-orange-500" size={20} />
+                Build Contract
+              </h3>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <Button
-                className="w-full py-6 font-poppins font-bold text-base bg-orange-600 hover:bg-orange-700"
-                onClick={handleDeployContract}
-                disabled={isDeploying || !isAnchorInstalled}
+                className="bg-orange-500 hover:bg-orange-600 w-full justify-start gap-2"
+                onClick={handleBuildContract}
+                disabled={isBuilding}
               >
-                {isDeploying ? (
+                {isBuilding ? (
                   <>
-                    <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
-                    Deploying Contract...
+                    <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                    Building...
                   </>
                 ) : (
                   <>
-                    <Rocket className="mr-2 h-5 w-5" />
-                    Deploy Smart Contract
+                    <Play className="w-4 h-4 mr-2" />
+                    Build Contract
+                  </>
+                )}
+              </Button>
+              
+              {buildOutput && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Build Output</label>
+                  <Textarea
+                    value={buildOutput}
+                    readOnly
+                    className="bg-black/30 min-h-[150px] font-mono text-xs"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card border-wybe-primary/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h3 className="text-lg font-semibold font-poppins flex items-center">
+                <FileCode2 className="mr-2 text-orange-500" size={20} />
+                Deploy Contract
+              </h3>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                className="bg-green-500 hover:bg-green-600 w-full justify-start gap-2"
+                onClick={handleDeployContract}
+                disabled={!isAnchorInstalled || isDeploying}
+              >
+                {isDeploying ? (
+                  <>
+                    <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                    Deploying...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="w-4 h-4 mr-2" />
+                    Deploy Contract
                   </>
                 )}
               </Button>
               
               {!isAnchorInstalled && (
-                <p className="text-amber-400 text-sm mt-2 flex items-center">
-                  <AlertTriangle size={16} className="mr-1" />
-                  Anchor CLI must be installed before deployment. See the Deployment Status tab.
-                </p>
+                <div className="mt-4">
+                  <div className="rounded-md bg-amber-500/10 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-amber-800">
+                          Anchor CLI Required
+                        </h3>
+                        <div className="mt-2 text-sm text-amber-700">
+                          <p>
+                            Please install Anchor CLI to deploy contracts. See the Anchor Status card for installation instructions.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="status">
-            <div className="space-y-4">
-              <p className="text-gray-300 mb-6">
-                Check the status of Anchor CLI installation and deployment environment.
-                Real contract deployment requires Anchor CLI to be installed on your system.
-              </p>
               
-              <AnchorStatusCard />
-              
-              <div className="glass-card p-5 bg-gradient-to-br from-wybe-primary/10 to-transparent mt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-wybe-primary/20 p-2 rounded-full">
-                    <AlertTriangle className="h-5 w-5 text-wybe-primary" />
-                  </div>
-                  <h3 className="text-lg font-poppins font-bold">Deployment Requirements</h3>
+              {deploymentOutput && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Deployment Output</label>
+                  <Textarea
+                    value={deploymentOutput}
+                    readOnly
+                    className="bg-black/30 min-h-[150px] font-mono text-xs"
+                  />
                 </div>
-                
-                <ul className="space-y-3 mb-4">
-                  <li className="flex items-center gap-2">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isAnchorInstalled ? 'bg-green-500/20' : 'bg-gray-500/20'}`}>
-                      {isAnchorInstalled ? (
-                        <CheckCircle2 className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />
-                      )}
-                    </div>
-                    <span>Anchor CLI installed {isAnchorInstalled && anchorVersion && `(${anchorVersion})`}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    </div>
-                    <span>Solana CLI configured</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    </div>
-                    <span>Project structure initialized</span>
-                  </li>
-                </ul>
-                
-                <div className="bg-black/30 p-4 rounded-lg mb-4">
-                  <h4 className="font-poppins font-bold mb-2 flex items-center gap-2">
-                    <Terminal size={16} className="text-wybe-primary" />
-                    Command Line Tools
-                  </h4>
-                  <p className="text-sm text-gray-300 mb-3">
-                    For real contract deployment, ensure these tools are installed:
-                  </p>
-                  <div className="space-y-2 text-sm font-mono bg-black/50 p-3 rounded-md">
-                    <div className="flex justify-between items-center">
-                      <span>anchor</span>
-                      <span className={isAnchorInstalled ? "text-green-400" : "text-red-400"}>
-                        {isAnchorInstalled ? "✓ installed" : "✗ missing"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>solana</span>
-                      <span className="text-green-400">✓ installed</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>node</span>
-                      <span className="text-green-400">✓ installed</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full flex items-center justify-center gap-2 font-poppins"
-                  onClick={() => window.open("https://www.anchor-lang.com/docs/installation", "_blank")}
-                >
-                  <Terminal size={16} />
-                  Anchor Installation Guide
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </motion.div>
   );
 };
