@@ -1,569 +1,169 @@
 
-import { integrationService } from "./integrationService";
-import { tradingService } from "./tradingService";
-
-// Define the SmartContractConfig interface
-export interface SmartContractConfig {
-  creatorFeePercentage: number;
-  platformFeePercentage: number;
-  rewardClaimPeriodDays: number;
-  dexScreenerThreshold: number;
-  bondingCurveEnabled: boolean;
-  bondingCurveLimit: number;
-  networkType: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-  anchorInstalled: boolean;
-  anchorVersion?: string;
-  programId?: string;
-}
-
-// Define the SecurityAuditResult interface
-export interface SecurityAuditResult {
-  issues: Array<{
-    severity: 'high' | 'medium' | 'low' | 'info';
-    description: string;
-    location?: string;
-  }>;
-  passedChecks: string[];
-}
-
-// Define the GasUsageResult interface
-export interface GasUsageResult {
-  gasEstimates: { [key: string]: number };
-  optimizationSuggestions: string[];
-}
-
-// Define the TestnetResult interface
-export interface TestnetResult {
-  results: Array<{
-    function: string;
-    status: 'passed' | 'failed';
-    error?: string;
-    txHash?: string;
-  }>;
-}
-
-// Smart contract service file
-// This service handles smart contract related operations
-
-// Default contract configuration
-const defaultContractConfig: SmartContractConfig = {
-  creatorFeePercentage: 2.5,
-  platformFeePercentage: 2.5,
-  rewardClaimPeriodDays: 5,
-  dexScreenerThreshold: 50000,
-  bondingCurveEnabled: true,
-  bondingCurveLimit: 50000, // $50k limit
-  networkType: 'devnet',
-  anchorInstalled: false,
-};
+// Smart contract service for admin dashboard
+// This service handles smart contract operations for deployment
 
 export const smartContractService = {
-  // Method to compile smart contract
-  compileContract: async (contractCode: string): Promise<string> => {
-    console.log("Compiling smart contract...");
-    // Placeholder logic - replace with actual compilation process
-    return new Promise((resolve) => {
+  // Method to get contract configuration
+  getContractConfig: () => {
+    return {
+      anchorInstalled: true, // Mock status
+      anchorVersion: '0.29.0',
+      solanaVersion: '1.16.11',
+      rustVersion: '1.73.0'
+    };
+  },
+  
+  // Method to build smart contract
+  buildContract: async (contractName: string): Promise<string> => {
+    console.log(`Building contract: ${contractName}`);
+    
+    // Simulate build process
+    return new Promise((resolve, reject) => {
+      // Add random delay to simulate build time
+      const buildTime = Math.floor(Math.random() * 2000) + 1000;
+      
       setTimeout(() => {
-        const compiledCode = "0x123abc..."; // Mock compiled code
-        resolve(compiledCode);
-      }, 2000);
+        // 90% chance of success
+        const success = Math.random() < 0.9;
+        
+        if (success) {
+          const output = [
+            `Compiling ${contractName}...`,
+            'Building with anchor 0.29.0',
+            'Running cargo build-bpf...',
+            'Finished release [optimized] target(s) in 2.32s',
+            'Deploying program...',
+            `Successfully built ${contractName}!`,
+            'Creating program binary...',
+            'Program ready for deployment.'
+          ].join('\n');
+          
+          resolve(output);
+        } else {
+          reject(new Error('Build failed: Compilation error in cargo build-bpf'));
+        }
+      }, buildTime);
     });
   },
-
-  // Method to deploy smart contract with bytecode
+  
+  // Method to deploy smart contract
   deployContract: async (
-    compiledCodeOrName: string,
-    deployerAddressOrIdl: string,
+    contractName: string,
+    idlContent: string,
     programAddress?: string
   ): Promise<string> => {
-    // Check if this is a bytecode deployment or an IDL deployment
-    if (programAddress !== undefined) {
-      // This is an IDL deployment
-      const contractName = compiledCodeOrName;
-      const idlContent = deployerAddressOrIdl;
+    console.log(`Deploying contract: ${contractName}`);
+    
+    try {
+      // Validate IDL
+      JSON.parse(idlContent);
+    } catch (error) {
+      return Promise.reject(new Error('Invalid IDL format'));
+    }
+    
+    // Simulate deployment process
+    return new Promise((resolve, reject) => {
+      // Add random delay to simulate deployment time
+      const deployTime = Math.floor(Math.random() * 3000) + 2000;
       
-      console.log(`Deploying contract: ${contractName} with IDL...`);
-      
-      // Generate a program ID if not provided
-      const generatedProgramId = programAddress || `Wyb${Math.random().toString(36).substring(2, 10)}Token111111111111111111111111`;
-      
-      // Store the program ID for future use
-      localStorage.setItem('programId', generatedProgramId);
-      
-      // Placeholder logic - replace with actual deployment process
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const output = `
-Successfully deployed contract ${contractName}
-Program ID: ${generatedProgramId}
-Transaction: tx_${Math.random().toString(36).substring(2, 15)}
-Network: ${localStorage.getItem('treasuryNetworkType') || 'testnet'}
-Status: confirmed
-          `;
+      setTimeout(() => {
+        // 85% chance of success
+        const success = Math.random() < 0.85;
+        
+        if (success) {
+          // Generate a mock program ID if not provided
+          const mockProgramId = programAddress || `Wybe${contractName}${Date.now().toString(16).slice(0, 8)}1111111111111111`;
+          
+          const output = [
+            `Deploying ${contractName} to testnet...`,
+            'Anchor deploy command executed',
+            'Transaction confirmed',
+            'Uploading program binary...',
+            `Program size: ${Math.floor(Math.random() * 500) + 200}kb`,
+            'Finalizing deployment...',
+            `Program ID: ${mockProgramId}`,
+            'Deployment successful!',
+            `Contract ${contractName} deployed to testnet`,
+            'Verifying program on-chain...',
+            'Verification complete.',
+            'Your smart contract is now live!'
+          ].join('\n');
+          
+          // Store the deployed contract info
+          const newContract = {
+            name: contractName,
+            programId: mockProgramId,
+            deploymentDate: new Date().toISOString(),
+            network: 'testnet',
+            status: 'active'
+          };
+          
+          // Store in localStorage
+          const storedContracts = localStorage.getItem('deployedContracts');
+          const contracts = storedContracts ? JSON.parse(storedContracts) : [];
+          contracts.push(newContract);
+          localStorage.setItem('deployedContracts', JSON.stringify(contracts));
+          
           resolve(output);
-        }, 3000);
-      });
-    } else {
-      // This is a bytecode deployment
-      const compiledCode = compiledCodeOrName;
-      const deployerAddress = deployerAddressOrIdl;
-      
-      console.log(
-        `Deploying smart contract from address: ${deployerAddress}...`
-      );
-      
-      // Placeholder logic - replace with actual deployment process
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const contractAddress = "0x456def..."; // Mock contract address
-          resolve(contractAddress);
-        }, 3000);
-      });
-    }
-  },
-
-  // Method to build contract
-  buildContract: async (contractName: string): Promise<string> => {
-    console.log(`Building contract: ${contractName}...`);
-    
-    // Placeholder logic - replace with actual build process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const output = `
-Building ${contractName}...
-Compiling Rust code...
-Generating IDL...
-Successfully built ${contractName}
-        `;
-        resolve(output);
-      }, 2500);
-    });
-  },
-
-  // Method to verify smart contract
-  verifyContract: async (contractAddress: string): Promise<boolean> => {
-    console.log(`Verifying smart contract at address: ${contractAddress}...`);
-    // Placeholder logic - replace with actual verification process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isVerified = true; // Mock verification status
-        resolve(isVerified);
-      }, 2500);
-    });
-  },
-
-  // Method to get smart contract details
-  getContractDetails: async (contractAddress: string): Promise<any> => {
-    console.log(`Getting smart contract details for address: ${contractAddress}...`);
-    // Placeholder logic - replace with actual data retrieval
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const contractDetails = {
-          address: contractAddress,
-          name: "SampleContract",
-          version: "1.0",
-        }; // Mock contract details
-        resolve(contractDetails);
-      }, 1500);
-    });
-  },
-
-  // Method to update smart contract
-  updateContract: async (
-    contractAddress: string,
-    newContractCode: string
-  ): Promise<boolean> => {
-    console.log(`Updating smart contract at address: ${contractAddress}...`);
-    // Placeholder logic - replace with actual update process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const isUpdated = true; // Mock update status
-        resolve(isUpdated);
-      }, 3500);
-    });
-  },
-
-  // Method to set contract settings
-  setContractSettings: async (
-    contractAddress: string,
-    newSettings: any
-  ): Promise<boolean> => {
-    console.log(
-      `Setting contract settings for address: ${contractAddress} with settings:`,
-      newSettings
-    );
-    // Placeholder logic - replace with actual settings update process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const success = true; // Mock success
-        resolve(success);
-      }, 1250);
-    });
-  },
-
-  /**
-   * Checks if a creator can claim fees
-   */
-  canCreatorClaimFees: async (creatorId: string): Promise<{canClaim: boolean, amount: number}> => {
-    console.log(`Checking if creator ${creatorId} can claim fees`);
-    
-    // Check with integration service 
-    return integrationService.canCreatorClaimFees(creatorId);
-  },
-
-  /**
-   * Updates token claim date
-   */
-  claimCreatorFees: async (creatorId: string, tokenId: string, amount: number): Promise<boolean> => {
-    console.log(`Claiming ${amount} in creator fees for token ${tokenId}`);
-    
-    // Record the transaction
-    const now = new Date();
-    const transaction = {
-      from: 'treasury',
-      to: `creator-${creatorId}`,
-      timestamp: now.getTime(),
-      amount: amount,
-      tokenSymbol: 'SOL',
-      type: 'transfer', // Using allowed 'transfer' type
-      status: 'completed', // Using allowed 'completed' status
-      description: `Creator fee claim for token ${tokenId}`,
-      hash: `tx_${Math.random().toString(36).substring(2, 10)}`,
-    };
-
-    // Update claim date
-    await integrationService.updateTokenClaimDate(tokenId);
-    
-    // Record transaction
-    await integrationService.recordTransaction(transaction);
-    
-    return true;
-  },
-
-  /**
-   * Records a smart contract deployment transaction
-   */
-  recordDeploymentTransaction: async (data: any): Promise<void> => {
-    const fromWallet = 'treasury';
-    const contractAddress = data.contractAddress;
-    console.log(`Recording deployment transaction for ${data.contractType} to ${contractAddress}`);
-    
-    // Record the transaction with the treasury service
-    integrationService.recordTransaction({
-      from: fromWallet,
-      to: contractAddress,
-      timestamp: Date.now(),
-      amount: 0.01,
-      tokenSymbol: 'SOL',
-      type: 'transfer',
-      status: 'completed',
-      description: `Smart contract deployment of ${data.contractType}`,
-      hash: `tx_${Math.random().toString(36).substring(2, 10)}`,
-    });
-  },
-
-  // Get contract configuration
-  getContractConfig: (): SmartContractConfig => {
-    // In a real app, this would retrieve from storage/backend
-    const config = {
-      ...defaultContractConfig,
-      creatorFeePercentage: parseFloat(localStorage.getItem('creatorFeePercentage') || String(defaultContractConfig.creatorFeePercentage)),
-      platformFeePercentage: parseFloat(localStorage.getItem('platformFeePercentage') || String(defaultContractConfig.platformFeePercentage)),
-      rewardClaimPeriodDays: parseInt(localStorage.getItem('rewardClaimPeriodDays') || String(defaultContractConfig.rewardClaimPeriodDays)),
-      dexScreenerThreshold: parseInt(localStorage.getItem('dexScreenerThreshold') || String(defaultContractConfig.dexScreenerThreshold)),
-      bondingCurveEnabled: localStorage.getItem('bondingCurveEnabled') === 'true',
-      bondingCurveLimit: parseInt(localStorage.getItem('bondingCurveLimit') || String(defaultContractConfig.bondingCurveLimit)),
-      networkType: (localStorage.getItem('networkType') as 'mainnet' | 'testnet' | 'devnet' | 'localnet') || defaultContractConfig.networkType,
-      anchorInstalled: localStorage.getItem('anchorInstalled') === 'true',
-      anchorVersion: localStorage.getItem('anchorVersion') || undefined,
-      programId: localStorage.getItem('programId') || undefined,
-    };
-    
-    // Update the trading service config to maintain consistency
-    tradingService.updateConfig({
-      dexscreenerThreshold: config.dexScreenerThreshold,
-      creatorFeePercentage: config.creatorFeePercentage,
-      platformFeePercentage: config.platformFeePercentage,
-      rewardClaimPeriod: config.rewardClaimPeriodDays,
-      bondingCurveActive: config.bondingCurveEnabled,
-      bondingCurveLimit: config.bondingCurveLimit,
-    });
-    
-    return config;
-  },
-
-  // Update contract configuration
-  updateContractConfig: (config: Partial<SmartContractConfig>): void => {
-    // Store each property individually
-    Object.entries(config).forEach(([key, value]) => {
-      if (value !== undefined) {
-        localStorage.setItem(key, String(value));
-      }
-    });
-    
-    // Update trading service config to maintain consistency
-    tradingService.updateConfig({
-      dexscreenerThreshold: config.dexScreenerThreshold,
-      creatorFeePercentage: config.creatorFeePercentage,
-      platformFeePercentage: config.platformFeePercentage,
-      rewardClaimPeriod: config.rewardClaimPeriodDays,
-      bondingCurveActive: config.bondingCurveEnabled,
-      bondingCurveLimit: config.bondingCurveLimit,
-    });
-  },
-
-  // Install Anchor CLI
-  installAnchorCLI: async (): Promise<boolean> => {
-    console.log("Installing Anchor CLI...");
-    
-    // Simulate installation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        localStorage.setItem('anchorInstalled', 'true');
-        localStorage.setItem('anchorVersion', 'v0.29.0');
-        resolve(true);
-      }, 3000);
-    });
-  },
-
-  // Run security audit
-  runSecurityAudit: async (): Promise<SecurityAuditResult> => {
-    console.log("Running security audit...");
-    
-    // Simulate audit process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          issues: [
-            {
-              severity: 'medium',
-              description: 'Potential reentrancy vulnerability in withdraw function',
-              location: 'contracts/Token.sol:156'
-            },
-            {
-              severity: 'low',
-              description: 'Unchecked return value from external call',
-              location: 'contracts/Token.sol:203'
-            },
-            {
-              severity: 'info',
-              description: 'Consider using SafeMath for arithmetic operations',
-              location: 'contracts/Token.sol:78-92'
-            }
-          ],
-          passedChecks: [
-            'No critical vulnerabilities found',
-            'No hardcoded secret keys detected',
-            'No unbounded loops found',
-            'No floating pragma',
-            'Proper access control implemented',
-            'Bonding curve implementation secure',
-            '1% treasury allocation implemented correctly',
-            '2.5% fee structure implemented correctly'
-          ]
-        });
-      }, 4000);
-    });
-  },
-
-  // Analyze gas usage
-  analyzeGasUsage: async (): Promise<GasUsageResult> => {
-    console.log("Analyzing gas usage...");
-    
-    // Simulate analysis process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          gasEstimates: {
-            'initialize': 150000,
-            'mint': 75000,
-            'transfer': 65000,
-            'burn': 60000,
-            'updateMetadata': 45000,
-            'calculateBondingCurve': 32000,
-            'claimCreatorFees': 50000,
-            'recordTokenLaunch': 85000
-          },
-          optimizationSuggestions: [
-            'Consider using packed structs to save storage',
-            'Replace multiple storage writes with a single write',
-            'Use events for less critical data instead of storage',
-            'Consider using assembly for gas-intensive operations',
-            'Optimize bonding curve calculations for lower gas usage'
-          ]
-        });
-      }, 3500);
-    });
-  },
-
-  // Test on testnet
-  testOnTestnet: async (): Promise<TestnetResult> => {
-    console.log("Running testnet validation...");
-    
-    // Simulate test process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          results: [
-            {
-              function: 'initialize',
-              status: 'passed',
-              txHash: 'tx_abc123'
-            },
-            {
-              function: 'mint',
-              status: 'passed',
-              txHash: 'tx_def456'
-            },
-            {
-              function: 'transfer',
-              status: 'passed',
-              txHash: 'tx_ghi789'
-            },
-            {
-              function: 'updateFees',
-              status: 'passed',
-              txHash: 'tx_jkl012'
-            },
-            {
-              function: 'claimCreatorFees',
-              status: 'passed',
-              txHash: 'tx_mno345'
-            },
-            {
-              function: 'bondingCurveTransition',
-              status: 'passed',
-              txHash: 'tx_pqr678'
-            },
-            {
-              function: 'treasuryAllocation',
-              status: 'passed',
-              txHash: 'tx_stu901'
-            },
-            {
-              function: 'recordTokenLaunch',
-              status: 'passed',
-              txHash: 'tx_vwx234'
-            }
-          ]
-        });
-      }, 5000);
+        } else {
+          reject(new Error('Deployment failed: Transaction simulation error'));
+        }
+      }, deployTime);
     });
   },
   
-  // Mint tokens with bonding curve pricing
-  mintTokensWithBondingCurve: async (
-    contractAddress: string,
-    amount: number,
-    creatorAddress: string,
-    holderAddress: string
-  ): Promise<{
-    success: boolean;
-    message: string;
-    transaction?: any;
-  }> => {
-    console.log(`Minting ${amount} tokens on contract ${contractAddress}`);
+  // Method to get deployed contracts
+  getDeployedContracts: () => {
+    const storedContracts = localStorage.getItem('deployedContracts');
     
-    try {
-      // Get the token symbol from contract address
-      const tokens = tradingService.getAllTokenStatuses();
-      const token = tokens.find(t => t.contractAddress === contractAddress);
-      
-      if (!token) {
-        return {
-          success: false,
-          message: "Contract not found"
-        };
+    if (storedContracts) {
+      try {
+        return JSON.parse(storedContracts);
+      } catch (error) {
+        console.error("Error parsing deployed contracts:", error);
+        return [];
       }
-      
-      // Calculate price based on bonding curve
-      const price = tradingService.calculateTokenPrice(token.symbol, amount);
-      const totalValue = price * amount;
-      
-      // Calculate treasury amount (1%)
-      const treasuryAmount = amount * 0.01;
-      const holderAmount = amount - treasuryAmount;
-      
-      // Record the transaction
-      const transaction = {
-        type: 'mint' as const,
-        timestamp: Date.now(),
-        amount,
-        price,
-        totalValue,
-        toAddress: holderAddress,
-        treasuryAmount,
-        isBondingCurve: true
-      };
-      
-      // Update the token status
-      tradingService.recordTokenTransaction(token.symbol, transaction);
-      
-      // Update market cap
-      const newSupply = (token.totalSupply || 0) + amount;
-      const newMarketCap = newSupply * price;
-      tradingService.updateTokenMarketCap(token.symbol, newMarketCap);
-      
-      return {
-        success: true,
-        message: `Successfully minted ${amount} ${token.symbol} tokens with ${treasuryAmount} allocated to treasury`,
-        transaction
-      };
-    } catch (error) {
-      console.error("Error minting tokens:", error);
-      return {
-        success: false,
-        message: "Failed to mint tokens. Please try again."
-      };
     }
+    
+    return [];
   },
   
-  // Execute token trade with fees
-  executeTokenTrade: async (
-    contractAddress: string,
-    amount: number,
-    price: number,
-    sellerAddress: string,
-    buyerAddress: string
-  ): Promise<{
-    success: boolean;
-    message: string;
-    transaction?: any;
-  }> => {
-    console.log(`Executing trade for ${amount} tokens at ${price} on contract ${contractAddress}`);
+  // Method to get testnet contracts
+  getTestnetContracts: () => {
+    const storedContracts = localStorage.getItem('deployedTestnetContracts');
     
-    try {
-      // Get the token symbol from contract address
-      const tokens = tradingService.getAllTokenStatuses();
-      const token = tokens.find(t => t.contractAddress === contractAddress);
-      
-      if (!token) {
-        return {
-          success: false,
-          message: "Contract not found"
-        };
+    if (storedContracts) {
+      try {
+        return JSON.parse(storedContracts);
+      } catch (error) {
+        console.error("Error parsing testnet contracts:", error);
       }
-      
-      // Execute the trade
-      const result = tradingService.executeTokenTrade(
-        token.symbol,
-        amount,
-        sellerAddress,
-        buyerAddress
-      );
-      
-      return {
-        success: result.success,
-        message: result.message,
-        transaction: result.transaction
-      };
-    } catch (error) {
-      console.error("Error executing trade:", error);
-      return {
-        success: false,
-        message: "Failed to execute trade. Please try again."
-      };
     }
+    
+    // Default testnet contracts
+    const defaultContracts = [
+      {
+        name: 'WybeToken',
+        programId: 'WybeToken11111111111111111111111111111111111',
+        deployDate: '2023-05-01',
+        network: 'testnet',
+        txHash: 'tx_4f3a1b2c5d',
+        status: 'active'
+      },
+      {
+        name: 'WybeBonding',
+        programId: 'WybeBonding1111111111111111111111111111111111',
+        deployDate: '2023-05-05',
+        network: 'testnet',
+        txHash: 'tx_8e7d6f5a4',
+        status: 'active'
+      }
+    ];
+    
+    // Store in localStorage for future use
+    localStorage.setItem('deployedTestnetContracts', JSON.stringify(defaultContracts));
+    
+    return defaultContracts;
   }
 };
 

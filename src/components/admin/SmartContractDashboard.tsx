@@ -1,366 +1,319 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { FileCode2, Check, ArrowUpRight, Settings, BarChart4, ChevronRight, ExternalLink, Code, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-import { smartContractService, SmartContractConfig } from "@/services/smartContractService";
-import AnchorStatusCard from "./AnchorStatusCard";
-
-interface TokenDeploymentStatus {
-  name: string;
-  symbol: string;
-  deployDate: string;
-  status: "active" | "pending" | "failed";
-  txHash: string;
-  programId?: string;
-}
+import {
+  FileCode,
+  BarChart3,
+  Package,
+  Plus,
+  ArrowRight,
+  RefreshCcw,
+  Code,
+  Copy,
+  ExternalLink,
+  CheckCircle,
+  Info
+} from "lucide-react";
+import { smartContractService } from "@/services/smartContractService";
+import { useNavigate } from 'react-router-dom';
 
 const SmartContractDashboard = () => {
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [contractConfig, setContractConfig] = useState<SmartContractConfig>({
-    creatorFeePercentage: 2.5,
-    platformFeePercentage: 2.5,
-    rewardClaimPeriodDays: 5,
-    dexScreenerThreshold: 50000,
-    networkType: 'devnet',
-    anchorInstalled: false,
-    bondingCurveEnabled: true,
-    bondingCurveLimit: 50000
-  });
   
-  const [deploymentHistory, setDeploymentHistory] = useState<TokenDeploymentStatus[]>([
-    {
-      name: "Sample Token",
-      symbol: "SMPL",
-      deployDate: "2024-05-12",
-      status: "active",
-      txHash: "Tx8f3d7a9c",
-      programId: "Prog123456789"
-    }
-  ]);
-  
-  const [copiedText, setCopiedText] = useState("");
-
   useEffect(() => {
-    // Get the current configuration from the service
-    setContractConfig(smartContractService.getContractConfig());
+    loadContracts();
   }, []);
-
-  const handleConfigureClick = () => {
-    // Using data-tab attribute to trigger the tab change in Admin.tsx
-    const deploymentTabBtn = document.querySelector('[data-tab="deployment"]');
-    if (deploymentTabBtn) {
-      (deploymentTabBtn as HTMLElement).click();
-    } else {
-      // Fallback in case the button isn't found
-      const event = new CustomEvent('deployment-tab-request');
-      document.dispatchEvent(event);
-      // Set the activeTab in localStorage to be picked up by Admin component
-      localStorage.setItem('admin-active-tab', 'deployment');
+  
+  const loadContracts = () => {
+    setIsLoading(true);
+    
+    // Load contracts from the service
+    setTimeout(() => {
+      const contracts = smartContractService.getDeployedContracts();
+      setContracts(contracts);
+      setIsLoading(false);
+    }, 500);
+  };
+  
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    toast.success("Program ID copied to clipboard");
+    
+    setTimeout(() => {
+      setCopiedId(null);
+    }, 2000);
+  };
+  
+  const handleDeployContract = () => {
+    navigate('/admin/deployment');
+  };
+  
+  const handleViewContract = (contract: any) => {
+    // This would typically open contract details in a modal or new page
+    console.log("View contract:", contract);
+    toast.info(`Viewing contract ${contract.name}`);
+  };
+  
+  const handleViewTestnetContracts = () => {
+    navigate('/admin/testnet');
+  };
+  
+  const getContractStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'text-green-400 bg-green-500/10 border-green-500/30';
+      case 'deprecated':
+        return 'text-red-400 bg-red-500/10 border-red-500/30';
+      case 'pending':
+        return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+      default:
+        return 'text-gray-400 bg-white/10 border-white/30';
     }
   };
   
-  const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedText(text);
-      toast.success(`${type} copied to clipboard!`);
-      
-      // Reset copy state after 2 seconds
-      setTimeout(() => {
-        setCopiedText("");
-      }, 2000);
-    });
-  };
+  const filteredContracts = contracts.filter(contract => 
+    contract.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contract.programId?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
-  const handleViewContracts = () => {
-    // Using data-tab attribute to trigger the tab change in Admin.tsx
-    const testnetTabBtn = document.querySelector('[data-tab="testnet"]');
-    if (testnetTabBtn) {
-      (testnetTabBtn as HTMLElement).click();
-    } else {
-      // Fallback in case the button isn't found
-      const event = new CustomEvent('testnet-tab-request');
-      document.dispatchEvent(event);
-      // Set the activeTab in localStorage to be picked up by Admin component
-      localStorage.setItem('admin-active-tab', 'testnet');
-    }
-  };
+  // Stats calculation
+  const totalContracts = contracts.length;
+  const activeContracts = contracts.filter(c => c.status === 'active').length;
+  const mainnetContracts = contracts.filter(c => c.network === 'mainnet').length;
+  const testnetContracts = contracts.filter(c => c.network === 'testnet').length;
   
-  const handleViewDeploymentGuide = () => {
-    // Using data-tab attribute to trigger the tab change in Admin.tsx
-    const guideTabBtn = document.querySelector('[data-tab="guide"]');
-    if (guideTabBtn) {
-      (guideTabBtn as HTMLElement).click();
-    } else {
-      // Fallback in case the button isn't found
-      const event = new CustomEvent('guide-tab-request');
-      document.dispatchEvent(event);
-      // Set the activeTab in localStorage to be picked up by Admin component  
-      localStorage.setItem('admin-active-tab', 'guide');
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold font-poppins flex items-center">
-            <FileCode2 className="mr-2 text-orange-500" size={22} />
-            Smart Contract Dashboard
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <FileCode className="text-orange-500" size={22} />
+            Smart Contracts
           </h2>
-          <p className="text-gray-400 mt-1">Manage and monitor smart contract deployments</p>
+          <p className="text-gray-400 text-sm">
+            Manage and monitor your deployed smart contracts
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        
+        <div className="flex gap-2">
           <Button 
-            onClick={handleViewContracts} 
             variant="outline" 
-            className="flex items-center gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+            className="h-9 text-xs" 
+            onClick={handleViewTestnetContracts}
           >
-            <Code size={14} />
-            View Contracts
+            <Package size={14} className="mr-1" />
+            Testnet Contracts
           </Button>
-          <Button 
-            onClick={handleConfigureClick} 
-            variant="orange" 
-            className="flex items-center gap-2"
-          >
-            <Settings size={14} />
-            Configure Deployment
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-white font-poppins text-lg">Creator Fee</CardTitle>
-            <CardDescription>Current fee percentage for creators</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-white">{contractConfig.creatorFeePercentage}%</span>
-              <span className="text-gray-400 text-sm">of trading volume</span>
-            </div>
-            <Progress 
-              className="mt-2" 
-              value={contractConfig.creatorFeePercentage * 10} 
-              indicatorClassName="bg-wybe-primary" 
-            />
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-white font-poppins text-lg">Platform Fee</CardTitle>
-            <CardDescription>Current fee for the platform</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-white">{contractConfig.platformFeePercentage}%</span>
-              <span className="text-gray-400 text-sm">of trading volume</span>
-            </div>
-            <Progress 
-              className="mt-2" 
-              value={contractConfig.platformFeePercentage * 10} 
-              indicatorClassName="bg-wybe-accent" 
-            />
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-white font-poppins text-lg">Reward Period</CardTitle>
-            <CardDescription>Days between reward claims</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-white">{contractConfig.rewardClaimPeriodDays}</span>
-              <span className="text-gray-400 text-sm">days</span>
-            </div>
-            <Progress 
-              className="mt-2" 
-              value={contractConfig.rewardClaimPeriodDays * 10} 
-              indicatorClassName="bg-green-500" 
-            />
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AnchorStatusCard />
-        
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-5 border-wybe-primary/20"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold font-poppins flex items-center">
-              <BarChart4 className="mr-2 text-orange-500" size={20} />
-              Network Status
-            </h3>
-            <Badge 
-              variant={contractConfig.networkType === 'mainnet' ? 'default' : 'outline'}
-              className={
-                contractConfig.networkType === 'mainnet' 
-                  ? 'bg-green-500/80' 
-                  : contractConfig.networkType === 'testnet'
-                    ? 'border-amber-500 text-amber-500'
-                    : 'border-blue-500 text-blue-500'
-              }
-            >
-              {contractConfig.networkType.toUpperCase()}
-            </Badge>
-          </div>
           
-          <div className="space-y-2">
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-400">Active Network</span>
-              <span className="font-semibold">{contractConfig.networkType.charAt(0).toUpperCase() + contractConfig.networkType.slice(1)}</span>
-            </div>
-            <Separator className="bg-white/10" />
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-400">DEXScreener Threshold</span>
-              <span className="font-semibold">${contractConfig.dexScreenerThreshold.toLocaleString()}</span>
-            </div>
-            <Separator className="bg-white/10" />
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-400">Program ID</span>
-              <div className="flex items-center">
-                <span className="font-mono text-sm truncate max-w-[150px]">{contractConfig.programId || "Not deployed"}</span>
-                {contractConfig.programId && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-1 h-6 w-6 p-0"
-                    onClick={() => copyToClipboard(contractConfig.programId || "", "Program ID")}
-                  >
-                    {copiedText === contractConfig.programId ? <Check size={12} /> : <Copy size={12} />}
-                  </Button>
-                )}
-              </div>
-            </div>
-            <Separator className="bg-white/10" />
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-400">Deployment Guide</span>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-xs border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
-                onClick={handleViewDeploymentGuide}
-              >
-                View Master Guide
-                <ArrowUpRight size={12} className="ml-1" />
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-      
-      <div className="glass-card p-5 border-wybe-primary/20">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold font-poppins flex items-center">
-            Recent Deployments
-          </h3>
           <Button 
-            variant="outline" 
-            size="sm"
-            className="text-xs border-wybe-primary/30 text-wybe-primary hover:bg-wybe-primary/10"
-            onClick={handleViewContracts}
+            className="bg-orange-500 hover:bg-orange-600 h-9 text-xs" 
+            onClick={handleDeployContract}
           >
-            View All Contracts
-            <ChevronRight size={14} className="ml-1" />
+            <Plus size={14} className="mr-1" />
+            Deploy New Contract
           </Button>
         </div>
+      </div>
+      
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="glass-card border-wybe-primary/20 bg-gradient-to-br from-purple-500/10 to-transparent">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-gray-400">Total Contracts</p>
+              <FileCode size={18} className="text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold">{totalContracts}</h3>
+          </CardContent>
+        </Card>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-sm text-gray-400 border-b border-white/10">
-                <th className="pb-2 font-medium">Token</th>
-                <th className="pb-2 font-medium">Date</th>
-                <th className="pb-2 font-medium">Status</th>
-                <th className="pb-2 font-medium">Transaction</th>
-                <th className="pb-2 font-medium">Program ID</th>
-                <th className="pb-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {deploymentHistory.map((deployment, index) => (
-                <tr key={index} className="border-b border-white/5">
-                  <td className="py-3">
-                    <div>
-                      <div className="font-medium">{deployment.name}</div>
-                      <div className="text-sm text-gray-400">{deployment.symbol}</div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-sm">{deployment.deployDate}</td>
-                  <td className="py-3">
-                    <Badge 
-                      variant={deployment.status === 'active' ? 'default' : deployment.status === 'pending' ? 'outline' : 'destructive'}
-                      className={
-                        deployment.status === 'active' 
-                          ? 'bg-green-500/80' 
-                          : deployment.status === 'pending' 
-                            ? 'border-amber-500 text-amber-500' 
-                            : 'bg-red-500/80'
-                      }
-                    >
-                      {deployment.status === 'active' && <Check size={12} className="mr-1" />}
-                      {deployment.status.charAt(0).toUpperCase() + deployment.status.slice(1)}
-                    </Badge>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center">
-                      <span className="font-mono text-xs">{deployment.txHash}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="ml-1 h-6 w-6 p-0"
-                        onClick={() => copyToClipboard(deployment.txHash, "Transaction Hash")}
-                      >
-                        {copiedText === deployment.txHash ? <Check size={12} /> : <Copy size={12} />}
-                      </Button>
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center">
-                      <span className="font-mono text-xs">{deployment.programId || "N/A"}</span>
-                      {deployment.programId && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="ml-1 h-6 w-6 p-0"
-                          onClick={() => copyToClipboard(deployment.programId || "", "Program ID")}
-                        >
-                          {copiedText === deployment.programId ? <Check size={12} /> : <Copy size={12} />}
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 text-right">
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-gray-400">
-                      <ExternalLink size={14} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <Card className="glass-card border-wybe-primary/20 bg-gradient-to-br from-green-500/10 to-transparent">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-gray-400">Active Contracts</p>
+              <CheckCircle size={18} className="text-green-400" />
+            </div>
+            <h3 className="text-2xl font-bold">{activeContracts}</h3>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card border-wybe-primary/20 bg-gradient-to-br from-blue-500/10 to-transparent">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-gray-400">Mainnet Contracts</p>
+              <BarChart3 size={18} className="text-blue-400" />
+            </div>
+            <h3 className="text-2xl font-bold">{mainnetContracts}</h3>
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card border-wybe-primary/20 bg-gradient-to-br from-amber-500/10 to-transparent">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-gray-400">Testnet Contracts</p>
+              <Code size={18} className="text-amber-400" />
+            </div>
+            <h3 className="text-2xl font-bold">{testnetContracts}</h3>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Contract Search */}
+      <div className="glass-card border-wybe-primary/20 p-4 mb-6">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search by name or program ID"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-black/20"
+          />
+          <Button 
+            variant="outline" 
+            className="w-10 px-0 h-10 flex items-center justify-center"
+            onClick={loadContracts}
+          >
+            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+          </Button>
         </div>
       </div>
+      
+      {/* Contracts List */}
+      {isLoading ? (
+        <div className="flex justify-center p-20">
+          <RefreshCcw size={24} className="animate-spin text-wybe-primary" />
+        </div>
+      ) : (
+        <div>
+          {filteredContracts.length > 0 ? (
+            <div className="space-y-4">
+              {filteredContracts.map((contract, index) => (
+                <Card 
+                  key={index} 
+                  className="glass-card border-wybe-primary/20 hover:bg-white/5 transition-colors overflow-hidden"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-medium">{contract.name}</h3>
+                          <Badge 
+                            variant="outline" 
+                            className={getContractStatusColor(contract.status)}
+                          >
+                            {contract.status}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className="bg-blue-500/10 text-blue-400 border-blue-500/30"
+                          >
+                            {contract.network}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mb-4">
+                          <p className="text-sm font-mono text-gray-400">
+                            {`${contract.programId.substring(0, 8)}...${contract.programId.substring(
+                              contract.programId.length - 8
+                            )}`}
+                          </p>
+                          <button
+                            onClick={() => handleCopyId(contract.programId)}
+                            className="text-gray-400 hover:text-white"
+                          >
+                            {copiedId === contract.programId ? (
+                              <CheckCircle size={14} className="text-green-500" />
+                            ) : (
+                              <Copy size={14} />
+                            )}
+                          </button>
+                          <a
+                            href={`https://solscan.io/account/${contract.programId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                        
+                        <div className="text-sm text-gray-400">
+                          Deployed on: {contract.deploymentDate ? new Date(contract.deploymentDate).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 md:self-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewContract(contract)}
+                          className="text-xs h-8"
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          variant="orange" 
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={handleDeployContract}
+                        >
+                          <ArrowRight size={12} className="mr-1" />
+                          Deploy Again
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="glass-card border-wybe-primary/20 text-center py-16">
+              <CardContent>
+                <FileCode size={48} className="mx-auto mb-4 text-gray-500 opacity-20" />
+                <h3 className="text-lg font-medium mb-2">No Contracts Found</h3>
+                <p className="text-gray-400 mb-6">
+                  {searchTerm ? "No contracts match your search criteria." : "You don't have any deployed contracts yet."}
+                </p>
+                <Button
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={handleDeployContract}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Deploy Your First Contract
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+      
+      {/* Help Section */}
+      {!isLoading && filteredContracts.length > 0 && (
+        <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm flex gap-2">
+          <Info size={18} className="text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-blue-400 font-medium">Need help with your contracts?</p>
+            <p className="text-gray-300 mt-1">
+              Visit the <a className="text-blue-400 hover:underline" href="#" onClick={() => navigate('/admin/guide')}>Master Deployment Guide</a> for 
+              detailed instructions on deploying, upgrading, and managing your contracts, or go to 
+              the <a className="text-blue-400 hover:underline" href="#" onClick={() => navigate('/admin/testnet')}>Testnet Contracts</a> page to see your test deployments.
+            </p>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

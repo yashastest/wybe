@@ -18,7 +18,8 @@ export const useAdmin = () => {
     setIsLoading(true);
     
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
-    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+    const sessionData = sessionStorage.getItem("wybeAdminSession");
+    const sessionExists = !!sessionData;
     
     console.log("Auth check:", { isLoggedIn, sessionExists, path: location.pathname });
     
@@ -26,8 +27,17 @@ export const useAdmin = () => {
       console.log("Valid session found, setting authenticated to true");
       try {
         // Load permissions from session
-        const sessionData = JSON.parse(sessionStorage.getItem("wybeAdminSession") || '{}');
-        setAdminPermissions(sessionData.permissions || ['default']);
+        const parsedSession = JSON.parse(sessionData || '{}');
+        const permissions = parsedSession.permissions || ['default'];
+        setAdminPermissions(permissions);
+        
+        // Check if session has expired
+        const expiryTime = parsedSession.expiryTime;
+        if (expiryTime && new Date().getTime() > expiryTime) {
+          console.log("Session expired, logging out");
+          logout();
+          return;
+        }
       } catch (error) {
         console.error("Error parsing session data:", error);
         setAdminPermissions(['default']);
@@ -62,12 +72,21 @@ export const useAdmin = () => {
     });
   };
 
+  const hasPermission = (requiredPermission: string): boolean => {
+    // Super admin has all permissions
+    if (adminPermissions.includes('all')) return true;
+    
+    // Check if user has the specific permission
+    return adminPermissions.includes(requiredPermission);
+  };
+
   return { 
     isAuthenticated, 
     isLoading, 
     logout, 
     checkAdminSession,
-    adminPermissions
+    adminPermissions,
+    hasPermission
   };
 };
 

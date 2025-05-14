@@ -23,9 +23,17 @@ const AdminLoginForm = () => {
     if (username === 'admin' && password === 'password') {
       console.log("Credentials valid, setting session data");
       
+      // Create session data with permissions
+      const sessionData = {
+        username: 'admin',
+        permissions: ['all'], // Super admin has all permissions
+        loginTime: Date.now(),
+        expiryTime: Date.now() + (12 * 60 * 60 * 1000), // 12 hour expiry
+      };
+      
       // Set fresh session data
       localStorage.setItem('wybeAdminLoggedIn', 'true');
-      sessionStorage.setItem('wybeAdminSession', Date.now().toString());
+      sessionStorage.setItem('wybeAdminSession', JSON.stringify(sessionData));
       
       console.log("Session data set:", {
         isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),

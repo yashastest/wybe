@@ -1,179 +1,99 @@
 
-import React, { useState, useEffect } from 'react';
-import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import React from 'react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { smartContractService } from "@/services/smartContractService";
-import { integrationService } from "@/services/integrationService";
 
-interface AnchorStatusCardProps {
-  isAdminPanel?: boolean;
-}
-
-const AnchorStatusCard: React.FC<AnchorStatusCardProps> = ({ isAdminPanel }) => {
-  const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
-  const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [isInstalling, setIsInstalling] = useState<boolean>(false);
+const AnchorStatusCard = () => {
+  const config = smartContractService.getContractConfig();
   
-  useEffect(() => {
-    checkAnchorStatus();
-  }, []);
-  
-  const checkAnchorStatus = () => {
-    // Get the anchor installation status from localStorage directly
-    const installed = localStorage.getItem('anchorInstalled') === 'true';
-    const version = localStorage.getItem('anchorVersion') || undefined;
-    
-    setIsAnchorInstalled(installed);
-    setAnchorVersion(version);
-  };
-  
-  const handleRefreshStatus = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      checkAnchorStatus();
-      setIsRefreshing(false);
-      toast.success("Anchor status refreshed");
-    }, 1000);
-  };
-  
-  const toggleMockAnchorStatus = () => {
-    const newStatus = !isAnchorInstalled;
-    const version = newStatus ? 'v0.29.0' : undefined;
-    integrationService.setMockAnchorStatus(newStatus, version);
-    
-    checkAnchorStatus();
-    toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in ${newStatus ? 'real' : 'simulation'} mode`);
-  };
-  
-  const handleInstallAnchorCLI = async () => {
-    setIsInstalling(true);
-    toast.info("Installing Anchor CLI...");
-    
-    try {
-      // Simulate installation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update mock status
-      integrationService.setMockAnchorStatus(true, 'v0.29.0');
-      
-      checkAnchorStatus();
-      toast.success("Anchor CLI installed successfully");
-    } catch (error) {
-      console.error("Installation error:", error);
-      toast.error("Failed to install Anchor CLI");
-    } finally {
-      setIsInstalling(false);
-    }
-  };
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-5 border-wybe-primary/20"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold font-poppins flex items-center">
-          <Terminal className="mr-2 text-orange-500" size={20} />
-          Anchor CLI Status
+    <Card className="glass-card border-wybe-primary/20">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <h3 className="text-lg font-semibold font-poppins">
+          Anchor Development Environment
         </h3>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleMockAnchorStatus} 
-            className="h-8 px-2"
-          >
-            {isAnchorInstalled ? (
-              <ToggleRight size={14} className="mr-1 text-green-500" />
-            ) : (
-              <ToggleLeft size={14} className="mr-1" />
-            )}
-            {isAnchorInstalled ? "Disable" : "Enable"}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefreshStatus} 
-            disabled={isRefreshing}
-            className="h-8 px-2"
-          >
-            <RefreshCcw size={14} className={`mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-      
-      <div className="space-y-3">
-        {isAnchorInstalled ? (
-          <Alert variant="default" className="bg-green-500/10 border-green-500/30">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <AlertTitle className="font-poppins">Anchor Detected</AlertTitle>
-            <AlertDescription>
-              Anchor CLI version {anchorVersion || "unknown"} is installed on this system.
-              Smart contract deployment will use real Anchor builds.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
-            <XCircle className="h-5 w-5 text-red-500" />
-            <AlertTitle className="font-poppins">Anchor Not Detected</AlertTitle>
-            <AlertDescription>
-              Anchor CLI is not installed or not in your PATH. Smart contract deployment will use simulation mode.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {!isAnchorInstalled && (
-          <Alert variant="default" className="bg-amber-500/10 border-amber-500/30">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            <AlertTitle className="font-poppins">Installation Instructions</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>To enable real smart contract deployment, please install Anchor CLI:</p>
-              <div className="bg-black/50 p-3 rounded font-mono text-sm mb-2 overflow-x-auto">
-                <code>npm install -g @project-serum/anchor-cli</code>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+              <div className="p-1.5 rounded-full bg-white/10">
+                {config.anchorInstalled ? (
+                  <CheckCircle2 size={18} className="text-green-500" />
+                ) : (
+                  <XCircle size={18} className="text-red-500" />
+                )}
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button 
-                  className="flex items-center gap-2" 
-                  size="sm" 
-                  variant="orange"
-                  onClick={handleInstallAnchorCLI}
-                  disabled={isInstalling}
-                >
-                  {isInstalling ? (
-                    <RefreshCcw size={14} className="animate-spin" />
-                  ) : (
-                    <Download size={14} />
-                  )}
-                  {isInstalling ? "Installing..." : "Install Now"}
-                </Button>
-                <Button className="flex items-center gap-2" size="sm" variant="outline" asChild>
-                  <a href="https://www.anchor-lang.com/docs/installation" target="_blank" rel="noreferrer">
-                    <ExternalLink size={14} className="mr-1" />
-                    Installation Guide
-                  </a>
-                </Button>
+              <div>
+                <p className="text-sm font-medium">Anchor CLI</p>
+                <p className="text-xs text-gray-400">
+                  {config.anchorInstalled 
+                    ? `Version ${config.anchorVersion} installed` 
+                    : "Not detected"}
+                </p>
               </div>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="pt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Smart Contract Mode:</span>
-            <Badge variant={isAnchorInstalled ? "default" : "outline"} className={isAnchorInstalled ? "bg-green-500/80" : "border-amber-500 text-amber-500"}>
-              {isAnchorInstalled ? "Real Deployment" : "Simulation"}
-            </Badge>
+            </div>
+            
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+              <div className="p-1.5 rounded-full bg-white/10">
+                <CheckCircle2 size={18} className="text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Solana CLI</p>
+                <p className="text-xs text-gray-400">
+                  Version {config.solanaVersion} installed
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+              <div className="p-1.5 rounded-full bg-white/10">
+                <CheckCircle2 size={18} className="text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Rust Compiler</p>
+                <p className="text-xs text-gray-400">
+                  Version {config.rustVersion} installed
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+              <div className="p-1.5 rounded-full bg-white/10">
+                <CheckCircle2 size={18} className="text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Node.js</p>
+                <p className="text-xs text-gray-400">
+                  Version 18.x installed
+                </p>
+              </div>
+            </div>
           </div>
+          
+          {!config.anchorInstalled && (
+            <div className="mt-4 p-3 rounded-lg bg-amber-500/10 text-sm">
+              <p className="font-medium text-amber-400 mb-1">Installation Required</p>
+              <p className="text-gray-300 mb-2">
+                You need to install Anchor CLI to build and deploy contracts. Use the following command:
+              </p>
+              <div className="bg-black/30 p-2 rounded font-mono text-xs mb-2">
+                cargo install --git https://github.com/coral-xyz/anchor avm --locked
+              </div>
+              <a 
+                href="https://www.anchor-lang.com/docs/installation" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-blue-400 hover:underline text-xs"
+              >
+                View installation guide <ExternalLink size={12} />
+              </a>
+            </div>
+          )}
         </div>
-      </div>
-    </motion.div>
+      </CardContent>
+    </Card>
   );
 };
 
