@@ -27,9 +27,10 @@ import { DeploymentStepper } from "@/components/admin/DeploymentStepper";
 import { DeploymentConsole } from "@/components/admin/DeploymentConsole";
 import { DeploymentTests } from "@/components/admin/DeploymentTests";
 import { DeploymentStatus } from "@/components/admin/DeploymentStatus";
-import { integrationService, DeploymentStep } from "@/services/integrationService";
+import { integrationService } from "@/services/integrationService";
 import { smartContractService } from "@/services/smartContractService";
 
+// Define our local version of DeploymentStep
 export interface DeploymentStep {
   id: string;
   title: string;
@@ -46,7 +47,11 @@ export interface DeploymentStep {
   }[];
 }
 
-const MasterDeploymentGuide = () => {
+interface MasterDeploymentGuideProps {
+  isAdminPanel?: boolean;
+}
+
+const MasterDeploymentGuide: React.FC<MasterDeploymentGuideProps> = ({ isAdminPanel }) => {
   const [activePhase, setActivePhase] = useState<string>('prepare');
   const [deploymentProgress, setDeploymentProgress] = useState<number>(0);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
@@ -157,7 +162,7 @@ const MasterDeploymentGuide = () => {
       const result = await simulateStepExecution(step);
       
       // Update step with result
-      const finalUpdatedSteps = [...updatedSteps];
+      const finalUpdatedSteps = [...updatedSteps] as DeploymentStep[];
       finalUpdatedSteps[stepIndex] = {
         ...finalUpdatedSteps[stepIndex],
         status: result.success ? 'completed' : 'failed',

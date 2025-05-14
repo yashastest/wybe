@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,7 @@ import {
   ArrowUpDown,
   Coins
 } from "lucide-react";
-import { integrationService, TreasuryWallet as ServiceTreasuryWallet } from "@/services/integrationService";
+import { integrationService, TreasuryWallet } from "@/services/integrationService";
 import { useWallet } from '@/hooks/useWallet';
 
 // Treasury wallet types that matches the component's requirements
@@ -94,14 +93,7 @@ const TreasuryWalletManager = () => {
     try {
       // In a real app, this would be an API call
       const treasuryWallets = await integrationService.getTreasuryWallets();
-      
-      // Convert service wallet format to component format, ensuring isMultisig is always defined
-      const formattedWallets: TreasuryWallet[] = treasuryWallets.map(wallet => ({
-        ...wallet,
-        isMultisig: wallet.isMultisig || false,  // Default to false if undefined
-      }));
-      
-      setWallets(formattedWallets);
+      setWallets(treasuryWallets);
     } catch (error) {
       console.error("Failed to load treasury wallets:", error);
       toast.error("Failed to load treasury wallets");
@@ -161,16 +153,18 @@ const TreasuryWalletManager = () => {
     setLoading(true);
     
     try {
-      // Create wallet with the component's required structure
-      const walletToAdd = {
+      // Create wallet with the correct structure
+      const walletToAdd: Omit<TreasuryWallet, 'id'> = {
         name: newWallet.name,
         address: newWallet.address,
+        walletAddress: newWallet.address, // Map to both fields
         balance: 0,
         isMultisig: newWallet.isMultisig,
         signers: newWallet.isMultisig ? newWallet.signers : undefined,
         threshold: newWallet.isMultisig ? newWallet.threshold : undefined,
         network: 'mainnet', // Default network
-        isPrimary: false // Default not primary
+        isPrimary: false, // Default not primary
+        type: 'treasury', // Default type
       };
       
       // In a real app, this would be an API call
