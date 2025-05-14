@@ -51,12 +51,21 @@ class IntegrationService {
       // 3. Update contract config
       smartContractService.updateContractConfig({
         creatorFeePercentage: deploymentConfig.creatorFeePercentage,
-        platformFeePercentage: deploymentConfig.platformFeePercentage
+        platformFeePercentage: deploymentConfig.platformFeePercentage,
+        networkType: deploymentConfig.networkType
       });
       
       // 4. Log deployment (in real app, this would trigger actual deployment processes)
       console.log("Deploying environment with config:", deploymentConfig);
       console.log("Deploying for wallet:", walletAddress);
+      
+      // Check if Anchor is installed before proceeding
+      const contractConfig = smartContractService.getContractConfig();
+      if (!contractConfig.anchorInstalled) {
+        toast.warning("Anchor CLI not detected. Smart contracts will be simulated.");
+      } else {
+        toast.info(`Using Anchor ${contractConfig.anchorVersion} for real contract deployment`);
+      }
       
       // Simulate deployment process
       toast.info("Starting deployment process...");
@@ -97,15 +106,30 @@ class IntegrationService {
     symbol: string,
     initialSupply: number,
     creatorAddress: string
-  ): Promise<{ success: boolean; message: string; contractAddress?: string }> {
+  ): Promise<{ success: boolean; message: string; contractAddress?: string; programId?: string }> {
     try {
-      // 1. Deploy the token via smart contract service
-      const contractResult = await smartContractService.deployTokenContract(
-        name,
-        symbol,
-        initialSupply,
-        creatorAddress
-      );
+      // Check if Anchor is installed
+      const contractConfig = smartContractService.getContractConfig();
+      let contractResult;
+      
+      if (contractConfig.anchorInstalled) {
+        // 1. Deploy the token via real smart contract service
+        contractResult = await smartContractService.deployTokenContract(
+          name,
+          symbol,
+          initialSupply,
+          creatorAddress
+        );
+      } else {
+        // Fallback to simulation if Anchor is not installed
+        toast.warning("Anchor not detected. Using simulation mode.");
+        contractResult = await smartContractService.simulateTokenDeployment(
+          name,
+          symbol,
+          initialSupply,
+          creatorAddress
+        );
+      }
       
       if (!contractResult.success) {
         return contractResult;
@@ -122,7 +146,8 @@ class IntegrationService {
       return {
         success: true,
         message: `${name} (${symbol}) deployed successfully!`,
-        contractAddress: tradingResult.contractAddress || contractResult.txHash
+        contractAddress: tradingResult.contractAddress || contractResult.txHash,
+        programId: contractResult.programId
       };
     } catch (error) {
       console.error("Error deploying token:", error);
@@ -145,6 +170,22 @@ class IntegrationService {
    */
   public getDeploymentDocsUrl(): string {
     return "https://docs.wybe.finance/deployment-guide";
+  }
+  
+  /**
+   * Check if Anchor CLI is installed
+   */
+  public isAnchorInstalled(): boolean {
+    const contractConfig = smartContractService.getContractConfig();
+    return contractConfig.anchorInstalled;
+  }
+  
+  /**
+   * Get Anchor version if installed
+   */
+  public getAnchorVersion(): string | undefined {
+    const contractConfig = smartContractService.getContractConfig();
+    return contractConfig.anchorVersion;
   }
 }
 
