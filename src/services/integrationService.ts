@@ -262,7 +262,7 @@ class IntegrationService {
           marketCap: 500000,
           holders: 120,
           creator: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          programId: 'Wyb1111111111111111111111111111111111111111111',
+          programId: 'Wyb11111111111111111111111111111111111111111111',
           lastClaimDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
           nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 days ago (eligible to claim)
         },
@@ -466,9 +466,13 @@ class IntegrationService {
   
   // Record a new transaction
   public recordTransaction(tx: Omit<TransactionHistory, 'id'>): TransactionHistory {
+    // Generate a unique ID for the transaction
+    const newId = `tx_${Date.now()}_${Math.random().toString(16).substring(2, 8)}`;
+    
+    // Create the new transaction object with the generated ID
     const newTx: TransactionHistory = {
-      id: `tx_${Date.now()}_${Math.random().toString(16).substring(2, 8)}`,
-      ...tx
+      ...tx, // Spread the transaction properties
+      id: newId // Add the generated ID
     };
     
     const history = this.getTransactionHistory();
