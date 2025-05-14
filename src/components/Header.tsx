@@ -59,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 glass-nav ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 bg-black ${
         scrolled ? 'py-2 shadow-lg' : 'py-3'
       }`}
     >
@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                   <Menu className="h-6 w-6" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-black/95 border border-white/10 mr-4">
+              <DropdownMenuContent className="bg-black border border-white/10 mr-4">
                 {linksToDisplay.map((link) => (
                   <DropdownMenuItem key={link.to} asChild>
                     <Link

@@ -90,6 +90,15 @@
     scrollbar-width: none;
   }
   
+  /* Active navigation link styles */
+  .active-nav-link {
+    @apply text-wybe-primary font-medium relative;
+  }
+  .active-nav-link::after {
+    content: '';
+    @apply absolute bottom-[-5px] left-0 w-full h-[2px] bg-wybe-primary rounded-full;
+  }
+  
   /* Text size adjustments for better mobile readability */
   .mobile-text-xs {
     @apply text-xs sm:text-sm;
