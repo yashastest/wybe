@@ -1,7 +1,9 @@
+
 // Integration service file to connect frontend with smart contracts
 
 // Import any required dependencies
 import { toast } from "sonner";
+import { setMockAnchorStatus as setMockAnchor } from "@/scripts/anchorBuild";
 
 // Type definitions for treasury wallets
 export interface TreasuryWallet {
@@ -53,12 +55,24 @@ export interface DeployedContract {
   status: 'active' | 'inactive' | 'deprecated';
 }
 
+// Admin user access control interface
+export interface AdminUserAccess {
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  permissions: string[];
+  walletAddress?: string;
+  twoFactorEnabled?: boolean;
+}
+
 class IntegrationService {
   // Store treasury wallets
   private treasuryWallets: TreasuryWallet[] = [];
   
   // Store transaction history
   private transactionHistory: TransactionHistory[] = [];
+  
+  // Admin users list
+  private adminUsers: AdminUserAccess[] = [];
   
   // Deployment checklist
   private deploymentChecklist: { id: string; label: string; checked: boolean }[] = [];
@@ -139,6 +153,24 @@ class IntegrationService {
         }
       ];
       localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+    }
+    
+    // Check for admin users
+    const storedAdminUsers = localStorage.getItem('adminUsers');
+    if (storedAdminUsers) {
+      this.adminUsers = JSON.parse(storedAdminUsers);
+    } else {
+      // Initialize with a default admin user
+      this.adminUsers = [
+        {
+          email: 'admin@wybe.io',
+          role: 'superadmin',
+          permissions: ['all'],
+          walletAddress: '',
+          twoFactorEnabled: false
+        }
+      ];
+      localStorage.setItem('adminUsers', JSON.stringify(this.adminUsers));
     }
     
     // Initialize checklist if not already done
@@ -229,6 +261,12 @@ class IntegrationService {
         }
       }, 600);
     });
+  }
+  
+  // Set mock Anchor status for testing
+  public setMockAnchorStatus(installed: boolean, version: string = '0.26.0'): void {
+    // Use the function from the script
+    setMockAnchor(installed, version);
   }
   
   // Transfer between treasury wallets
@@ -329,6 +367,78 @@ class IntegrationService {
     
     // Save to localStorage
     localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+  }
+  
+  // Get admin users
+  public getAdminUsers(requesterWalletAddress: string): AdminUserAccess[] {
+    // In a real implementation, you would validate if the requester has permission
+    // For demo purposes, just return the list
+    return this.adminUsers;
+  }
+  
+  // Add a new admin user
+  public addAdminUser(user: AdminUserAccess, requesterWalletAddress: string): boolean {
+    // Check if user already exists
+    const existingUserIndex = this.adminUsers.findIndex(u => u.email === user.email);
+    if (existingUserIndex >= 0) {
+      return false;
+    }
+    
+    // In a real implementation, validate requester permissions
+    
+    // Add the new user
+    this.adminUsers.push(user);
+    
+    // Save to localStorage
+    localStorage.setItem('adminUsers', JSON.stringify(this.adminUsers));
+    
+    return true;
+  }
+  
+  // Update admin user permissions
+  public updateAdminUserPermissions(
+    email: string,
+    role: AdminUserAccess['role'],
+    permissions: string[],
+    requesterWalletAddress: string
+  ): boolean {
+    // Find user
+    const userIndex = this.adminUsers.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    // In a real implementation, validate requester permissions
+    
+    // Update user
+    this.adminUsers[userIndex].role = role;
+    this.adminUsers[userIndex].permissions = permissions;
+    
+    // Save to localStorage
+    localStorage.setItem('adminUsers', JSON.stringify(this.adminUsers));
+    
+    return true;
+  }
+  
+  // Remove an admin user
+  public removeAdminUser(email: string, requesterWalletAddress: string): boolean {
+    // Find user
+    const userIndex = this.adminUsers.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    // In a real implementation, validate requester permissions
+    
+    // Remove user
+    this.adminUsers.splice(userIndex, 1);
+    
+    // Save to localStorage
+    localStorage.setItem('adminUsers', JSON.stringify(this.adminUsers));
+    
+    return true;
   }
   
   // Execute a trade with fee collection
