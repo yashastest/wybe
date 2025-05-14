@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
@@ -8,7 +9,11 @@ import { toast } from "sonner";
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
 
-const AnchorStatusCard = () => {
+interface AnchorStatusCardProps {
+  isAdminPanel?: boolean;
+}
+
+const AnchorStatusCard: React.FC<AnchorStatusCardProps> = ({ isAdminPanel }) => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
   const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -19,9 +24,12 @@ const AnchorStatusCard = () => {
   }, []);
   
   const checkAnchorStatus = () => {
-    const config = smartContractService.getContractConfig();
-    setIsAnchorInstalled(config.anchorInstalled || false);
-    setAnchorVersion(config.anchorVersion);
+    // Get the anchor installation status from localStorage directly
+    const installed = localStorage.getItem('anchorInstalled') === 'true';
+    const version = localStorage.getItem('anchorVersion') || undefined;
+    
+    setIsAnchorInstalled(installed);
+    setAnchorVersion(version);
   };
   
   const handleRefreshStatus = () => {
@@ -38,12 +46,6 @@ const AnchorStatusCard = () => {
     const version = newStatus ? 'v0.29.0' : undefined;
     integrationService.setMockAnchorStatus(newStatus, version);
     
-    // Update smart contract service configuration
-    smartContractService.updateContractConfig({
-      anchorInstalled: newStatus,
-      anchorVersion: version
-    });
-    
     checkAnchorStatus();
     toast.success(`Anchor CLI ${newStatus ? 'enabled' : 'disabled'} in ${newStatus ? 'real' : 'simulation'} mode`);
   };
@@ -53,14 +55,11 @@ const AnchorStatusCard = () => {
     toast.info("Installing Anchor CLI...");
     
     try {
-      // Use the smart contract service to install Anchor
-      await smartContractService.installAnchorCLI();
+      // Simulate installation
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update smart contract service configuration
-      smartContractService.updateContractConfig({
-        anchorInstalled: true,
-        anchorVersion: 'v0.29.0'
-      });
+      // Update mock status
+      integrationService.setMockAnchorStatus(true, 'v0.29.0');
       
       checkAnchorStatus();
       toast.success("Anchor CLI installed successfully");

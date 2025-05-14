@@ -46,6 +46,7 @@ export default function DeploymentEnvironment() {
     // TODO: Load deployment environments from service when implemented
     const mockEnvironments: DeploymentEnvironmentType[] = [
       {
+        id: 'env_1',
         name: 'Wybe Token Production',
         url: 'https://mainnet.wybe.io/wybe-token',
         programIds: [
@@ -57,6 +58,7 @@ export default function DeploymentEnvironment() {
         status: 'active'
       },
       {
+        id: 'env_2',
         name: 'Wybe DEX Staging',
         url: 'https://testnet.wybe.io/wybe-dex',
         programIds: [
@@ -67,6 +69,7 @@ export default function DeploymentEnvironment() {
         status: 'active'
       },
       {
+        id: 'env_3',
         name: 'Legacy Token',
         url: 'https://mainnet.wybe.io/legacy-token',
         programIds: [
@@ -224,7 +227,7 @@ export default function DeploymentEnvironment() {
                           className={
                             env.status === 'active' 
                               ? 'bg-green-600' 
-                              : env.status === 'inactive' 
+                              : env.status === 'pending' 
                                 ? 'bg-amber-600/50' 
                                 : 'bg-red-600/50'
                           }

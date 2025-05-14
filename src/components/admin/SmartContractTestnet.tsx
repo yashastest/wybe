@@ -33,16 +33,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
-
-interface TestnetContract {
-  id: string;
-  name: string;
-  programId: string;
-  network: "testnet" | "devnet" | "localnet" | "mainnet";
-  deployDate: string;
-  txHash: string;
-  status: "active" | "inactive" | "pending" | "failed";
-}
+import type { TestnetContract } from "@/services/integrationService";
 
 const SmartContractTestnet = () => {
   const navigate = useNavigate();
@@ -73,7 +64,7 @@ const SmartContractTestnet = () => {
   
   const loadTestnetContracts = () => {
     const contracts = integrationService.getTestnetContracts();
-    setTestnetContracts(contracts);
+    setTestnetContracts([...contracts]); // Create a new array to ensure state update
   };
   
   const copyToClipboard = (text: string, type: string) => {
@@ -106,8 +97,8 @@ const SmartContractTestnet = () => {
     }
   };
   
-  const handleStatusChange = (contractId: string, status: "active" | "inactive" | "pending" | "failed") => {
-    integrationService.updateTestnetContract(contractId, { status: status });
+  const handleStatusChange = (contractId: string, status: TestnetContract['status']) => {
+    integrationService.updateTestnetContract(contractId, { status });
     loadTestnetContracts();
     toast.success(`Contract status updated to ${status}`);
   };
@@ -122,18 +113,22 @@ const SmartContractTestnet = () => {
       return;
     }
     
-    integrationService.addTestnetContract(newContract);
-    loadTestnetContracts();
-    setIsAddingNew(false);
-    setNewContract({
-      name: "",
-      programId: "",
-      network: "testnet",
-      deployDate: new Date().toISOString().split('T')[0],
-      txHash: "",
-      status: "pending"
-    });
-    toast.success("Contract added successfully");
+    const success = integrationService.addTestnetContract(newContract);
+    if (success) {
+      loadTestnetContracts();
+      setIsAddingNew(false);
+      setNewContract({
+        name: "",
+        programId: "",
+        network: "testnet",
+        deployDate: new Date().toISOString().split('T')[0],
+        txHash: "",
+        status: "pending"
+      });
+      toast.success("Contract added successfully");
+    } else {
+      toast.error("Failed to add contract");
+    }
   };
   
   const handleCancelNewContract = () => {
@@ -157,13 +152,20 @@ const SmartContractTestnet = () => {
   };
   
   const handleSaveEditedContract = () => {
-    if (!editedContract) return;
+    if (!editedContract || !editingContractId) return;
     
-    integrationService.updateTestnetContract(editingContractId || "", editedContract);
-    loadTestnetContracts();
-    setEditingContractId(null);
-    setEditedContract(null);
-    toast.success("Contract updated successfully");
+    // Make a copy to avoid type issues
+    const updatedContract = { ...editedContract };
+    
+    const success = integrationService.updateTestnetContract(editingContractId, updatedContract);
+    if (success) {
+      loadTestnetContracts();
+      setEditingContractId(null);
+      setEditedContract(null);
+      toast.success("Contract updated successfully");
+    } else {
+      toast.error("Failed to update contract");
+    }
   };
   
   const handleCancelEditContract = () => {
@@ -181,9 +183,13 @@ const SmartContractTestnet = () => {
     setIsDeleting(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      integrationService.deleteTestnetContract(isDeletingContractId);
-      loadTestnetContracts();
-      toast.success("Contract deleted successfully");
+      const success = integrationService.deleteTestnetContract(isDeletingContractId);
+      if (success) {
+        loadTestnetContracts();
+        toast.success("Contract deleted successfully");
+      } else {
+        toast.error("Failed to delete contract");
+      }
     } catch (error) {
       toast.error("Failed to delete contract");
     } finally {
@@ -244,17 +250,21 @@ const SmartContractTestnet = () => {
       
       // Validate each contract
       for (const contract of importedContracts) {
-        if (!contract.name || !contract.programId || !contract.network || !contract.deployDate || !contract.txHash || !contract.status) {
+        if (!contract.name || !contract.programId || !contract.network || !contract.deployDate) {
           throw new Error("Invalid contract format");
         }
       }
       
       // Import contracts
-      integrationService.importTestnetContracts(importedContracts);
-      loadTestnetContracts();
-      setIsImporting(false);
-      setImportData('');
-      toast.success("Contracts imported successfully");
+      const success = integrationService.importTestnetContracts(importedContracts);
+      if (success) {
+        loadTestnetContracts();
+        setIsImporting(false);
+        setImportData('');
+        toast.success("Contracts imported successfully");
+      } else {
+        toast.error("Failed to import contracts");
+      }
     } catch (error: any) {
       toast.error(`Failed to import contracts: ${error.message}`);
     }

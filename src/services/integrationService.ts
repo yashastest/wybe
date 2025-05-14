@@ -1,3 +1,4 @@
+
 // Integration service file
 // This service handles integration with external services, APIs, and blockchain
 
@@ -12,13 +13,13 @@ export interface AdminUserAccess {
 
 // Define the TestnetContract interface for SmartContractTestnet
 export interface TestnetContract {
-  id?: string;
+  id: string;
   name: string;
   programId: string;
   network: string;
   deployDate: string;
   txHash?: string;
-  status: 'active' | 'pending' | 'failed';
+  status: 'active' | 'pending' | 'failed' | 'inactive';
   verificationStatus?: 'verified' | 'unverified';
   abi?: string;
 }
@@ -27,19 +28,22 @@ export interface TestnetContract {
 export interface DeploymentEnvironment {
   id: string;
   name: string;
+  url: string; // Added this property
+  programIds?: string[]; // Added this property
+  deploymentDate?: number; // Added this property
   network: string;
-  status: 'active' | 'pending' | 'down';
-  endpoints: {
+  status: 'active' | 'pending' | 'down' | 'deprecated'; // Added 'deprecated' status
+  endpoints?: {
     rpc: string;
     websocket?: string;
   };
-  contracts: string[];
+  contracts?: string[];
 }
 
 // Define the DeploymentChecklistItem for DeploymentEnvironment component
 export interface DeploymentChecklistItem {
   id: string;
-  title: string;
+  title: string; // This should map to 'label' in the component
   description: string;
   checked: boolean;
   required: boolean;
@@ -446,72 +450,71 @@ export const integrationService = {
   },
 
   // Add deployment checklist methods for DeploymentEnvironment component
-  getDeploymentChecklist: (): DeploymentChecklistItem[] => {
+  getDeploymentChecklist: (): { id: string; label: string; checked: boolean; }[] => {
     const storedChecklist = localStorage.getItem('deploymentChecklist');
     if (storedChecklist) {
-      return JSON.parse(storedChecklist);
+      const parsedChecklist: DeploymentChecklistItem[] = JSON.parse(storedChecklist);
+      // Map DeploymentChecklistItem to the format expected by the component
+      return parsedChecklist.map(item => ({
+        id: item.id,
+        label: item.title, // Map title to label
+        checked: item.checked
+      }));
     }
     
     // Return default checklist if none found
-    const defaultChecklist: DeploymentChecklistItem[] = [
+    const defaultChecklist = [
       {
         id: 'contract',
-        title: 'Smart Contract',
-        description: 'Create and build your smart contract',
-        checked: false,
-        required: true
+        label: 'Smart Contract',
+        checked: false
       },
       {
         id: 'security',
-        title: 'Security Audit',
-        description: 'Perform security audit on your smart contract',
-        checked: false,
-        required: true,
-        prerequisite: ['contract']
+        label: 'Security Audit',
+        checked: false
       },
       {
         id: 'test',
-        title: 'Testnet Deployment',
-        description: 'Deploy your contract to testnet',
-        checked: false,
-        required: true,
-        prerequisite: ['security']
+        label: 'Testnet Deployment',
+        checked: false
       },
       {
         id: 'verify',
-        title: 'Contract Verification',
-        description: 'Verify your contract on explorer',
-        checked: false,
-        required: false,
-        prerequisite: ['test']
+        label: 'Contract Verification',
+        checked: false
       },
       {
         id: 'docs',
-        title: 'Documentation',
-        description: 'Create developer documentation',
-        checked: false,
-        required: false
+        label: 'Documentation',
+        checked: false
       }
     ];
     
-    localStorage.setItem('deploymentChecklist', JSON.stringify(defaultChecklist));
     return defaultChecklist;
   },
   
   updateChecklistItem: (id: string, checked: boolean): boolean => {
-    const checklist = integrationService.getDeploymentChecklist();
-    const itemIndex = checklist.findIndex(item => item.id === id);
+    const storedChecklist = localStorage.getItem('deploymentChecklist');
+    let checklist: DeploymentChecklistItem[] = [];
     
-    if (itemIndex === -1) {
-      return false;
+    if (storedChecklist) {
+      checklist = JSON.parse(storedChecklist);
+      const itemIndex = checklist.findIndex(item => item.id === id);
+      
+      if (itemIndex === -1) {
+        return false;
+      }
+      
+      checklist[itemIndex].checked = checked;
+      localStorage.setItem('deploymentChecklist', JSON.stringify(checklist));
+      return true;
     }
     
-    checklist[itemIndex].checked = checked;
-    localStorage.setItem('deploymentChecklist', JSON.stringify(checklist));
-    return true;
+    return false;
   },
   
-  deployFullEnvironment: async (environmentName: string, network: string): Promise<boolean> => {
+  deployFullEnvironment: async (environmentName: string, network: string): Promise<DeploymentEnvironment> => {
     console.log(`Deploying full environment: ${environmentName} on ${network}`);
     
     // Simulate deployment
@@ -520,8 +523,11 @@ export const integrationService = {
         const environment: DeploymentEnvironment = {
           id: `env_${Date.now()}`,
           name: environmentName,
+          url: `https://${network}.wybe.io/${environmentName.toLowerCase().replace(/\s+/g, '-')}`,
           network,
           status: 'active',
+          programIds: [`Wyb${environmentName.replace(/\s+/g, '')}${Date.now().toString().substring(7)}`],
+          deploymentDate: Date.now(),
           endpoints: {
             rpc: `https://rpc.${network}.solana.com`,
             websocket: `wss://ws.${network}.solana.com`
@@ -529,12 +535,7 @@ export const integrationService = {
           contracts: []
         };
         
-        // Store in local storage
-        const environments = JSON.parse(localStorage.getItem('deploymentEnvironments') || '[]');
-        environments.push(environment);
-        localStorage.setItem('deploymentEnvironments', JSON.stringify(environments));
-        
-        resolve(true);
+        resolve(environment);
       }, 3000);
     });
   },
@@ -591,16 +592,14 @@ export const integrationService = {
     return true;
   },
   
-  importTestnetContracts: (contractsData: string): boolean => {
+  importTestnetContracts: (contractsData: TestnetContract[]): boolean => {
     try {
-      const contracts = JSON.parse(contractsData);
-      
-      if (!Array.isArray(contracts)) {
+      if (!Array.isArray(contractsData)) {
         return false;
       }
       
       // Validate basic structure
-      const isValid = contracts.every(contract => 
+      const isValid = contractsData.every(contract => 
         contract.name && 
         contract.programId && 
         contract.network &&
@@ -611,11 +610,22 @@ export const integrationService = {
         return false;
       }
       
-      localStorage.setItem('deployedTestnetContracts', contractsData);
+      localStorage.setItem('deployedTestnetContracts', JSON.stringify(contractsData));
       return true;
     } catch (error) {
       console.error("Failed to import contracts:", error);
       return false;
+    }
+  },
+  
+  // Add this method for AnchorStatusCard component
+  setMockAnchorStatus: (installed: boolean, version?: string): void => {
+    console.log(`Setting mock Anchor status: ${installed ? 'installed' : 'not installed'}, version: ${version || 'none'}`);
+    localStorage.setItem('anchorInstalled', String(installed));
+    if (version) {
+      localStorage.setItem('anchorVersion', version);
+    } else {
+      localStorage.removeItem('anchorVersion');
     }
   }
 };
