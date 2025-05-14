@@ -1,30 +1,14 @@
+// Integration service file to connect frontend with smart contracts
 
-import { setMockAnchorStatus } from "@/scripts/anchorBuild";
+// Import any required dependencies
+import { toast } from "sonner";
 
-// Types for admin user access
-export type AdminUserAccess = {
-  id?: string;
-  email: string;
-  name?: string;
-  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
-  accessLevel?: 'admin' | 'manager' | 'viewer';
-  permissions: string[];
-  lastLogin?: string;
-  isActive?: boolean;
-  walletAddress?: string;
-  twoFactorEnabled?: boolean;
-};
-
-// Types for treasury wallets
+// Type definitions for treasury wallets
 export interface TreasuryWallet {
   id: string;
   name: string;
   address: string;
   balance: number;
-  network?: string;
-  purpose?: string;
-  isActive?: boolean;
-  createdAt?: string;
   isMultisig?: boolean;
   signers?: string[];
   threshold?: number;
@@ -34,15 +18,8 @@ export interface TreasuryWallet {
   }[];
 }
 
-// Interface for deployment checklist items
-interface ChecklistItem {
-  id: string;
-  label: string;
-  checked: boolean;
-}
-
-// Interface for environment deployment options
-interface DeploymentOptions {
+// Interface for environment deployment
+export interface EnvironmentDeployment {
   networkType: 'mainnet' | 'testnet' | 'devnet';
   frontendUrl?: string;
   backendUrl?: string;
@@ -50,333 +27,455 @@ interface DeploymentOptions {
   platformFeePercentage?: number;
 }
 
+// Transaction history interface
+export interface TransactionHistory {
+  id: string;
+  type: 'trade' | 'mint' | 'claim' | 'transfer';
+  from: string;
+  to: string;
+  amount: number;
+  tokenSymbol?: string;
+  feeAmount?: number;
+  treasuryAmount?: number;
+  timestamp: number;
+  hash: string;
+  status: 'confirmed' | 'pending' | 'failed';
+  errorMessage?: string;
+}
+
+// Smart contract deployment record
+export interface DeployedContract {
+  name: string;
+  programId: string;
+  network: 'mainnet' | 'testnet' | 'devnet';
+  deployDate: string;
+  txHash: string;
+  status: 'active' | 'inactive' | 'deprecated';
+}
+
 class IntegrationService {
-  // Method to set mock Anchor status
-  public setMockAnchorStatus(installed: boolean, version?: string): void {
-    setMockAnchorStatus(installed, version);
-  }
-
-  // Method to get deployment checklist
-  public getDeploymentChecklist(): ChecklistItem[] {
-    try {
-      const checklistString = localStorage.getItem('deploymentChecklist');
-      return checklistString ? JSON.parse(checklistString) : [];
-    } catch (error) {
-      console.error('Error getting checklist:', error);
-      return [];
-    }
-  }
-
-  // Method to update a checklist item
-  public updateChecklistItem(itemId: string, checked: boolean): void {
-    try {
-      const checklistString = localStorage.getItem('deploymentChecklist');
-      const checklist = checklistString ? JSON.parse(checklistString) : [];
-      
-      const updatedChecklist = checklist.map((item: any) => 
-        item.id === itemId ? { ...item, checked } : item
-      );
-      
-      localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
-    } catch (error) {
-      console.error('Error updating checklist item:', error);
-    }
-  }
-
-  // Deploy full environment with options
-  public deployFullEnvironment(options: DeploymentOptions, walletAddress: string): Promise<{ success: boolean; message: string }> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Store the deployment information
-        localStorage.setItem('deploymentOptions', JSON.stringify(options));
-        localStorage.setItem('deploymentWallet', walletAddress);
-        localStorage.setItem('environmentDeployed', 'true');
-        
-        resolve({ 
-          success: true, 
-          message: "Environment deployed successfully" 
-        });
-      }, 2000);
-    });
-  }
-
-  // Methods for admin user management
-  public getAdminUsers(walletAddress?: string): AdminUserAccess[] {
-    try {
-      const savedUsers = localStorage.getItem('adminUsers');
-      const users = savedUsers ? JSON.parse(savedUsers) : [
-        {
-          id: '1',
-          email: 'admin@wybe.finance',
-          name: 'Admin User',
-          role: 'superadmin',
-          permissions: ['all'],
-          lastLogin: new Date().toISOString(),
-          isActive: true,
-          walletAddress: walletAddress || ''
-        },
-        {
-          id: '2',
-          email: 'manager@wybe.finance',
-          name: 'Manager User',
-          role: 'manager',
-          permissions: ['analytics_view', 'token_creation'],
-          lastLogin: new Date().toISOString(),
-          isActive: true
-        }
-      ];
-      
-      return users;
-    } catch (error) {
-      console.error("Error getting admin users:", error);
-      return [];
-    }
+  // Store treasury wallets
+  private treasuryWallets: TreasuryWallet[] = [];
+  
+  // Store transaction history
+  private transactionHistory: TransactionHistory[] = [];
+  
+  // Deployment checklist
+  private deploymentChecklist: { id: string; label: string; checked: boolean }[] = [];
+  
+  constructor() {
+    // Initialize with demo data if none exists
+    this.initializeDefaultData();
   }
   
-  public addAdminUser(user: AdminUserAccess, walletAddress?: string): boolean {
-    try {
-      // Get existing users
-      const users = this.getAdminUsers();
-      
-      // Check if user with this email already exists
-      if (users.some(u => u.email === user.email)) {
-        return false;
-      }
-      
-      // Create new user with ID
-      const newUser = {
-        ...user,
-        id: `user_${Date.now()}`,
-        lastLogin: new Date().toISOString(),
-        isActive: true,
-      };
-      
-      // Add to storage
-      const updatedUsers = [...users, newUser];
-      localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
-      
-      return true;
-    } catch (error) {
-      console.error("Error adding admin user:", error);
-      return false;
-    }
-  }
-  
-  public updateAdminUserPermissions(
-    email: string, 
-    role: string,
-    permissions: string[],
-    walletAddress?: string
-  ): boolean {
-    try {
-      // Get existing users
-      const users = this.getAdminUsers();
-      
-      // Find and update user
-      const userIndex = users.findIndex(u => u.email === email);
-      
-      if (userIndex === -1) {
-        return false;
-      }
-      
-      // Update user properties
-      users[userIndex].role = role as AdminUserAccess['role'];
-      users[userIndex].permissions = permissions;
-      
-      // Save updated users
-      localStorage.setItem('adminUsers', JSON.stringify(users));
-      
-      return true;
-    } catch (error) {
-      console.error("Error updating admin user:", error);
-      return false;
-    }
-  }
-  
-  public removeAdminUser(email: string, walletAddress?: string): boolean {
-    try {
-      // Get existing users
-      const users = this.getAdminUsers();
-      
-      // Check if removing the last superadmin
-      if (users.length <= 1) {
-        return false;
-      }
-      
-      // Filter out the user
-      const updatedUsers = users.filter(u => u.email !== email);
-      
-      // Save updated users
-      localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
-      
-      return true;
-    } catch (error) {
-      console.error("Error removing admin user:", error);
-      return false;
-    }
-  }
-
-  // Methods for treasury wallet management
-  public getTreasuryWallets(walletAddress?: string): TreasuryWallet[] {
-    try {
-      const savedWallets = localStorage.getItem('treasuryWallets');
-      const wallets = savedWallets ? JSON.parse(savedWallets) : [
+  private initializeDefaultData(): void {
+    // Check local storage for existing data
+    const storedWallets = localStorage.getItem('treasuryWallets');
+    if (storedWallets) {
+      this.treasuryWallets = JSON.parse(storedWallets);
+    } else {
+      // Add default treasury wallet
+      this.treasuryWallets = [
         {
-          id: '1',
+          id: 'treasury-main',
           name: 'Main Treasury',
           address: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          balance: 145.75,
-          network: 'mainnet',
-          purpose: 'Platform fees',
-          isActive: true,
-          createdAt: new Date().toISOString(),
+          balance: 35.75,
           isMultisig: true,
           signers: [
             '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-            '6Ks2e5vLt8bj9X3sBnMuKVnGWFxh5SbZuKeRYzKVtEGk'
+            '5xK5SG6UhgXwbsf2Vc9WyBMmRDh79JRzCPyomzPbJwN9',
+            'EWyMp9Sdq3Wza1vKuCqpKTbEVpzrr6FY3xEJcVNKHpnM'
           ],
           threshold: 2,
           tokenBalance: [
-            { symbol: 'USDC', amount: 12500 },
-            { symbol: 'WYBE', amount: 25000 }
+            { symbol: 'WYBE', amount: 100000 },
+            { symbol: 'USDC', amount: 5000 }
           ]
         },
         {
-          id: '2',
-          name: 'Development Fund',
-          address: 'Devh8H4L3sGjFNuaEDrH3JE6Uuy9ZdnHUEW9Pgjh4NM',
-          balance: 58.42,
-          network: 'mainnet',
-          purpose: 'Development expenses',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          isMultisig: false,
-          tokenBalance: [
-            { symbol: 'USDC', amount: 4200 }
-          ]
+          id: 'treasury-ops',
+          name: 'Operations Wallet',
+          address: '5xK5SG6UhgXwbsf2Vc9WyBMmRDh79JRzCPyomzPbJwN9',
+          balance: 8.92,
+          isMultisig: false
         }
       ];
-      
-      return wallets;
-    } catch (error) {
-      console.error("Error getting treasury wallets:", error);
-      return [];
+      localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+    }
+    
+    // Check for transaction history
+    const storedHistory = localStorage.getItem('transactionHistory');
+    if (storedHistory) {
+      this.transactionHistory = JSON.parse(storedHistory);
+    } else {
+      // Add some sample transactions
+      const now = Date.now();
+      this.transactionHistory = [
+        {
+          id: 'tx1',
+          type: 'mint',
+          from: 'Creator',
+          to: 'Treasury',
+          amount: 1000,
+          tokenSymbol: 'WYBE',
+          treasuryAmount: 10, // 1% to treasury
+          timestamp: now - 86400000, // 1 day ago
+          hash: '5JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
+          status: 'confirmed'
+        },
+        {
+          id: 'tx2',
+          type: 'trade',
+          from: 'Trader1',
+          to: 'Trader2',
+          amount: 500,
+          tokenSymbol: 'WYBE',
+          feeAmount: 25, // 5% total fee
+          treasuryAmount: 12.5, // Half to treasury
+          timestamp: now - 43200000, // 12 hours ago
+          hash: '3WyMp9Sdq3Wza1vKuCqpKTbEVpzrr6FY3xEJcVNKHpnM',
+          status: 'confirmed'
+        }
+      ];
+      localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+    }
+    
+    // Initialize checklist if not already done
+    const storedChecklist = localStorage.getItem('deploymentChecklist');
+    if (storedChecklist) {
+      this.deploymentChecklist = JSON.parse(storedChecklist);
+    } else {
+      this.deploymentChecklist = [
+        { id: 'anchor', label: 'Anchor CLI is installed and configured', checked: true },
+        { id: 'wallet', label: 'Wallet is connected and has sufficient SOL', checked: true },
+        { id: 'contract', label: 'Smart contract code is finalized', checked: true },
+        { id: 'treasury', label: 'Treasury wallet is configured', checked: true },
+        { id: 'fees', label: 'Creator and platform fees are set', checked: true },
+        { id: 'security', label: 'Security audit is complete', checked: false }
+      ];
+      localStorage.setItem('deploymentChecklist', JSON.stringify(this.deploymentChecklist));
     }
   }
   
-  public addTreasuryWallet(wallet: TreasuryWallet, walletAddress?: string): boolean {
-    try {
-      // Get existing wallets
-      const wallets = this.getTreasuryWallets();
-      
-      // Check if wallet with this address already exists
-      if (wallets.some(w => w.address === wallet.address)) {
-        return false;
-      }
-      
-      // Add to storage
-      const updatedWallets = [...wallets, wallet];
-      localStorage.setItem('treasuryWallets', JSON.stringify(updatedWallets));
-      
-      return true;
-    } catch (error) {
-      console.error("Error adding treasury wallet:", error);
-      return false;
-    }
-  }
-  
-  public removeTreasuryWallet(walletId: string, walletAddress?: string): boolean {
-    try {
-      // Get existing wallets
-      const wallets = this.getTreasuryWallets();
-      
-      // Filter out the wallet
-      const updatedWallets = wallets.filter(w => w.id !== walletId);
-      
-      // Save updated wallets
-      localStorage.setItem('treasuryWallets', JSON.stringify(updatedWallets));
-      
-      return true;
-    } catch (error) {
-      console.error("Error removing treasury wallet:", error);
-      return false;
-    }
-  }
-  
-  public transferBetweenTreasuryWallets(
-    fromId: string,
-    toId: string,
-    amount: number,
-    token: string = 'SOL',
-    walletAddress?: string
-  ): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+  // Get treasury wallets
+  public getTreasuryWallets(): Promise<TreasuryWallet[]> {
+    return new Promise(resolve => {
+      // Simulate network delay
       setTimeout(() => {
-        try {
-          // Get existing wallets
-          const wallets = this.getTreasuryWallets();
+        resolve(this.treasuryWallets);
+      }, 500);
+    });
+  }
+  
+  // Add a new treasury wallet
+  public addTreasuryWallet(wallet: TreasuryWallet): Promise<boolean> {
+    return new Promise(resolve => {
+      // Simulate network delay
+      setTimeout(() => {
+        // Add wallet to the list
+        this.treasuryWallets.push(wallet);
+        
+        // Save to localStorage
+        localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+        
+        // Record this action
+        this.recordTransaction({
+          id: `tx-add-wallet-${Date.now()}`,
+          type: 'transfer',
+          from: 'System',
+          to: wallet.name,
+          amount: 0,
+          timestamp: Date.now(),
+          hash: `wallet-${Math.random().toString(36).substring(2, 10)}`,
+          status: 'confirmed'
+        });
+        
+        resolve(true);
+      }, 800);
+    });
+  }
+  
+  // Remove a treasury wallet
+  public removeTreasuryWallet(walletId: string): Promise<boolean> {
+    return new Promise(resolve => {
+      // Simulate network delay
+      setTimeout(() => {
+        // Find wallet index
+        const walletIndex = this.treasuryWallets.findIndex(w => w.id === walletId);
+        
+        if (walletIndex >= 0) {
+          // Remove wallet
+          const removedWallet = this.treasuryWallets.splice(walletIndex, 1)[0];
           
-          // Find source and destination wallets
-          const sourceIdx = wallets.findIndex(w => w.id === fromId);
-          const destIdx = wallets.findIndex(w => w.id === toId);
+          // Save to localStorage
+          localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
           
-          if (sourceIdx === -1 || destIdx === -1) {
+          // Record this action
+          this.recordTransaction({
+            id: `tx-remove-wallet-${Date.now()}`,
+            type: 'transfer',
+            from: removedWallet.name,
+            to: 'System',
+            amount: 0,
+            timestamp: Date.now(),
+            hash: `wallet-${Math.random().toString(36).substring(2, 10)}`,
+            status: 'confirmed'
+          });
+          
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }, 600);
+    });
+  }
+  
+  // Transfer between treasury wallets
+  public transferBetweenTreasuryWallets(
+    fromWalletId: string,
+    toWalletId: string,
+    amount: number,
+    token: string = 'SOL'
+  ): Promise<boolean> {
+    return new Promise(resolve => {
+      // Simulate network delay
+      setTimeout(() => {
+        // Find wallets
+        const fromWallet = this.treasuryWallets.find(w => w.id === fromWalletId);
+        const toWallet = this.treasuryWallets.find(w => w.id === toWalletId);
+        
+        if (!fromWallet || !toWallet) {
+          resolve(false);
+          return;
+        }
+        
+        // Perform transfer
+        if (token === 'SOL') {
+          // Check balance
+          if (fromWallet.balance < amount) {
             resolve(false);
             return;
           }
           
-          // Handle different token types
-          if (token === 'SOL') {
-            // Check if source has enough balance
-            if (wallets[sourceIdx].balance < amount) {
-              resolve(false);
-              return;
-            }
-            
-            // Update balances
-            wallets[sourceIdx].balance -= amount;
-            wallets[destIdx].balance += amount;
-          } else {
-            // Handle token transfers (USDC, WYBE, etc.)
-            const sourceTokenIdx = wallets[sourceIdx].tokenBalance?.findIndex(t => t.symbol === token) ?? -1;
-            
-            if (sourceTokenIdx === -1 || 
-               !wallets[sourceIdx].tokenBalance || 
-               wallets[sourceIdx].tokenBalance[sourceTokenIdx].amount < amount) {
-              resolve(false);
-              return;
-            }
-            
-            // Reduce source token amount
-            wallets[sourceIdx].tokenBalance![sourceTokenIdx].amount -= amount;
-            
-            // Add to destination token balance
-            const destTokenIdx = wallets[destIdx].tokenBalance?.findIndex(t => t.symbol === token) ?? -1;
-            
-            if (destTokenIdx !== -1 && wallets[destIdx].tokenBalance) {
-              wallets[destIdx].tokenBalance[destTokenIdx].amount += amount;
-            } else {
-              // Create token balance if it doesn't exist
-              if (!wallets[destIdx].tokenBalance) {
-                wallets[destIdx].tokenBalance = [];
-              }
-              wallets[destIdx].tokenBalance.push({ symbol: token, amount });
-            }
+          // Update balances
+          fromWallet.balance -= amount;
+          toWallet.balance += amount;
+        } else {
+          // Handle token transfer
+          const fromTokenIndex = fromWallet.tokenBalance?.findIndex(t => t.symbol === token) ?? -1;
+          const toTokenIndex = toWallet.tokenBalance?.findIndex(t => t.symbol === token) ?? -1;
+          
+          // Ensure from wallet has the token and enough balance
+          if (fromTokenIndex === -1 || !fromWallet.tokenBalance || 
+              fromWallet.tokenBalance[fromTokenIndex].amount < amount) {
+            resolve(false);
+            return;
           }
           
-          // Save updated wallets
-          localStorage.setItem('treasuryWallets', JSON.stringify(wallets));
+          // Update from wallet token balance
+          fromWallet.tokenBalance[fromTokenIndex].amount -= amount;
           
-          resolve(true);
-        } catch (error) {
-          console.error("Error during transfer:", error);
-          resolve(false);
+          // Update to wallet token balance
+          if (toTokenIndex === -1) {
+            // Token doesn't exist in target wallet, add it
+            if (!toWallet.tokenBalance) toWallet.tokenBalance = [];
+            toWallet.tokenBalance.push({ symbol: token, amount });
+          } else {
+            // Add to existing token balance
+            toWallet.tokenBalance[toTokenIndex].amount += amount;
+          }
         }
+        
+        // Save to localStorage
+        localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+        
+        // Record transaction
+        this.recordTransaction({
+          id: `tx-transfer-${Date.now()}`,
+          type: 'transfer',
+          from: fromWallet.name,
+          to: toWallet.name,
+          amount,
+          tokenSymbol: token,
+          timestamp: Date.now(),
+          hash: `transfer-${Math.random().toString(36).substring(2, 10)}`,
+          status: 'confirmed'
+        });
+        
+        resolve(true);
       }, 1000);
     });
   }
+  
+  // Get transaction history
+  public getTransactionHistory(): Promise<TransactionHistory[]> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(this.transactionHistory);
+      }, 500);
+    });
+  }
+  
+  // Record a new transaction
+  public recordTransaction(transaction: TransactionHistory): void {
+    // Add to history
+    this.transactionHistory.unshift(transaction); // Add to beginning of array
+    
+    // Keep history at reasonable size
+    if (this.transactionHistory.length > 100) {
+      this.transactionHistory = this.transactionHistory.slice(0, 100);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+  }
+  
+  // Execute a trade with fee collection
+  public executeTokenTrade(
+    tokenSymbol: string,
+    seller: string,
+    buyer: string,
+    amount: number,
+    price: number
+  ): Promise<{ success: boolean; txHash?: string }> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Calculate trade value
+        const tradeValue = amount * price;
+        
+        // Calculate fees (5% total - 2.5% creator, 2.5% platform)
+        const creatorFee = tradeValue * 0.025;
+        const platformFee = tradeValue * 0.025;
+        const totalFee = creatorFee + platformFee;
+        
+        // Calculate seller receives
+        const sellerReceives = tradeValue - totalFee;
+        
+        // Record the transaction
+        const txHash = `trade-${Math.random().toString(36).substring(2, 12)}`;
+        this.recordTransaction({
+          id: `tx-trade-${Date.now()}`,
+          type: 'trade',
+          from: seller,
+          to: buyer,
+          amount,
+          tokenSymbol,
+          feeAmount: totalFee,
+          treasuryAmount: platformFee,
+          timestamp: Date.now(),
+          hash: txHash,
+          status: 'confirmed'
+        });
+        
+        // Add platform fee to treasury
+        const mainTreasury = this.treasuryWallets.find(w => w.id === 'treasury-main');
+        if (mainTreasury) {
+          mainTreasury.balance += platformFee;
+          localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+        }
+        
+        // Notify the user
+        toast.success(`Trade executed: ${amount} ${tokenSymbol} for ${tradeValue.toFixed(2)} SOL`);
+        
+        resolve({ success: true, txHash });
+      }, 1500);
+    });
+  }
+  
+  // Mint tokens with 1% to treasury
+  public mintTokens(
+    tokenSymbol: string,
+    creator: string,
+    recipient: string,
+    amount: number
+  ): Promise<{ success: boolean; txHash?: string }> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Calculate 1% for treasury
+        const treasuryAmount = amount * 0.01;
+        const recipientAmount = amount - treasuryAmount;
+        
+        // Record the transaction
+        const txHash = `mint-${Math.random().toString(36).substring(2, 12)}`;
+        this.recordTransaction({
+          id: `tx-mint-${Date.now()}`,
+          type: 'mint',
+          from: creator,
+          to: recipient,
+          amount,
+          tokenSymbol,
+          treasuryAmount,
+          timestamp: Date.now(),
+          hash: txHash,
+          status: 'confirmed'
+        });
+        
+        // Add token to treasury
+        const mainTreasury = this.treasuryWallets.find(w => w.id === 'treasury-main');
+        if (mainTreasury) {
+          const tokenIndex = mainTreasury.tokenBalance?.findIndex(t => t.symbol === tokenSymbol) ?? -1;
+          
+          if (tokenIndex === -1) {
+            // Token doesn't exist in treasury yet
+            if (!mainTreasury.tokenBalance) mainTreasury.tokenBalance = [];
+            mainTreasury.tokenBalance.push({ symbol: tokenSymbol, amount: treasuryAmount });
+          } else {
+            // Add to existing token balance
+            mainTreasury.tokenBalance[tokenIndex].amount += treasuryAmount;
+          }
+          
+          localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+        }
+        
+        // Notify the user
+        toast.success(`Minted ${amount} ${tokenSymbol} (${treasuryAmount} to treasury)`);
+        
+        resolve({ success: true, txHash });
+      }, 1200);
+    });
+  }
+  
+  // Deploy the full environment
+  public deployFullEnvironment(
+    config: EnvironmentDeployment,
+    wallet: string
+  ): Promise<{ success: boolean; message: string }> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Record deployment details
+        localStorage.setItem('environmentConfig', JSON.stringify({
+          ...config,
+          deployedBy: wallet,
+          deploymentTimestamp: Date.now()
+        }));
+        
+        // Mark as deployed in localStorage
+        localStorage.setItem('environmentDeployed', 'true');
+        
+        resolve({
+          success: true,
+          message: `Environment successfully deployed to ${config.networkType}`
+        });
+      }, 3000);
+    });
+  }
+  
+  // Get deployment checklist
+  public getDeploymentChecklist(): { id: string; label: string; checked: boolean }[] {
+    return this.deploymentChecklist;
+  }
+  
+  // Update checklist item
+  public updateChecklistItem(id: string, checked: boolean): void {
+    const itemIndex = this.deploymentChecklist.findIndex(item => item.id === id);
+    if (itemIndex !== -1) {
+      this.deploymentChecklist[itemIndex].checked = checked;
+      localStorage.setItem('deploymentChecklist', JSON.stringify(this.deploymentChecklist));
+    }
+  }
 }
 
-// Export singleton instance
+// Export a singleton instance
 export const integrationService = new IntegrationService();
 export default integrationService;

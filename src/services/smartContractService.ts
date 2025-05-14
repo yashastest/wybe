@@ -1,6 +1,8 @@
+
 import { toast } from "sonner";
 import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation, installAnchorCLI } from "../scripts/anchorBuild";
 import { treasuryService } from "./treasuryService";
+import { integrationService } from "./integrationService";
 
 // Interface for the smart contract configuration
 export interface SmartContractConfig {
@@ -266,6 +268,18 @@ Program logs:
       
       // Create a transaction hash for reference
       const mockTxHash = `${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}_${Math.random().toString(16).slice(2, 8)}`;
+      
+      // Register initial mint with treasury allocation (1%)
+      const treasuryAllocation = Math.floor(totalSupply * 0.01); // 1% to treasury
+      const initialSupply = totalSupply - treasuryAllocation;
+      
+      // Record the mint transaction with treasury allocation
+      integrationService.mintTokens(
+        tokenSymbol,
+        creatorAddress,
+        creatorAddress, // Initial recipient is creator
+        totalSupply
+      );
       
       toast.success(`Smart contract for ${tokenSymbol} deployed!`);
       
@@ -590,7 +604,7 @@ Program logs:
     receiverAddress: string,
     amount: number,
     price: number
-  ): Promise<{ success: boolean; fees: { creator: number; platform: number } }> {
+  ): Promise<{ success: boolean; fees: { creator: number; platform: number }; txHash?: string }> {
     // Simulate blockchain delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -607,12 +621,22 @@ Program logs:
       console.log(`Creator fee: ${creatorFee.toFixed(6)} SOL (${this.config.creatorFeePercentage}%)`);
       console.log(`Platform fee: ${platformFee.toFixed(6)} SOL (${this.config.platformFeePercentage}%)`);
       
+      // Record the transaction in our integration service
+      const tradeTx = await integrationService.executeTokenTrade(
+        tokenSymbol,
+        senderAddress,
+        receiverAddress,
+        amount,
+        price
+      );
+      
       return {
         success: true,
         fees: {
           creator: creatorFee,
           platform: platformFee
-        }
+        },
+        txHash: tradeTx.txHash
       };
     } catch (error) {
       console.error("Transaction error:", error);
@@ -622,6 +646,102 @@ Program logs:
           creator: 0,
           platform: 0
         }
+      };
+    }
+  }
+  
+  /**
+   * Claim creator fees
+   */
+  public async claimCreatorFees(
+    tokenSymbol: string,
+    creatorAddress: string
+  ): Promise<{ success: boolean; amount: number; txHash?: string }> {
+    // Simulate blockchain delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    try {
+      // In a real implementation, this would interact with the on-chain program
+      // For simulation, calculate a reasonable fee amount based on recent activity
+      
+      // Mock fee amount based on token "popularity"
+      const mockFeeAmount = Math.random() * 10 + 1; // Between 1-11 SOL
+      
+      // Mock transaction hash
+      const txHash = `claim_${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}`;
+      
+      // Record the transaction
+      integrationService.recordTransaction({
+        id: `tx-claim-${Date.now()}`,
+        type: 'claim',
+        from: 'Fee Pool',
+        to: creatorAddress,
+        amount: mockFeeAmount,
+        tokenSymbol: 'SOL', // Fees paid in SOL
+        timestamp: Date.now(),
+        hash: txHash,
+        status: 'confirmed'
+      });
+      
+      toast.success(`Claimed ${mockFeeAmount.toFixed(2)} SOL in creator fees!`);
+      
+      return {
+        success: true,
+        amount: mockFeeAmount,
+        txHash
+      };
+    } catch (error) {
+      console.error("Fee claim error:", error);
+      toast.error("Failed to claim creator fees");
+      
+      return {
+        success: false,
+        amount: 0
+      };
+    }
+  }
+  
+  /**
+   * Update the treasury address in the smart contract
+   */
+  public async updateContractTreasury(
+    newTreasuryAddress: string
+  ): Promise<{ success: boolean; txHash?: string }> {
+    // Simulate blockchain delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    try {
+      // Update the config
+      const oldTreasuryAddress = this.config.treasuryAddress;
+      this.config.treasuryAddress = newTreasuryAddress;
+      
+      // Mock transaction hash
+      const txHash = `treasury_${Date.now().toString(16)}`;
+      
+      // Record the update in transaction history
+      integrationService.recordTransaction({
+        id: `tx-treasury-update-${Date.now()}`,
+        type: 'transfer',
+        from: oldTreasuryAddress || 'Unknown',
+        to: newTreasuryAddress,
+        amount: 0, // No funds transferred, just a settings update
+        timestamp: Date.now(),
+        hash: txHash,
+        status: 'confirmed'
+      });
+      
+      toast.success("Treasury address updated in smart contract!");
+      
+      return {
+        success: true,
+        txHash
+      };
+    } catch (error) {
+      console.error("Treasury update error:", error);
+      toast.error("Failed to update treasury address");
+      
+      return {
+        success: false
       };
     }
   }
