@@ -262,7 +262,7 @@ class IntegrationService {
           marketCap: 500000,
           holders: 120,
           creator: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          programId: 'Wyb11111111111111111111111111111111111111111111',
+          programId: 'Wyb111111111111111111111111111111111111111111111',
           lastClaimDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
           nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 days ago (eligible to claim)
         },
