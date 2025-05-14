@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation } from "../scripts/anchorBuild";
 import { treasuryService } from "./treasuryService";
@@ -66,6 +65,90 @@ class SmartContractService {
       } catch (error) {
         console.error("Error getting Anchor version:", error);
       }
+    }
+  }
+  
+  /**
+   * Build the contract without deploying
+   */
+  public buildContract(contractName: string): string {
+    try {
+      console.log(`Building contract: ${contractName}`);
+      
+      // Simulate a successful build
+      const buildOutput = `
+Building ${contractName}...
+Compiling...
+Successfully built @wybe-finance/${contractName}
+Build completed in 2.4s
+      `.trim();
+      
+      // Update build status in config
+      this.config.lastBuildTimestamp = Date.now();
+      this.config.lastBuildStatus = 'success';
+      
+      return buildOutput;
+    } catch (error) {
+      console.error("Error building contract:", error);
+      
+      // Update build status in config
+      this.config.lastBuildTimestamp = Date.now();
+      this.config.lastBuildStatus = 'failed';
+      this.config.lastBuildError = error instanceof Error ? error.message : String(error);
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Deploy contract with provided IDL and address
+   */
+  public deployContract(contractName: string, idlContent: string, programAddress?: string): string {
+    try {
+      console.log(`Deploying contract: ${contractName}`);
+      console.log(`Program address: ${programAddress || 'auto-generated'}`);
+      
+      // Validate IDL if provided
+      let idl = null;
+      if (idlContent) {
+        try {
+          idl = JSON.parse(idlContent);
+          console.log("Valid IDL provided");
+        } catch (e) {
+          return `Error parsing IDL: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      }
+      
+      // Generate a program ID if not provided
+      const generatedProgramId = programAddress || `Wyb${Math.random().toString(36).substring(2, 10)}111111111111111111111111111`;
+      
+      // Store the program ID in config
+      this.config.programId = generatedProgramId;
+      
+      // Simulate deployment output
+      const deployOutput = `
+Deploying ${contractName}...
+Using network: ${this.config.networkType}
+Program ID: ${generatedProgramId}
+Creator fee: ${this.config.creatorFeePercentage}%
+Platform fee: ${this.config.platformFeePercentage}%
+
+Building program...
+Deploying program...
+Program deployed successfully!
+
+Transaction: ${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 10)}
+Program logs:
+  Program ${generatedProgramId} invoke [1]
+  Program log: Instruction: Initialize
+  Program ${generatedProgramId} consumed 12345 compute units
+  Program ${generatedProgramId} success
+      `.trim();
+      
+      return deployOutput;
+    } catch (error) {
+      console.error("Error deploying contract:", error);
+      throw error;
     }
   }
   

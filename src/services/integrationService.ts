@@ -41,6 +41,57 @@ const mockAdminUsers: AdminUserAccess[] = [
   }
 ];
 
+// Mock treasury wallet data types
+interface TreasuryWallet {
+  id: string;
+  name: string;
+  address: string;
+  balance: number;
+  tokenBalance?: {
+    symbol: string;
+    amount: number;
+  }[];
+  isMultisig: boolean;
+  signers?: string[];
+  threshold?: number;
+}
+
+// Mock treasury wallet data
+const mockTreasuryWallets: TreasuryWallet[] = [
+  {
+    id: "wallet-1",
+    name: "Main Treasury",
+    address: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD",
+    balance: 156.78,
+    tokenBalance: [
+      { symbol: "USDC", amount: 25000 },
+      { symbol: "WYBE", amount: 1000000 }
+    ],
+    isMultisig: true,
+    signers: [
+      "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD",
+      "5dNRAkbeYxy5j6zBeCpkEHxYXZXGE7LyGrDebZMx5BR"
+    ],
+    threshold: 2
+  },
+  {
+    id: "wallet-2",
+    name: "Operational Wallet",
+    address: "5dNRAkbeYxy5j6zBeCpkEHxYXZXGE7LyGrDebZMx5BR",
+    balance: 42.45,
+    isMultisig: false
+  }
+];
+
+// Environment deployment options
+export interface EnvironmentDeploymentOptions {
+  networkType: 'mainnet' | 'testnet' | 'devnet';
+  frontendUrl: string;
+  backendUrl: string;
+  creatorFeePercentage: number;
+  platformFeePercentage: number;
+}
+
 // Integration service implementation
 export const integrationService = {
   // Admin user methods
@@ -88,6 +139,115 @@ export const integrationService = {
     return true;
   },
 
+  // Treasury wallet methods
+  getTreasuryWallets: (walletAddress: string): TreasuryWallet[] => {
+    console.log(`Getting treasury wallets for: ${walletAddress}`);
+    return mockTreasuryWallets;
+  },
+  
+  addTreasuryWallet: (wallet: TreasuryWallet, walletAddress: string): boolean => {
+    console.log(`Adding treasury wallet: ${wallet.name}`);
+    if (mockTreasuryWallets.find(w => w.id === wallet.id)) {
+      return false; // Wallet already exists
+    }
+    mockTreasuryWallets.push(wallet);
+    return true;
+  },
+  
+  removeTreasuryWallet: (walletId: string, walletAddress: string): boolean => {
+    console.log(`Removing treasury wallet: ${walletId}`);
+    const initialLength = mockTreasuryWallets.length;
+    const filtered = mockTreasuryWallets.filter(w => w.id !== walletId);
+    
+    if (filtered.length === initialLength) {
+      return false; // Wallet not found
+    }
+    
+    // Update the reference keeping the same array
+    mockTreasuryWallets.length = 0;
+    mockTreasuryWallets.push(...filtered);
+    return true;
+  },
+  
+  transferBetweenTreasuryWallets: (
+    fromWalletId: string,
+    toWalletId: string,
+    amount: number,
+    token: string,
+    walletAddress: string
+  ): Promise<boolean> => {
+    console.log(`Transferring ${amount} ${token} from wallet ${fromWalletId} to wallet ${toWalletId}`);
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const fromWallet = mockTreasuryWallets.find(w => w.id === fromWalletId);
+        const toWallet = mockTreasuryWallets.find(w => w.id === toWalletId);
+        
+        if (!fromWallet || !toWallet) {
+          resolve(false);
+          return;
+        }
+        
+        if (token === 'SOL') {
+          if (fromWallet.balance < amount) {
+            resolve(false);
+            return;
+          }
+          
+          fromWallet.balance -= amount;
+          toWallet.balance += amount;
+          resolve(true);
+        } else {
+          // Handle token transfers
+          const fromTokenBalance = fromWallet.tokenBalance?.find(t => t.symbol === token);
+          
+          if (!fromTokenBalance || fromTokenBalance.amount < amount) {
+            resolve(false);
+            return;
+          }
+          
+          fromTokenBalance.amount -= amount;
+          
+          if (!toWallet.tokenBalance) {
+            toWallet.tokenBalance = [];
+          }
+          
+          const toTokenBalance = toWallet.tokenBalance.find(t => t.symbol === token);
+          
+          if (toTokenBalance) {
+            toTokenBalance.amount += amount;
+          } else {
+            toWallet.tokenBalance.push({
+              symbol: token,
+              amount: amount
+            });
+          }
+          
+          resolve(true);
+        }
+      }, 1500); // Simulate network delay
+    });
+  },
+  
+  // Environment deployment method
+  deployFullEnvironment: (
+    options: EnvironmentDeploymentOptions,
+    walletAddress: string
+  ): Promise<{ success: boolean; message: string }> => {
+    console.log(`Deploying full environment with options:`, options);
+    console.log(`Using wallet address: ${walletAddress}`);
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simulate successful deployment
+        resolve({
+          success: true,
+          message: "Environment deployed successfully to " + options.networkType
+        });
+      }, 3000); // Simulate network delay
+    });
+  },
+
   // Anchor CLI mock status methods
   setMockAnchorStatus: (enabled: boolean, version?: string): void => {
     console.log(`Setting mock anchor status: ${enabled}, version: ${version || 'N/A'}`);
@@ -102,6 +262,6 @@ export const integrationService = {
     const version = localStorage.getItem("mockAnchorVersion") || undefined;
     return { enabled, version };
   },
-
-  // Other integration methods can be added here
 };
+
+export default integrationService;

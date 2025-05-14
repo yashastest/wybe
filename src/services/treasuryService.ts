@@ -1,3 +1,4 @@
+
 // Import the newly exported integrationService
 import { integrationService } from "./integrationService";
 
@@ -81,4 +82,12 @@ export const treasuryService = {
       }, 1250);
     });
   },
+
+  // Method to set network type
+  setNetworkType: (networkType: 'mainnet' | 'testnet' | 'devnet'): void => {
+    console.log(`Setting treasury network type to: ${networkType}`);
+    localStorage.setItem('treasuryNetworkType', networkType);
+  },
 };
+
+export default treasuryService;
