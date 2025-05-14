@@ -65,44 +65,50 @@ export const smartContractService = {
     });
   },
 
-  // Method to deploy smart contract
+  // Method to deploy smart contract with bytecode
   deployContract: async (
-    compiledCode: string,
-    deployerAddress: string
-  ): Promise<string> => {
-    console.log(
-      `Deploying smart contract from address: ${deployerAddress}...`
-    );
-    // Placeholder logic - replace with actual deployment process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const contractAddress = "0x456def..."; // Mock contract address
-        resolve(contractAddress);
-      }, 3000);
-    });
-  },
-
-  // Overloaded deployContract method to handle IDL deployment
-  deployContract: async (
-    contractName: string,
-    idlContent: string,
+    compiledCodeOrName: string,
+    deployerAddressOrIdl: string,
     programAddress?: string
   ): Promise<string> => {
-    console.log(`Deploying contract: ${contractName} with IDL...`);
-    
-    // Placeholder logic - replace with actual deployment process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const output = `
+    // Check if this is a bytecode deployment or an IDL deployment
+    if (programAddress !== undefined) {
+      // This is an IDL deployment
+      const contractName = compiledCodeOrName;
+      const idlContent = deployerAddressOrIdl;
+      
+      console.log(`Deploying contract: ${contractName} with IDL...`);
+      
+      // Placeholder logic - replace with actual deployment process
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const output = `
 Successfully deployed contract ${contractName}
 Program ID: Wyb${Math.random().toString(36).substring(2, 10)}Token111111111111111111111111
 Transaction: tx_${Math.random().toString(36).substring(2, 15)}
 Network: testnet
 Status: confirmed
-        `;
-        resolve(output);
-      }, 3000);
-    });
+          `;
+          resolve(output);
+        }, 3000);
+      });
+    } else {
+      // This is a bytecode deployment
+      const compiledCode = compiledCodeOrName;
+      const deployerAddress = deployerAddressOrIdl;
+      
+      console.log(
+        `Deploying smart contract from address: ${deployerAddress}...`
+      );
+      
+      // Placeholder logic - replace with actual deployment process
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const contractAddress = "0x456def..."; // Mock contract address
+          resolve(contractAddress);
+        }, 3000);
+      });
+    }
   },
 
   // Method to build contract
@@ -208,8 +214,8 @@ Successfully built ${contractName}
       timestamp: now.getTime(),
       amount: amount,
       tokenSymbol: 'SOL',
-      type: 'transfer', // Changed from 'fee_claim' to allowed 'transfer'
-      status: 'completed', // Changed from 'confirmed' to allowed 'completed'
+      type: 'transfer', // Using allowed 'transfer' type
+      status: 'completed', // Using allowed 'completed' status
       description: `Creator fee claim for token ${tokenId}`,
       hash: `tx_${Math.random().toString(36).substring(2, 10)}`,
     };

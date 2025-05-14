@@ -1,6 +1,51 @@
 // Integration service file
 // This service handles integration with external services, APIs, and blockchain
 
+// Define the AdminUserAccess interface needed for AdminUserManager
+export interface AdminUserAccess {
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  permissions: string[];
+  walletAddress?: string;
+  twoFactorEnabled?: boolean;
+}
+
+// Define the TestnetContract interface for SmartContractTestnet
+export interface TestnetContract {
+  id?: string;
+  name: string;
+  programId: string;
+  network: string;
+  deployDate: string;
+  txHash?: string;
+  status: 'active' | 'pending' | 'failed';
+  verificationStatus?: 'verified' | 'unverified';
+  abi?: string;
+}
+
+// Define the DeploymentEnvironment interface for DeploymentEnvironment component
+export interface DeploymentEnvironment {
+  id: string;
+  name: string;
+  network: string;
+  status: 'active' | 'pending' | 'down';
+  endpoints: {
+    rpc: string;
+    websocket?: string;
+  };
+  contracts: string[];
+}
+
+// Define the DeploymentChecklistItem for DeploymentEnvironment component
+export interface DeploymentChecklistItem {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  required: boolean;
+  prerequisite?: string[];
+}
+
 // Update the TreasuryWallet interface to match usage in TreasuryWalletManager
 export interface TreasuryWallet {
   id: string;
@@ -311,4 +356,266 @@ export const integrationService = {
     // In a real app, this would remove the wallet from a database or configuration
     return true;
   },
+
+  // Set mock Anchor status - add this method for AnchorStatusCard
+  setMockAnchorStatus: (installed: boolean, version?: string): void => {
+    console.log(`Setting mock Anchor status: ${installed ? 'installed' : 'not installed'}, version: ${version || 'none'}`);
+    localStorage.setItem('anchorInstalled', String(installed));
+    if (version) {
+      localStorage.setItem('anchorVersion', version);
+    } else {
+      localStorage.removeItem('anchorVersion');
+    }
+  },
+
+  // Admin user management methods
+  getAdminUsers: (walletAddress: string): AdminUserAccess[] => {
+    // Simulate retrieving admin users from storage
+    const storedUsers = localStorage.getItem(`adminUsers_${walletAddress}`);
+    if (storedUsers) {
+      return JSON.parse(storedUsers);
+    }
+    
+    // Return default admin users if none found
+    const defaultUsers: AdminUserAccess[] = [
+      {
+        email: 'admin@wybe.com',
+        role: 'superadmin',
+        permissions: ['all'],
+        walletAddress,
+        twoFactorEnabled: true
+      }
+    ];
+    
+    localStorage.setItem(`adminUsers_${walletAddress}`, JSON.stringify(defaultUsers));
+    return defaultUsers;
+  },
+  
+  addAdminUser: (user: AdminUserAccess, adminWallet: string): boolean => {
+    const existingUsers = integrationService.getAdminUsers(adminWallet);
+    
+    // Check if user with this email already exists
+    if (existingUsers.some(u => u.email === user.email)) {
+      return false;
+    }
+    
+    // Add new user
+    const updatedUsers = [...existingUsers, user];
+    localStorage.setItem(`adminUsers_${adminWallet}`, JSON.stringify(updatedUsers));
+    return true;
+  },
+  
+  updateAdminUserPermissions: (
+    email: string, 
+    role: AdminUserAccess['role'], 
+    permissions: string[],
+    adminWallet: string
+  ): boolean => {
+    const existingUsers = integrationService.getAdminUsers(adminWallet);
+    const userIndex = existingUsers.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    // Update user permissions
+    existingUsers[userIndex] = {
+      ...existingUsers[userIndex],
+      role,
+      permissions
+    };
+    
+    localStorage.setItem(`adminUsers_${adminWallet}`, JSON.stringify(existingUsers));
+    return true;
+  },
+  
+  removeAdminUser: (email: string, adminWallet: string): boolean => {
+    const existingUsers = integrationService.getAdminUsers(adminWallet);
+    
+    // Don't allow removing the last super admin
+    const superAdmins = existingUsers.filter(u => u.role === 'superadmin');
+    const userToRemove = existingUsers.find(u => u.email === email);
+    
+    if (userToRemove?.role === 'superadmin' && superAdmins.length <= 1) {
+      return false;
+    }
+    
+    const updatedUsers = existingUsers.filter(u => u.email !== email);
+    localStorage.setItem(`adminUsers_${adminWallet}`, JSON.stringify(updatedUsers));
+    return true;
+  },
+
+  // Add deployment checklist methods for DeploymentEnvironment component
+  getDeploymentChecklist: (): DeploymentChecklistItem[] => {
+    const storedChecklist = localStorage.getItem('deploymentChecklist');
+    if (storedChecklist) {
+      return JSON.parse(storedChecklist);
+    }
+    
+    // Return default checklist if none found
+    const defaultChecklist: DeploymentChecklistItem[] = [
+      {
+        id: 'contract',
+        title: 'Smart Contract',
+        description: 'Create and build your smart contract',
+        checked: false,
+        required: true
+      },
+      {
+        id: 'security',
+        title: 'Security Audit',
+        description: 'Perform security audit on your smart contract',
+        checked: false,
+        required: true,
+        prerequisite: ['contract']
+      },
+      {
+        id: 'test',
+        title: 'Testnet Deployment',
+        description: 'Deploy your contract to testnet',
+        checked: false,
+        required: true,
+        prerequisite: ['security']
+      },
+      {
+        id: 'verify',
+        title: 'Contract Verification',
+        description: 'Verify your contract on explorer',
+        checked: false,
+        required: false,
+        prerequisite: ['test']
+      },
+      {
+        id: 'docs',
+        title: 'Documentation',
+        description: 'Create developer documentation',
+        checked: false,
+        required: false
+      }
+    ];
+    
+    localStorage.setItem('deploymentChecklist', JSON.stringify(defaultChecklist));
+    return defaultChecklist;
+  },
+  
+  updateChecklistItem: (id: string, checked: boolean): boolean => {
+    const checklist = integrationService.getDeploymentChecklist();
+    const itemIndex = checklist.findIndex(item => item.id === id);
+    
+    if (itemIndex === -1) {
+      return false;
+    }
+    
+    checklist[itemIndex].checked = checked;
+    localStorage.setItem('deploymentChecklist', JSON.stringify(checklist));
+    return true;
+  },
+  
+  deployFullEnvironment: async (environmentName: string, network: string): Promise<boolean> => {
+    console.log(`Deploying full environment: ${environmentName} on ${network}`);
+    
+    // Simulate deployment
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const environment: DeploymentEnvironment = {
+          id: `env_${Date.now()}`,
+          name: environmentName,
+          network,
+          status: 'active',
+          endpoints: {
+            rpc: `https://rpc.${network}.solana.com`,
+            websocket: `wss://ws.${network}.solana.com`
+          },
+          contracts: []
+        };
+        
+        // Store in local storage
+        const environments = JSON.parse(localStorage.getItem('deploymentEnvironments') || '[]');
+        environments.push(environment);
+        localStorage.setItem('deploymentEnvironments', JSON.stringify(environments));
+        
+        resolve(true);
+      }, 3000);
+    });
+  },
+
+  // Add testnet contract methods for SmartContractTestnet component
+  getTestnetContracts: (): TestnetContract[] => {
+    const storedContracts = localStorage.getItem('deployedTestnetContracts');
+    if (storedContracts) {
+      return JSON.parse(storedContracts);
+    }
+    return [];
+  },
+  
+  getTestnetContract: (id: string): TestnetContract | null => {
+    const contracts = integrationService.getTestnetContracts();
+    return contracts.find(contract => contract.id === id) || null;
+  },
+  
+  addTestnetContract: (contract: Omit<TestnetContract, 'id'>): boolean => {
+    const contracts = integrationService.getTestnetContracts();
+    
+    const newContract: TestnetContract = {
+      ...contract,
+      id: `contract_${Date.now()}`
+    };
+    
+    contracts.push(newContract);
+    localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
+    return true;
+  },
+  
+  updateTestnetContract: (id: string, updates: Partial<TestnetContract>): boolean => {
+    const contracts = integrationService.getTestnetContracts();
+    const contractIndex = contracts.findIndex(c => c.id === id);
+    
+    if (contractIndex === -1) {
+      return false;
+    }
+    
+    contracts[contractIndex] = {
+      ...contracts[contractIndex],
+      ...updates
+    };
+    
+    localStorage.setItem('deployedTestnetContracts', JSON.stringify(contracts));
+    return true;
+  },
+  
+  deleteTestnetContract: (id: string): boolean => {
+    const contracts = integrationService.getTestnetContracts();
+    const updatedContracts = contracts.filter(c => c.id !== id);
+    
+    localStorage.setItem('deployedTestnetContracts', JSON.stringify(updatedContracts));
+    return true;
+  },
+  
+  importTestnetContracts: (contractsData: string): boolean => {
+    try {
+      const contracts = JSON.parse(contractsData);
+      
+      if (!Array.isArray(contracts)) {
+        return false;
+      }
+      
+      // Validate basic structure
+      const isValid = contracts.every(contract => 
+        contract.name && 
+        contract.programId && 
+        contract.network &&
+        contract.deployDate
+      );
+      
+      if (!isValid) {
+        return false;
+      }
+      
+      localStorage.setItem('deployedTestnetContracts', contractsData);
+      return true;
+    } catch (error) {
+      console.error("Failed to import contracts:", error);
+      return false;
+    }
+  }
 };

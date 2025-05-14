@@ -35,23 +35,6 @@ import {
 import { integrationService, TreasuryWallet } from "@/services/integrationService";
 import { useWallet } from '@/hooks/useWallet';
 
-// Treasury wallet types that matches the component's requirements
-interface TreasuryWallet {
-  id: string;
-  name: string;
-  address: string;
-  balance: number;
-  tokenBalance?: {
-    symbol: string;
-    amount: number;
-  }[];
-  isMultisig: boolean;
-  signers?: string[];
-  threshold?: number;
-  network: string;
-  isPrimary: boolean;
-}
-
 const TreasuryWalletManager = () => {
   const [wallets, setWallets] = useState<TreasuryWallet[]>([]);
   const [isAddingWallet, setIsAddingWallet] = useState(false);
@@ -153,11 +136,11 @@ const TreasuryWalletManager = () => {
     setLoading(true);
     
     try {
-      // Create wallet with the correct structure
+      // Create wallet with the correct structure matching TreasuryWallet interface
       const walletToAdd: Omit<TreasuryWallet, 'id'> = {
         name: newWallet.name,
         address: newWallet.address,
-        walletAddress: newWallet.address, // Map to both fields
+        walletAddress: newWallet.address, // Set both address fields
         balance: 0,
         isMultisig: newWallet.isMultisig,
         signers: newWallet.isMultisig ? newWallet.signers : undefined,
