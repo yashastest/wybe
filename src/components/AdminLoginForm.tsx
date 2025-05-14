@@ -24,25 +24,30 @@ const AdminLoginForm = () => {
       if (username === 'admin' && password === 'admin123') {
         console.log("Credentials valid, setting session data");
         
-        // Clear any previous session data first
+        // First, clear any existing session data
         localStorage.removeItem('wybeAdminLoggedIn');
         sessionStorage.removeItem('wybeAdminSession');
         
-        // Set new session data
+        // Then set fresh session data
         localStorage.setItem('wybeAdminLoggedIn', 'true');
         sessionStorage.setItem('wybeAdminSession', Date.now().toString());
         
+        console.log("Session data set:", {
+          isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),
+          sessionExists: sessionStorage.getItem('wybeAdminSession')
+        });
+        
         toast.success('Login successful!');
         
-        // Force a small delay before navigation to ensure session data is set
+        // Force a longer delay before navigation to ensure session data is properly set
         setTimeout(() => {
-          console.log("Redirecting to admin panel");
-          navigate('/admin');
-        }, 100);
+          console.log("Redirecting to admin panel now...");
+          window.location.href = '/admin'; // Using direct URL change instead of navigate
+        }, 300);
       } else {
         toast.error('Invalid credentials. Please check username and password.');
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }, 1000);
   };
 

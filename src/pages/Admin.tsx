@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,9 +45,9 @@ const Admin = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, logout } = useAdmin();
   
-  // Force authentication check on initial load and whenever the component remounts
+  // Force authentication check on mount
   useEffect(() => {
-    console.log("Admin panel authentication state:", { isAuthenticated, isLoading });
+    console.log("Admin component mounted, checking authentication...");
     
     // Ensure valid session is present
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
@@ -59,10 +60,19 @@ const Admin = () => {
       navigate('/admin-login');
       return;
     }
+  }, [navigate]);
+  
+  // Add a delay before showing content to ensure auth state is correct
+  const [showContent, setShowContent] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
   
   // Early return if still loading
-  if (isLoading) {
+  if (isLoading || !showContent) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
         <div className="animate-pulse text-xl">Loading admin panel...</div>
@@ -72,7 +82,7 @@ const Admin = () => {
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
-    console.log("Not authenticated, redirecting to login");
+    console.log("Not authenticated in render phase, redirecting to login");
     navigate('/admin-login');
     return null;
   }
