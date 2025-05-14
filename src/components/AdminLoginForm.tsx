@@ -31,23 +31,28 @@ const AdminLoginForm = () => {
         expiryTime: Date.now() + (12 * 60 * 60 * 1000), // 12 hour expiry
       };
       
-      // Set fresh session data
-      localStorage.setItem('wybeAdminLoggedIn', 'true');
-      sessionStorage.setItem('wybeAdminSession', JSON.stringify(sessionData));
-      
-      console.log("Session data set:", {
-        isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),
-        sessionExists: !!sessionStorage.getItem('wybeAdminSession')
-      });
-      
-      toast.success('Login successful!');
-      
-      // Use a short timeout to ensure the session is properly set
-      // before navigating to the admin page
-      setTimeout(() => {
-        navigate('/admin');
+      try {
+        // Set fresh session data
+        localStorage.setItem('wybeAdminLoggedIn', 'true');
+        sessionStorage.setItem('wybeAdminSession', JSON.stringify(sessionData));
+        
+        console.log("Session data set:", {
+          isLoggedIn: localStorage.getItem('wybeAdminLoggedIn'),
+          sessionExists: !!sessionStorage.getItem('wybeAdminSession')
+        });
+        
+        toast.success('Login successful!');
+        
+        // Navigate to admin page
+        setTimeout(() => {
+          navigate('/admin');
+          setIsLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error("Error setting session data:", error);
+        toast.error("Failed to create session. Please try again.");
         setIsLoading(false);
-      }, 100);
+      }
     } else {
       toast.error('Invalid credentials. Please check username and password.');
       setIsLoading(false);

@@ -1,6 +1,8 @@
+
 // Smart contract service for admin dashboard
 // This service handles smart contract related operations
 
+// Contract Configuration Type
 export interface ContractConfig {
   anchorInstalled: boolean;
   anchorVersion: string;
@@ -10,30 +12,35 @@ export interface ContractConfig {
   bondingCurveLimit: number;
   creatorFeePercentage: number;
   platformFeePercentage: number;
-  rewardClaimPeriodDays: number;
   dexScreenerThreshold: number;
+  rewardClaimPeriodDays: number;
 }
 
+// Security Audit Result Type
 export interface SecurityAuditResult {
-  issues: Array<{ 
-    severity: 'high' | 'medium' | 'low' | 'info'; 
-    description: string; 
-    location?: string;
+  successful: boolean;
+  vulnerabilities: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  findings: Array<{
+    id: string;
+    severity: 'high' | 'medium' | 'low';
+    title: string;
+    description: string;
+    location: string;
   }>;
-  passedChecks: string[];
 }
 
+// Gas Analysis Result Type
 export interface GasAnalysisResult {
-  gasEstimates: { [key: string]: number };
-  optimizationSuggestions: string[];
-}
-
-export interface TestnetTestResult {
-  results: Array<{
-    function: string;
-    status: 'passed' | 'failed';
-    error?: string;
-    txHash?: string;
+  successful: boolean;
+  averageGasUsed: number;
+  gasBreakdown: Array<{
+    operation: string;
+    gasUsed: number;
+    percentage: number;
   }>;
 }
 
@@ -56,83 +63,105 @@ interface TestnetContract {
 export const smartContractService = {
   // Get contract configuration
   getContractConfig: (): ContractConfig => {
-    const storedConfig = localStorage.getItem('contractConfig');
+    // Default configuration
+    const defaultConfig: ContractConfig = {
+      anchorInstalled: true,
+      anchorVersion: "0.26.0",
+      solanaVersion: "1.14.16",
+      rustVersion: "1.65.0",
+      bondingCurveEnabled: true,
+      bondingCurveLimit: 1000000,
+      creatorFeePercentage: 2.5,
+      platformFeePercentage: 1.5,
+      dexScreenerThreshold: 50000,
+      rewardClaimPeriodDays: 5
+    };
     
+    // Check if there's a stored configuration
+    const storedConfig = localStorage.getItem('contractConfig');
     if (storedConfig) {
       try {
-        return JSON.parse(storedConfig);
+        // Parse stored configuration and merge with default config
+        return { ...defaultConfig, ...JSON.parse(storedConfig) };
       } catch (error) {
-        console.error('Error parsing contract config:', error);
+        console.error('Error parsing stored contract configuration:', error);
       }
     }
     
-    // Default config
-    const defaultConfig: ContractConfig = {
-      anchorInstalled: true,
-      anchorVersion: '0.29.0',
-      solanaVersion: '1.16.0',
-      rustVersion: '1.68.0',
-      bondingCurveEnabled: true,
-      bondingCurveLimit: 50000,
-      creatorFeePercentage: 2.5,
-      platformFeePercentage: 2.5,
-      rewardClaimPeriodDays: 30,
-      dexScreenerThreshold: 10000
-    };
-    
-    localStorage.setItem('contractConfig', JSON.stringify(defaultConfig));
+    // Return default configuration if stored configuration is invalid
     return defaultConfig;
   },
-
+  
   // Update contract configuration
   updateContractConfig: (config: Partial<ContractConfig>): boolean => {
     try {
+      // Get current configuration
       const currentConfig = smartContractService.getContractConfig();
-      const updatedConfig = { ...currentConfig, ...config };
       
-      localStorage.setItem('contractConfig', JSON.stringify(updatedConfig));
+      // Merge new configuration with current configuration
+      const newConfig = { ...currentConfig, ...config };
+      
+      // Store new configuration
+      localStorage.setItem('contractConfig', JSON.stringify(newConfig));
+      
       return true;
     } catch (error) {
-      console.error('Error updating contract config:', error);
+      console.error('Error updating contract configuration:', error);
       return false;
     }
   },
   
-  // Build contract
+  // Build contract method
   buildContract: async (contractName: string): Promise<string> => {
-    console.log(`Building contract ${contractName}...`);
+    console.log(`Building contract: ${contractName}`);
     
-    // Simulate build process with delay
+    // Simulate build process
     return new Promise((resolve) => {
       setTimeout(() => {
-        const buildOutput = `
-==> Building ${contractName}...
-Compiling anchor-lang v0.29.0
-Compiling solana-program v1.16.0
-    Finished release [optimized] target(s) in 18.29s
-Done! ${contractName} built successfully.
-        `.trim();
-        
-        resolve(buildOutput);
+        // Return mock output
+        resolve(`
+Building ${contractName}...
+Installing dependencies...
+Compiling program...
+Build successful!
+
+Program ready for deployment!
+        `);
       }, 2000);
     });
   },
   
-  // Deploy contract
-  deployContract: async (contractName: string, idlContent: string, programAddress?: string): Promise<DeploymentResult> => {
-    console.log(`Deploying contract ${contractName}...`);
+  // Deploy contract method
+  deployContract: async (
+    contractName: string, 
+    idlContent: string, 
+    programAddress?: string
+  ): Promise<DeploymentResult> => {
+    console.log(`Deploying contract: ${contractName}`);
+    console.log("IDL Content:", idlContent ? "Provided" : "Not provided");
+    console.log("Program Address:", programAddress || "Not provided");
     
-    // Simulate deployment process with delay
+    // Simulate deployment process
     return new Promise((resolve) => {
       setTimeout(() => {
-        const txId = `tx_${Math.random().toString(36).substring(2, 15)}`;
-        const signature = `sig_${Math.random().toString(36).substring(2, 15)}`;
+        // Generate mock program ID if not provided
+        const deployedProgramId = programAddress || "Wyb" + Math.random().toString(36).substring(2, 10);
         
+        // Return mock output
         resolve({
           success: true,
-          message: `${contractName} deployed successfully to program address ${programAddress || 'new-address'}`,
-          transactionId: txId,
-          signature
+          message: `
+Deploying ${contractName}...
+Creating keypair...
+Sending transaction...
+Waiting for confirmation...
+Finalizing deployment...
+Deployment successful!
+
+Program ID: ${deployedProgramId}
+          `,
+          transactionId: "tx_" + Math.random().toString(36).substring(2, 15),
+          signature: "sig_" + Math.random().toString(36).substring(2, 15)
         });
       }, 3000);
     });
@@ -147,30 +176,27 @@ Done! ${contractName} built successfully.
       try {
         return JSON.parse(storedContracts);
       } catch (error) {
-        console.error('Error parsing deployed contracts:', error);
+        console.error('Error parsing stored contracts:', error);
       }
     }
     
     // Default contracts
     const defaultContracts = [
       {
-        name: 'Wybe Token Program',
-        programId: 'WybeTokenProg111111111111111111111111111',
-        network: 'testnet',
-        deploymentDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
+        name: 'Wybe Token Standard',
+        programId: 'Wyb1111111111111111111111111111111111111111',
+        deployedDate: '2023-09-01',
+        network: 'mainnet',
         status: 'active'
       },
       {
         name: 'Creator Fee Treasury',
-        programId: 'WybeFeeTreasury111111111111111111111111',
-        network: 'testnet',
-        deploymentDate: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
+        programId: 'Wyb2222222222222222222222222222222222222222',
+        deployedDate: '2023-09-05',
+        network: 'mainnet',
         status: 'active'
       }
     ];
-    
-    // Store in localStorage for future use
-    localStorage.setItem('deployedContracts', JSON.stringify(defaultContracts));
     
     return defaultContracts;
   },
@@ -219,118 +245,114 @@ Done! ${contractName} built successfully.
     // Simulate security audit with delay
     return new Promise((resolve) => {
       setTimeout(() => {
-        const result: SecurityAuditResult = {
-          issues: [
-            {
-              severity: 'medium',
-              description: 'Potential reentrancy vulnerability in withdraw function',
-              location: 'programs/wybe_token_program/src/lib.rs:156'
-            },
-            {
-              severity: 'low',
-              description: 'Unchecked arithmetic operations may lead to overflow',
-              location: 'programs/wybe_token_program/src/lib.rs:203'
-            },
-            {
-              severity: 'info',
-              description: 'Consider adding more detailed error messages',
-              location: 'programs/wybe_token_program/src/error.rs:15'
-            }
-          ],
-          passedChecks: [
-            'No critical vulnerabilities found',
-            'Program authority validation is correct',
-            'Account ownership validation is correct',
-            'No unsafe memory operations detected',
-            'No unauthorized instruction data access'
-          ]
-        };
-        
-        resolve(result);
-      }, 3000);
-    });
-  },
-  
-  // Analyze gas usage of smart contract
-  analyzeGasUsage: async (): Promise<GasAnalysisResult> => {
-    // Simulate gas analysis with delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const result: GasAnalysisResult = {
-          gasEstimates: {
-            'initialize': 12500,
-            'mint_token': 35000,
-            'transfer': 25000,
-            'withdraw_fees': 32000,
-            'close_account': 15000
+        // Return mock audit results
+        resolve({
+          successful: true,
+          vulnerabilities: {
+            high: 0,
+            medium: 1,
+            low: 2
           },
-          optimizationSuggestions: [
-            'Consider batching multiple token transfers to reduce overall gas costs',
-            'Replace repeated account validation with a helper function',
-            'Cache account data to avoid multiple borrows',
-            'Consider using program derived addresses to reduce the number of required signatures'
+          findings: [
+            {
+              id: 'MEDIUM-01',
+              severity: 'medium',
+              title: 'Unbounded loop in token distribution',
+              description: 'The token distribution function contains a loop that iterates over all token holders, which could be gas-intensive if there are many holders.',
+              location: 'src/distribution.rs:42'
+            },
+            {
+              id: 'LOW-01',
+              severity: 'low',
+              title: 'Missing event for important state change',
+              description: 'The contract does not emit an event when the admin address is changed.',
+              location: 'src/admin.rs:28'
+            },
+            {
+              id: 'LOW-02',
+              severity: 'low',
+              title: 'Lack of input validation',
+              description: 'The contract does not validate that the bonding curve parameters are within reasonable bounds.',
+              location: 'src/bonding_curve.rs:15'
+            }
           ]
-        };
-        
-        resolve(result);
+        });
       }, 2500);
     });
   },
   
-  // Test contract on testnet
-  testOnTestnet: async (): Promise<TestnetTestResult> => {
-    // Simulate testnet testing with delay
+  // Analyze gas usage
+  analyzeGasUsage: async (): Promise<GasAnalysisResult> => {
+    // Simulate gas analysis with delay
     return new Promise((resolve) => {
       setTimeout(() => {
-        const result: TestnetTestResult = {
-          results: [
+        // Return mock gas analysis results
+        resolve({
+          successful: true,
+          averageGasUsed: 125000,
+          gasBreakdown: [
             {
-              function: 'initialize',
-              status: 'passed',
-              txHash: '5jQ77E3hZWbKNtXd1EMeGe1cGXx8yTVTu1ncKvTkY9oXz2c113EFUdyc1D7H'
+              operation: 'Token Transfer',
+              gasUsed: 50000,
+              percentage: 40
             },
             {
-              function: 'mint_token',
-              status: 'passed',
-              txHash: '3xP55rJ6W1mzLNGyfA9KsqZ6RoPR1jL8y3qXb2MxLm7ZA1DWc29nK4cF8G2Z'
+              operation: 'Bonding Curve Calculation',
+              gasUsed: 35000,
+              percentage: 28
             },
             {
-              function: 'transfer',
-              status: 'passed',
-              txHash: '2rT98qK5L1pWzXfGhB7JmY4VnDS3eAu8x3vZc4RnE5oQy6F711bPw3dH5M9S'
+              operation: 'Fee Distribution',
+              gasUsed: 25000,
+              percentage: 20
             },
             {
-              function: 'withdraw_fees',
-              status: 'failed',
-              error: 'Insufficient permissions: Only treasury manager can withdraw fees',
-              txHash: '7kN33mP9R6bSx4tYcE8LvF2gQ1jD7oWe5yZh2VzA9uGXr1H6JdTq5wZa3B4K'
+              operation: 'State Management',
+              gasUsed: 15000,
+              percentage: 12
             }
           ]
-        };
-        
-        resolve(result);
-      }, 3500);
+        });
+      }, 2000);
     });
   },
   
-  // Mint tokens with bonding curve
-  mintTokensWithBondingCurve: async (
-    contractAddress: string,
-    amount: number,
-    creator: string,
-    receiver: string
-  ): Promise<DeploymentResult> => {
-    console.log(`Minting ${amount} tokens on contract ${contractAddress}...`);
-    
-    // Simulate minting with delay
+  // Test contract on testnet
+  testOnTestnet: async (): Promise<boolean> => {
+    // Simulate testnet deployment and testing with delay
     return new Promise((resolve) => {
       setTimeout(() => {
+        // Return success status (90% chance of success)
+        const success = Math.random() < 0.9;
+        resolve(success);
+      }, 3000);
+    });
+  },
+  
+  // Mint tokens using bonding curve
+  mintTokensWithBondingCurve: async (
+    amount: number, 
+    price: number, 
+    recipient: string
+  ): Promise<{ success: boolean; tokens: number; cost: number }> => {
+    console.log(`Minting ${amount} tokens at ${price} SOL each for ${recipient}`);
+    
+    // Simulate minting process
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Calculate total cost with bonding curve
+        // Simple linear bonding curve for demo purposes
+        const baseCost = amount * price;
+        const bondingFactor = 1 + (amount / 10000); // Increases price as more tokens are purchased
+        const totalCost = baseCost * bondingFactor;
+        
+        // Return result
         resolve({
           success: true,
-          message: `Successfully minted ${amount} tokens to ${receiver}`,
-          transactionId: `tx_mint_${Math.random().toString(36).substring(2, 10)}`
+          tokens: amount,
+          cost: parseFloat(totalCost.toFixed(4))
         });
-      }, 2000);
+      }, 1500);
     });
   },
   
@@ -341,16 +363,20 @@ Done! ${contractName} built successfully.
     price: number,
     seller: string,
     buyer: string
-  ): Promise<DeploymentResult> => {
-    console.log(`Trading ${amount} tokens at $${price} on contract ${contractAddress}...`);
+  ): Promise<{ success: boolean; txId: string }> => {
+    console.log(`Trading ${amount} tokens at ${price} SOL each from ${seller} to ${buyer}`);
+    console.log(`Contract address: ${contractAddress}`);
     
-    // Simulate trade with delay
+    // Simulate trade process
     return new Promise((resolve) => {
       setTimeout(() => {
+        // Generate mock transaction ID
+        const txId = "tx_" + Math.random().toString(36).substring(2, 15);
+        
+        // Return result
         resolve({
           success: true,
-          message: `Successfully traded ${amount} tokens from ${seller} to ${buyer}`,
-          transactionId: `tx_trade_${Math.random().toString(36).substring(2, 10)}`
+          txId
         });
       }, 2000);
     });

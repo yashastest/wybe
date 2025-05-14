@@ -1,330 +1,233 @@
 
 // Integration service for admin dashboard
-// This service handles integration related operations for deployment and admin
+// This service handles integration between different parts of the app
 
-// Types for deployment environment
-export type DeploymentEnvironment = {
-  id: string;
-  name: string;
-  url: string;
-  programIds: string[];
-  deploymentDate: number;
-  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-  status: 'active' | 'pending' | 'deprecated';
-};
-
-// Type for admin user access
+// Types for admin user access
 export interface AdminUserAccess {
-  email: string;
-  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  wallet: string;
   permissions: string[];
-  walletAddress?: string;
-  twoFactorEnabled?: boolean;
+  active: boolean;
+  name: string;
+  role: string;
+  lastLogin?: string;
 }
 
-// Type for deployment step
-export type DeploymentStep = {
+// Export DeploymentStep type that was missing
+export interface DeploymentStep {
   id: string;
-  title: string;
+  name: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
   command?: string;
-  prerequisite?: string[];
   output?: string;
-  verificationSteps?: {
-    id: string;
-    title: string;
-    status: 'pending' | 'success' | 'error';
-    message?: string;
-  }[];
-};
+  dependencies?: string[];
+}
 
-export const integrationService = {
-  // Method to get deployment checklist
-  getDeploymentChecklist: () => {
-    // Try to get from localStorage first
-    const storedChecklist = localStorage.getItem('deploymentChecklist');
-    
-    if (storedChecklist) {
-      try {
-        return JSON.parse(storedChecklist);
-      } catch (error) {
-        console.error("Error parsing checklist:", error);
-      }
-    }
-    
-    // Default checklist
-    const defaultChecklist = [
-      { id: 'contract', label: 'Smart contract built and tested', checked: false },
-      { id: 'wallets', label: 'Treasury wallets configured', checked: false },
-      { id: 'idl', label: 'Program IDL verified and documented', checked: false },
-      { id: 'security', label: 'Security audit completed', checked: false },
-      { id: 'test', label: 'Testnet deployment successful', checked: false },
-      { id: 'keys', label: 'All required keys secured and backed up', checked: false },
-      { id: 'frontend', label: 'Frontend integration tested', checked: false },
-      { id: 'docs', label: 'Deployment documentation finalized', checked: false }
-    ];
-    
-    // Store in localStorage for future use
-    localStorage.setItem('deploymentChecklist', JSON.stringify(defaultChecklist));
-    
-    return defaultChecklist;
+// Mock deployment checklist data
+const deploymentChecklist = [
+  {
+    id: '1',
+    name: 'Install Dependencies',
+    checked: true,
+    description: 'Install all required dependencies for the project'
   },
-  
-  // Method to update checklist item
+  {
+    id: '2',
+    name: 'Configure Environment',
+    checked: false,
+    description: 'Set up environment variables and configuration files'
+  },
+  {
+    id: '3',
+    name: 'Build Smart Contracts',
+    checked: false,
+    description: 'Compile and build smart contracts using Anchor'
+  },
+  {
+    id: '4',
+    name: 'Deploy to Test Network',
+    checked: false,
+    description: 'Deploy contracts to Solana testnet for testing'
+  },
+  {
+    id: '5',
+    name: 'Run Integration Tests',
+    checked: false,
+    description: 'Execute integration tests against deployed contracts'
+  },
+  {
+    id: '6',
+    name: 'Security Audit',
+    checked: false,
+    description: 'Perform security audit on deployed contracts'
+  },
+  {
+    id: '7',
+    name: 'Deploy to Mainnet',
+    checked: false,
+    description: 'Deploy finalized contracts to Solana mainnet'
+  }
+];
+
+// Mock admin users
+const adminUsers: AdminUserAccess[] = [
+  {
+    wallet: 'WybeAdmin123456789',
+    permissions: ['all'],
+    active: true,
+    name: 'Main Admin',
+    role: 'Super Admin',
+    lastLogin: new Date().toISOString()
+  },
+  {
+    wallet: 'WybeViewer987654321',
+    permissions: ['view'],
+    active: true,
+    name: 'Viewer Account',
+    role: 'Viewer',
+    lastLogin: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+  }
+];
+
+// Export integration service object
+export const integrationService = {
+  // Get deployment checklist
+  getDeploymentChecklist: () => {
+    return [...deploymentChecklist];
+  },
+
+  // Update checklist item
   updateChecklistItem: (id: string, checked: boolean) => {
-    const storedChecklist = localStorage.getItem('deploymentChecklist');
+    const index = deploymentChecklist.findIndex(item => item.id === id);
+    if (index !== -1) {
+      deploymentChecklist[index].checked = checked;
+      return true;
+    }
+    return false;
+  },
+
+  // Deploy full environment mock function
+  deployFullEnvironment: async (name: string, network: 'testnet' | 'mainnet' | 'devnet' | 'localnet') => {
+    console.log(`Deploying ${name} to ${network}...`);
     
-    if (storedChecklist) {
-      try {
-        const checklist = JSON.parse(storedChecklist);
-        const updatedChecklist = checklist.map((item: any) => 
-          item.id === id ? { ...item, checked } : item
-        );
-        
-        localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
+    // Simulate deployment
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          message: `Deployment of ${name} to ${network} completed successfully.`,
+          timestamp: new Date().toISOString(),
+          environment: {
+            name,
+            network,
+            status: 'active'
+          }
+        });
+      }, 2000);
+    });
+  },
+
+  // Get admin users
+  getAdminUsers: (adminWallet: string) => {
+    // Simulate check if admin has permission to view users
+    const admin = adminUsers.find(user => user.wallet === adminWallet);
+    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
+      return [...adminUsers];
+    }
+    return [];
+  },
+
+  // Add new admin user
+  addAdminUser: (user: AdminUserAccess, adminWallet: string) => {
+    // Simulate check if admin has permission to add users
+    const admin = adminUsers.find(userItem => userItem.wallet === adminWallet);
+    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
+      adminUsers.push(user);
+      return true;
+    }
+    return false;
+  },
+
+  // Update admin user
+  updateAdminUser: (user: AdminUserAccess, adminWallet: string) => {
+    // Simulate check if admin has permission to update users
+    const admin = adminUsers.find(userItem => userItem.wallet === adminWallet);
+    if (admin && (admin.permissions.includes('all') || admin.permissions.includes('manage_users'))) {
+      const index = adminUsers.findIndex(userItem => userItem.wallet === user.wallet);
+      if (index !== -1) {
+        adminUsers[index] = user;
         return true;
-      } catch (error) {
-        console.error("Error updating checklist:", error);
-        return false;
       }
     }
-    
     return false;
   },
   
-  // Method to deploy environment
-  deployFullEnvironment: async (
-    name: string,
-    network: 'mainnet' | 'testnet' | 'devnet' | 'localnet'
-  ): Promise<DeploymentEnvironment> => {
-    // Simulate deployment process with delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newEnvironment: DeploymentEnvironment = {
-          id: `env_${Date.now()}`,
-          name,
-          url: `https://${network}.wybe.io/${name.toLowerCase().replace(/\s+/g, '-')}`,
-          programIds: [
-            `Wybe${Date.now().toString(16).toUpperCase()}111111111111111111111`,
-          ],
-          deploymentDate: Date.now(),
-          network,
-          status: 'active'
-        };
-        
-        // Store in localStorage
-        const storedEnvironments = localStorage.getItem('deploymentEnvironments');
-        const environments = storedEnvironments ? JSON.parse(storedEnvironments) : [];
-        environments.push(newEnvironment);
-        localStorage.setItem('deploymentEnvironments', JSON.stringify(environments));
-        
-        resolve(newEnvironment);
-      }, 3000);
-    });
-  },
-  
-  // Get deployment steps for specific network
-  getDeploymentSteps: (network: string): DeploymentStep[] => {
-    // Try to get from localStorage first
-    const key = `deploymentSteps_${network}`;
-    const storedSteps = localStorage.getItem(key);
-    
-    if (storedSteps) {
-      try {
-        return JSON.parse(storedSteps);
-      } catch (error) {
-        console.error("Error parsing deployment steps:", error);
-      }
-    }
-    
-    // Default steps
-    const defaultSteps: DeploymentStep[] = [
+  // Get deployment steps for deployment guide
+  getDeploymentSteps: (): DeploymentStep[] => {
+    return [
       {
         id: '1',
-        title: 'Initialize Environment',
-        description: 'Setup necessary development environment for contract deployment',
+        name: 'Set up development environment',
+        description: 'Install Node.js, Solana CLI, and Anchor framework',
         status: 'completed',
-        command: 'anchor init wybe_token_program',
-        output: 'Environment initialized successfully!'
+        command: 'npm install -g @project-serum/anchor'
       },
       {
         id: '2',
-        title: 'Build Smart Contract',
-        description: 'Build the smart contract with Anchor framework',
+        name: 'Initialize project',
+        description: 'Create a new Anchor project',
         status: 'completed',
-        command: 'anchor build',
-        prerequisite: ['1'],
-        output: 'Build completed successfully!'
+        command: 'anchor init wybe_token_program',
+        dependencies: ['1']
       },
       {
         id: '3',
-        title: 'Configure Program ID',
-        description: 'Update Anchor.toml and lib.rs files with the program ID',
-        status: 'in-progress',
-        command: 'solana address -k ./target/deploy/wybe_token_program-keypair.json',
-        prerequisite: ['2']
+        name: 'Configure project',
+        description: 'Update Anchor.toml and program files',
+        status: 'completed',
+        dependencies: ['2']
       },
       {
         id: '4',
-        title: 'Deploy to Local Validator',
-        description: 'Deploy the program to a local Solana validator for testing',
-        status: 'pending',
-        command: 'anchor deploy --provider.cluster localnet',
-        prerequisite: ['2', '3']
+        name: 'Build project',
+        description: 'Compile the Rust program',
+        status: 'in-progress',
+        command: 'anchor build',
+        dependencies: ['3']
       },
       {
         id: '5',
-        title: 'Run Tests',
-        description: 'Execute test suite against the deployed program',
+        name: 'Deploy to localnet',
+        description: 'Test deployment on local Solana validator',
         status: 'pending',
-        command: 'anchor test',
-        prerequisite: ['4']
+        command: 'anchor deploy --provider.cluster localnet',
+        dependencies: ['4']
       },
       {
         id: '6',
-        title: `Deploy to ${network.charAt(0).toUpperCase() + network.slice(1)}`,
-        description: `Deploy the program to ${network}`,
+        name: 'Run tests',
+        description: 'Execute test suite',
         status: 'pending',
-        command: `anchor deploy --provider.cluster ${network}`,
-        prerequisite: ['5']
+        command: 'anchor test',
+        dependencies: ['5']
       },
       {
         id: '7',
-        title: 'Verify Deployment',
-        description: 'Confirm deployment status and program functionality',
+        name: 'Deploy to testnet',
+        description: 'Deploy to Solana testnet',
         status: 'pending',
-        command: 'npm run verify-deployment',
-        prerequisite: ['6']
-      }
-    ];
-    
-    // Store in localStorage for future use
-    localStorage.setItem(key, JSON.stringify(defaultSteps));
-    
-    return defaultSteps;
-  },
-  
-  // Methods for admin user management
-  getAdminUsers: (adminWallet: string): AdminUserAccess[] => {
-    const storedUsers = localStorage.getItem('adminUsers');
-    
-    if (storedUsers) {
-      try {
-        return JSON.parse(storedUsers);
-      } catch (error) {
-        console.error("Error parsing admin users:", error);
-      }
-    }
-    
-    // Default admin users
-    const defaultUsers: AdminUserAccess[] = [
-      {
-        email: 'admin@wybe.com',
-        role: 'superadmin',
-        permissions: ['all'],
-        walletAddress: adminWallet,
-        twoFactorEnabled: true
+        command: 'anchor deploy --provider.cluster testnet',
+        dependencies: ['6']
       },
       {
-        email: 'manager@wybe.com',
-        role: 'manager',
-        permissions: ['analytics_view', 'token_creation'],
-        twoFactorEnabled: false
-      },
-      {
-        email: 'support@wybe.com',
-        role: 'viewer',
-        permissions: ['analytics_view'],
-        twoFactorEnabled: false
+        id: '8',
+        name: 'Deploy to mainnet',
+        description: 'Deploy to Solana mainnet',
+        status: 'pending',
+        command: 'anchor deploy --provider.cluster mainnet-beta',
+        dependencies: ['7']
       }
     ];
-    
-    // Store in localStorage for future use
-    localStorage.setItem('adminUsers', JSON.stringify(defaultUsers));
-    
-    return defaultUsers;
-  },
-  
-  // Add admin user
-  addAdminUser: (user: AdminUserAccess, adminWallet: string): boolean => {
-    const storedUsers = localStorage.getItem('adminUsers');
-    
-    if (storedUsers) {
-      try {
-        const users: AdminUserAccess[] = JSON.parse(storedUsers);
-        
-        // Check if email already exists
-        if (users.some(u => u.email === user.email)) {
-          return false;
-        }
-        
-        users.push(user);
-        localStorage.setItem('adminUsers', JSON.stringify(users));
-        return true;
-      } catch (error) {
-        console.error("Error adding admin user:", error);
-        return false;
-      }
-    }
-    
-    return false;
-  },
-  
-  // Update admin user permissions
-  updateAdminUserPermissions: (
-    email: string,
-    role: AdminUserAccess['role'],
-    permissions: string[],
-    adminWallet: string
-  ): boolean => {
-    const storedUsers = localStorage.getItem('adminUsers');
-    
-    if (storedUsers) {
-      try {
-        const users: AdminUserAccess[] = JSON.parse(storedUsers);
-        
-        const updatedUsers = users.map(user => 
-          user.email === email 
-            ? { ...user, role, permissions } 
-            : user
-        );
-        
-        localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
-        return true;
-      } catch (error) {
-        console.error("Error updating admin user:", error);
-        return false;
-      }
-    }
-    
-    return false;
-  },
-  
-  // Remove admin user
-  removeAdminUser: (email: string, adminWallet: string): boolean => {
-    const storedUsers = localStorage.getItem('adminUsers');
-    
-    if (storedUsers) {
-      try {
-        const users: AdminUserAccess[] = JSON.parse(storedUsers);
-        
-        // Prevent removing the last superadmin
-        const superadmins = users.filter(u => u.role === 'superadmin');
-        if (superadmins.length === 1 && superadmins[0].email === email) {
-          return false;
-        }
-        
-        const filteredUsers = users.filter(user => user.email !== email);
-        localStorage.setItem('adminUsers', JSON.stringify(filteredUsers));
-        return true;
-      } catch (error) {
-        console.error("Error removing admin user:", error);
-        return false;
-      }
-    }
-    
-    return false;
   }
 };
 
