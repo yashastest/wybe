@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -70,6 +69,10 @@ const SmartContractDashboard = () => {
   
   const handleViewContracts = () => {
     navigate("/admin/smart-contract-testnet");
+  };
+  
+  const handleViewDeploymentGuide = () => {
+    navigate("/master-deployment-guide");
   };
 
   return (
@@ -215,6 +218,19 @@ const SmartContractDashboard = () => {
                   </Button>
                 )}
               </div>
+            </div>
+            <Separator className="bg-white/10" />
+            <div className="flex justify-between items-center py-2">
+              <span className="text-gray-400">Deployment Guide</span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-xs border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                onClick={handleViewDeploymentGuide}
+              >
+                View Master Guide
+                <ArrowUpRight size={12} className="ml-1" />
+              </Button>
             </div>
           </div>
         </motion.div>

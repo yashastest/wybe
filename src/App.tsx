@@ -12,6 +12,7 @@ import Trade from './pages/Trade';
 import NotFound from './pages/NotFound';
 import { Toaster } from "sonner";
 import SecurityReport from './pages/SecurityReport';
+import MasterDeploymentGuide from './pages/MasterDeploymentGuide';
 import { WalletProvider } from './hooks/useWallet';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/discover" element={<Discover />} />
           <Route path="/trade" element={<Trade />} />
           <Route path="/security-report" element={<SecurityReport />} />
+          <Route path="/master-deployment-guide" element={<MasterDeploymentGuide />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster position="top-center" />
