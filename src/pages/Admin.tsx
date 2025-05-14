@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -33,7 +34,8 @@ import {
   Download,
   XCircle as XCircleIcon,
   CheckCircle as CheckCircleIcon,
-  ArrowUpRight
+  ArrowUpRight,
+  ChartLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -70,6 +72,8 @@ import SmartContractTestnet from '@/components/admin/SmartContractTestnet';
 import DeploymentEnvironment from '@/components/admin/DeploymentEnvironment';
 import AdminUserManager from '@/components/admin/AdminUserManager';
 import MasterDeploymentGuide from '@/pages/MasterDeploymentGuide';
+import BondingCurveTester from '@/components/admin/BondingCurveTester';
+import HardwareWalletManager from '@/components/admin/HardwareWalletManager';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("status");
@@ -115,30 +119,42 @@ const Admin = () => {
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="contracts">Contracts</TabsTrigger>
           <TabsTrigger value="deployment">Deployment</TabsTrigger>
+          <TabsTrigger value="testing">Testing</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="guide" data-tab="guide">Deployment Guide</TabsTrigger>
         </TabsList>
         <TabsContent value="status" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AnchorStatusCard isAdminPanel={true} />
-            <Card className="glass-card p-5 border-wybe-primary/20">
+            <HardwareWalletManager />
+            <Card className="glass-card p-5 border-wybe-primary/20 lg:col-span-2">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold font-poppins">Quick Actions</CardTitle>
                 <CardDescription>Manage your smart contracts and deployments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full justify-start" onClick={() => navigate('/admin/contracts')}>
-                  <FileCode2 className="mr-2 h-4 w-4" />
-                  Manage Contracts
-                </Button>
-                <Button className="w-full justify-start" onClick={() => navigate('/admin/deployment')}>
-                  <Rocket className="mr-2 h-4 w-4" />
-                  Manage Deployments
-                </Button>
-                <Button className="w-full justify-start" onClick={() => navigate('/admin/users')}>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Manage Users
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button className="w-full justify-start" onClick={() => setActiveTab('contracts')}>
+                    <FileCode2 className="mr-2 h-4 w-4" />
+                    Manage Contracts
+                  </Button>
+                  <Button className="w-full justify-start" onClick={() => setActiveTab('deployment')}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Manage Deployments
+                  </Button>
+                  <Button className="w-full justify-start" onClick={() => setActiveTab('testing')}>
+                    <ChartLine className="mr-2 h-4 w-4" />
+                    Test Bonding Curve
+                  </Button>
+                  <Button className="w-full justify-start" onClick={() => setActiveTab('users')}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Manage Users
+                  </Button>
+                  <Button className="w-full justify-start" onClick={() => setActiveTab('guide')}>
+                    <Terminal className="mr-2 h-4 w-4" />
+                    Deployment Guide
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -148,6 +164,9 @@ const Admin = () => {
         </TabsContent>
         <TabsContent value="deployment" className="space-y-4">
           <DeploymentEnvironment />
+        </TabsContent>
+        <TabsContent value="testing" className="space-y-4">
+          <BondingCurveTester />
         </TabsContent>
         <TabsContent value="users" className="space-y-4">
           <AdminUserManager />

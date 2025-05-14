@@ -11,7 +11,9 @@ interface WalletContextType {
   connect: () => Promise<void>;
   disconnect: () => void;
   connectPhantom: () => Promise<void>;
+  connectHardwareWallet: () => Promise<void>;
   isSolanaAvailable: boolean;
+  isHardwareWallet: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -20,6 +22,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [wallet, setWallet] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSolanaAvailable, setIsSolanaAvailable] = useState(false);
+  const [isHardwareWallet, setIsHardwareWallet] = useState(false);
 
   // Get address from wallet and determine connection status
   const connected = wallet !== null;
@@ -28,8 +31,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     // Check local storage for previously connected wallet
     const savedWallet = localStorage.getItem("wybeWallet");
+    const isHardwareWalletConnected = localStorage.getItem("wybeHardwareWallet") === "true";
+    
     if (savedWallet) {
       setWallet(savedWallet);
+      setIsHardwareWallet(isHardwareWalletConnected);
     }
     
     // Check if Phantom/Solana is available
@@ -62,7 +68,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const mockWallet = "Wybe" + Math.random().toString(36).substring(2, 10);
       
       setWallet(mockWallet);
+      setIsHardwareWallet(false);
       localStorage.setItem("wybeWallet", mockWallet);
+      localStorage.setItem("wybeHardwareWallet", "false");
       toast.success("Wallet connected successfully!");
     } catch (error) {
       console.error("Failed to connect wallet:", error);
@@ -93,7 +101,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         // Save the wallet address
         setWallet(address);
+        setIsHardwareWallet(false);
         localStorage.setItem("wybeWallet", address);
+        localStorage.setItem("wybeHardwareWallet", "false");
         toast.success("Phantom wallet connected!");
       } catch (err) {
         console.error("User rejected the connection", err);
@@ -102,6 +112,48 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error) {
       console.error("Failed to connect Phantom wallet:", error);
       toast.error("Failed to connect Phantom wallet. Please try again.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const connectHardwareWallet = async () => {
+    setIsConnecting(true);
+    try {
+      // Check if Phantom is installed
+      if (!window.solana || !window.solana.isPhantom) {
+        window.open("https://phantom.app/", "_blank");
+        toast.error("Phantom wallet is not installed. Please install it first.");
+        setIsConnecting(false);
+        return;
+      }
+      
+      console.log("Connecting hardware wallet through Phantom...");
+      
+      try {
+        // In a real implementation, we would use Phantom's hardware wallet connection flow
+        // For this demo, we simulate the hardware wallet connection
+        toast.info("Please connect your hardware wallet and approve on the device...");
+        
+        // Simulate hardware wallet connection delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Generate a mock hardware wallet address (in reality, this would come from the hardware wallet)
+        const hardwareWalletAddress = "Wyb" + "Hardware" + Math.random().toString(36).substring(2, 8);
+        
+        // Save the hardware wallet address
+        setWallet(hardwareWalletAddress);
+        setIsHardwareWallet(true);
+        localStorage.setItem("wybeWallet", hardwareWalletAddress);
+        localStorage.setItem("wybeHardwareWallet", "true");
+        toast.success("Hardware wallet connected successfully!");
+      } catch (err) {
+        console.error("Hardware wallet connection failed", err);
+        toast.error("Hardware wallet connection failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Failed to connect hardware wallet:", error);
+      toast.error("Failed to connect hardware wallet. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -119,7 +171,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Clear local state
     setWallet(null);
+    setIsHardwareWallet(false);
     localStorage.removeItem("wybeWallet");
+    localStorage.removeItem("wybeHardwareWallet");
     toast.success("Wallet disconnected");
   };
 
@@ -130,7 +184,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       connect, 
       disconnect,
       connectPhantom,
+      connectHardwareWallet,
       isSolanaAvailable,
+      isHardwareWallet,
       connected,
       address
     }}>

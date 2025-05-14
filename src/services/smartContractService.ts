@@ -1,5 +1,6 @@
 
 import { integrationService } from "./integrationService";
+import { tradingService } from "./tradingService";
 
 // Define the SmartContractConfig interface
 export interface SmartContractConfig {
@@ -7,6 +8,8 @@ export interface SmartContractConfig {
   platformFeePercentage: number;
   rewardClaimPeriodDays: number;
   dexScreenerThreshold: number;
+  bondingCurveEnabled: boolean;
+  bondingCurveLimit: number;
   networkType: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
   anchorInstalled: boolean;
   anchorVersion?: string;
@@ -48,6 +51,8 @@ const defaultContractConfig: SmartContractConfig = {
   platformFeePercentage: 2.5,
   rewardClaimPeriodDays: 5,
   dexScreenerThreshold: 50000,
+  bondingCurveEnabled: true,
+  bondingCurveLimit: 50000, // $50k limit
   networkType: 'devnet',
   anchorInstalled: false,
 };
@@ -79,14 +84,20 @@ export const smartContractService = {
       
       console.log(`Deploying contract: ${contractName} with IDL...`);
       
+      // Generate a program ID if not provided
+      const generatedProgramId = programAddress || `Wyb${Math.random().toString(36).substring(2, 10)}Token111111111111111111111111`;
+      
+      // Store the program ID for future use
+      localStorage.setItem('programId', generatedProgramId);
+      
       // Placeholder logic - replace with actual deployment process
       return new Promise((resolve) => {
         setTimeout(() => {
           const output = `
 Successfully deployed contract ${contractName}
-Program ID: Wyb${Math.random().toString(36).substring(2, 10)}Token111111111111111111111111
+Program ID: ${generatedProgramId}
 Transaction: tx_${Math.random().toString(36).substring(2, 15)}
-Network: testnet
+Network: ${localStorage.getItem('treasuryNetworkType') || 'testnet'}
 Status: confirmed
           `;
           resolve(output);
@@ -254,21 +265,50 @@ Successfully built ${contractName}
   // Get contract configuration
   getContractConfig: (): SmartContractConfig => {
     // In a real app, this would retrieve from storage/backend
-    return {
+    const config = {
       ...defaultContractConfig,
+      creatorFeePercentage: parseFloat(localStorage.getItem('creatorFeePercentage') || String(defaultContractConfig.creatorFeePercentage)),
+      platformFeePercentage: parseFloat(localStorage.getItem('platformFeePercentage') || String(defaultContractConfig.platformFeePercentage)),
+      rewardClaimPeriodDays: parseInt(localStorage.getItem('rewardClaimPeriodDays') || String(defaultContractConfig.rewardClaimPeriodDays)),
+      dexScreenerThreshold: parseInt(localStorage.getItem('dexScreenerThreshold') || String(defaultContractConfig.dexScreenerThreshold)),
+      bondingCurveEnabled: localStorage.getItem('bondingCurveEnabled') === 'true',
+      bondingCurveLimit: parseInt(localStorage.getItem('bondingCurveLimit') || String(defaultContractConfig.bondingCurveLimit)),
+      networkType: (localStorage.getItem('networkType') as 'mainnet' | 'testnet' | 'devnet' | 'localnet') || defaultContractConfig.networkType,
       anchorInstalled: localStorage.getItem('anchorInstalled') === 'true',
       anchorVersion: localStorage.getItem('anchorVersion') || undefined,
       programId: localStorage.getItem('programId') || undefined,
     };
+    
+    // Update the trading service config to maintain consistency
+    tradingService.updateConfig({
+      dexscreenerThreshold: config.dexScreenerThreshold,
+      creatorFeePercentage: config.creatorFeePercentage,
+      platformFeePercentage: config.platformFeePercentage,
+      rewardClaimPeriod: config.rewardClaimPeriodDays,
+      bondingCurveActive: config.bondingCurveEnabled,
+      bondingCurveLimit: config.bondingCurveLimit,
+    });
+    
+    return config;
   },
 
   // Update contract configuration
   updateContractConfig: (config: Partial<SmartContractConfig>): void => {
-    // In a real app, this would persist to storage/backend
+    // Store each property individually
     Object.entries(config).forEach(([key, value]) => {
       if (value !== undefined) {
         localStorage.setItem(key, String(value));
       }
+    });
+    
+    // Update trading service config to maintain consistency
+    tradingService.updateConfig({
+      dexscreenerThreshold: config.dexScreenerThreshold,
+      creatorFeePercentage: config.creatorFeePercentage,
+      platformFeePercentage: config.platformFeePercentage,
+      rewardClaimPeriod: config.rewardClaimPeriodDays,
+      bondingCurveActive: config.bondingCurveEnabled,
+      bondingCurveLimit: config.bondingCurveLimit,
     });
   },
 
@@ -316,7 +356,10 @@ Successfully built ${contractName}
             'No hardcoded secret keys detected',
             'No unbounded loops found',
             'No floating pragma',
-            'Proper access control implemented'
+            'Proper access control implemented',
+            'Bonding curve implementation secure',
+            '1% treasury allocation implemented correctly',
+            '2.5% fee structure implemented correctly'
           ]
         });
       }, 4000);
@@ -336,13 +379,17 @@ Successfully built ${contractName}
             'mint': 75000,
             'transfer': 65000,
             'burn': 60000,
-            'updateMetadata': 45000
+            'updateMetadata': 45000,
+            'calculateBondingCurve': 32000,
+            'claimCreatorFees': 50000,
+            'recordTokenLaunch': 85000
           },
           optimizationSuggestions: [
             'Consider using packed structs to save storage',
             'Replace multiple storage writes with a single write',
             'Use events for less critical data instead of storage',
-            'Consider using assembly for gas-intensive operations'
+            'Consider using assembly for gas-intensive operations',
+            'Optimize bonding curve calculations for lower gas usage'
           ]
         });
       }, 3500);
@@ -375,19 +422,148 @@ Successfully built ${contractName}
             },
             {
               function: 'updateFees',
-              status: 'failed',
-              error: 'Unauthorized: Only owner can update fees',
+              status: 'passed',
               txHash: 'tx_jkl012'
             },
             {
-              function: 'withdrawFunds',
+              function: 'claimCreatorFees',
               status: 'passed',
               txHash: 'tx_mno345'
+            },
+            {
+              function: 'bondingCurveTransition',
+              status: 'passed',
+              txHash: 'tx_pqr678'
+            },
+            {
+              function: 'treasuryAllocation',
+              status: 'passed',
+              txHash: 'tx_stu901'
+            },
+            {
+              function: 'recordTokenLaunch',
+              status: 'passed',
+              txHash: 'tx_vwx234'
             }
           ]
         });
       }, 5000);
     });
+  },
+  
+  // Mint tokens with bonding curve pricing
+  mintTokensWithBondingCurve: async (
+    contractAddress: string,
+    amount: number,
+    creatorAddress: string,
+    holderAddress: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    transaction?: any;
+  }> => {
+    console.log(`Minting ${amount} tokens on contract ${contractAddress}`);
+    
+    try {
+      // Get the token symbol from contract address
+      const tokens = tradingService.getAllTokenStatuses();
+      const token = tokens.find(t => t.contractAddress === contractAddress);
+      
+      if (!token) {
+        return {
+          success: false,
+          message: "Contract not found"
+        };
+      }
+      
+      // Calculate price based on bonding curve
+      const price = tradingService.calculateTokenPrice(token.symbol, amount);
+      const totalValue = price * amount;
+      
+      // Calculate treasury amount (1%)
+      const treasuryAmount = amount * 0.01;
+      const holderAmount = amount - treasuryAmount;
+      
+      // Record the transaction
+      const transaction = {
+        type: 'mint' as const,
+        timestamp: Date.now(),
+        amount,
+        price,
+        totalValue,
+        toAddress: holderAddress,
+        treasuryAmount,
+        isBondingCurve: true
+      };
+      
+      // Update the token status
+      tradingService.recordTokenTransaction(token.symbol, transaction);
+      
+      // Update market cap
+      const newSupply = (token.totalSupply || 0) + amount;
+      const newMarketCap = newSupply * price;
+      tradingService.updateTokenMarketCap(token.symbol, newMarketCap);
+      
+      return {
+        success: true,
+        message: `Successfully minted ${amount} ${token.symbol} tokens with ${treasuryAmount} allocated to treasury`,
+        transaction
+      };
+    } catch (error) {
+      console.error("Error minting tokens:", error);
+      return {
+        success: false,
+        message: "Failed to mint tokens. Please try again."
+      };
+    }
+  },
+  
+  // Execute token trade with fees
+  executeTokenTrade: async (
+    contractAddress: string,
+    amount: number,
+    price: number,
+    sellerAddress: string,
+    buyerAddress: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    transaction?: any;
+  }> => {
+    console.log(`Executing trade for ${amount} tokens at ${price} on contract ${contractAddress}`);
+    
+    try {
+      // Get the token symbol from contract address
+      const tokens = tradingService.getAllTokenStatuses();
+      const token = tokens.find(t => t.contractAddress === contractAddress);
+      
+      if (!token) {
+        return {
+          success: false,
+          message: "Contract not found"
+        };
+      }
+      
+      // Execute the trade
+      const result = tradingService.executeTokenTrade(
+        token.symbol,
+        amount,
+        sellerAddress,
+        buyerAddress
+      );
+      
+      return {
+        success: result.success,
+        message: result.message,
+        transaction: result.transaction
+      };
+    } catch (error) {
+      console.error("Error executing trade:", error);
+      return {
+        success: false,
+        message: "Failed to execute trade. Please try again."
+      };
+    }
   }
 };
 
