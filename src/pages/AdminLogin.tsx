@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AdminLoginForm from '@/components/AdminLoginForm';
@@ -9,6 +10,15 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 const AdminLogin = () => {
   // Ensure the page starts at the top when loaded
   useScrollToTop();
+  const navigate = useNavigate();
+  
+  // If already logged in, redirect to admin panel
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+    if (isLoggedIn) {
+      navigate('/admin');
+    }
+  }, [navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">

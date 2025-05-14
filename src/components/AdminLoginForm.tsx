@@ -29,9 +29,9 @@ const AdminLoginForm = () => {
       
       // In production, this would be replaced with an actual API call
       if (username === 'admin' && password === 'password') {
-        toast.success('Login successful');
         // Save login state to localStorage for persistence
         localStorage.setItem("wybeAdminLoggedIn", "true");
+        toast.success('Login successful');
         navigate('/admin');
       } else {
         toast.error('Invalid credentials');

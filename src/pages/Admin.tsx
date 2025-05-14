@@ -11,6 +11,7 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import SmartContractDashboard from "@/components/admin/SmartContractDashboard";
 import SmartContractDeployment from "@/components/admin/SmartContractDeployment";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { 
   LayoutDashboard, 
   Check, 
@@ -29,12 +30,14 @@ const Admin = () => {
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
     if (!isLoggedIn) {
+      toast.error("Please login to access the admin panel");
       navigate("/admin-login");
     }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("wybeAdminLoggedIn");
+    toast.success("Logged out successfully");
     navigate("/admin-login");
   };
 
@@ -80,7 +83,6 @@ const Admin = () => {
     <div className="min-h-screen bg-black flex flex-col">
       <Header adminOnly={true} />
       
-      {/* Added top padding to create space */}
       <div className="flex flex-1 w-full max-w-[1400px] mx-auto pt-20">
         {/* Sidebar */}
         <motion.div
@@ -119,7 +121,7 @@ const Admin = () => {
         
         {/* Mobile Tabs */}
         <div className="md:hidden w-full px-4 pt-4">
-          <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full bg-transparent border border-white/10 rounded-lg p-1">
               <TabsTrigger 
                 value="dashboard" 
@@ -175,7 +177,6 @@ const Admin = () => {
         </motion.div>
       </div>
       
-      {/* Added bottom padding for footer clearance */}
       <div className="pb-6"></div>
       
       <Footer />
