@@ -1,4 +1,3 @@
-
 // Smart contract service for admin dashboard
 // This service handles smart contract related operations
 
@@ -38,11 +37,20 @@ export interface TestnetTestResult {
   }>;
 }
 
-interface DeploymentResult {
+export interface DeploymentResult {
   success: boolean;
   message: string;
   transactionId?: string;
   signature?: string;
+}
+
+interface TestnetContract {
+  name: string;
+  programId: string;
+  deployDate: string;
+  network: string;
+  txHash: string;
+  status: string;
 }
 
 export const smartContractService = {
@@ -163,6 +171,45 @@ Done! ${contractName} built successfully.
     
     // Store in localStorage for future use
     localStorage.setItem('deployedContracts', JSON.stringify(defaultContracts));
+    
+    return defaultContracts;
+  },
+  
+  // Get testnet contracts
+  getTestnetContracts: (): TestnetContract[] => {
+    // Try to get from localStorage first
+    const storedContracts = localStorage.getItem('deployedTestnetContracts');
+    
+    if (storedContracts) {
+      try {
+        return JSON.parse(storedContracts);
+      } catch (error) {
+        console.error('Error parsing testnet contracts:', error);
+      }
+    }
+    
+    // Default contracts
+    const defaultContracts: TestnetContract[] = [
+      {
+        name: 'Wybe Token Program',
+        programId: 'WybeTokenProg111111111111111111111111111',
+        network: 'testnet',
+        deployDate: '2023-10-15',
+        txHash: 'tx_3jP88qZ5M1pXbUfGiA7LmX4VnDS3eAo8x3vZh4RnD5oQy6F711bPw3dH5M9S',
+        status: 'active'
+      },
+      {
+        name: 'Creator Fee Treasury',
+        programId: 'WybeFeeTreasury111111111111111111111111',
+        network: 'testnet',
+        deployDate: '2023-10-17',
+        txHash: 'tx_5kO93pG7Y2q0dWgTiA8KnZ7RnQS4fL9z5wZd6PqF7nRx4E511cQr5eJ3T2V',
+        status: 'active'
+      }
+    ];
+    
+    // Store in localStorage for future use
+    localStorage.setItem('deployedTestnetContracts', JSON.stringify(defaultContracts));
     
     return defaultContracts;
   },
