@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
 import DeploymentGuide from "@/components/admin/DeploymentGuide";
 import DeploymentEnvironment from "@/components/admin/DeploymentEnvironment";
+import AboutProject from "@/components/admin/AboutProject";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useAdmin from "@/hooks/useAdmin";
 import { 
@@ -27,7 +28,8 @@ import {
   Folder,
   Wallet,
   Menu,
-  Cloud
+  Cloud,
+  Info
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -69,6 +71,7 @@ const Admin = () => {
         { id: "environment", label: "Deployment Environment", icon: <Cloud size={18} /> },
         { id: "treasury", label: "Treasury Management", icon: <Wallet size={18} /> },
         { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
+        { id: "about", label: "About Project", icon: <Info size={18} /> },
       ]
     },
     {
@@ -220,6 +223,12 @@ const Admin = () => {
               >
                 Treasury
               </button>
+              <button 
+                onClick={() => setActiveTab("about")}
+                className={`px-4 py-2 whitespace-nowrap ${activeTab === "about" ? "text-orange-500 border-b-2 border-orange-500" : "text-white"}`}
+              >
+                About
+              </button>
             </div>
           </div>
         </div>
@@ -240,6 +249,7 @@ const Admin = () => {
           {activeTab === "environment" && <DeploymentEnvironment />}
           {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
+          {activeTab === "about" && <AboutProject />}
           {activeTab === "projects" && (
             <div className="glass-card p-6">
               <h2 className="text-xl font-bold mb-4">Projects</h2>
