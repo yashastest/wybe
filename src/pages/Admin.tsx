@@ -12,6 +12,8 @@ import SmartContractDashboard from "@/components/admin/SmartContractDashboard";
 import SmartContractDeployment from "@/components/admin/SmartContractDeployment";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import TreasuryWalletManager from "@/components/admin/TreasuryWalletManager";
+import DeploymentGuide from "@/components/admin/DeploymentGuide";
 import { 
   LayoutDashboard, 
   Check, 
@@ -19,7 +21,8 @@ import {
   Activity, 
   Package, 
   LogOut, 
-  Folder 
+  Folder,
+  Wallet
 } from "lucide-react";
 
 const Admin = () => {
@@ -50,6 +53,8 @@ const Admin = () => {
         { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
         { id: "approvals", label: "Approvals", icon: <Check size={18} /> },
         { id: "contracts", label: "Smart Contracts", icon: <Folder size={18} /> },
+        { id: "deployment", label: "Deployment Guide", icon: <Package size={18} /> },
+        { id: "treasury", label: "Treasury Management", icon: <Wallet size={18} /> },
         { id: "analytics", label: "Analytics", icon: <Activity size={18} /> },
       ]
     },
@@ -138,6 +143,13 @@ const Admin = () => {
                 Approvals
               </TabsTrigger>
               <TabsTrigger 
+                value="contracts" 
+                className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
+              >
+                <Folder size={16} className="mr-1" />
+                Contracts
+              </TabsTrigger>
+              <TabsTrigger 
                 value="settings" 
                 className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-500"
               >
@@ -160,7 +172,8 @@ const Admin = () => {
           {activeTab === "approvals" && <PendingApprovals />}
           {activeTab === "analytics" && <AnalyticsDashboard />}
           {activeTab === "contracts" && <SmartContractDashboard />}
-          {activeTab === "deployment" && <SmartContractDeployment />}
+          {activeTab === "deployment" && <DeploymentGuide />}
+          {activeTab === "treasury" && <TreasuryWalletManager />}
           {activeTab === "settings" && <AdminSettings />}
           {activeTab === "projects" && (
             <div className="glass-card p-6">
