@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,37 +43,31 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Directly check local storage instead of relying on the hook initially
-  const initialAuthCheck = () => {
-    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
-    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
-    return isLoggedIn && sessionExists;
-  };
-  
-  // If not authenticated on first render, redirect immediately
-  useEffect(() => {
-    if (!initialAuthCheck()) {
-      console.log("Initial check: Not authenticated, redirecting to login");
-      navigate('/admin-login');
-    }
-  }, []);
-  
-  // Now use the hook for subsequent checks and state management
+  // Use the admin hook with proper authentication
   const { isAuthenticated, isLoading, logout } = useAdmin();
 
-  // Add a loading state before showing content
+  // State to control when to show content
   const [showContent, setShowContent] = useState(false);
+  
   useEffect(() => {
-    // Allow time for session check to complete
-    const timer = setTimeout(() => {
-      if (initialAuthCheck()) {
-        setShowContent(true);
-      } else {
+    // Check authentication immediately on component mount
+    const checkAuth = () => {
+      const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+      const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+      
+      console.log("Admin page initial auth check:", { isLoggedIn, sessionExists });
+      
+      if (!isLoggedIn || !sessionExists) {
+        console.log("Not authenticated, redirecting to login");
         navigate('/admin-login');
+        return;
       }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+      
+      setShowContent(true);
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   useEffect(() => {
     // Setup event listeners for data-attribute buttons
@@ -113,9 +106,9 @@ const Admin = () => {
     );
   }
 
-  // Redirect if not authenticated (this is a backup check)
-  if (!isAuthenticated && !initialAuthCheck()) {
-    console.log("Secondary check: Not authenticated, redirecting to login");
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    console.log("useAdmin hook says not authenticated, redirecting to login");
     navigate('/admin-login');
     return null;
   }

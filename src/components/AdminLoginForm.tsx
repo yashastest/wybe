@@ -23,10 +23,6 @@ const AdminLoginForm = () => {
     if (username === 'admin' && password === 'password') {
       console.log("Credentials valid, setting session data");
       
-      // Clear any existing session data
-      localStorage.removeItem('wybeAdminLoggedIn');
-      sessionStorage.removeItem('wybeAdminSession');
-      
       // Set fresh session data
       localStorage.setItem('wybeAdminLoggedIn', 'true');
       sessionStorage.setItem('wybeAdminSession', Date.now().toString());
@@ -38,8 +34,12 @@ const AdminLoginForm = () => {
       
       toast.success('Login successful!');
       
-      // Use window.location for a hard redirect
-      window.location.href = '/admin';
+      // Use a short timeout to ensure the session is properly set
+      // before navigating to the admin page
+      setTimeout(() => {
+        navigate('/admin');
+        setIsLoading(false);
+      }, 100);
     } else {
       toast.error('Invalid credentials. Please check username and password.');
       setIsLoading(false);

@@ -13,23 +13,18 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
+    // Check if already logged in, redirect to admin panel
+    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
+    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
+    
+    if (isLoggedIn && sessionExists) {
+      navigate('/admin');
+      return;
+    }
+    
     // Clear any stale session data when arriving at login page
     localStorage.removeItem("wybeAdminLoggedIn");
     sessionStorage.removeItem("wybeAdminSession");
-    
-    // Check if user navigates directly to admin after clearing
-    const handleBeforeUnload = () => {
-      // This ensures we don't have lingering session data
-      if (window.location.pathname === '/admin-login') {
-        localStorage.removeItem("wybeAdminLoggedIn");
-        sessionStorage.removeItem("wybeAdminSession");
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
   }, [navigate]);
   
   return (
