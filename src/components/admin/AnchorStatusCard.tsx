@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Download, AlertTriangle, Terminal, ExternalLink, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { smartContractService } from "@/services/smartContractService";
 import { integrationService } from "@/services/integrationService";
-import { installAnchorCLI } from "@/scripts/anchorBuild";
 
 const AnchorStatusCard = () => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
@@ -54,8 +54,8 @@ const AnchorStatusCard = () => {
     toast.info("Installing Anchor CLI...");
     
     try {
-      // Install Anchor CLI (simulation in browser, would be real in local environment)
-      await installAnchorCLI();
+      // Use the smart contract service to install Anchor
+      await smartContractService.installAnchorCLI();
       
       // Update smart contract service configuration
       smartContractService.updateContractConfig({

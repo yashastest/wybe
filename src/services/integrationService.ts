@@ -1,424 +1,275 @@
 
-// Integration service to handle all third-party integrations
-import { toast } from "sonner";
 import { setMockAnchorStatus } from "@/scripts/anchorBuild";
 
-// Types for environment deployment
-export interface EnvironmentConfig {
-  networkType: 'mainnet' | 'testnet' | 'devnet';
-  frontendUrl?: string;
-  backendUrl?: string;
-  creatorFeePercentage?: number;
-  platformFeePercentage?: number;
+// Types for admin user access
+export type AdminAccessLevel = 'admin' | 'manager' | 'viewer';
+
+export interface AdminUserAccess {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  accessLevel: AdminAccessLevel;
+  permissions: string[];
+  lastLogin?: string;
+  isActive: boolean;
 }
 
-// Treasury wallet type
+// Types for treasury wallets
 export interface TreasuryWallet {
   id: string;
   name: string;
   address: string;
   balance: number;
-  tokenBalance?: {
-    symbol: string;
-    amount: number;
-  }[];
-  isMultisig: boolean;
-  signers?: string[];
-  threshold?: number;
-}
-
-// Admin user access type
-export interface AdminUserAccess {
-  email: string;
-  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
-  permissions: string[];
-  walletAddress?: string;
-  twoFactorEnabled?: boolean;
+  network: string;
+  purpose: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 class IntegrationService {
-  /**
-   * Set mock Anchor status for testing
-   */
-  public setMockAnchorStatus(enabled: boolean, version?: string): void {
-    setMockAnchorStatus(enabled, version);
-    
-    // Update local storage
-    localStorage.setItem('anchorInstalled', enabled.toString());
-    if (version) {
-      localStorage.setItem('anchorVersion', version);
-    } else if (!enabled) {
-      localStorage.removeItem('anchorVersion');
-    }
-    
-    console.log(`Mock Anchor CLI ${enabled ? 'enabled' : 'disabled'}, version: ${version || 'none'}`);
+  // Method to set mock Anchor status
+  public setMockAnchorStatus(installed: boolean, version?: string): void {
+    setMockAnchorStatus(installed, version);
   }
-  
-  /**
-   * Deploy full environment (frontend, backend, contracts)
-   */
-  public async deployFullEnvironment(
-    config: EnvironmentConfig,
-    walletAddress: string
-  ): Promise<{ success: boolean; message: string; txHash?: string }> {
-    console.log("Deploying full environment with config:", config);
-    console.log("Using wallet:", walletAddress);
-    
-    try {
-      // Simulate environment deployment process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Generate mock txHash
-      const txHash = `env_${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 8)}`;
-      
-      // Store deployment info
-      localStorage.setItem('environmentDeployed', 'true');
-      localStorage.setItem('environmentNetwork', config.networkType);
-      localStorage.setItem('environmentWallet', walletAddress);
-      localStorage.setItem('environmentFrontendUrl', config.frontendUrl || 'https://app.wybe.finance');
-      localStorage.setItem('environmentBackendUrl', config.backendUrl || 'https://api.wybe.finance');
-      
-      // Update deployment checklist
-      this.updateChecklistItem('anchor', true);
-      this.updateChecklistItem('wallet', true);
-      this.updateChecklistItem('security', true);
-      
-      return {
-        success: true,
-        message: `Environment successfully deployed to ${config.networkType}`,
-        txHash
-      };
-    } catch (error) {
-      console.error("Environment deployment error:", error);
-      return {
-        success: false,
-        message: `Failed to deploy environment: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
-  }
-  
-  /**
-   * Update a deployment checklist item
-   */
-  public updateChecklistItem(id: string, checked: boolean): void {
+
+  // Method to update a checklist item
+  public updateChecklistItem(itemId: string, checked: boolean): void {
     try {
       const checklistString = localStorage.getItem('deploymentChecklist');
-      const checklist = checklistString ? JSON.parse(checklistString) : [
-        { id: 'anchor', label: 'Anchor CLI is installed and configured', checked: false },
-        { id: 'wallet', label: 'Wallet is connected and has sufficient SOL', checked: false },
-        { id: 'contract', label: 'Smart contract code is finalized', checked: false },
-        { id: 'treasury', label: 'Treasury wallet is configured', checked: false },
-        { id: 'fees', label: 'Creator and platform fees are set', checked: true },
-        { id: 'security', label: 'Security audit is complete', checked: false }
-      ];
+      const checklist = checklistString ? JSON.parse(checklistString) : [];
       
       const updatedChecklist = checklist.map((item: any) => 
-        item.id === id ? {...item, checked} : item
+        item.id === itemId ? { ...item, checked } : item
       );
       
       localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
     } catch (error) {
-      console.error("Error updating checklist item:", error);
+      console.error('Error updating checklist item:', error);
     }
+  }
+
+  // Methods for admin user management
+  public getAdminUsers(): Promise<AdminUserAccess[]> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const savedUsers = localStorage.getItem('adminUsers');
+        const users = savedUsers ? JSON.parse(savedUsers) : [
+          {
+            id: '1',
+            email: 'admin@wybe.finance',
+            name: 'Admin User',
+            role: 'Administrator',
+            accessLevel: 'admin',
+            permissions: ['read', 'write', 'deploy', 'manage_users'],
+            lastLogin: new Date().toISOString(),
+            isActive: true
+          },
+          {
+            id: '2',
+            email: 'manager@wybe.finance',
+            name: 'Manager User',
+            role: 'Manager',
+            accessLevel: 'manager',
+            permissions: ['read', 'write'],
+            lastLogin: new Date().toISOString(),
+            isActive: true
+          }
+        ];
+        
+        resolve(users);
+      }, 500);
+    });
   }
   
-  /**
-   * Get the deployment checklist
-   */
-  public getDeploymentChecklist(): any[] {
-    try {
-      const checklistString = localStorage.getItem('deploymentChecklist');
-      if (checklistString) {
-        return JSON.parse(checklistString);
-      }
-      
-      // Default checklist
-      const defaultChecklist = [
-        { id: 'anchor', label: 'Anchor CLI is installed and configured', checked: false },
-        { id: 'wallet', label: 'Wallet is connected and has sufficient SOL', checked: false },
-        { id: 'contract', label: 'Smart contract code is finalized', checked: false },
-        { id: 'treasury', label: 'Treasury wallet is configured', checked: false },
-        { id: 'fees', label: 'Creator and platform fees are set', checked: true },
-        { id: 'security', label: 'Security audit is complete', checked: false }
-      ];
-      
-      localStorage.setItem('deploymentChecklist', JSON.stringify(defaultChecklist));
-      return defaultChecklist;
-    } catch (error) {
-      console.error("Error getting checklist:", error);
-      return [];
-    }
+  public addAdminUser(user: Omit<AdminUserAccess, 'id'>): Promise<AdminUserAccess> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Get existing users
+        const savedUsers = localStorage.getItem('adminUsers');
+        const users = savedUsers ? JSON.parse(savedUsers) : [];
+        
+        // Create new user with ID
+        const newUser = {
+          ...user,
+          id: `user_${Date.now()}`,
+          lastLogin: new Date().toISOString(),
+        };
+        
+        // Add to storage
+        const updatedUsers = [...users, newUser];
+        localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
+        
+        resolve(newUser);
+      }, 800);
+    });
   }
-
-  /**
-   * Get admin users for a given wallet
-   */
-  public getAdminUsers(walletAddress: string): AdminUserAccess[] {
-    try {
-      const usersString = localStorage.getItem(`adminUsers_${walletAddress}`);
-      if (usersString) {
-        return JSON.parse(usersString);
-      }
-      
-      // Create default admin user if none exist
-      const defaultUsers = [
-        {
-          email: 'admin@wybe.finance',
-          role: 'superadmin',
-          permissions: ['all'],
-          walletAddress: walletAddress,
-          twoFactorEnabled: false
-        }
-      ] as AdminUserAccess[];
-      
-      localStorage.setItem(`adminUsers_${walletAddress}`, JSON.stringify(defaultUsers));
-      return defaultUsers;
-    } catch (error) {
-      console.error("Error getting admin users:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Add a new admin user
-   */
-  public addAdminUser(user: AdminUserAccess, walletAddress: string): boolean {
-    try {
-      const users = this.getAdminUsers(walletAddress);
-      
-      // Check if email already exists
-      if (users.some(u => u.email === user.email)) {
-        return false;
-      }
-      
-      users.push(user);
-      localStorage.setItem(`adminUsers_${walletAddress}`, JSON.stringify(users));
-      return true;
-    } catch (error) {
-      console.error("Error adding admin user:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Update admin user permissions
-   */
+  
   public updateAdminUserPermissions(
-    email: string,
-    role: AdminUserAccess['role'],
-    permissions: string[],
-    walletAddress: string
-  ): boolean {
-    try {
-      const users = this.getAdminUsers(walletAddress);
-      const updatedUsers = users.map(user => 
-        user.email === email ? { ...user, role, permissions } : user
-      );
-      
-      localStorage.setItem(`adminUsers_${walletAddress}`, JSON.stringify(updatedUsers));
-      return true;
-    } catch (error) {
-      console.error("Error updating admin user permissions:", error);
-      return false;
-    }
+    userId: string, 
+    updates: Partial<AdminUserAccess>
+  ): Promise<AdminUserAccess> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Get existing users
+        const savedUsers = localStorage.getItem('adminUsers');
+        const users = savedUsers ? JSON.parse(savedUsers) : [];
+        
+        // Find and update user
+        const userIndex = users.findIndex((u: AdminUserAccess) => u.id === userId);
+        
+        if (userIndex === -1) {
+          return reject(new Error('User not found'));
+        }
+        
+        const updatedUser = { ...users[userIndex], ...updates };
+        users[userIndex] = updatedUser;
+        
+        // Save updated users
+        localStorage.setItem('adminUsers', JSON.stringify(users));
+        
+        resolve(updatedUser);
+      }, 600);
+    });
+  }
+  
+  public removeAdminUser(userId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Get existing users
+        const savedUsers = localStorage.getItem('adminUsers');
+        const users = savedUsers ? JSON.parse(savedUsers) : [];
+        
+        // Filter out the user
+        const updatedUsers = users.filter((u: AdminUserAccess) => u.id !== userId);
+        
+        // Save updated users
+        localStorage.setItem('adminUsers', JSON.stringify(updatedUsers));
+        
+        resolve(true);
+      }, 600);
+    });
   }
 
-  /**
-   * Remove an admin user
-   */
-  public removeAdminUser(email: string, walletAddress: string): boolean {
-    try {
-      const users = this.getAdminUsers(walletAddress);
-      
-      // Don't remove the last superadmin
-      const remainingSuperadmins = users.filter(u => u.role === 'superadmin' && u.email !== email);
-      if (users.find(u => u.email === email)?.role === 'superadmin' && remainingSuperadmins.length === 0) {
-        toast.error("Cannot remove the last superadmin");
-        return false;
-      }
-      
-      const filteredUsers = users.filter(user => user.email !== email);
-      localStorage.setItem(`adminUsers_${walletAddress}`, JSON.stringify(filteredUsers));
-      return true;
-    } catch (error) {
-      console.error("Error removing admin user:", error);
-      return false;
-    }
+  // Methods for treasury wallet management
+  public getTreasuryWallets(): Promise<TreasuryWallet[]> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const savedWallets = localStorage.getItem('treasuryWallets');
+        const wallets = savedWallets ? JSON.parse(savedWallets) : [
+          {
+            id: '1',
+            name: 'Main Treasury',
+            address: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
+            balance: 145.75,
+            network: 'mainnet',
+            purpose: 'Platform fees',
+            isActive: true,
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: '2',
+            name: 'Development Fund',
+            address: 'Devh8H4L3sGjFNuaEDrH3JE6Uuy9ZdnHUEW9Pgjh4NM',
+            balance: 58.42,
+            network: 'mainnet',
+            purpose: 'Development expenses',
+            isActive: true,
+            createdAt: new Date().toISOString()
+          }
+        ];
+        
+        resolve(wallets);
+      }, 500);
+    });
   }
-
-  /**
-   * Get treasury wallets
-   */
-  public async getTreasuryWallets(walletAddress: string): Promise<TreasuryWallet[]> {
-    try {
-      const walletsString = localStorage.getItem(`treasuryWallets_${walletAddress}`);
-      if (walletsString) {
-        return JSON.parse(walletsString);
-      }
-      
-      // Create default treasury wallet if none exist
-      const defaultWallets = [
-        {
-          id: 'wallet-default',
-          name: 'Main Treasury',
-          address: walletAddress,
-          balance: 100,
-          tokenBalance: [
-            { symbol: 'WYBE', amount: 1000000 },
-            { symbol: 'USDC', amount: 5000 }
-          ],
-          isMultisig: false
-        },
-        {
-          id: 'wallet-multisig',
-          name: 'Security Reserve',
-          address: 'Wyb222222222222222222222222222222222222222',
-          balance: 250,
-          tokenBalance: [
-            { symbol: 'WYBE', amount: 5000000 }
-          ],
-          isMultisig: true,
-          signers: [
-            walletAddress,
-            'FkGFCvYkW13Nfx42UcCgJhfRSRuJD2rQHBKgKBhZMJcb',
-            'CGZQ9JhweWJ6RprQUQgVoPe8mWM1YJzUcGrqpvZT6i8c'
-          ],
-          threshold: 2
-        }
-      ] as TreasuryWallet[];
-      
-      localStorage.setItem(`treasuryWallets_${walletAddress}`, JSON.stringify(defaultWallets));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return defaultWallets;
-    } catch (error) {
-      console.error("Error getting treasury wallets:", error);
-      return [];
-    }
+  
+  public addTreasuryWallet(wallet: Omit<TreasuryWallet, 'id' | 'createdAt'>): Promise<TreasuryWallet> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Get existing wallets
+        const savedWallets = localStorage.getItem('treasuryWallets');
+        const wallets = savedWallets ? JSON.parse(savedWallets) : [];
+        
+        // Create new wallet with ID
+        const newWallet = {
+          ...wallet,
+          id: `wallet_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        };
+        
+        // Add to storage
+        const updatedWallets = [...wallets, newWallet];
+        localStorage.setItem('treasuryWallets', JSON.stringify(updatedWallets));
+        
+        resolve(newWallet);
+      }, 800);
+    });
   }
-
-  /**
-   * Add a new treasury wallet
-   */
-  public async addTreasuryWallet(wallet: TreasuryWallet, walletAddress: string): Promise<boolean> {
-    try {
-      const wallets = await this.getTreasuryWallets(walletAddress);
-      
-      // Check if address already exists
-      if (wallets.some(w => w.address === wallet.address)) {
-        return false;
-      }
-      
-      wallets.push(wallet);
-      localStorage.setItem(`treasuryWallets_${walletAddress}`, JSON.stringify(wallets));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      return true;
-    } catch (error) {
-      console.error("Error adding treasury wallet:", error);
-      return false;
-    }
+  
+  public removeTreasuryWallet(walletId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Get existing wallets
+        const savedWallets = localStorage.getItem('treasuryWallets');
+        const wallets = savedWallets ? JSON.parse(savedWallets) : [];
+        
+        // Filter out the wallet
+        const updatedWallets = wallets.filter((w: TreasuryWallet) => w.id !== walletId);
+        
+        // Save updated wallets
+        localStorage.setItem('treasuryWallets', JSON.stringify(updatedWallets));
+        
+        resolve(true);
+      }, 600);
+    });
   }
-
-  /**
-   * Remove a treasury wallet
-   */
-  public async removeTreasuryWallet(id: string, walletAddress: string): Promise<boolean> {
-    try {
-      const wallets = await this.getTreasuryWallets(walletAddress);
-      const filteredWallets = wallets.filter(wallet => wallet.id !== id);
-      
-      localStorage.setItem(`treasuryWallets_${walletAddress}`, JSON.stringify(filteredWallets));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return true;
-    } catch (error) {
-      console.error("Error removing treasury wallet:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Transfer funds between treasury wallets
-   */
-  public async transferBetweenTreasuryWallets(
-    fromWalletId: string,
-    toWalletId: string,
-    amount: number,
-    token: string,
-    walletAddress: string
-  ): Promise<boolean> {
-    try {
-      const wallets = await this.getTreasuryWallets(walletAddress);
-      
-      const fromIndex = wallets.findIndex(w => w.id === fromWalletId);
-      const toIndex = wallets.findIndex(w => w.id === toWalletId);
-      
-      if (fromIndex === -1 || toIndex === -1) {
-        return false;
-      }
-      
-      if (token === 'SOL') {
-        // Ensure there are sufficient funds
-        if (wallets[fromIndex].balance < amount) {
-          toast.error("Insufficient SOL balance for transfer");
-          return false;
+  
+  public transferBetweenTreasuryWallets(
+    fromId: string,
+    toId: string,
+    amount: number
+  ): Promise<{ success: boolean; newBalances: { fromBalance: number; toBalance: number } }> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Get existing wallets
+        const savedWallets = localStorage.getItem('treasuryWallets');
+        const wallets = savedWallets ? JSON.parse(savedWallets) : [];
+        
+        // Find source and destination wallets
+        const sourceIdx = wallets.findIndex((w: TreasuryWallet) => w.id === fromId);
+        const destIdx = wallets.findIndex((w: TreasuryWallet) => w.id === toId);
+        
+        if (sourceIdx === -1 || destIdx === -1) {
+          return reject(new Error('Wallet not found'));
         }
         
-        // Update SOL balances
-        wallets[fromIndex].balance -= amount;
-        wallets[toIndex].balance += amount;
-      } else {
-        // Find token in from wallet
-        const fromTokenIndex = wallets[fromIndex].tokenBalance?.findIndex(t => t.symbol === token) ?? -1;
+        const sourceWallet = wallets[sourceIdx];
         
-        if (fromTokenIndex === -1 || !wallets[fromIndex].tokenBalance) {
-          toast.error(`No ${token} tokens in source wallet`);
-          return false;
+        // Check if source has enough balance
+        if (sourceWallet.balance < amount) {
+          return reject(new Error('Insufficient balance'));
         }
         
-        // Ensure there are sufficient tokens
-        if (wallets[fromIndex].tokenBalance[fromTokenIndex].amount < amount) {
-          toast.error(`Insufficient ${token} balance for transfer`);
-          return false;
-        }
+        // Update balances
+        wallets[sourceIdx].balance -= amount;
+        wallets[destIdx].balance += amount;
         
-        // Update token balances
-        wallets[fromIndex].tokenBalance[fromTokenIndex].amount -= amount;
+        // Save updated wallets
+        localStorage.setItem('treasuryWallets', JSON.stringify(wallets));
         
-        // Find or create token in to wallet
-        if (!wallets[toIndex].tokenBalance) {
-          wallets[toIndex].tokenBalance = [];
-        }
-        
-        const toTokenIndex = wallets[toIndex].tokenBalance.findIndex(t => t.symbol === token);
-        
-        if (toTokenIndex === -1) {
-          wallets[toIndex].tokenBalance.push({ symbol: token, amount });
-        } else {
-          wallets[toIndex].tokenBalance[toTokenIndex].amount += amount;
-        }
-      }
-      
-      localStorage.setItem(`treasuryWallets_${walletAddress}`, JSON.stringify(wallets));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      return true;
-    } catch (error) {
-      console.error("Error transferring between treasury wallets:", error);
-      return false;
-    }
+        resolve({ 
+          success: true, 
+          newBalances: {
+            fromBalance: wallets[sourceIdx].balance,
+            toBalance: wallets[destIdx].balance
+          }
+        });
+      }, 1000);
+    });
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const integrationService = new IntegrationService();
 export default integrationService;

@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation } from "../scripts/anchorBuild";
+import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation, installAnchorCLI as installAnchor } from "../scripts/anchorBuild";
 import { treasuryService } from "./treasuryService";
 
 // Interface for the smart contract configuration
@@ -65,6 +65,27 @@ class SmartContractService {
       } catch (error) {
         console.error("Error getting Anchor version:", error);
       }
+    }
+  }
+  
+  /**
+   * Install Anchor CLI
+   */
+  public async installAnchorCLI(): Promise<boolean> {
+    try {
+      // Use the function from anchorBuild
+      const result = await installAnchor();
+      
+      // Update configuration
+      if (result) {
+        this.config.anchorInstalled = true;
+        this.config.anchorVersion = 'v0.29.0';
+      }
+      
+      return result;
+    } catch (error) {
+      console.error("Error installing Anchor CLI:", error);
+      throw error;
     }
   }
   
@@ -349,7 +370,7 @@ Program logs:
         this.config.treasuryAddress = newTreasuryWallet;
         
         // Generate mock transaction hash
-        const txHash = `treasury_${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 8)}`;
+        const txHash = `treasury_${Date.now().toString(16)}_${Math.random().toString(16).slice(2, 8)}`;
         
         return {
           success: true,
