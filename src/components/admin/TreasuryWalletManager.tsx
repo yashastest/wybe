@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,8 @@ interface TreasuryWallet {
   isMultisig: boolean;
   signers?: string[];
   threshold?: number;
+  network: string;
+  isPrimary: boolean;
 }
 
 const TreasuryWalletManager = () => {
@@ -159,15 +162,15 @@ const TreasuryWalletManager = () => {
     
     try {
       // Create wallet with the component's required structure
-      const walletToAdd: TreasuryWallet = {
-        id: `wallet-${Date.now()}`,
+      const walletToAdd = {
         name: newWallet.name,
         address: newWallet.address,
         balance: 0,
         isMultisig: newWallet.isMultisig,
         signers: newWallet.isMultisig ? newWallet.signers : undefined,
         threshold: newWallet.isMultisig ? newWallet.threshold : undefined,
-        tokenBalance: []
+        network: 'mainnet', // Default network
+        isPrimary: false // Default not primary
       };
       
       // In a real app, this would be an API call

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,7 @@ const ContractSecurityAudit = () => {
       setAuditResults(results);
       
       // Update checklist
-      integrationService.updateChecklistItem('security', true);
+      integrationService.updateChecklistItem('5', true);
       
       // Find high risk issues
       const highRisks = results.issues.filter(issue => issue.severity === 'high');

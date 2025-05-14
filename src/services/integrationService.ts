@@ -1,4 +1,3 @@
-
 // Integration service file to connect frontend with smart contracts
 
 // Import any required dependencies
@@ -14,6 +13,13 @@ export interface TreasuryWallet {
   network: string;
   isPrimary: boolean;
   createdAt: number;
+  isMultisig?: boolean;
+  signers?: string[];
+  threshold?: number;
+  tokenBalance?: {
+    symbol: string;
+    amount: number;
+  }[];
 }
 
 // Type definitions for transaction history
@@ -239,7 +245,7 @@ class IntegrationService {
           marketCap: 500000,
           holders: 120,
           creator: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          programId: 'Wyb111111111111111111111111111111111111111',
+          programId: 'Wyb1111111111111111111111111111111111111111',
           lastClaimDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
           nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 days ago (eligible to claim)
         },
@@ -320,7 +326,8 @@ class IntegrationService {
   public transferBetweenTreasuryWallets(
     fromWalletId: string,
     toWalletId: string,
-    amount: number
+    amount: number,
+    token: string = 'SOL'
   ): boolean {
     // Find wallets
     const fromIndex = this.treasuryWallets.findIndex(w => w.id === fromWalletId);
@@ -344,12 +351,14 @@ class IntegrationService {
     localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
     
     // Record transaction
+    const txId = `transfer-${Date.now()}`;
     this.recordTransaction({
-      id: `transfer-${Date.now()}`,
+      id: txId,
       type: 'transfer',
       from: this.treasuryWallets[fromIndex].name,
       to: this.treasuryWallets[toIndex].name,
       amount,
+      tokenSymbol: token,
       timestamp: Date.now(),
       status: 'confirmed',
       hash: `tx_${Date.now().toString(16)}`
@@ -398,15 +407,16 @@ class IntegrationService {
   }
   
   // Record a new transaction
-  public recordTransaction(transaction: Omit<TransactionHistory, 'id'>): string {
-    const txId = transaction.hash || `tx-${Date.now()}`;
-    const newTransaction: TransactionHistory = {
-      id: txId,
-      ...transaction
-    };
+  public recordTransaction(transaction: TransactionHistory): string {
+    const txId = transaction.id || transaction.hash || `tx-${Date.now()}`;
+    
+    // If id is not provided in transaction, add it
+    if (!transaction.id) {
+      transaction.id = txId;
+    }
     
     // Add to array
-    this.transactionHistory.unshift(newTransaction);
+    this.transactionHistory.unshift(transaction);
     
     // Save to localStorage
     localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
@@ -489,6 +499,65 @@ class IntegrationService {
     localStorage.setItem('adminUsers', JSON.stringify(this.adminUsers));
     
     return true;
+  }
+
+  // Remove a treasury wallet
+  public removeTreasuryWallet(walletId: string): boolean {
+    const walletIndex = this.treasuryWallets.findIndex(w => w.id === walletId);
+    if (walletIndex === -1) {
+      return false;
+    }
+
+    // Remove the wallet
+    this.treasuryWallets.splice(walletIndex, 1);
+    
+    // Save to localStorage
+    localStorage.setItem('treasuryWallets', JSON.stringify(this.treasuryWallets));
+    
+    return true;
+  }
+
+  // Update checklist item
+  public updateChecklistItem(id: string, checked: boolean): boolean {
+    const itemIndex = this.deploymentChecklist.findIndex(item => item.id === id);
+    
+    if (itemIndex === -1) {
+      return false;
+    }
+    
+    this.deploymentChecklist[itemIndex].checked = checked;
+    
+    // Save to localStorage
+    localStorage.setItem('deploymentChecklist', JSON.stringify(this.deploymentChecklist));
+    
+    return true;
+  }
+
+  // Deploy full environment
+  public deployFullEnvironment(
+    name: string, 
+    network: 'mainnet' | 'testnet' | 'devnet' | 'localnet'
+  ): Promise<DeploymentEnvironment> {
+    return new Promise((resolve) => {
+      // Simulate deployment delay
+      setTimeout(() => {
+        const newEnvironment: DeploymentEnvironment = {
+          name,
+          url: `https://${network}.wybe.io/${name.toLowerCase().replace(/\s+/g, '-')}`,
+          programIds: [
+            `Wyb${Math.random().toString(16).substring(2, 10)}111111111111111111111111111`,
+            `Wyb${Math.random().toString(16).substring(2, 10)}222222222222222222222222222`
+          ],
+          deploymentDate: Date.now(),
+          network,
+          status: 'active'
+        };
+        
+        // In a real implementation, would save to backend
+        // For demo, resolve with the new environment
+        resolve(newEnvironment);
+      }, 2000);
+    });
   }
   
   // Get token trade details

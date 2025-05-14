@@ -1,777 +1,533 @@
-
 import { toast } from "sonner";
-import { buildAnchorProgram, deployAnchorProgram, verifyAnchorInstallation, installAnchorCLI } from "../scripts/anchorBuild";
-import { treasuryService } from "./treasuryService";
-import { integrationService } from "./integrationService";
+import { integrationService, TransactionHistory } from "./integrationService";
 
-// Interface for the smart contract configuration
-export interface SmartContractConfig {
-  creatorFeePercentage: number;
-  platformFeePercentage: number;
-  rewardClaimPeriodDays: number;
-  dexScreenerThreshold: number;
-  networkType: 'mainnet' | 'testnet' | 'devnet';
-  anchorInstalled: boolean;
-  anchorVersion?: string;
-  programId?: string;
-  lastBuildTimestamp?: number;
-  lastBuildStatus?: 'success' | 'failed';
-  lastBuildError?: string;
-  treasuryAddress?: string;
+export interface SecurityAuditResult {
+  issues: Array<{
+    severity: 'high' | 'medium' | 'low' | 'info';
+    description: string;
+    location?: string;
+  }>;
+  passedChecks: string[];
 }
 
-// Interface for contract deployment options
-export interface ContractDeploymentOptions {
-  networkType?: 'mainnet' | 'testnet' | 'devnet';
-  creatorFeePercentage?: number;
-  platformFeePercentage?: number;
-  skipBuild?: boolean;
-  verbose?: boolean;
-  treasuryAddress?: string;
+export interface GasAnalysisResult {
+  gasEstimates: Record<string, number>;
+  optimizationSuggestions: string[];
+}
+
+export interface TestnetTestResult {
+  results: Array<{
+    function: string;
+    status: 'passed' | 'failed';
+    error?: string;
+    txHash?: string;
+  }>;
+}
+
+export interface SmartContractDeploymentResult {
+  programId: string;
+  deployedAt: number;
+  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  version: string;
+  transactionHash: string;
+}
+
+export interface TokenFeeClaim {
+  tokenSymbol: string;
+  amount: number;
+  timestamp: number;
+  txHash: string;
+  status: 'pending' | 'confirmed' | 'failed';
+}
+
+// Define types for smart contract data
+export interface TokenCreatorFees {
+  lastClaimDate?: number;
+  nextClaimAvailable?: number;
+  totalAccumulatedFees: number;
+  lastFeeAmount?: number;
+}
+
+export interface DeploymentParams {
+  tokenName: string;
+  tokenSymbol: string;
+  totalSupply: number;
+  decimals: number;
+  treasuryFeePercent: number;
+  creatorFeePercent: number;
+  tradingEnabled: boolean;
+  mintingEnabled: boolean;
+  creatorAddress: string;
+  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+}
+
+export interface TokenSwapParams {
+  tokenA: string;
+  tokenB: string;
+  amountA: number;
+  slippage: number;
+}
+
+export interface SwapResult {
+  amountOut: number;
+  exchangeRate: number;
+  transactionHash: string;
+  timestamp: number;
 }
 
 class SmartContractService {
-  // Default configuration values
-  private config: SmartContractConfig = {
-    creatorFeePercentage: 2.5,       // Creator gets 2.5% of trading volume
-    platformFeePercentage: 2.5,      // Platform fee is 2.5%
-    rewardClaimPeriodDays: 5,        // 5 days between claims
-    dexScreenerThreshold: 50000,     // $50k for DEXScreener eligibility
-    networkType: 'devnet',           // Default to devnet for development
-    anchorInstalled: false,          // Will be checked on initialization
-    treasuryAddress: "8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD"
-  };
+  // Track contract deployment status
+  private deploymentStatus: 'not_started' | 'in_progress' | 'completed' | 'failed' = 'not_started';
+  
+  // Store deployment result
+  private deploymentResult: SmartContractDeploymentResult | null = null;
+  
+  // Status of security audit
+  private securityAuditStatus: 'not_started' | 'in_progress' | 'completed' | 'failed' = 'not_started';
+  
+  // Track deployment params
+  private deploymentParams: DeploymentParams | null = null;
+  
+  // Mock list of recently deployed contracts
+  private recentDeployments: SmartContractDeploymentResult[] = [
+    {
+      programId: 'Wyb1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8',
+      deployedAt: Date.now() - 86400000, // 1 day ago
+      network: 'devnet',
+      version: '1.0.0',
+      transactionHash: 'mock_tx_hash_1'
+    }
+  ];
+  
+  // Creator fee claims by address and token
+  private creatorFeeClaims: Record<string, Record<string, TokenCreatorFees>> = {};
   
   constructor() {
-    // Check if Anchor CLI is installed
-    this.checkAnchorInstallation();
+    // Initialize from localStorage if available
+    this.loadFromStorage();
   }
   
-  /**
-   * Check if Anchor CLI is installed
-   */
-  private checkAnchorInstallation(): void {
-    // In the browser environment, use the browser-compatible function
-    const isInstalled = verifyAnchorInstallation();
-    this.config.anchorInstalled = isInstalled;
+  private loadFromStorage(): void {
+    const storedDeployments = localStorage.getItem('smartContractDeployments');
+    if (storedDeployments) {
+      this.recentDeployments = JSON.parse(storedDeployments);
+    }
     
-    // Save to localStorage for persistence
-    localStorage.setItem('anchorInstalled', isInstalled.toString());
+    const storedDeploymentStatus = localStorage.getItem('deploymentStatus');
+    if (storedDeploymentStatus) {
+      this.deploymentStatus = storedDeploymentStatus as any;
+    }
     
-    if (isInstalled) {
-      // If installed, try to get version from localStorage or simulation
-      try {
-        // In a browser-compatible way
-        const version = localStorage.getItem('anchorVersion') || 'Simulated 0.29.0';
-        this.config.anchorVersion = version;
-      } catch (error) {
-        console.error("Error getting Anchor version:", error);
-      }
+    const storedDeploymentResult = localStorage.getItem('deploymentResult');
+    if (storedDeploymentResult) {
+      this.deploymentResult = JSON.parse(storedDeploymentResult);
+    }
+    
+    const storedDeploymentParams = localStorage.getItem('deploymentParams');
+    if (storedDeploymentParams) {
+      this.deploymentParams = JSON.parse(storedDeploymentParams);
+    }
+    
+    const storedFeeClaims = localStorage.getItem('creatorFeeClaims');
+    if (storedFeeClaims) {
+      this.creatorFeeClaims = JSON.parse(storedFeeClaims);
     }
   }
   
-  /**
-   * Install Anchor CLI
-   */
-  public async installAnchorCLI(): Promise<boolean> {
-    try {
-      // Use the function from anchorBuild
-      const result = await installAnchorCLI();
-      
-      // Update configuration
-      if (result) {
-        this.config.anchorInstalled = true;
-        this.config.anchorVersion = 'v0.29.0';
-      }
-      
-      return result;
-    } catch (error) {
-      console.error("Error installing Anchor CLI:", error);
-      throw error;
+  private saveToStorage(): void {
+    localStorage.setItem('smartContractDeployments', JSON.stringify(this.recentDeployments));
+    localStorage.setItem('deploymentStatus', this.deploymentStatus);
+    
+    if (this.deploymentResult) {
+      localStorage.setItem('deploymentResult', JSON.stringify(this.deploymentResult));
     }
+    
+    if (this.deploymentParams) {
+      localStorage.setItem('deploymentParams', JSON.stringify(this.deploymentParams));
+    }
+    
+    localStorage.setItem('creatorFeeClaims', JSON.stringify(this.creatorFeeClaims));
   }
   
-  /**
-   * Build the contract without deploying
-   */
-  public buildContract(contractName: string): string {
-    try {
-      console.log(`Building contract: ${contractName}`);
-      
-      // Simulate a successful build
-      const buildOutput = `
-Building ${contractName}...
-Compiling...
-Successfully built @wybe-finance/${contractName}
-Build completed in 2.4s
-      `.trim();
-      
-      // Update build status in config
-      this.config.lastBuildTimestamp = Date.now();
-      this.config.lastBuildStatus = 'success';
-      
-      return buildOutput;
-    } catch (error) {
-      console.error("Error building contract:", error);
-      
-      // Update build status in config
-      this.config.lastBuildTimestamp = Date.now();
-      this.config.lastBuildStatus = 'failed';
-      this.config.lastBuildError = error instanceof Error ? error.message : String(error);
-      
-      throw error;
-    }
+  // Run security audit on smart contract code
+  public async runSecurityAudit(): Promise<SecurityAuditResult> {
+    // In a real app, this would perform actual analysis
+    // This is a mock implementation
+    this.securityAuditStatus = 'in_progress';
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const result: SecurityAuditResult = {
+          issues: [
+            {
+              severity: 'high',
+              description: 'Possible reentrancy vulnerability in withdraw function',
+              location: 'programs/wybe_token_program/src/lib.rs:154'
+            },
+            {
+              severity: 'medium',
+              description: 'Unchecked arithmetic operation may lead to overflow',
+              location: 'programs/wybe_token_program/src/lib.rs:212'
+            },
+            {
+              severity: 'low',
+              description: 'Consider adding event emission on state changes',
+              location: 'programs/wybe_token_program/src/lib.rs:98-120'
+            },
+            {
+              severity: 'info',
+              description: 'Program uses deprecated API call',
+              location: 'programs/wybe_token_program/src/utils.rs:45'
+            }
+          ],
+          passedChecks: [
+            'No unauthorized minting capabilities',
+            'Owner validation present in critical functions',
+            'Proper access control in admin functions',
+            'No hardcoded addresses found',
+            'Safe math operations in most calculations'
+          ]
+        };
+        
+        this.securityAuditStatus = result.issues.some(i => i.severity === 'high') 
+          ? 'failed' 
+          : 'completed';
+        
+        resolve(result);
+      }, 3000);
+    });
   }
   
-  /**
-   * Deploy contract with provided IDL and address
-   */
-  public deployContract(contractName: string, idlContent: string, programAddress?: string): string {
-    try {
-      console.log(`Deploying contract: ${contractName}`);
-      console.log(`Program address: ${programAddress || 'auto-generated'}`);
-      
-      // Validate IDL if provided
-      let idl = null;
-      if (idlContent) {
-        try {
-          idl = JSON.parse(idlContent);
-          console.log("Valid IDL provided");
-        } catch (e) {
-          return `Error parsing IDL: ${e instanceof Error ? e.message : String(e)}`;
+  // Analyze gas usage of the contract
+  public async analyzeGasUsage(): Promise<GasAnalysisResult> {
+    // In a real app, this would calculate actual gas costs
+    // This is a mock implementation
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          gasEstimates: {
+            'initialize': 80000,
+            'mint': 65000,
+            'transfer': 28000,
+            'burn': 24000,
+            'setAuthority': 40000,
+            'claimFees': 50000,
+            'enableTrading': 22000,
+            'updateParams': 35000
+          },
+          optimizationSuggestions: [
+            'Consider batching multiple transfers to save on gas costs',
+            'The initialize function can be optimized by removing redundant state checks',
+            'Cache storage variables in memory when used multiple times',
+            'Reduce the size of error messages to decrease contract size'
+          ]
+        });
+      }, 2000);
+    });
+  }
+  
+  // Run tests on testnet
+  public async testOnTestnet(): Promise<TestnetTestResult> {
+    // In a real app, this would deploy and test on an actual testnet
+    // This is a mock implementation
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          results: [
+            {
+              function: 'initialize',
+              status: 'passed',
+              txHash: 'testnet_tx_hash_1'
+            },
+            {
+              function: 'mint',
+              status: 'passed',
+              txHash: 'testnet_tx_hash_2'
+            },
+            {
+              function: 'transfer',
+              status: 'passed',
+              txHash: 'testnet_tx_hash_3'
+            },
+            {
+              function: 'burn',
+              status: 'passed',
+              txHash: 'testnet_tx_hash_4'
+            },
+            {
+              function: 'claimFees',
+              status: 'failed',
+              error: 'Insufficient signer permissions',
+              txHash: 'testnet_tx_hash_5'
+            }
+          ]
+        });
+      }, 4000);
+    });
+  }
+  
+  // Deploy smart contract to testnet
+  public async deployToTestnet(params: DeploymentParams): Promise<SmartContractDeploymentResult> {
+    this.deploymentStatus = 'in_progress';
+    this.deploymentParams = params;
+    this.saveToStorage();
+    
+    // In a real app, this would deploy to an actual testnet
+    // This is a mock implementation
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const result: SmartContractDeploymentResult = {
+          programId: `Wyb${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`,
+          deployedAt: Date.now(),
+          network: params.network,
+          version: '1.0.0',
+          transactionHash: `tx_${Date.now().toString(16)}`
+        };
+        
+        this.deploymentResult = result;
+        this.deploymentStatus = 'completed';
+        this.recentDeployments.unshift(result);
+        
+        // Keep only last 5 deployments
+        if (this.recentDeployments.length > 5) {
+          this.recentDeployments = this.recentDeployments.slice(0, 5);
         }
-      }
-      
-      // Generate a program ID if not provided
-      const generatedProgramId = programAddress || `Wyb${Math.random().toString(36).substring(2, 10)}111111111111111111111111111`;
-      
-      // Store the program ID in config
-      this.config.programId = generatedProgramId;
-      
-      // Simulate deployment output
-      const deployOutput = `
-Deploying ${contractName}...
-Using network: ${this.config.networkType}
-Program ID: ${generatedProgramId}
-Creator fee: ${this.config.creatorFeePercentage}%
-Platform fee: ${this.config.platformFeePercentage}%
-
-Building program...
-Deploying program...
-Program deployed successfully!
-
-Transaction: ${Date.now().toString(16)}_${Math.random().toString(16).substring(2, 10)}
-Program logs:
-  Program ${generatedProgramId} invoke [1]
-  Program log: Instruction: Initialize
-  Program ${generatedProgramId} consumed 12345 compute units
-  Program ${generatedProgramId} success
-      `.trim();
-      
-      return deployOutput;
-    } catch (error) {
-      console.error("Error deploying contract:", error);
-      throw error;
-    }
+        
+        this.saveToStorage();
+        resolve(result);
+      }, 5000);
+    });
   }
   
-  /**
-   * Build the Anchor program without deploying
-   */
-  public buildProgram(): { success: boolean; message: string; buildOutput?: string } {
-    try {
-      toast.info("Building Anchor program...");
-      
-      // Call the browser-compatible build function - no longer a Promise
-      const buildResult = buildAnchorProgram();
-      
-      // Update build status
-      this.config.lastBuildTimestamp = Date.now();
-      this.config.lastBuildStatus = buildResult.success ? 'success' : 'failed';
-      this.config.lastBuildError = buildResult.success ? undefined : buildResult.message;
-      
-      if (buildResult.success) {
-        toast.success("Anchor program built successfully!");
-      } else {
-        toast.error(`Build failed: ${buildResult.message}`);
-      }
-      
-      return {
-        success: buildResult.success,
-        message: buildResult.message,
-        buildOutput: buildResult.logs.join('\n')
-      };
-    } catch (error) {
-      console.error("Build error:", error);
-      
-      // Update build status
-      this.config.lastBuildTimestamp = Date.now();
-      this.config.lastBuildStatus = 'failed';
-      this.config.lastBuildError = error instanceof Error ? error.message : String(error);
-      
-      toast.error("Failed to build Anchor program");
-      
-      return {
-        success: false,
-        message: `Build failed: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
+  // Deploy to mainnet
+  public async deployToMainnet(params: DeploymentParams): Promise<SmartContractDeploymentResult> {
+    // Very similar to testnet deployment but would have additional checks
+    this.deploymentStatus = 'in_progress';
+    this.deploymentParams = params;
+    this.saveToStorage();
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const result: SmartContractDeploymentResult = {
+          programId: `Wyb${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`,
+          deployedAt: Date.now(),
+          network: 'mainnet',
+          version: '1.0.0',
+          transactionHash: `tx_${Date.now().toString(16)}`
+        };
+        
+        this.deploymentResult = result;
+        this.deploymentStatus = 'completed';
+        this.recentDeployments.unshift(result);
+        
+        // Keep only last 5 deployments
+        if (this.recentDeployments.length > 5) {
+          this.recentDeployments = this.recentDeployments.slice(0, 5);
+        }
+        
+        this.saveToStorage();
+        resolve(result);
+      }, 8000);
+    });
   }
   
-  /**
-   * Deploy a token contract using Anchor
-   */
-  public async deployTokenContract(
-    tokenName: string,
+  // Get deployment status
+  public getDeploymentStatus(): {
+    status: 'not_started' | 'in_progress' | 'completed' | 'failed';
+    result: SmartContractDeploymentResult | null;
+    params: DeploymentParams | null;
+  } {
+    return {
+      status: this.deploymentStatus,
+      result: this.deploymentResult,
+      params: this.deploymentParams
+    };
+  }
+  
+  // Get recent deployments
+  public getRecentDeployments(): SmartContractDeploymentResult[] {
+    return this.recentDeployments;
+  }
+  
+  // Reset deployment status
+  public resetDeploymentStatus(): void {
+    this.deploymentStatus = 'not_started';
+    this.deploymentResult = null;
+    this.deploymentParams = null;
+    this.saveToStorage();
+  }
+  
+  // Check if a creator can claim fees for a token
+  public canCreatorClaimFees(
     tokenSymbol: string,
-    totalSupply: number,
     creatorAddress: string
-  ): Promise<{ success: boolean; message: string; txHash?: string; programId?: string }> {
-    try {
-      // Check if Anchor is installed
-      if (!this.config.anchorInstalled) {
-        toast.warning("Anchor CLI not detected. Smart contracts will be simulated.");
-        return this.simulateTokenDeployment(tokenName, tokenSymbol, totalSupply, creatorAddress);
-      }
-      
-      toast.info("Building Anchor program...");
-      
-      // First build the program (browser-compatible)
-      const buildResult = buildAnchorProgram();
-      
-      if (!buildResult.success) {
-        toast.error(`Build failed: ${buildResult.message}`);
-        return {
-          success: false,
-          message: `Build failed: ${buildResult.message}`
-        };
-      }
-      
-      toast.info(`Deploying to ${this.config.networkType}...`);
-      
-      // Then deploy the program (browser-compatible)
-      const deployResult = deployAnchorProgram(this.config.networkType);
-      
-      if (!deployResult.success) {
-        toast.error(`Deployment failed: ${deployResult.message}`);
-        return {
-          success: false,
-          message: `Deployment failed: ${deployResult.message}`
-        };
-      }
-      
-      // Store the program ID
-      const programId = deployResult.programId;
-      if (programId) {
-        this.config.programId = programId;
-      }
-      
-      // Create a transaction hash for reference
-      const mockTxHash = `${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}_${Math.random().toString(16).slice(2, 8)}`;
-      
-      // Register initial mint with treasury allocation (1%)
-      const treasuryAllocation = Math.floor(totalSupply * 0.01); // 1% to treasury
-      const initialSupply = totalSupply - treasuryAllocation;
-      
-      // Record the mint transaction with treasury allocation
-      integrationService.mintTokens(
-        tokenSymbol,
-        creatorAddress,
-        creatorAddress, // Initial recipient is creator
-        totalSupply
-      );
-      
-      toast.success(`Smart contract for ${tokenSymbol} deployed!`);
-      
-      return {
-        success: true,
-        message: `${tokenName} (${tokenSymbol}) deployed successfully with creator fee of ${this.config.creatorFeePercentage}%!`,
-        txHash: mockTxHash,
-        programId: programId
-      };
-    } catch (error) {
-      console.error("Contract deployment error:", error);
-      toast.error(`Failed to deploy ${tokenSymbol} contract`);
-      
-      return {
-        success: false,
-        message: `Contract deployment failed: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
-  }
-  
-  /**
-   * Deploy contract with more options
-   */
-  public async deployWithOptions(
-    options: ContractDeploymentOptions = {}
-  ): Promise<{ success: boolean; message: string; programId?: string }> {
-    try {
-      // Update config with provided options
-      if (options.networkType) {
-        this.config.networkType = options.networkType;
-      }
-      
-      if (options.creatorFeePercentage !== undefined) {
-        this.config.creatorFeePercentage = options.creatorFeePercentage;
-      }
-      
-      if (options.platformFeePercentage !== undefined) {
-        this.config.platformFeePercentage = options.platformFeePercentage;
-      }
-      
-      if (options.treasuryAddress) {
-        this.config.treasuryAddress = options.treasuryAddress;
-        
-        // Update treasury service as well
-        treasuryService.setNetworkType(this.config.networkType);
-      }
-      
-      // Build if not skipped
-      if (!options.skipBuild) {
-        const buildResult = this.buildProgram();
-        if (!buildResult.success) {
-          return buildResult;
-        }
-      }
-      
-      toast.info(`Deploying contract to ${this.config.networkType}...`);
-      
-      // Deploy to selected network - no longer a Promise
-      const deployResult = deployAnchorProgram(this.config.networkType);
-      
-      if (deployResult.success) {
-        // Store program ID
-        if (deployResult.programId) {
-          this.config.programId = deployResult.programId;
-        }
-        
-        toast.success(`Contract deployed successfully to ${this.config.networkType}!`);
-      } else {
-        toast.error(`Deployment failed: ${deployResult.message}`);
-      }
-      
-      return {
-        success: deployResult.success,
-        message: deployResult.message,
-        programId: deployResult.programId
-      };
-    } catch (error) {
-      console.error("Deployment error:", error);
-      toast.error("Failed to deploy contract");
-      
-      return {
-        success: false,
-        message: `Deployment failed: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
-  }
-  
-  /**
-   * Update treasury wallet
-   */
-  public async updateTreasuryWallet(
-    newTreasuryWallet: string
-  ): Promise<{ success: boolean; message: string; txHash?: string }> {
-    try {
-      // Check if valid address
-      if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(newTreasuryWallet)) {
-        return {
-          success: false,
-          message: "Invalid Solana address format"
-        };
-      }
-      
-      // Check if Anchor is installed for real contract interaction
-      if (this.config.anchorInstalled) {
-        // In a real implementation, this would interact with the on-chain program
-        // For now, simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Update config
-        this.config.treasuryAddress = newTreasuryWallet;
-        
-        // Generate mock transaction hash
-        const txHash = `treasury_${Date.now().toString(16)}_${Math.random().toString(16).slice(2, 8)}`;
-        
-        return {
-          success: true,
-          message: "Treasury wallet updated successfully on the blockchain",
-          txHash: txHash
-        };
-      } else {
-        // Simulation mode
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Update config
-        this.config.treasuryAddress = newTreasuryWallet;
-        
-        return {
-          success: true,
-          message: "[SIMULATION] Treasury wallet updated successfully",
-          txHash: `sim_treasury_${Date.now().toString(16)}`
-        };
-      }
-    } catch (error) {
-      console.error("Treasury wallet update error:", error);
-      return {
-        success: false,
-        message: `Failed to update treasury wallet: ${error instanceof Error ? error.message : String(error)}`
-      };
-    }
-  }
-  
-  /**
-   * Fallback to simulation mode when Anchor is not installed
-   */
-  public async simulateTokenDeployment(
-    tokenName: string,
-    tokenSymbol: string,
-    totalSupply: number,
-    creatorAddress: string
-  ): Promise<{ success: boolean; message: string; txHash?: string }> {
-    // Simulate blockchain delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  ): {
+    canClaim: boolean;
+    amount: number;
+    nextClaimTime?: number;
+    reason?: string;
+  } {
+    // Forward to integration service
+    const canClaimResult = integrationService.canCreatorClaimFees(tokenSymbol, creatorAddress);
     
-    try {
-      // Mock successful deployment
-      const mockTxHash = `${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}_${Math.random().toString(16).slice(2, 8)}`;
-      
-      toast.success(`[SIMULATION] Smart contract for ${tokenSymbol} deployed!`);
-      
-      return {
-        success: true,
-        message: `[SIMULATION] ${tokenName} (${tokenSymbol}) deployed successfully with creator fee of ${this.config.creatorFeePercentage}%!`,
-        txHash: mockTxHash
-      };
-    } catch (error) {
-      console.error("Contract deployment simulation error:", error);
-      toast.error(`Failed to simulate ${tokenSymbol} contract deployment`);
-      
-      return {
-        success: false,
-        message: "Simulation failed. Please try again."
-      };
-    }
-  }
-  
-  /**
-   * Run security audit on contracts
-   */
-  public async runSecurityAudit(): Promise<{
-    success: boolean;
-    issues: Array<{severity: 'high' | 'medium' | 'low' | 'info'; description: string; location?: string}>;
-    passedChecks: string[];
-  }> {
-    // In a real implementation, this would use tools like Slither, Mythril, etc.
-    // For demo purposes, we'll return simulated results
-    
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Add fee amount data
+    const creatorFees = this.getCreatorFees(tokenSymbol, creatorAddress);
     
     return {
-      success: true,
-      issues: [
-        {
-          severity: 'low',
-          description: 'Consider adding more comprehensive input validation',
-          location: 'initialize()'
-        },
-        {
-          severity: 'info',
-          description: 'Token decimals value could be constrained further',
-          location: 'initialize()'
-        }
-      ],
-      passedChecks: [
-        'No reentrancy vulnerabilities found',
-        'Proper access control implemented',
-        'No integer overflow/underflow risks',
-        'No unchecked return values',
-        'Event emissions for state changes',
-        'Authority validation on sensitive functions',
-        'No hardcoded secret values'
-      ]
+      ...canClaimResult,
+      amount: creatorFees.totalAccumulatedFees
     };
   }
   
-  /**
-   * Run gas optimization analysis
-   */
-  public async analyzeGasUsage(): Promise<{
-    success: boolean;
-    gasEstimates: {[key: string]: number};
-    optimizationSuggestions: string[];
-  }> {
-    // In a real implementation, this would profile actual transactions
-    // For demo purposes, we'll return simulated results
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      success: true,
-      gasEstimates: {
-        'initialize': 125000,
-        'createBondingCurve': 98000,
-        'updateFees': 45000,
-        'updateTreasury': 65000,
-        'emergencyFreeze': 35000,
-        'emergencyUnfreeze': 35000
-      },
-      optimizationSuggestions: [
-        'Consider reducing string sizes in TokenMetadata to save on storage costs',
-        'Could batch updates to state to reduce transaction count',
-        'Consider using references to shared data where appropriate'
-      ]
-    };
-  }
-  
-  /**
-   * Test on testnet
-   */
-  public async testOnTestnet(): Promise<{
-    success: boolean;
-    results: {
-      function: string;
-      status: 'passed' | 'failed';
-      error?: string;
-      txHash?: string;
-    }[];
-  }> {
-    // In a real implementation, this would deploy to testnet and run tests
-    // For demo purposes, we'll return simulated results
-    
-    toast.info("Running testnet validation...");
-    await new Promise(resolve => setTimeout(resolve, 4000));
-    
-    return {
-      success: true,
-      results: [
-        {
-          function: 'initialize',
-          status: 'passed',
-          txHash: 'testnet_init_' + Date.now().toString(16)
-        },
-        {
-          function: 'createBondingCurve',
-          status: 'passed',
-          txHash: 'testnet_curve_' + Date.now().toString(16)
-        },
-        {
-          function: 'updateFees',
-          status: 'passed',
-          txHash: 'testnet_fees_' + Date.now().toString(16)
-        },
-        {
-          function: 'updateTreasury',
-          status: 'passed',
-          txHash: 'testnet_treasury_' + Date.now().toString(16)
-        },
-        {
-          function: 'emergencyFreeze',
-          status: 'passed',
-          txHash: 'testnet_freeze_' + Date.now().toString(16)
-        },
-        {
-          function: 'emergencyUnfreeze',
-          status: 'passed',
-          txHash: 'testnet_unfreeze_' + Date.now().toString(16)
-        }
-      ]
-    };
-  }
-  
-  /**
-   * Update the contract configuration
-   */
-  public updateContractConfig(newConfig: Partial<SmartContractConfig>): SmartContractConfig {
-    this.config = { ...this.config, ...newConfig };
-    return this.config;
-  }
-  
-  /**
-   * Get the current configuration
-   */
-  public getContractConfig(): SmartContractConfig {
-    return this.config;
-  }
-  
-  /**
-   * Simulate a token transaction with fee distribution
-   */
-  public async executeTransaction(
-    tokenSymbol: string,
-    senderAddress: string,
-    receiverAddress: string,
-    amount: number,
-    price: number
-  ): Promise<{ success: boolean; fees: { creator: number; platform: number }; txHash?: string }> {
-    // Simulate blockchain delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    try {
-      const transactionVolume = amount * price;
-      
-      // Calculate fees
-      const creatorFee = transactionVolume * (this.config.creatorFeePercentage / 100);
-      const platformFee = transactionVolume * (this.config.platformFeePercentage / 100);
-      
-      // Log the fee distribution (this would be stored on-chain in a real implementation)
-      console.log(`Transaction for ${tokenSymbol}: ${amount} tokens at ${price} SOL each`);
-      console.log(`Volume: ${transactionVolume} SOL`);
-      console.log(`Creator fee: ${creatorFee.toFixed(6)} SOL (${this.config.creatorFeePercentage}%)`);
-      console.log(`Platform fee: ${platformFee.toFixed(6)} SOL (${this.config.platformFeePercentage}%)`);
-      
-      // Record the transaction in our integration service
-      const tradeTx = await integrationService.executeTokenTrade(
-        tokenSymbol,
-        senderAddress,
-        receiverAddress,
-        amount,
-        price
-      );
-      
-      return {
-        success: true,
-        fees: {
-          creator: creatorFee,
-          platform: platformFee
-        },
-        txHash: tradeTx.txHash
-      };
-    } catch (error) {
-      console.error("Transaction error:", error);
-      return {
-        success: false,
-        fees: {
-          creator: 0,
-          platform: 0
-        }
-      };
-    }
-  }
-  
-  /**
-   * Claim creator fees
-   */
+  // Claim creator fees
   public async claimCreatorFees(
     tokenSymbol: string,
-    creatorAddress: string,
-    tokenProgramId?: string
-  ): Promise<{ success: boolean; amount: number; txHash?: string; details?: any }> {
-    // Simulate blockchain delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    creatorAddress: string
+  ): Promise<{
+    success: boolean;
+    txHash?: string;
+    amount?: number;
+    error?: string;
+  }> {
+    const canClaim = this.canCreatorClaimFees(tokenSymbol, creatorAddress);
     
-    try {
-      // Check if program ID is provided, if not use the configured one
-      const programId = tokenProgramId || this.config.programId || "Wyb111111111111111111111111111111111111111";
-      
-      console.log(`Claiming creator fees for ${tokenSymbol} by ${creatorAddress} from program ${programId}`);
-      
-      // In a real implementation, this would use the Anchor program to call the claim_creator_fees instruction
-      // For simulation, calculate fees based on token trading volume and creator fee percentage
-      
-      // Get token trading data
-      const tokenDetails = await integrationService.getTokenTradeDetails(tokenSymbol);
-      const tradingVolume = tokenDetails?.tradingVolume || Math.random() * 10000 + 5000; // Fallback to random if no data
-      
-      // Calculate accumulated creator fees (creator fee % of trading volume)
-      const mockFeeAmount = tradingVolume * (this.config.creatorFeePercentage / 100) / 10;
-      
-      // Generate transaction hash
-      const txHash = `claim_${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}_${creatorAddress.slice(0, 6)}`;
-      
-      // Record the transaction
-      integrationService.recordTransaction({
-        id: `tx-claim-${Date.now()}`,
-        type: 'fee_claim',
-        from: 'Fee Pool',
-        to: creatorAddress,
-        amount: mockFeeAmount,
-        tokenSymbol: 'SOL', // Fees paid in SOL
-        timestamp: Date.now(),
-        hash: txHash,
-        status: 'confirmed',
-        details: {
-          programId,
-          tradingVolume,
-          feePercentage: this.config.creatorFeePercentage,
-          claimType: 'creator_fee'
-        }
-      });
-      
-      // Update the token's last claim date
-      integrationService.updateTokenClaimDate(tokenSymbol, creatorAddress);
-      
-      toast.success(`Successfully claimed ${mockFeeAmount.toFixed(4)} SOL in creator fees!`);
-      
-      return {
-        success: true,
-        amount: mockFeeAmount,
-        txHash,
-        details: {
-          programId,
-          timestamp: Date.now(),
-          tradingVolume,
-          tokenSymbol
-        }
-      };
-    } catch (error) {
-      console.error("Fee claim error:", error);
-      toast.error("Failed to claim creator fees");
-      
+    if (!canClaim.canClaim) {
       return {
         success: false,
-        amount: 0
+        error: canClaim.reason || 'Cannot claim fees at this time'
       };
     }
+    
+    // Get fee data
+    const feeData = this.getCreatorFees(tokenSymbol, creatorAddress);
+    const claimAmount = feeData.totalAccumulatedFees;
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Create transaction hash
+        const txHash = `claim_${Date.now().toString(16)}_${tokenSymbol.toLowerCase()}`;
+        
+        // Update fee data
+        this.updateCreatorFees(tokenSymbol, creatorAddress, {
+          lastClaimDate: Date.now(),
+          nextClaimAvailable: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
+          totalAccumulatedFees: 0,
+          lastFeeAmount: claimAmount
+        });
+        
+        // Also update in integration service
+        integrationService.updateTokenClaimDate(tokenSymbol, creatorAddress);
+        
+        // Record transaction
+        const tx: TransactionHistory = {
+          id: `fee_${Date.now()}`,
+          type: 'fee_claim',
+          from: 'Fee Pool',
+          to: creatorAddress,
+          amount: claimAmount,
+          tokenSymbol: 'SOL', // Fees are in SOL
+          timestamp: Date.now(),
+          hash: txHash,
+          status: 'confirmed',
+          details: {
+            sourceToken: tokenSymbol
+          }
+        };
+        
+        integrationService.recordTransaction(tx);
+        
+        resolve({
+          success: true,
+          txHash,
+          amount: claimAmount
+        });
+      }, 2000);
+    });
   }
   
-  /**
-   * Update the treasury address in the smart contract
-   */
-  public async updateContractTreasury(
-    newTreasuryAddress: string
-  ): Promise<{ success: boolean; txHash?: string }> {
-    // Simulate blockchain delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    try {
-      // Update the config
-      const oldTreasuryAddress = this.config.treasuryAddress;
-      this.config.treasuryAddress = newTreasuryAddress;
-      
-      // Mock transaction hash
-      const txHash = `treasury_${Date.now().toString(16)}`;
-      
-      // Record the update in transaction history
-      integrationService.recordTransaction({
-        id: `tx-treasury-update-${Date.now()}`,
-        type: 'transfer',
-        from: oldTreasuryAddress || 'Unknown',
-        to: newTreasuryAddress,
-        amount: 0, // No funds transferred, just a settings update
-        timestamp: Date.now(),
-        hash: txHash,
-        status: 'confirmed'
-      });
-      
-      toast.success("Treasury address updated in smart contract!");
-      
-      return {
-        success: true,
-        txHash
-      };
-    } catch (error) {
-      console.error("Treasury update error:", error);
-      toast.error("Failed to update treasury address");
-      
-      return {
-        success: false
-      };
+  // Get creator fee data
+  private getCreatorFees(tokenSymbol: string, creatorAddress: string): TokenCreatorFees {
+    // Initialize if not exists
+    if (!this.creatorFeeClaims[creatorAddress]) {
+      this.creatorFeeClaims[creatorAddress] = {};
     }
+    
+    if (!this.creatorFeeClaims[creatorAddress][tokenSymbol]) {
+      // Generate random accumulated fees
+      const randomFees = Math.random() * 5 + 0.5; // 0.5 to 5.5 SOL
+      
+      this.creatorFeeClaims[creatorAddress][tokenSymbol] = {
+        totalAccumulatedFees: parseFloat(randomFees.toFixed(4))
+      };
+      
+      this.saveToStorage();
+    }
+    
+    return this.creatorFeeClaims[creatorAddress][tokenSymbol];
+  }
+  
+  // Update creator fee data
+  private updateCreatorFees(
+    tokenSymbol: string,
+    creatorAddress: string,
+    data: TokenCreatorFees
+  ): void {
+    if (!this.creatorFeeClaims[creatorAddress]) {
+      this.creatorFeeClaims[creatorAddress] = {};
+    }
+    
+    this.creatorFeeClaims[creatorAddress][tokenSymbol] = {
+      ...this.getCreatorFees(tokenSymbol, creatorAddress),
+      ...data
+    };
+    
+    this.saveToStorage();
+  }
+  
+  // Execute a token swap
+  public async executeTokenSwap(params: TokenSwapParams): Promise<SwapResult> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Calculate output amount with some randomness
+        const rate = Math.random() * 10 + 5; // Random rate between 5 and 15
+        const amountOut = parseFloat((params.amountA / rate).toFixed(6));
+        
+        // Generate transaction hash
+        const txHash = `swap_${Date.now().toString(16)}_${params.tokenA.toLowerCase()}_${params.tokenB.toLowerCase()}`;
+        
+        // Record transaction
+        const tx: TransactionHistory = {
+          id: `swap_${Date.now()}`,
+          type: 'swap',
+          from: 'Swap Pool',
+          to: 'User',
+          amount: params.amountA,
+          tokenSymbol: params.tokenA,
+          timestamp: Date.now(),
+          hash: txHash,
+          status: 'confirmed',
+          details: {
+            tokenOut: params.tokenB,
+            amountOut: amountOut,
+            rate: rate
+          }
+        };
+        
+        integrationService.recordTransaction(tx);
+        
+        resolve({
+          amountOut,
+          exchangeRate: rate,
+          transactionHash: txHash,
+          timestamp: Date.now()
+        });
+      }, 1500);
+    });
   }
 }
 
-// Export a singleton instance
 export const smartContractService = new SmartContractService();
 export default smartContractService;
