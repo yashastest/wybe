@@ -88,19 +88,20 @@ const HeroSection = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.6 }}
-              className="grid grid-cols-3 gap-8 mt-8 pt-8 border-t border-white/10"
+              className="mt-8 pt-8 border-t border-white/10"
             >
-              <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">3s</h3>
-                <p className="text-sm text-gray-400 mt-1">Average Deploy Time</p>
-              </div>
-              <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">247+</h3>
-                <p className="text-sm text-gray-400 mt-1">Projects Launched</p>
-              </div>
-              <div>
-                <h3 className="text-3xl font-jetbrains font-bold text-orange-500">$4.2M</h3>
-                <p className="text-sm text-gray-400 mt-1">Total Trading Volume</p>
+              <div className="text-center md:text-left">
+                <h3 className="text-2xl font-bold mb-3 text-gradient">
+                  <span className="text-white">Launch in </span>
+                  <span className="text-orange-500">3 seconds</span>
+                  <span className="text-white">, make your coin </span>
+                  <span className="text-orange-500">tradeable</span>
+                  <span className="text-white"> and earn </span>
+                  <span className="text-orange-500">creator rewards</span>
+                </h3>
+                <p className="text-gray-300">
+                  We are making meme coin trading an asset class for creators
+                </p>
               </div>
             </motion.div>
           </motion.div>
