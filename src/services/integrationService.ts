@@ -25,7 +25,7 @@ export interface TreasuryWallet {
 // Type definition for transaction history
 export interface TransactionHistory {
   id: string;
-  type: 'mint' | 'transfer' | 'swap' | 'fee_claim';
+  type: 'mint' | 'transfer' | 'swap' | 'fee_claim' | 'fee';
   from: string;
   to: string;
   amount: number;
@@ -68,6 +68,17 @@ export interface AdminUserAccess {
   twoFactorEnabled?: boolean;
 }
 
+// Type definition for testnet contracts
+export interface TestnetContract {
+  id: string;
+  name: string;
+  programId: string;
+  network: "testnet" | "devnet" | "localnet" | "mainnet";
+  deployDate: string;
+  txHash: string;
+  status: "active" | "inactive" | "pending" | "failed";
+}
+
 class IntegrationService {
   // Store treasury wallets
   private treasuryWallets: TreasuryWallet[] = [];
@@ -84,11 +95,17 @@ class IntegrationService {
   // Deployment checklist
   private deploymentChecklist: { id: string; label: string; checked: boolean }[] = [];
   
+  // Testnet contracts
+  private testnetContracts: TestnetContract[] = [];
+  
   constructor() {
     this.initializeData();
     
     // Initialize sample tokens for testing
     this.initializeTestTokens();
+    
+    // Initialize testnet contracts
+    this.initializeTestnetContracts();
   }
   
   // Initialize data from localStorage or set defaults
@@ -171,7 +188,7 @@ class IntegrationService {
         },
         {
           id: `tx-${Date.now() - 10800000}`,
-          type: 'fee',
+          type: 'fee_claim',
           from: 'Trading Pool',
           to: 'Primary Treasury',
           amount: 2.5,
@@ -245,7 +262,7 @@ class IntegrationService {
           marketCap: 500000,
           holders: 120,
           creator: '8JzqrG4pQSSA7QuQeEjbDxKLBMqKriGCNzUL7Lxpk8iD',
-          programId: 'Wyb11111111111111111111111111111111111111111',
+          programId: 'Wyb111111111111111111111111111111111111111111',
           lastClaimDate: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
           nextClaimAvailable: Date.now() - 2 * 24 * 60 * 60 * 1000 // 2 days ago (eligible to claim)
         },
@@ -269,6 +286,47 @@ class IntegrationService {
         }
       };
       localStorage.setItem('tokenTradeDetails', JSON.stringify(this.tokenTradeDetails));
+    }
+  }
+  
+  // Initialize testnet contracts
+  private initializeTestnetContracts(): void {
+    // Check for existing testnet contracts
+    const storedContracts = localStorage.getItem('testnetContracts');
+    if (storedContracts) {
+      this.testnetContracts = JSON.parse(storedContracts);
+    } else {
+      // Initialize with some sample contracts
+      this.testnetContracts = [
+        {
+          id: 'contract-1',
+          name: 'Wybe Token',
+          programId: 'WybToken111111111111111111111111111111111111',
+          network: 'testnet',
+          deployDate: '2024-05-01',
+          txHash: 'tx_abc123',
+          status: 'active'
+        },
+        {
+          id: 'contract-2',
+          name: 'Governance Token',
+          programId: 'WybGov22222222222222222222222222222222222222',
+          network: 'testnet',
+          deployDate: '2024-05-05',
+          txHash: 'tx_def456',
+          status: 'pending'
+        },
+        {
+          id: 'contract-3',
+          name: 'Staking Contract',
+          programId: 'WybStake3333333333333333333333333333333333333',
+          network: 'devnet',
+          deployDate: '2024-05-07',
+          txHash: 'tx_ghi789',
+          status: 'active'
+        }
+      ];
+      localStorage.setItem('testnetContracts', JSON.stringify(this.testnetContracts));
     }
   }
   
@@ -815,7 +873,7 @@ class IntegrationService {
       },
       {
         id: `tx-${Date.now() - 10800000}`,
-        type: 'fee',
+        type: 'fee_claim',
         from: 'Trading Pool',
         to: 'Primary Treasury',
         amount: 2.5,
@@ -848,7 +906,7 @@ class IntegrationService {
       },
       {
         id: `tx-${Date.now() - 21600000}`,
-        type: 'fee',
+        type: 'fee_claim',
         from: 'Trading Pool',
         to: 'Primary Treasury',
         amount: 1.25,
@@ -961,6 +1019,86 @@ class IntegrationService {
     localStorage.setItem('deploymentChecklist', JSON.stringify(this.deploymentChecklist));
     
     return true;
+  }
+
+  // Get all testnet contracts
+  public getTestnetContracts(): TestnetContract[] {
+    return this.testnetContracts;
+  }
+
+  // Get a specific testnet contract
+  public getTestnetContract(id: string): TestnetContract | undefined {
+    return this.testnetContracts.find(contract => contract.id === id);
+  }
+
+  // Add a new testnet contract
+  public addTestnetContract(contract: Omit<TestnetContract, 'id'>): TestnetContract {
+    const newContract: TestnetContract = {
+      ...contract,
+      id: `contract-${Date.now()}`
+    };
+    
+    this.testnetContracts.push(newContract);
+    
+    // Save to localStorage
+    localStorage.setItem('testnetContracts', JSON.stringify(this.testnetContracts));
+    
+    return newContract;
+  }
+
+  // Update a testnet contract
+  public updateTestnetContract(id: string, updates: Partial<TestnetContract>): boolean {
+    const contractIndex = this.testnetContracts.findIndex(c => c.id === id);
+    
+    if (contractIndex === -1) {
+      return false;
+    }
+    
+    this.testnetContracts[contractIndex] = {
+      ...this.testnetContracts[contractIndex],
+      ...updates
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('testnetContracts', JSON.stringify(this.testnetContracts));
+    
+    return true;
+  }
+
+  // Delete a testnet contract
+  public deleteTestnetContract(id: string): boolean {
+    const initialLength = this.testnetContracts.length;
+    this.testnetContracts = this.testnetContracts.filter(c => c.id !== id);
+    
+    if (this.testnetContracts.length === initialLength) {
+      return false;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('testnetContracts', JSON.stringify(this.testnetContracts));
+    
+    return true;
+  }
+
+  // Import testnet contracts
+  public importTestnetContracts(contracts: TestnetContract[]): boolean {
+    try {
+      // Merge with existing contracts
+      const existingIds = new Set(this.testnetContracts.map(c => c.id));
+      
+      // Filter out contracts with duplicate IDs
+      const newContracts = contracts.filter(c => !existingIds.has(c.id));
+      
+      this.testnetContracts = [...this.testnetContracts, ...newContracts];
+      
+      // Save to localStorage
+      localStorage.setItem('testnetContracts', JSON.stringify(this.testnetContracts));
+      
+      return true;
+    } catch (error) {
+      console.error("Error importing testnet contracts:", error);
+      return false;
+    }
   }
 }
 
