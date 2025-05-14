@@ -102,6 +102,65 @@ export function TypewriterHeading({
   );
 }
 
+export function RotatingTypewriterWord({
+  words,
+  colors = ["text-orange-500", "text-blue-500", "text-green-500", "text-purple-500"],
+  typingDelay = 100,
+  deletingDelay = 50,
+  pauseDuration = 1500,
+  className = ""
+}: {
+  words: string[];
+  colors?: string[];
+  typingDelay?: number;
+  deletingDelay?: number;
+  pauseDuration?: number;
+  className?: string;
+}) {
+  const [currentWord, setCurrentWord] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [colorIndex, setColorIndex] = useState(0);
+  
+  useEffect(() => {
+    const word = words[wordIndex];
+    const currentDelay = isDeleting ? deletingDelay : typingDelay;
+    
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing
+        setCurrentWord(word.substring(0, currentWord.length + 1));
+        
+        // If we completed the word, start deleting after a pause
+        if (currentWord.length === word.length) {
+          setTimeout(() => {
+            setIsDeleting(true);
+          }, pauseDuration);
+        }
+      } else {
+        // Deleting
+        setCurrentWord(word.substring(0, currentWord.length - 1));
+        
+        // If we deleted the word, move to the next word
+        if (currentWord.length === 0) {
+          setIsDeleting(false);
+          setWordIndex((wordIndex + 1) % words.length);
+          setColorIndex((colorIndex + 1) % colors.length);
+        }
+      }
+    }, currentDelay);
+    
+    return () => clearTimeout(timeout);
+  }, [currentWord, isDeleting, wordIndex, words, typingDelay, deletingDelay, pauseDuration, colorIndex, colors]);
+  
+  return (
+    <span className={cn(colors[colorIndex], className)}>
+      {currentWord}
+      <span className="inline-block w-1 h-5 ml-0.5 bg-current animate-pulse"></span>
+    </span>
+  );
+}
+
 export function SplitColorHeading({
   text,
   className = "",

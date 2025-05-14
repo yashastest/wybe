@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
 import MemeRocketAnimation from "./MemeRocketAnimation";
-import { TypewriterText, TypewriterHeading, SplitColorHeading } from "@/components/ui/typewriter-text";
+import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
 
 const HeroSection = () => {
   const [showFullTagline, setShowFullTagline] = useState(false);
@@ -33,9 +32,16 @@ const HeroSection = () => {
             >
               <span className="text-orange-500 font-mono text-sm uppercase tracking-wider font-bold">Powered by Solana</span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight">
-                <span className="text-white">Build your meme empire in </span>
-                <span className="text-orange-500">seconds</span>
-                <span className="text-white"> 🚀</span>
+                <span className="text-white">Build your meme </span>
+                <RotatingTypewriterWord 
+                  words={["empire", "gang", "community", "kingdom", "crew"]}
+                  colors={["text-orange-500", "text-blue-500", "text-green-500", "text-purple-500", "text-pink-500"]}
+                  typingDelay={100}
+                  deletingDelay={50}
+                  pauseDuration={1500}
+                  className="font-extrabold"
+                />
+                <span className="text-white"> in seconds 🚀</span>
               </h1>
             </motion.div>
             
