@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Footer: React.FC = () => {
@@ -9,14 +9,22 @@ const Footer: React.FC = () => {
     <footer className="bg-black border-t border-white/10 py-8 mt-auto">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center justify-center mb-8">
-          <Link to="/security-report">
-            <Button variant="outline" className="border-white/20 hover:bg-white/5">
-              <ShieldCheck className="mr-2 h-5 w-5 text-green-500" />
-              Security Report
-            </Button>
-          </Link>
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <Link to="/security-report">
+              <Button variant="outline" className="border-white/20 hover:bg-white/5">
+                <ShieldCheck className="mr-2 h-5 w-5 text-green-500" />
+                Security Report
+              </Button>
+            </Link>
+            <Link to="/bonding-curves">
+              <Button variant="outline" className="border-white/20 hover:bg-white/5">
+                <BookOpen className="mr-2 h-5 w-5 text-purple-500" />
+                Bonding Curves Guide
+              </Button>
+            </Link>
+          </div>
           <p className="text-gray-400 text-sm mt-2">
-            View our comprehensive security report and smart contract audit
+            View our comprehensive security report and learn about our token pricing mechanism
           </p>
         </div>
         
@@ -44,7 +52,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="text-gray-400 hover:text-white">Documentation</a></li>
               <li><a href="#" className="text-gray-400 hover:text-white">Tutorials</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">FAQs</a></li>
+              <li><Link to="/bonding-curves" className="text-gray-400 hover:text-white">Bonding Curves</Link></li>
               <li><Link to="/security-report" className="text-gray-400 hover:text-white">Security Report</Link></li>
             </ul>
           </div>
@@ -70,6 +78,9 @@ const Footer: React.FC = () => {
             <a href="#" className="text-gray-400 hover:text-white text-sm">Terms of Service</a>
             <Link to="/security-report" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
               Security Report
+            </Link>
+            <Link to="/bonding-curves" className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+              Bonding Curves
             </Link>
           </div>
         </div>

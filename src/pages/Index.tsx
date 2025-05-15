@@ -1,7 +1,6 @@
-
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
-import { ChevronDown, Globe, Shield, TrendingUp, Wallet, Rocket, CircleDollarSign } from "lucide-react";
+import { ChevronDown, Globe, Shield, TrendingUp, Wallet, Rocket, CircleDollarSign, BookOpen } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,9 @@ const Index = () => {
       
       {/* Creator Fees Section */}
       <CreatorFeesSection />
+      
+      {/* Bonding Curves Learn Section */}
+      <BondingCurvesCallout />
       
       <Footer />
     </div>
@@ -260,6 +262,100 @@ const CreatorFeesSection = () => {
         </Section>
       </div>
     </section>
+  );
+};
+
+// Add a new section to promote the Bonding Curves page
+const BondingCurvesCallout = () => {
+  const controls = useAnimation();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.2 });
+  
+  useEffect(() => {
+    if (inView) {
+      controls.start("visible");
+    }
+  }, [controls, inView]);
+  
+  return (
+    <motion.section 
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={{
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.5 } }
+      }}
+      className="py-16 bg-gradient-to-br from-purple-900/20 via-black to-black"
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row items-center gap-10">
+          <div className="md:w-1/2">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { 
+                  opacity: 1, 
+                  y: 0, 
+                  transition: { delay: 0.2, duration: 0.4 }
+                }
+              }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold font-poppins mb-4">
+                <span className="text-white">Understand </span>
+                <span className="text-purple-400">Bonding Curves</span>
+              </h2>
+              <p className="text-gray-300 mb-6">
+                Curious about how token prices work on our platform? Learn how bonding curves 
+                create fair, transparent pricing for meme coins and enable instant liquidity.
+              </p>
+              <Link to="/bonding-curves">
+                <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/20">
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Learn About Bonding Curves
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+          
+          <div className="md:w-1/2">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, scale: 0.9 },
+                visible: { 
+                  opacity: 1, 
+                  scale: 1, 
+                  transition: { delay: 0.3, duration: 0.5 }
+                }
+              }}
+              className="relative h-64 bg-gradient-to-br from-purple-900/30 to-indigo-900/30 rounded-xl overflow-hidden border border-purple-500/20"
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="bg-black/40 p-4 rounded-lg backdrop-blur-sm">
+                    <p className="font-mono text-sm text-purple-300 mb-2">Price = f(Supply)</p>
+                    <div className="h-24 relative">
+                      <svg className="w-full h-full" viewBox="0 0 100 50">
+                        <path 
+                          d="M 10,40 Q 25,35 40,25 Q 60,15 90,5" 
+                          stroke="rgb(192, 132, 252)" 
+                          strokeWidth="2" 
+                          fill="none"
+                        />
+                        <circle cx="10" cy="40" r="2" fill="white" />
+                        <circle cx="90" cy="5" r="2" fill="white" />
+                      </svg>
+                      <div className="absolute bottom-0 left-0 text-xs text-gray-400">Supply</div>
+                      <div className="absolute top-0 left-0 text-xs text-gray-400 transform -rotate-90 origin-top-left translate-y-6">Price</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.section>
   );
 };
 
