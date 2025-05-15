@@ -92,9 +92,6 @@ export class WebSocketImpl extends w3cwebsocket {
   }
 }
 
-// Make sure the implementation is available as both default and named export
-export { Client as default };
-
 // Mock implementation for jayson/lib/client/browser
 export const jaysonClient = {
   Client: class {

@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Gamepad } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
 import MemeRocketAnimation from "./MemeRocketAnimation";
 import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
@@ -78,13 +79,24 @@ const HeroSection = () => {
                   </Button>
                 </motion.div>
               </Link>
-              <Link to="/package">
+              <Link to="/meme-battle-royale">
                 <motion.div
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Button variant="blue" className="font-poppins font-bold text-base px-8 py-6">
-                    Launch Package
+                    <Gamepad className="mr-2 h-5 w-5" />
+                    Meme Battle Royale
+                  </Button>
+                </motion.div>
+              </Link>
+              <Link to="/bonding-curves">
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Button variant="green" className="font-poppins font-bold text-base px-8 py-6">
+                    Learn About Bonding Curves
                   </Button>
                 </motion.div>
               </Link>
