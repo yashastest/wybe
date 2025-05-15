@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
@@ -14,6 +13,7 @@ import { Toaster } from "sonner";
 import SecurityReport from './pages/SecurityReport';
 import TokenDeployment from './pages/TokenDeployment';
 import { WalletProvider } from '@/hooks/useWallet.tsx';  // Updated import path with .tsx extension
+import LaunchToken from './pages/LaunchToken';
 
 function App() {
   return (
@@ -27,6 +27,7 @@ function App() {
           <Route path="/launch" element={<Launch />} />
           <Route path="/package" element={<LaunchPackage />} />
           <Route path="/launch/:packageId" element={<LaunchPackage />} />
+          <Route path="/launch-token" element={<LaunchToken />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/trade" element={<Trade />} />
           <Route path="/security-report" element={<SecurityReport />} />

@@ -1,48 +1,123 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import TradingViewChart from '@/components/TradingViewChart';
 import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
-import { ArrowDownUp, Wallet, ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, Flame, Sparkles, Zap, AlertTriangle } from 'lucide-react';
-import { useWallet } from '@/lib/wallet'; // Updated import
-import { tradingService } from '@/services/tradingService';
+import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star } from 'lucide-react';
+import { useWallet } from '@/lib/wallet';
+import TradingInterface from '@/components/TradingInterface';
+import TransactionHistory from '@/components/TransactionHistory';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletBalance } from '@/hooks/useWalletBalance';
 
 const Trade = () => {
   const { symbol } = useParams();
-  const { connected, address, connect } = useWallet();
-  const [amount, setAmount] = useState('');
-  const [receiveAmount, setReceiveAmount] = useState('0.00');
-  const [tab, setTab] = useState('buy');
+  const { connected, address } = useWallet();
+  const { refreshBalances } = useWalletBalance(symbol);
+  
+  const [tab, setTab] = useState('chart');
   const [isBondingOpen, setIsBondingOpen] = useState(false);
-  const [isCreator, setIsCreator] = useState(true); // For demo purposes, assuming user is creator
+  const [isCreator, setIsCreator] = useState(false);
   const [canClaimRewards, setCanClaimRewards] = useState(false);
   const [nextClaimDate, setNextClaimDate] = useState<Date | null>(null);
+  const [tokenData, setTokenData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get token info including market cap status
-  const normalizedSymbol = symbol?.toLowerCase() || 'pepes';
-  const tokenStatus = tradingService.getTokenStatus(normalizedSymbol);
-  const isDexscreenerListed = tokenStatus?.listedOnDexscreener || false;
-  const marketCap = tokenStatus?.marketCap || 0;
+  const normalizedSymbol = symbol?.toLowerCase() || '';
+  
+  // Get token data from Supabase
+  useEffect(() => {
+    const fetchTokenData = async () => {
+      if (!normalizedSymbol) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('tokens')
+          .select('*')
+          .eq('symbol', normalizedSymbol.toUpperCase())
+          .single();
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setTokenData(data);
+          
+          // Check if current user is creator
+          if (connected && address && data.creator_wallet === address) {
+            setIsCreator(true);
+          } else {
+            setIsCreator(false);
+          }
+        } else {
+          toast.error('Token not found');
+        }
+      } catch (error) {
+        console.error('Error fetching token data:', error);
+        // Use mock data if token not found in database
+        setTokenData({
+          name: (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`) || 'Token',
+          symbol: symbol?.toUpperCase() || 'TOKEN',
+          market_cap: 50000,
+          creator_wallet: '',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTokenData();
+  }, [normalizedSymbol, connected, address]);
+  
+  // Check if creator can claim rewards
+  useEffect(() => {
+    const checkCreatorRewards = async () => {
+      if (isCreator && tokenData) {
+        try {
+          // In a real implementation, fetch this from Supabase
+          // For now, we'll use a mock implementation
+          setCanClaimRewards(Math.random() > 0.5);
+          
+          if (!canClaimRewards) {
+            const nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + 7); // Next claim in 7 days
+            setNextClaimDate(nextDate);
+          }
+        } catch (error) {
+          console.error('Error checking creator rewards:', error);
+        }
+      }
+    };
+    
+    checkCreatorRewards();
+  }, [isCreator, tokenData]);
 
-  // Mock data for the selected token
-  const token = {
-    id: normalizedSymbol,
-    name: (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`) || 'Pepe Solana',
-    symbol: symbol?.toUpperCase() || 'PEPES',
-    logo: `/coins/${normalizedSymbol}.png`,
-    price: 0.00023,
-    change24h: 15.4,
-    marketCap: marketCap,
-    volume24h: 52000,
-    supply: 1000000000
+  // Handle creator reward claims
+  const handleClaimRewards = async () => {
+    if (!connected || !isCreator) return;
+    
+    toast.loading('Processing claim...');
+    
+    // In a real implementation, this would call a Supabase function
+    // For now, we simulate a successful claim
+    setTimeout(() => {
+      toast.success('Rewards claimed successfully!', {
+        description: 'You received 0.25 SOL in rewards'
+      });
+      setCanClaimRewards(false);
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + 7);
+      setNextClaimDate(nextDate);
+    }, 2000);
   };
 
   // Sample trader activities for the chart
@@ -78,107 +153,6 @@ const Trade = () => {
     }
   ];
 
-  // Check if creator can claim rewards
-  useEffect(() => {
-    if (isCreator && tokenStatus) {
-      if (!tokenStatus.lastClaimDate) {
-        setCanClaimRewards(true);
-        setNextClaimDate(null);
-      } else if (tokenStatus.nextClaimAvailable) {
-        const now = new Date();
-        if (now >= tokenStatus.nextClaimAvailable) {
-          setCanClaimRewards(true);
-        } else {
-          setCanClaimRewards(false);
-          setNextClaimDate(tokenStatus.nextClaimAvailable);
-        }
-      }
-    }
-  }, [isCreator, tokenStatus]);
-
-  // Process trade
-  const handleTrade = () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
-    if (!connected) {
-      connect();
-      return;
-    }
-
-    const transactionType = tab === 'buy' ? 'Purchase' : 'Sale';
-    
-    // Update market cap (simulated)
-    const tradeAmount = parseFloat(receiveAmount) || 0;
-    let newMarketCap = marketCap;
-    
-    if (tab === 'buy') {
-      // Buying increases market cap
-      newMarketCap = marketCap + (tradeAmount * token.price);
-    } else {
-      // Selling decreases market cap
-      newMarketCap = Math.max(marketCap - (tradeAmount * token.price), 0);
-    }
-    
-    // Update the token's market cap
-    const listedStatusChanged = tradingService.updateTokenMarketCap(normalizedSymbol, newMarketCap);
-    
-    // If the token just became eligible for DEXScreener, show notification
-    if (listedStatusChanged) {
-      toast.success(`${token.symbol} has reached $50,000 market cap!`, {
-        description: "Now eligible for listing on DEXScreener"
-      });
-    }
-    
-    toast.success(`${transactionType} Successful`, {
-      description: `${transactionType} of ${receiveAmount} ${token.symbol} completed`
-    });
-    
-    setAmount('');
-    setReceiveAmount('0.00');
-  };
-
-  // Handle creator reward claims
-  const handleClaimRewards = () => {
-    if (!connected) {
-      connect();
-      return;
-    }
-
-    const claimResult = tradingService.processCreatorRewardClaim(normalizedSymbol);
-    
-    if (claimResult.success) {
-      toast.success(claimResult.message, { 
-        description: `You received ${claimResult.amount?.toFixed(2)} SOL in rewards`
-      });
-      
-      // Update state
-      setCanClaimRewards(false);
-      if (tokenStatus?.nextClaimAvailable) {
-        setNextClaimDate(tokenStatus.nextClaimAvailable);
-      }
-    } else {
-      toast.error(claimResult.message);
-    }
-  };
-
-  // Calculate receive amount based on input and selected tab
-  useEffect(() => {
-    const parsedAmount = parseFloat(amount) || 0;
-    
-    if (tab === 'buy') {
-      // Simple calculation for demo purposes
-      const tokenAmount = parsedAmount / token.price;
-      setReceiveAmount(tokenAmount ? tokenAmount.toFixed(2) : '0.00');
-    } else {
-      // Sell calculation
-      const solAmount = parsedAmount * token.price;
-      setReceiveAmount(solAmount ? solAmount.toFixed(5) : '0.00');
-    }
-  }, [amount, tab, token.price]);
-
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: (delay = 0) => ({
@@ -194,6 +168,41 @@ const Trade = () => {
       transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
     }
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
+        <Header />
+        <main className="flex-grow w-full px-4 pt-20 md:pt-24 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl text-indigo-200">Loading token data...</h2>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const token = {
+    id: normalizedSymbol,
+    name: tokenData?.name || (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`),
+    symbol: tokenData?.symbol || symbol?.toUpperCase(),
+    logo: `/coins/${normalizedSymbol}.png`,
+    price: 0.00023,
+    change24h: 15.4,
+    marketCap: tokenData?.market_cap || 50000,
+    volume24h: 52000,
+    supply: 1000000000,
+    isDexscreenerListed: tokenData?.market_cap >= 50000
+  };
+
+  // Reset wallet balance
+  useEffect(() => {
+    if (connected) {
+      refreshBalances();
+    }
+  }, [connected, normalizedSymbol]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
@@ -249,7 +258,7 @@ const Trade = () => {
                       {Math.abs(token.change24h)}%
                     </span>
                     
-                    {isDexscreenerListed && (
+                    {token.isDexscreenerListed && (
                       <div className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded flex items-center gap-1">
                         <Star size={10} />
                         DEXScreener
@@ -281,7 +290,7 @@ const Trade = () => {
           </motion.div>
 
           {/* Market cap progress to DEXScreener */}
-          {!isDexscreenerListed && (
+          {!token.isDexscreenerListed && (
             <motion.div 
               initial="hidden"
               animate="visible"
@@ -291,18 +300,17 @@ const Trade = () => {
             >
               <div className="flex justify-between mb-2">
                 <h3 className="font-poppins font-semibold text-indigo-200 flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-amber-400" />
                   DEXScreener Eligibility Progress
                 </h3>
                 <span className="font-mono text-indigo-200">
-                  ${marketCap.toLocaleString()} / $50,000
+                  ${token.marketCap.toLocaleString()} / $50,000
                 </span>
               </div>
               
               <div className="w-full h-3 bg-black/30 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-                  style={{ width: `${Math.min(100, (marketCap / 50000) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (token.marketCap / 50000) * 100)}%` }}
                 ></div>
               </div>
               
@@ -332,25 +340,25 @@ const Trade = () => {
                       {canClaimRewards 
                         ? "You have rewards available to claim!"
                         : nextClaimDate 
-                          ? `Next claim available ${nextClaimDate.toLocaleString()}`
+                          ? `Next claim available ${nextClaimDate.toLocaleDateString()}`
                           : "Start earning rewards from your token's trading activity"}
                     </p>
                   </div>
-                  <Button 
-                    className={`${canClaimRewards 
-                      ? "bg-amber-600 hover:bg-amber-500 text-white" 
-                      : "bg-amber-600/30 text-amber-200 cursor-not-allowed"}`}
+                  <button 
                     onClick={handleClaimRewards}
                     disabled={!canClaimRewards}
+                    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${canClaimRewards 
+                      ? "bg-amber-600 hover:bg-amber-500 text-white cursor-pointer" 
+                      : "bg-amber-600/30 text-amber-200 cursor-not-allowed"}`}
                   >
-                    <Star size={16} className="mr-2" />
+                    <Star size={16} />
                     Claim Rewards
-                  </Button>
+                  </button>
                 </div>
                 
                 <p className="text-xs text-amber-200/70 mt-3">
-                  As creator, you earn {tradingService.getConfig().creatorFeePercentage}% of all trading activity.
-                  Rewards can be claimed every {tradingService.getConfig().rewardClaimPeriod} days.
+                  As creator, you earn 1% of all trading activity.
+                  Rewards can be claimed every 7 days.
                 </p>
               </div>
             </motion.div>
@@ -366,7 +374,7 @@ const Trade = () => {
               className="lg:col-span-2 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 bg-gradient-to-br from-indigo-950/50 to-purple-900/20"
             >
               <div className="border-b border-white/10 p-2 md:p-4">
-                <Tabs defaultValue="chart">
+                <Tabs defaultValue="chart" value={tab} onValueChange={setTab}>
                   <TabsList className="bg-black/40 backdrop-blur-md w-full overflow-x-auto flex-nowrap">
                     <TabsTrigger 
                       value="chart" 
@@ -388,6 +396,13 @@ const Trade = () => {
                     >
                       <TrendingUp size={14} className="mr-1 md:mr-2" />
                       Activity
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="history" 
+                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
+                    >
+                      <Clock size={14} className="mr-1 md:mr-2" />
+                      Your History
                     </TabsTrigger>
                   </TabsList>
                   
@@ -422,6 +437,12 @@ const Trade = () => {
                   <TabsContent value="activity" className="mt-4">
                     <div className="h-[300px] md:h-[400px]">
                       <TraderActivityMarkers activities={traderActivities} />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="history" className="mt-4">
+                    <div className="h-[300px] md:h-[400px] overflow-y-auto">
+                      <TransactionHistory tokenSymbol={token.symbol} />
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -467,157 +488,13 @@ const Trade = () => {
               animate="visible"
               variants={fadeUpVariants}
               custom={0.2}
-              className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-4 md:p-6 rounded-xl border border-white/10 shadow-glow-sm"
             >
-              <h2 className="text-lg md:text-xl font-poppins font-bold mb-4 md:mb-6 flex items-center">
-                <Flame size={18} className="mr-2 text-orange-500" />
-                <span className="bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
-                  Trade {token.symbol}
-                </span>
-              </h2>
-              
-              <Tabs defaultValue="buy" onValueChange={setTab}>
-                <TabsList className="mb-4 md:mb-6 grid grid-cols-2 bg-black/40 backdrop-blur">
-                  <TabsTrigger
-                    value="buy"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600/50 data-[state=active]:to-emerald-600/20 data-[state=active]:text-green-400 font-poppins font-bold"
-                  >
-                    <Sparkles size={14} className="mr-1 md:mr-2" />
-                    Buy
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="sell"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600/50 data-[state=active]:to-rose-600/20 data-[state=active]:text-red-400 font-poppins font-bold"
-                  >
-                    <Zap size={14} className="mr-1 md:mr-2" />
-                    Sell
-                  </TabsTrigger>
-                </TabsList>
-                
-                <div className="space-y-4 md:space-y-6">
-                  <div>
-                    <label className="block text-sm text-indigo-200 mb-1 md:mb-2 font-mono">
-                      {tab === 'buy' ? 'Pay with SOL' : `Sell ${token.symbol}`}
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="bg-black/30 border-white/10 font-mono text-base h-10 md:h-12 focus:border-indigo-500 focus:ring-indigo-500/30 rounded-xl"
-                      />
-                      <div className="absolute top-0 right-0 h-full px-3 flex items-center font-mono text-indigo-200">
-                        {tab === 'buy' ? 'SOL' : token.symbol}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-center">
-                    <motion.div 
-                      className="bg-gradient-to-r from-indigo-600/30 to-purple-600/30 p-2 rounded-full"
-                      animate={{
-                        rotate: [0, 180, 360],
-                      }}
-                      transition={{
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    >
-                      <ArrowDownUp size={20} className="text-indigo-300" />
-                    </motion.div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm text-indigo-200 mb-1 md:mb-2 font-mono">
-                      {tab === 'buy' ? `Receive ${token.symbol}` : 'Receive SOL'}
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        value={receiveAmount}
-                        disabled
-                        className="bg-black/30 border-white/10 font-mono text-base h-10 md:h-12 rounded-xl"
-                      />
-                      <div className="absolute top-0 right-0 h-full px-3 flex items-center font-mono text-indigo-200">
-                        {tab === 'buy' ? token.symbol : 'SOL'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-1 md:pt-2">
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button
-                        onClick={handleTrade}
-                        className={`w-full py-4 md:py-6 font-poppins font-bold text-sm md:text-base rounded-xl ${
-                          tab === 'buy'
-                            ? 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_15px_rgba(34,197,94,0.5)] hover:shadow-[0_0_20px_rgba(34,197,94,0.7)]'
-                            : 'bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:shadow-[0_0_20px_rgba(239,68,68,0.7)]'
-                        } transition-all duration-300`}
-                      >
-                        {!connected && (
-                          <>
-                            <Wallet className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                            Connect Wallet
-                          </>
-                        )}
-                        {connected && tab === 'buy' && (
-                          <>
-                            <Star className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                            Buy {token.symbol}
-                          </>
-                        )}
-                        {connected && tab === 'sell' && (
-                          <>
-                            <Zap className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                            Sell {token.symbol}
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
-                  </div>
-                  
-                  <motion.div 
-                    className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 p-3 md:p-4 rounded-xl border border-indigo-500/20 text-xs md:text-sm"
-                    animate={{
-                      boxShadow: [
-                        "0 0 10px rgba(139, 92, 246, 0.2)",
-                        "0 0 15px rgba(139, 92, 246, 0.4)",
-                        "0 0 10px rgba(139, 92, 246, 0.2)"
-                      ]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <h3 className="font-poppins font-bold mb-2 text-indigo-200">Trade Information</h3>
-                    <div className="space-y-1 md:space-y-2 font-mono">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Price</span>
-                        <span className="text-white">{token.price} SOL</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Fee</span>
-                        <span className="text-white">2.5%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Creator Fee</span>
-                        <span className="text-white">{tradingService.getConfig().creatorFeePercentage}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Slippage Tolerance</span>
-                        <span className="text-white">0.5%</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </Tabs>
+              <TradingInterface 
+                tokenSymbol={token.symbol}
+                tokenName={token.name}
+                tokenPrice={token.price}
+                tokenLogo={token.logo}
+              />
             </motion.div>
           </div>
           
