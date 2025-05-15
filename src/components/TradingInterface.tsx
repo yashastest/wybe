@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowDownUp, AlertCircle, Check, Loader, Wallet, ArrowDown, Star } from 'lucide-react';
+import { ArrowUpDown, AlertCircle, Check, Loader, Wallet, ArrowDown, Star } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { motion } from 'framer-motion';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
@@ -227,7 +226,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                 ease: "linear"
               }}
             >
-              <ArrowDownUp size={20} className="text-indigo-300" />
+              <ArrowUpDown size={20} className="text-indigo-300" />
             </motion.div>
           </div>
           

@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
-import { Twitter } from "lucide-react";
+import { Twitter, BookOpen } from "lucide-react";
 
 const Footer = () => {
   const currentYear = 2025;
@@ -44,6 +45,12 @@ const Footer = () => {
               <li>
                 <Link to="/dashboard" className="text-gray-400 hover:text-wybe-primary transition-colors">
                   Creator Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/bonding-curves" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
+                  <BookOpen size={16} className="mr-2" />
+                  <span>Learn About Bonding Curves</span>
                 </Link>
               </li>
             </ul>
@@ -92,6 +99,16 @@ const Footer = () => {
               <span>Discord</span>
             </a>
           </div>
+        </div>
+        
+        <div className="mt-6 text-center">
+          <Link 
+            to="/bonding-curves" 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-poppins font-bold rounded-full hover:from-indigo-500 hover:to-purple-500 transition-all shadow-glow-sm hover:shadow-glow-md"
+          >
+            <BookOpen size={18} />
+            Learn About Bonding Curves
+          </Link>
         </div>
       </div>
     </footer>
