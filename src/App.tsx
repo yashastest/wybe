@@ -14,6 +14,8 @@ import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
 import Launch from './pages/Launch';
 import BondingCurves from './pages/BondingCurves';
+import LaunchPackage from './pages/LaunchPackage';
+import TokenTrade from './pages/TokenTrade';
 
 const App = () => {
   return (
@@ -24,9 +26,11 @@ const App = () => {
         <Route path="/discover" element={<Discover />} />
         <Route path="/create" element={<Discover />} />
         <Route path="/trade/:tokenId?" element={<Trade />} />
+        <Route path="/token/:tokenId" element={<TokenTrade />} />
         <Route path="/trading-history" element={<TradingHistory />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/launch" element={<Launch />} />
+        <Route path="/package" element={<LaunchPackage />} />
         <Route path="/bonding-curves" element={<BondingCurves />} />
         <Route path="/security-report" element={<SecurityReport />} />
           

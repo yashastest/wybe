@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X, Wallet } from "lucide-react";
+import { Menu, X, Wallet, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -55,6 +56,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     { to: "/trade", label: "Trade" },
     { to: "/dashboard", label: "Dashboard" },
     { to: "/launch", label: "Launch" },
+    { to: "/package", label: "Launch Package" },
   ];
   
   // Admin navigation links
@@ -184,6 +186,20 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                     </Link>
                   </DropdownMenuItem>
                 ))}
+                
+                {/* Package link with special styling */}
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/package"
+                    className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
+                      location.pathname === '/package' ? 'text-wybe-primary' : 'text-white'
+                    }`}
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Launch Package ($500)
+                  </Link>
+                </DropdownMenuItem>
+                
                 {!adminOnly && (
                   <>
                     {/* Wallet Button - Mobile */}

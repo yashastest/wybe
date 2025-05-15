@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { smartContractService } from '@/services/smartContractService.ts';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import BondingCurveChart from '@/components/BondingCurveChart';
 import { useTokenTrading } from '@/hooks/useTokenTrading.tsx';
@@ -13,6 +13,8 @@ import { useTokenTrading } from '@/hooks/useTokenTrading.tsx';
 interface TradingInterfaceProps {
   tokenSymbol?: string;
   tokenId?: string;
+  tokenName?: string;
+  tokenImage?: string;
 }
 
 interface TradeHistoryItem {
@@ -23,8 +25,8 @@ interface TradeHistoryItem {
   timestamp: string;
 }
 
-const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenId }) => {
-  const { connected, publicKey } = useWallet();
+const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenId, tokenName, tokenImage }) => {
+  const { connected, address } = useWallet();
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [tradeAmount, setTradeAmount] = useState<number>(0);
   const [tokenPrice, setTokenPrice] = useState<number>(0);
@@ -58,7 +60,8 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenI
 
     setLoading(true);
     try {
-      const result = await executeTrade(tokenSymbol || '', tradeAmount, tradeType === 'buy');
+      // Pass only the symbol to executeTrade as per its signature
+      const result = await executeTrade(tokenSymbol || '');
       if (result.success) {
         setTokenPrice(result.price);
         toast.success(`Successfully executed ${tradeType} of ${tradeAmount} tokens at price: ${result.price} SOL per token`);
