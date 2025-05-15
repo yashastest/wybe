@@ -1,97 +1,84 @@
 
-// Empty module to handle imports of unsupported browser modules
-export default {};
+// Mock implementation for Node.js modules in the browser
+// This file provides lightweight mocks for modules that are not available in the browser
 
-/**
- * Mock implementation for rpc-websockets/dist/lib/client
- * This is a comprehensive mock to support Solana Web3.js in browser environments
- */
-export class Client {
+console.log('Loading empty module mocks');
+
+// Basic event emitter implementation for compatibility
+class EventEmitter {
   constructor() {
-    this.connected = false;
     this._events = {};
   }
-  connect() {
-    this.connected = true;
-    return Promise.resolve();
+  
+  on(event, listener) {
+    if (!this._events[event]) this._events[event] = [];
+    this._events[event].push(listener);
+    return this;
   }
-  disconnect() {
-    this.connected = false;
-    return Promise.resolve();
+  
+  off(event, listener) {
+    if (!this._events[event]) return this;
+    this._events[event] = this._events[event].filter(l => l !== listener);
+    return this;
   }
-  call() {
-    return Promise.resolve(null);
-  }
-  notify() {
-    return Promise.resolve();
-  }
-  on(event, callback) {
-    if (!this._events[event]) {
-      this._events[event] = [];
-    }
-    this._events[event].push(callback);
-  }
-  once(event, callback) {
-    const onceCallback = (...args) => {
-      this.off(event, onceCallback);
-      callback(...args);
-    };
-    this.on(event, onceCallback);
-  }
-  off(event, callback) {
-    if (this._events[event]) {
-      this._events[event] = this._events[event].filter(cb => cb !== callback);
-    }
-  }
-  subscribe() {
-    return Promise.resolve(1); // Subscription ID
-  }
-  unsubscribe() {
-    return Promise.resolve(true);
-  }
+  
   emit(event, ...args) {
-    if (this._events[event]) {
-      this._events[event].forEach(callback => callback(...args));
-    }
+    if (!this._events[event]) return false;
+    this._events[event].forEach(listener => listener.apply(this, args));
+    return true;
   }
 }
 
-// Provide a WebSocket implementation for browser environments
-export class w3cwebsocket {
-  constructor() {
-    this.onopen = null;
-    this.onclose = null;
-    this.onmessage = null;
-    this.onerror = null;
-    
-    // Mock implementation that simulates a successful connection
-    setTimeout(() => {
-      if (this.onopen) this.onopen({ type: 'open' });
-    }, 0);
-  }
-  send() {}
-  close() {
-    if (this.onclose) this.onclose({ type: 'close' });
-  }
-}
-
-// Additional exports from rpc-websockets
-export const WebSocketClient = Client;
-export const NodeWebSocketClient = Client;
-
-// Export RpcWebSocketCommonClient which is specifically imported by @solana/web3.js
-export const RpcWebSocketCommonClient = Client;
-
-// Export createRpc for the websocket.browser import
-export const createRpc = () => new Client();
-
-// Mock WS module used by Solana's web socket connection
-export class WebSocketImpl extends w3cwebsocket {
-  constructor() {
+// Mock WebSocket implementation
+class MockWebSocket extends EventEmitter {
+  constructor(url, protocols) {
     super();
-    this.readyState = 1; // WebSocket.OPEN
+    this.url = url;
+    this.protocols = protocols;
+    this.readyState = 0; // CONNECTING
+    
+    // Simulate connection
+    setTimeout(() => {
+      this.readyState = 1; // OPEN
+      this.emit('open');
+    }, 100);
+  }
+  
+  send(data) {
+    console.log('[Mock WebSocket] Send:', data);
+    return true;
+  }
+  
+  close(code, reason) {
+    this.readyState = 3; // CLOSED
+    this.emit('close', { code, reason });
   }
 }
 
-// Make sure the implementation is available as both default and named export
-export { Client as default };
+// Mock RPC client
+const createRpcClient = () => {
+  return {
+    call: (method, params) => {
+      console.log('[Mock RPC] Call:', method, params);
+      return Promise.resolve({ result: null, error: null });
+    },
+    connect: () => Promise.resolve(),
+    disconnect: () => Promise.resolve(),
+    on: () => {},
+    once: () => {},
+    removeListener: () => {}
+  };
+};
+
+// Export all required mocks
+export const w3cwebsocket = MockWebSocket;
+export const client = createRpcClient;
+export default {
+  w3cwebsocket: MockWebSocket,
+  client: createRpcClient
+};
+
+// Mock exports for various specific imports
+export const WebSocketClient = MockWebSocket;
+export const NodeWebSocketClient = MockWebSocket;
+export const BrowserWebSocketClient = MockWebSocket;

@@ -18,9 +18,13 @@ const queryClient = new QueryClient({
   },
 });
 
-// Handle any runtime errors
+// Initialization status tracking
+console.log('Application initialization starting...');
+
+// Improved error handling
 window.addEventListener('error', (event) => {
   console.error('Runtime error:', event.error);
+  document.getElementById('root')?.setAttribute('data-error', 'true');
 });
 
 // Add connection status monitoring
@@ -30,23 +34,47 @@ if (import.meta.hot) {
   });
 }
 
-// Enhanced error boundary for the root component
-try {
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster />
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
-} catch (error) {
-  console.error('Failed to render application:', error);
-  // Display a minimal error message to the user
-  document.body.innerHTML = `
-    <div style="padding: 20px; text-align: center;">
-      <h2>Something went wrong</h2>
-      <p>Please refresh the page to try again.</p>
-    </div>
-  `;
+// Enhanced initialization to provide better feedback
+const initializeApp = () => {
+  try {
+    console.log('Mounting React application...');
+    const rootElement = document.getElementById("root");
+    
+    if (!rootElement) {
+      throw new Error('Root element not found in DOM');
+    }
+    
+    // Set initialization status for debugging
+    rootElement.setAttribute('data-initializing', 'true');
+    
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <App />
+          <Toaster />
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+    
+    // Mark initialization as complete
+    rootElement.setAttribute('data-initializing', 'false');
+    console.log('Application mounted successfully');
+  } catch (error) {
+    console.error('Failed to render application:', error);
+    // Display a minimal error message to the user
+    document.body.innerHTML = `
+      <div style="padding: 20px; text-align: center;">
+        <h2>Something went wrong</h2>
+        <p>Application initialization failed. Please refresh the page to try again.</p>
+        <p style="color: gray; font-size: 12px;">Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+      </div>
+    `;
+  }
+};
+
+// Attempt initialization with a small delay to ensure DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initializeApp, 100));
+} else {
+  setTimeout(initializeApp, 100);
 }
