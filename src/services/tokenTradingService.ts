@@ -1,3 +1,4 @@
+
 import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -203,7 +204,7 @@ const getUserTransactions = async (
         });
       } else {
         // Explicitly check if tokenSymbol exists and is a string before using toLowerCase
-        if (filters.tokenSymbol !== undefined && filters.tokenSymbol !== null && typeof filters.tokenSymbol === 'string') {
+        if (filters.tokenSymbol && typeof filters.tokenSymbol === 'string') {
           const tokenSymbolFilter = filters.tokenSymbol.toLowerCase();
           filteredData = filteredData.filter(tx => {
             const txTokenSymbol = tx.token_symbol;
