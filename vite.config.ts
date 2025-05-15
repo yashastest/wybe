@@ -44,7 +44,8 @@ export default defineConfig(({ mode }) => ({
       "tls": path.resolve(__dirname, "src/empty-module.js"),
       "dgram": path.resolve(__dirname, "src/empty-module.js"),
       "fs": path.resolve(__dirname, "src/empty-module.js"),
-      "crypto": path.resolve(__dirname, "src/empty-module.js")
+      "crypto": "crypto-browserify",
+      "stream": "stream-browserify"
     },
   },
   build: {

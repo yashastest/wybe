@@ -22,7 +22,7 @@ if (typeof WebSocket !== 'undefined') {
   (window as any).WebSocket = WebSocket;
 }
 
-// Console logging helpers for debugging
+// Console logging with enhanced error filtering
 const originalConsoleError = console.error;
 console.error = (...args) => {
   // Filter out specific WebSocket errors from @solana/web3.js that we expect in browser environment
@@ -30,9 +30,10 @@ console.error = (...args) => {
     typeof args[0] === 'string' && 
     (args[0].includes('WebSocket connection error') || 
      args[0].includes('rpc-websockets') ||
-     args[0].includes('Failed to connect to websocket'))
+     args[0].includes('Failed to connect to websocket') ||
+     args[0].includes('Cannot resolve module'))
   ) {
-    console.log('[Suppressed WebSocket Error]', ...args);
+    console.log('[Suppressed Error]', ...args);
     return;
   }
   originalConsoleError(...args);
@@ -74,3 +75,6 @@ window.fetch = function(...args) {
       throw err;
     });
 };
+
+// Add console.log to track polyfill initialization
+console.log('Polyfills initialized for Solana Web3.js compatibility');
