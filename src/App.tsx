@@ -9,6 +9,9 @@ import NotFoundPage from './pages/NotFound';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import TokenDeployment from './pages/TokenDeployment';
 import { WalletProvider } from '@/hooks/useWallet.tsx';
+import Index from './pages/Index';
+import Dashboard from './pages/Dashboard';
+import Launch from './pages/Launch';
 
 const App = () => {
   // You can add any global context providers or initial setup here
@@ -17,12 +20,14 @@ const App = () => {
     <WalletProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Discover />} />
+          <Route path="/" element={<Index />} />
           <Route path="/about" element={<Discover />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/create" element={<Discover />} />
           <Route path="/trade/:tokenId?" element={<Trade />} />
           <Route path="/trading-history" element={<TradingHistory />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/launch" element={<Launch />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/tokens" element={<AdminDashboard />} />

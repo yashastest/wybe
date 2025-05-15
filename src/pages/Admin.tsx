@@ -6,12 +6,11 @@ import TokenDeployment from './TokenDeployment';
 
 const Admin = () => {
   const { pathname } = useLocation();
-  const { tokenId } = useParams<{ tokenId?: string }>();
   
   // Render the appropriate component based on the current path
   const renderContent = () => {
     if (pathname.includes('token-deployment')) {
-      return <TokenDeployment />; // Let TokenDeployment access tokenId via useParams
+      return <TokenDeployment />;  // TokenDeployment will access tokenId from useParams itself
     }
     return <AdminDashboard />;
   };
