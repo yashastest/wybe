@@ -9,8 +9,8 @@ import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, ArrowUpDown } from 'lucide-react';
-import { useWallet } from '@/lib/wallet';
-import TradingInterface from '@/components/TradingInterface';
+import { useWallet } from '@/hooks/useWallet.tsx';
+import EnhancedTradingInterface from '@/components/EnhancedTradingInterface';
 import TransactionHistory from '@/components/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +30,7 @@ const Trade = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const normalizedSymbol = symbol?.toLowerCase() || '';
-  
+
   // Get token data from Supabase
   useEffect(() => {
     const fetchTokenData = async () => {
@@ -435,7 +435,7 @@ const Trade = () => {
                   
                   <TabsContent value="activity" className="mt-4">
                     <div className="h-[300px] md:h-[400px]">
-                      <TraderActivityMarkers activities={traderActivities} />
+                      <TraderActivityMarkers activities={[]} />
                     </div>
                   </TabsContent>
                   
@@ -488,7 +488,7 @@ const Trade = () => {
               variants={fadeUpVariants}
               custom={0.2}
             >
-              <TradingInterface 
+              <EnhancedTradingInterface 
                 tokenSymbol={token.symbol}
                 tokenName={token.name}
                 tokenPrice={token.price}

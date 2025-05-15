@@ -1,262 +1,195 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Define the transaction request structure
-interface TokenTransactionRequest {
-  tokenId: string;
-  wallet: string;
+// Create a Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+interface TradeRequest {
+  wallet_address: string;
+  token_symbol: string;
+  side: "buy" | "sell";
   amount: number;
-  type: 'buy' | 'sell';
-  price?: number;
+  sol_amount: number;
+  gas_priority?: number;
 }
-
-// Define the bonding curve calculation config
-interface BondingCurveConfig {
-  type: 'linear' | 'exponential' | 'logarithmic';
-  basePrice: number;
-  coefficient: number;
-}
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Platform configuration
-const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
-const CREATOR_FEE_PERCENTAGE_HIGH = 0.40; // 40% of fee when market cap > threshold
-const CREATOR_FEE_PERCENTAGE_LOW = 0.20; // 20% of fee when market cap <= threshold
-const MARKET_CAP_THRESHOLD = 50000; // $50K threshold
-const HIGH_FEE_HOLDING_PERIOD_HOURS = 48; // 48 hours
-const LOW_FEE_HOLDING_PERIOD_DAYS = 7; // 7 days
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
     });
   }
 
   try {
-    // Create a Supabase client with the Auth context of the request
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Parse the request body
-    const transaction = await req.json() as TokenTransactionRequest;
-
-    // Validate required fields
-    if (!transaction.tokenId || !transaction.wallet || !transaction.amount || !transaction.type) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
+    // Only allow POST requests
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     }
 
-    // Get token details
+    // Parse request body
+    const tradeReq: TradeRequest = await req.json();
+
+    // Validate required fields
+    if (!tradeReq.wallet_address || !tradeReq.token_symbol || !tradeReq.side || tradeReq.amount === undefined) {
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    // Create Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // 1. Verify token exists
     const { data: token, error: tokenError } = await supabase
-      .from('tokens')
-      .select('*')
-      .eq('id', transaction.tokenId)
+      .from("tokens")
+      .select("id, symbol, market_cap, launched")
+      .eq("symbol", tradeReq.token_symbol.toUpperCase())
       .single();
 
     if (tokenError || !token) {
-      console.error('Error fetching token:', tokenError);
-      return new Response(
-        JSON.stringify({ error: 'Token not found' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 404,
-        }
-      );
-    }
-
-    // Check if the token has been launched
-    if (!token.launched) {
-      return new Response(
-        JSON.stringify({ error: 'Token has not been launched yet' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    // Get the current supply and calculate price using the bonding curve
-    const { data: transactions, error: txError } = await supabase
-      .from('transactions')
-      .select('amount, type')
-      .eq('token_id', transaction.tokenId);
-
-    if (txError) {
-      console.error('Error fetching transactions:', txError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to calculate token price' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
-    }
-
-    // Calculate current supply
-    let currentSupply = 0;
-    if (transactions) {
-      for (const tx of transactions) {
-        if (tx.type === 'buy') {
-          currentSupply += tx.amount;
-        } else if (tx.type === 'sell') {
-          currentSupply -= tx.amount;
-        }
-      }
-    }
-
-    // Ensure the current supply is never negative
-    currentSupply = Math.max(0, currentSupply);
-
-    // Calculate price using bonding curve
-    let curveType = 'linear';
-    let calculatedPrice = 0;
-
-    if (token.bonding_curve) {
-      const curve = token.bonding_curve as BondingCurveConfig;
-      curveType = curve.type || 'linear';
-    }
-
-    // Use the Supabase function to calculate price
-    const { data: priceData, error: priceError } = await supabase
-      .rpc('calculate_token_price', {
-        total_supply: transaction.type === 'buy' ? currentSupply : currentSupply - transaction.amount,
-        amount: transaction.amount,
-        curve_type: curveType
+      return new Response(JSON.stringify({ error: "Token not found" }), {
+        status: 404,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       });
-
-    if (priceError) {
-      console.error('Error calculating price:', priceError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to calculate token price' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
     }
 
-    calculatedPrice = priceData;
+    // 2. Calculate token price using bonding curve
+    // In a real implementation, this would call the smart contract
+    // For now, we'll use a simple formula
+    const basePrice = Math.pow(token.market_cap / 10000, 2) + 0.01;
+    
+    // Add a small spread for buy/sell difference
+    const price = tradeReq.side === "buy"
+      ? basePrice * 1.01
+      : basePrice * 0.99;
 
-    // Override with provided price if specified (mainly for testing)
-    const price = transaction.price || calculatedPrice;
+    // 3. Calculate SOL amount if selling tokens
+    const solAmount = tradeReq.side === "buy"
+      ? tradeReq.sol_amount
+      : price * tradeReq.amount;
+    
+    // 4. Calculate tokens amount if buying with SOL
+    const tokenAmount = tradeReq.side === "buy"
+      ? tradeReq.sol_amount / price
+      : tradeReq.amount;
 
-    // Calculate transaction total value
-    const transactionValue = price * transaction.amount;
-
-    // Calculate fee
-    const fee = transactionValue * PLATFORM_FEE_PERCENTAGE;
-
-    // Create the transaction record
-    const { data: newTransaction, error: insertError } = await supabase
-      .from('transactions')
+    // 5. Calculate fees
+    const platformFee = solAmount * 0.01; // 1% platform fee
+    const creatorFee = solAmount * 0.01; // 1% creator fee
+    
+    // Generate a mock transaction hash
+    const txHash = "tx_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+    
+    // 6. Log trade to the database
+    const { data: trade, error: tradeError } = await supabase
+      .from("transactions")
       .insert({
-        token_id: transaction.tokenId,
-        wallet: transaction.wallet,
-        amount: transaction.amount,
-        type: transaction.type,
-        price,
-        fee
+        wallet: tradeReq.wallet_address,
+        token_id: token.id,
+        type: tradeReq.side,
+        price: price,
+        amount: tokenAmount,
+        fee: platformFee + creatorFee,
       })
       .select()
       .single();
 
-    if (insertError) {
-      console.error('Error creating transaction:', insertError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to record transaction' }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
-    }
-
-    // Update token market cap
-    const newMarketCap = currentSupply * price;
-    const { error: updateError } = await supabase
-      .from('tokens')
-      .update({ market_cap: newMarketCap })
-      .eq('id', transaction.tokenId);
-
-    if (updateError) {
-      console.error('Error updating token market cap:', updateError);
-      // Non-critical, continue processing
-    }
-
-    // Create fee distribution record
-    let eligibleTimestamp: Date | null = null;
-    
-    if (newMarketCap > MARKET_CAP_THRESHOLD) {
-      // High market cap: eligible after 48 hours
-      eligibleTimestamp = new Date();
-      eligibleTimestamp.setHours(eligibleTimestamp.getHours() + HIGH_FEE_HOLDING_PERIOD_HOURS);
-    } else {
-      // Low market cap: eligible after 7 days
-      eligibleTimestamp = new Date();
-      eligibleTimestamp.setDate(eligibleTimestamp.getDate() + LOW_FEE_HOLDING_PERIOD_DAYS);
-    }
-
-    // Calculate creator fee portion
-    const creatorFeePercentage = newMarketCap > MARKET_CAP_THRESHOLD 
-      ? CREATOR_FEE_PERCENTAGE_HIGH 
-      : CREATOR_FEE_PERCENTAGE_LOW;
-    
-    const creatorFee = fee * creatorFeePercentage;
-
-    const { error: feeDistributionError } = await supabase
-      .from('fee_distributions')
-      .insert({
-        token_id: transaction.tokenId,
-        creator_wallet: token.creator_wallet,
-        amount: creatorFee,
-        eligible_timestamp: eligibleTimestamp.toISOString(),
-        distributed: false
+    if (tradeError) {
+      console.error("Error logging trade:", tradeError);
+      return new Response(JSON.stringify({ error: "Failed to log trade" }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       });
-
-    if (feeDistributionError) {
-      console.error('Error creating fee distribution record:', feeDistributionError);
-      // Non-critical, continue processing
     }
 
+    // 7. Update token market cap
+    let newMarketCap = token.market_cap;
+    
+    if (tradeReq.side === "buy") {
+      // If buying, increase market cap by the SOL amount (simplified)
+      newMarketCap += solAmount;
+    } else {
+      // If selling, decrease market cap by the SOL amount (simplified)
+      newMarketCap -= solAmount;
+      // Ensure market cap doesn't go below a minimum value
+      newMarketCap = Math.max(newMarketCap, 1000);
+    }
+    
+    await supabase
+      .from("tokens")
+      .update({ market_cap: newMarketCap })
+      .eq("id", token.id);
+
+    // 8. In a real implementation, we would also:
+    // - Call the smart contract to execute the trade
+    // - Wait for blockchain confirmation
+    // - Update token balances in user wallets
+
+    // Return successful response
     return new Response(
       JSON.stringify({
         success: true,
-        transaction: newTransaction,
-        marketCap: newMarketCap,
-        supply: transaction.type === 'buy' ? currentSupply + transaction.amount : currentSupply - transaction.amount,
-        fee: {
-          total: fee,
-          creator: creatorFee,
-          platform: fee - creatorFee,
-          eligibleAt: eligibleTimestamp
-        }
+        transaction: {
+          id: trade.id,
+          txHash,
+          tokenSymbol: token.symbol,
+          side: tradeReq.side,
+          amount: tokenAmount,
+          price: price,
+          solAmount: solAmount,
+          fees: {
+            platform: platformFee,
+            creator: creatorFee,
+            total: platformFee + creatorFee,
+          },
+        },
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
-  } catch (err) {
-    console.error('Server error:', err);
+  } catch (error) {
+    console.error("Error processing trade:", error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: err.message }),
+      JSON.stringify({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : String(error),
+      }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
   }
