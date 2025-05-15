@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { smartContractService } from './services/smartContractService.ts'
-import { BrowserRouter } from 'react-router-dom'
 
 // Initialize default config values for services
 function initializeServices() {
@@ -23,9 +22,7 @@ function initializeServices() {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   </React.StrictMode>,
 )
 

@@ -1,19 +1,22 @@
 
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import TokenDeployment from './TokenDeployment';
 
 const Admin = () => {
-  return (
-    <Routes>
-      <Route index element={<AdminDashboard />} />
-      <Route path="tokens" element={<AdminDashboard />} />
-      <Route path="token-deployment" element={<TokenDeployment />} />
-      <Route path="token-deployment/:tokenId" element={<TokenDeployment />} />
-      <Route path="*" element={<AdminDashboard />} />
-    </Routes>
-  );
+  const { pathname } = useLocation();
+  const { tokenId } = useParams();
+  
+  // Render the appropriate component based on the current path
+  const renderContent = () => {
+    if (pathname.includes('token-deployment')) {
+      return <TokenDeployment tokenId={tokenId} />;
+    }
+    return <AdminDashboard />;
+  };
+
+  return renderContent();
 };
 
 export default Admin;
