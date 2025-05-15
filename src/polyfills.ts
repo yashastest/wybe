@@ -12,7 +12,7 @@ if (typeof global === 'undefined') {
 
 // Additional polyfills for browser compatibility
 (window as any).process = {
-  env: { NODE_ENV: 'production' },
+  env: { NODE_ENV: import.meta.env.MODE || 'production' },
   version: '',
   nextTick: (fn: Function) => setTimeout(fn, 0),
   browser: true, // Explicitly indicate browser environment
@@ -70,3 +70,10 @@ if (typeof XMLHttpRequest === 'undefined') {
     send() {}
   };
 }
+
+// Ensure Vite HMR is properly setup
+if (import.meta.hot) {
+  import.meta.hot.accept();
+}
+
+console.log('Polyfills loaded successfully');
