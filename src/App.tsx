@@ -12,7 +12,7 @@ import Trade from './pages/Trade';
 import NotFound from './pages/NotFound';
 import { Toaster } from "sonner";
 import SecurityReport from './pages/SecurityReport';
-import { WalletProvider } from './hooks/useWallet';
+import { WalletProvider } from '@/hooks/useWallet.tsx';  // Updated import path with .tsx extension
 
 function App() {
   return (

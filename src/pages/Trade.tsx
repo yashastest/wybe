@@ -12,7 +12,7 @@ import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
 import { ArrowDownUp, Wallet, ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, Flame, Sparkles, Zap, AlertTriangle } from 'lucide-react';
-import { useWallet } from '@/hooks/useWallet';
+import { useWallet } from '@/lib/wallet'; // Updated import
 import { tradingService } from '@/services/tradingService';
 
 const Trade = () => {

@@ -39,7 +39,7 @@ import {
   RefreshCcw
 } from "lucide-react";
 import { integrationService, AdminUserAccess } from '@/services/integrationService';
-import { useWallet } from '@/hooks/useWallet';
+import { useWallet } from '@/lib/wallet';
 
 // Available permissions
 const availablePermissions = [

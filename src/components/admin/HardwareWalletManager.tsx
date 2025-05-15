@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -15,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from '@/lib/wallet';
 
 const HardwareWalletManager = () => {
   const { connect, connectHardwareWallet, address, isConnecting, isHardwareWallet } = useWallet();

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -31,9 +30,12 @@ type SidebarItem = {
 
 const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const { logout, adminPermissions } = useAdmin();
+  const { logout, admin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Get admin permissions from admin object
+  const adminPermissions = admin?.permissions || [];
 
   const sidebarItems: SidebarItem[] = [
     // Main Category

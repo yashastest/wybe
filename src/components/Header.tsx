@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/useWallet.tsx";  // Updated import with .tsx extension
 
 interface HeaderProps {
   adminOnly?: boolean;
