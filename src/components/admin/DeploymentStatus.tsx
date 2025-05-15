@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DeploymentStep } from "@/services/integrationService";
+import { Progress } from "@/components/ui/progress";
+import { DeploymentStep } from '@/services/integrationService';
+import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 interface DeploymentStatusProps {
   deploymentNetwork: string;

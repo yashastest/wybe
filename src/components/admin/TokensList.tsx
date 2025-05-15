@@ -21,9 +21,10 @@ import {
   Play
 } from "lucide-react";
 import { toast } from "sonner";
-import integrationService from '@/services/integrationService';
+import { integrationService, AdminUserAccess } from '@/services/integrationService';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from "@/integrations/supabase/client";
 
 // Token type definition
 interface Token {
@@ -43,7 +44,6 @@ interface Token {
 
 // This is a pseudo fix since we don't have full access to this file
 // Import the supabase client at the beginning of the file
-import { supabase } from "@/integrations/supabase/client";
 
 const TokensList: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);

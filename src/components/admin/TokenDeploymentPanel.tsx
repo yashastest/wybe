@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import integrationService, { DeploymentConfig } from '@/services/integrationService';
+import { integrationService, DeploymentConfig } from '@/services/integrationService';
 import { useWallet } from '@/lib/wallet';
 
 const TokenDeploymentPanel: React.FC<{
