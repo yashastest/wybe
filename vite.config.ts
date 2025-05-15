@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Add comprehensive aliases for all possible import paths
+      // Comprehensive aliases for all possible import paths
       "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket": path.resolve(__dirname, "src/empty-module.js"),
@@ -43,9 +43,9 @@ export default defineConfig(({ mode }) => ({
       "ws": path.resolve(__dirname, "src/empty-module.js"),
       "net": path.resolve(__dirname, "src/empty-module.js"),
       "tls": path.resolve(__dirname, "src/empty-module.js"),
-      "dgram": path.resolve(__dirname, "src/empty-module.js"), // Additional Node-specific module
-      "fs": path.resolve(__dirname, "src/empty-module.js"),    // Additional Node-specific module
-      "crypto": path.resolve(__dirname, "src/empty-module.js"), // Additional Node-specific module that might be used
+      "dgram": path.resolve(__dirname, "src/empty-module.js"),
+      "fs": path.resolve(__dirname, "src/empty-module.js"),
+      "crypto": path.resolve(__dirname, "src/empty-module.js"),
     },
   },
   build: {
@@ -56,8 +56,8 @@ export default defineConfig(({ mode }) => ({
     }
   },
   optimizeDeps: {
-    exclude: ["@project-serum/anchor", "@solana/web3.js"], // Don't optimize these packages
-    include: ["buffer", "events", "assert", "stream"],     // Include these to be pre-bundled
+    exclude: ["@solana/web3.js"], // Don't optimize these packages
+    include: ["buffer", "events", "assert", "stream"], // Include these to be pre-bundled
     esbuildOptions: {
       // Node.js global to browser globalThis
       define: {
