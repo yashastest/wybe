@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { tokenTradingService } from "@/services/tokenTradingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,6 +17,13 @@ interface CoinData {
   volume24h: number;
   category: string[];
 }
+
+// Helper to safely extract values from bonding_curve JSONB data
+const extractFromBondingCurve = (bondingCurve: any, field: string, defaultValue: any) => {
+  if (!bondingCurve) return defaultValue;
+  if (typeof bondingCurve !== 'object') return defaultValue;
+  return bondingCurve[field] || defaultValue;
+};
 
 const formatPrice = (price: number): string => {
   if (price < 0.00001) {
@@ -70,21 +75,20 @@ const MemeCoins: React.FC = () => {
         // Map database tokens to CoinData format
         const coinData: CoinData[] = tokensData.map(token => {
           // Handle calculation of change24h from bonding curve data if available
-          const bondingCurve = token.bonding_curve || {};
-          const change24h = bondingCurve.change_24h || Math.random() * 20 - 10; // Fallback for demo
+          const change24h = extractFromBondingCurve(token.bonding_curve, 'change_24h', Math.random() * 20 - 10);
           
           // Extract categories from tags if available
-          const categories = bondingCurve.tags || ['Meme'];
+          const categories = extractFromBondingCurve(token.bonding_curve, 'tags', ['Meme']);
           
           return {
             id: token.id,
             name: token.name,
             symbol: token.symbol,
             logo: null, // Will be updated with storage URL when available
-            price: token.price || 0.01,
+            price: extractFromBondingCurve(token.bonding_curve, 'price', 0.01),
             change24h: change24h,
             marketCap: token.market_cap || 10000,
-            volume24h: bondingCurve.volume_24h || token.market_cap * 0.1 || 1000,
+            volume24h: extractFromBondingCurve(token.bonding_curve, 'volume_24h', token.market_cap * 0.1 || 1000),
             category: Array.isArray(categories) ? categories : [categories],
           };
         });

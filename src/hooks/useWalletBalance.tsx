@@ -93,7 +93,10 @@ export const useWalletBalance = (tokenSymbol?: string): WalletBalanceState => {
       }
       
       // Get current token price (would come from oracle in production)
-      const tokenPrice = token.price || 0.01;
+      // Handle bonding_curve as it might be a JSONB object or null
+      const tokenPrice = token.bonding_curve && 
+                        typeof token.bonding_curve === 'object' ? 
+                        (token.bonding_curve.price || 0.01) : 0.01;
       
       return {
         symbol,

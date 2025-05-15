@@ -2,6 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TradeParams, TradeResult } from './types';
 
+// Helper to safely extract values from bonding_curve JSONB data
+const extractFromBondingCurve = (bondingCurve: any, field: string, defaultValue: any) => {
+  if (!bondingCurve) return defaultValue;
+  if (typeof bondingCurve !== 'object') return defaultValue;
+  return bondingCurve[field] || defaultValue;
+};
+
 // Real implementation of trading service
 const estimateTokenAmount = async (tokenSymbol: string, solAmount: number): Promise<number> => {
   try {
@@ -18,7 +25,7 @@ const estimateTokenAmount = async (tokenSymbol: string, solAmount: number): Prom
     }
     
     // Calculate token amount based on token price and SOL amount
-    const tokenPrice = token.price || 0.01; // Default to 0.01 if price not available
+    const tokenPrice = extractFromBondingCurve(token.bonding_curve, 'price', 0.01);
     return solAmount / tokenPrice;
   } catch (error) {
     console.error('Error estimating token amount:', error);
@@ -43,7 +50,7 @@ const estimateSolAmount = async (tokenSymbol: string, tokenAmount: number): Prom
     }
     
     // Calculate SOL amount based on token price and token amount
-    const tokenPrice = token.price || 0.01; // Default to 0.01 if price not available
+    const tokenPrice = extractFromBondingCurve(token.bonding_curve, 'price', 0.01);
     return tokenAmount * tokenPrice;
   } catch (error) {
     console.error('Error estimating SOL amount:', error);
@@ -90,7 +97,7 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
     // In a real implementation, this would call the blockchain using web3.js
     // Here we'll simulate the blockchain transaction with database operations
     
-    const tokenPrice = token.price || 0.01;
+    const tokenPrice = extractFromBondingCurve(token.bonding_curve, 'price', 0.01);
     let solAmount = amountSol || 0;
     let tokenAmount = amountTokens || 0;
     

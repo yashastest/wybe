@@ -1,30 +1,22 @@
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { smartContractService } from './services/smartContractService.ts'
+import "./polyfills"; // Import polyfills first
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
 
-// Initialize default config values for services
-function initializeServices() {
-  // Set up default contract configuration
-  smartContractService.updateContractConfig({
-    creatorFeePercentage: 2,
-    rewardClaimPeriodDays: 7,
-    dexScreenerThreshold: 1000,
-    bondingCurveEnabled: true,
-    bondingCurveLimit: 10000,
-    platformFeePercentage: 1
-  });
-  
-  console.log('Services initialized with default configuration');
-}
+const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-
-// Initialize services with default values
-initializeServices();
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster />
+      </QueryClientProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
