@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet.tsx';
@@ -167,7 +166,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
                 {tx.side === 'buy' ? 'Buy' : 'Sell'} {tx.tokenSymbol}
               </span>
             </div>
-            <Badge variant={tx.status === 'confirmed' ? 'success' : 'secondary'} className="text-xs font-medium">
+            <Badge variant={tx.status === 'confirmed' ? 'green' : 'secondary'} className="text-xs font-medium">
               {tx.status === 'confirmed' ? 'Confirmed' : tx.status}
             </Badge>
           </div>
