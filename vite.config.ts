@@ -34,6 +34,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
       // Add aliases for problematic packages
       "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist/lib/client/websocket.browser": path.resolve(__dirname, "src/empty-module.js"),
+      "ws": path.resolve(__dirname, "src/empty-module.js"),
+      "net": path.resolve(__dirname, "src/empty-module.js"),
+      "tls": path.resolve(__dirname, "src/empty-module.js"),
     },
   },
   build: {
