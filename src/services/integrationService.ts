@@ -1,7 +1,14 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import tradingService from "./tradingService";
 import { toast } from "sonner";
+
+export type AdminUserAccess = {
+  email: string;
+  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
+  permissions: string[];
+  walletAddress?: string;
+  twoFactorEnabled?: boolean;
+};
 
 export type DeploymentStep = {
   id: string;
@@ -445,6 +452,73 @@ class IntegrationService {
     
     toast.success("Token rejected successfully");
     return true;
+  }
+
+  // New admin user management methods
+  public getAdminUsers(walletAddress: string): AdminUserAccess[] {
+    // For demo purposes, return mock data
+    return [
+      {
+        email: 'admin@wybe.io',
+        role: 'superadmin',
+        permissions: ['all'],
+        walletAddress: walletAddress,
+        twoFactorEnabled: true
+      },
+      {
+        email: 'manager@wybe.io',
+        role: 'manager',
+        permissions: ['analytics_view', 'token_creation'],
+        walletAddress: '',
+        twoFactorEnabled: false
+      },
+      {
+        email: 'viewer@wybe.io',
+        role: 'viewer',
+        permissions: ['analytics_view'],
+        walletAddress: '',
+        twoFactorEnabled: false
+      }
+    ];
+  }
+
+  public addAdminUser(userData: AdminUserAccess, adminWallet: string): boolean {
+    // This would connect to Supabase in a real implementation
+    console.log('Adding admin user:', userData, 'by admin wallet:', adminWallet);
+    return true;
+  }
+
+  public updateAdminUserPermissions(
+    email: string,
+    role: string,
+    permissions: string[],
+    adminWallet: string
+  ): boolean {
+    // This would connect to Supabase in a real implementation
+    console.log('Updating user permissions:', { email, role, permissions }, 'by admin wallet:', adminWallet);
+    return true;
+  }
+
+  public removeAdminUser(email: string, adminWallet: string): boolean {
+    // This would connect to Supabase in a real implementation
+    console.log('Removing admin user:', email, 'by admin wallet:', adminWallet);
+    return true;
+  }
+
+  // New methods for network configuration
+  public getNetworkConfig(network: string) {
+    return {
+      network,
+      rpcEndpoint: `https://api.${network.toLowerCase()}.solana.com`,
+      explorerUrl: `https://explorer.solana.com/?cluster=${network.toLowerCase()}`,
+      programId: 'Wybe' + Math.random().toString(16).substring(2, 10),
+      isActive: network === 'devnet'
+    };
+  }
+
+  // Method for MasterDeploymentGuide
+  public getDeploymentSteps(): DeploymentStep[] {
+    return this.deploymentSteps;
   }
 }
 

@@ -3,4 +3,4 @@
 export { useWallet, WalletProvider } from '@/hooks/useWallet.tsx';
 
 // Re-export wallet types for convenience
-export type { WalletContextType } from '@/hooks/useWallet.tsx';
+export type { Wallet } from '@/hooks/useWallet.tsx';

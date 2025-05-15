@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
 
-interface Admin {
+export interface Admin {
   id: string;
   email: string;
-  permissions?: string[]; // Added permissions as an optional property
+  permissions: string[]; // Changed from optional to required
 }
 
 interface Session {
@@ -97,12 +97,16 @@ export const useAdmin = () => {
     setSession(null);
   };
   
+  // Ensure permissions are always available
+  const adminPermissions = admin?.permissions || [];
+  
   return {
     isAuthenticated,
     admin,
     session,
     isLoading,
     authCheckCompleted,
+    adminPermissions,
     logout
   };
 };
