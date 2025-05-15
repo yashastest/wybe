@@ -28,30 +28,18 @@ export interface TradeHistoryFilters {
 
 export interface ListedToken {
   id: string;
-  name: string;
   symbol: string;
+  name: string;
   price: number;
   priceChange24h?: number;
-  change24h?: number; // Added for backward compatibility
-  volume24h?: number;
-  marketCap?: number;
-  totalSupply?: number;
-  status: 'active' | 'pending' | 'inactive' | string;
-  description?: string;
-  logo?: string;
-  createdAt: string;
+  logo?: string | null;
   contractAddress?: string;
+  marketCap?: number;
+  volume24h?: number;
+  totalSupply?: number;
+  description?: string;
+  isAssisted?: boolean;
   creatorAddress?: string;
-  // Additional properties for backward compatibility
-  category?: string[];
-  holderStats?: {
-    whales: number;
-    retail: number;
-    devs: number;
-  };
-  creatorWallet?: string;
-  devWallet?: string;
-  holders?: number;
 }
 
 export interface TradeParams {

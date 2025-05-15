@@ -1,527 +1,289 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useWallet } from '@/hooks/useWallet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { PieChart, LineChart, BarChart3, TrendingUp, TrendingDown, Wallet, History, ArrowUpDown } from 'lucide-react';
-import { tokenTradingService } from '@/services/tokenTradingService';
-import TransactionHistory from '@/components/TransactionHistory';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  BarChart,
-  Bar,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { TrendingUp, TrendingDown, AlertCircle, Download } from 'lucide-react';
+import { useWallet } from '@/hooks/useWallet.tsx';
+import { useTokenTrading } from '@/hooks/useTokenTrading';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/utils/tradeUtils';
 
-// Mock data generator for performance statistics
-const generatePerformanceData = () => {
-  // Last 30 days performance
-  const dailyPerformance = [];
-  let cumulativeValue = 100; // Start with 100 SOL
-  
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    const change = (Math.random() * 0.1) - 0.03; // -3% to +7%
-    cumulativeValue = cumulativeValue * (1 + change);
-    
-    dailyPerformance.push({
-      date: date.toISOString().split('T')[0],
-      value: cumulativeValue,
-      change: change * 100
-    });
-  }
-  
-  // Trading performance by token
-  const tokenPerformance = [
-    { name: 'PEPE', profit: 45.2, trades: 12 },
-    { name: 'DOGE', profit: -12.8, trades: 5 },
-    { name: 'BONK', profit: 67.3, trades: 8 },
-    { name: 'SAMO', profit: 23.1, trades: 3 },
-    { name: 'SOL', profit: 8.9, trades: 15 }
-  ];
-  
-  // Distribution by trade type
-  const tradeDistribution = [
-    { name: 'Buy', value: 35 },
-    { name: 'Sell', value: 30 },
-    { name: 'Quick Buy', value: 20 },
-    { name: 'Quick Sell', value: 15 }
-  ];
-  
-  // Win/loss statistics
-  const winLossStats = {
-    totalTrades: 43,
-    winningTrades: 28,
-    losingTrades: 15,
-    winRate: 65.1,
-    avgWin: 18.7,
-    avgLoss: 9.3,
-    largestWin: 67.3,
-    largestLoss: 24.1,
-    profitFactor: 2.3,
-    currentStreak: 4,
-    longestWinStreak: 7,
-    longestLossStreak: 3
-  };
-  
-  return {
-    dailyPerformance,
-    tokenPerformance,
-    tradeDistribution,
-    winLossStats
-  };
-};
+interface TradeStats {
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  longestStreak: number;
+  currentStreak: number;
+  averageProfit: number;
+  averageLoss: number;
+  totalVolume: number;
+}
 
-const COLORS = ['#8B5CF6', '#EF4444', '#22C55E', '#F59E0B', '#64748B'];
-
-const TradingHistory = () => {
+const TradingHistory: React.FC = () => {
   const { connected, address, connect } = useWallet();
-  const [performanceData, setPerformanceData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-
+  const { isLoading, tradeHistory, fetchTradeHistory } = useTokenTrading();
+  
+  const [selectedPeriod, setSelectedPeriod] = useState<'all' | '7d' | '30d' | '90d'>('all');
+  const [stats, setStats] = useState<TradeStats>({
+    totalTrades: 0,
+    winningTrades: 0,
+    losingTrades: 0,
+    longestStreak: 0,
+    currentStreak: 0,
+    averageProfit: 0,
+    averageLoss: 0,
+    totalVolume: 0
+  });
+  
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      
-      if (connected && address) {
-        try {
-          // In a real application, we would fetch actual data from the service
-          // const data = await tokenTradingService.getUserPerformance(address);
-          
-          // Using mock data for demonstration
-          const data = generatePerformanceData();
-          setPerformanceData(data);
-        } catch (error) {
-          console.error('Error fetching trading performance:', error);
-          // Fallback to mock data
-          setPerformanceData(generatePerformanceData());
-        }
-      } else {
-        // Set demo data for logged out state
-        setPerformanceData(generatePerformanceData());
-      }
-      
-      setTimeout(() => setIsLoading(false), 800);
+    if (connected && address) {
+      loadTradeHistory();
+    }
+  }, [connected, address, selectedPeriod]);
+  
+  const loadTradeHistory = async () => {
+    if (!address) return;
+    
+    try {
+      await fetchTradeHistory(address, { period: selectedPeriod });
+      calculateStats();
+    } catch (error) {
+      console.error("Failed to load trade history:", error);
+      toast.error("Failed to load trading history");
+    }
+  };
+  
+  // Calculate trading statistics (mock implementation)
+  const calculateStats = () => {
+    // In a real app, this would analyze the actual trade history
+    // Here we're just generating some mock statistics
+    
+    const mockStats: TradeStats = {
+      totalTrades: 42,
+      winningTrades: 28,
+      losingTrades: 14,
+      longestStreak: 7,
+      currentStreak: 3,
+      averageProfit: 0.23,
+      averageLoss: 0.12,
+      totalVolume: 150.75
     };
     
-    fetchData();
-  }, [connected, address]);
-
-  // Format value as SOL with 2 decimal places
-  const formatSOL = (value: number) => {
-    return `${value.toFixed(2)} SOL`;
+    setStats(mockStats);
   };
   
-  // Format percentage with sign
-  const formatPercent = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
-  };
-
-  // Custom tooltip for charts
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-black/80 p-3 border border-indigo-500/30 rounded-lg shadow-lg">
-          <p className="text-gray-300 mb-1">{label}</p>
-          <p className="font-medium text-white">{formatSOL(payload[0].value)}</p>
-          <p className={`text-sm ${payload[0].payload.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatPercent(payload[0].payload.change)}
-          </p>
-        </div>
-      );
+  // Handle wallet connection
+  const handleConnectWallet = async () => {
+    try {
+      await connect();
+    } catch (error) {
+      toast.error("Failed to connect wallet");
     }
-    return null;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
-        <Header />
-        <main className="flex-grow w-full px-4 pt-20 md:pt-24 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl text-indigo-200">Loading trading history...</h2>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!connected) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
-        <Header />
-        <main className="flex-grow w-full px-4 pt-20 md:pt-24 flex items-center justify-center">
-          <div className="max-w-md w-full p-6 md:p-8 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 backdrop-blur-lg rounded-xl border border-indigo-500/30 shadow-glow-md text-center">
-            <Wallet className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-300 bg-clip-text text-transparent">
-              Connect Your Wallet
-            </h2>
-            <p className="text-gray-300 mb-6">
-              Connect your wallet to see your complete trading history, performance statistics, and trading insights.
-            </p>
-            <Button 
-              size="lg" 
-              onClick={connect}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white"
-            >
-              Connect Wallet
-            </Button>
-            <div className="mt-6 pt-6 border-t border-indigo-500/20 text-sm text-gray-400">
-              <p>Want to see a demo of the trading history features?</p>
-              <Button 
-                variant="link"
-                className="text-indigo-300 hover:text-indigo-200"
-                onClick={() => setPerformanceData(generatePerformanceData())}
-              >
-                View Demo Data
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  
+  // Mock trade history data
+  const mockTradeHistory = [
+    { id: '1', tokenSymbol: 'WYBE', side: 'buy', amount: 1000, price: 0.0015, timestamp: '2023-05-15T14:30:00Z', status: 'completed', profit: 0.05 },
+    { id: '2', tokenSymbol: 'PEPE', side: 'sell', amount: 5000, price: 0.000032, timestamp: '2023-05-14T10:15:00Z', status: 'completed', profit: -0.02 },
+    { id: '3', tokenSymbol: 'DOGE', side: 'buy', amount: 200, price: 0.23, timestamp: '2023-05-13T16:45:00Z', status: 'completed', profit: 0.08 },
+    { id: '4', tokenSymbol: 'WYBE', side: 'buy', amount: 500, price: 0.0014, timestamp: '2023-05-12T09:20:00Z', status: 'completed', profit: 0.03 },
+    { id: '5', tokenSymbol: 'PEPE', side: 'sell', amount: 2000, price: 0.000030, timestamp: '2023-05-11T13:10:00Z', status: 'completed', profit: 0.01 },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       <Header />
-      <main className="flex-grow w-full px-4 pt-20 md:pt-24 pb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-300 bg-clip-text text-transparent">
-                Trading History & Analytics
-              </h1>
-              <p className="text-gray-400 mt-1">Track your performance, analyze your trades, and improve your strategy</p>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/trade')}
-                className="border-indigo-500/40 text-indigo-300 hover:bg-indigo-950/50"
-              >
-                <ArrowUpDown className="mr-2 h-4 w-4" />
-                Back to Trading
-              </Button>
-            </div>
-          </div>
+      
+      <main className="flex-grow container mx-auto px-4 pt-24 pb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <h1 className="text-3xl font-bold mb-6">Trading History</h1>
           
-          {/* Performance Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Total Profit/Loss</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {formatSOL(performanceData.dailyPerformance[performanceData.dailyPerformance.length - 1].value - 100)}
-                </div>
-                <div className={`text-sm font-medium flex items-center ${
-                  performanceData.dailyPerformance[performanceData.dailyPerformance.length - 1].value > 100 ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {performanceData.dailyPerformance[performanceData.dailyPerformance.length - 1].value > 100 ? (
-                    <TrendingUp className="mr-1 h-4 w-4" />
+          {!connected ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <AlertCircle className="text-yellow-500 h-12 w-12 mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Connect Your Wallet</h2>
+                <p className="text-gray-400 text-center mb-6">
+                  Connect your wallet to view your trading history and performance metrics.
+                </p>
+                <Button onClick={handleConnectWallet}>
+                  Connect Wallet
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {/* Trading Statistics */}
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Trading Performance</CardTitle>
+                    <Tabs value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
+                      <TabsList>
+                        <TabsTrigger value="all">All Time</TabsTrigger>
+                        <TabsTrigger value="7d">7 Days</TabsTrigger>
+                        <TabsTrigger value="30d">30 Days</TabsTrigger>
+                        <TabsTrigger value="90d">90 Days</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  <CardDescription>
+                    Your trading performance metrics and statistics
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[...Array(8)].map((_, i) => (
+                        <Skeleton key={i} className="h-24 w-full" />
+                      ))}
+                    </div>
                   ) : (
-                    <TrendingDown className="mr-1 h-4 w-4" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Total Trades</p>
+                        <p className="text-2xl font-bold">{stats.totalTrades}</p>
+                      </div>
+                      
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Win Rate</p>
+                        <p className="text-2xl font-bold">
+                          {stats.totalTrades > 0 ? `${((stats.winningTrades / stats.totalTrades) * 100).toFixed(1)}%` : '0%'}
+                        </p>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500">
+                            {stats.winningTrades} wins
+                          </Badge>
+                          <Badge variant="outline" className="bg-red-500/10 text-red-500">
+                            {stats.losingTrades} losses
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Best Streak</p>
+                        <p className="text-2xl font-bold">{stats.longestStreak}</p>
+                        <p className="text-xs text-gray-400">Current: {stats.currentStreak}</p>
+                      </div>
+                      
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Total Volume</p>
+                        <p className="text-2xl font-bold">{stats.totalVolume} SOL</p>
+                      </div>
+                      
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Average Profit</p>
+                        <p className="text-2xl font-bold text-green-500">+{stats.averageProfit} SOL</p>
+                      </div>
+                      
+                      <div className="bg-black/20 p-4 rounded-lg">
+                        <p className="text-gray-400 text-sm">Average Loss</p>
+                        <p className="text-2xl font-bold text-red-500">-{stats.averageLoss} SOL</p>
+                      </div>
+                      
+                      {/* Add more stats as needed */}
+                    </div>
                   )}
-                  {formatPercent((performanceData.dailyPerformance[performanceData.dailyPerformance.length - 1].value / 100 - 1) * 100)}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Win Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {performanceData.winLossStats.winRate}%
-                </div>
-                <div className="mt-2">
-                  <Progress value={performanceData.winLossStats.winRate} className="h-2" />
-                </div>
-                <div className="text-xs mt-1 text-gray-400">
-                  {performanceData.winLossStats.winningTrades} wins / {performanceData.winLossStats.totalTrades} trades
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Current Streak</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {performanceData.winLossStats.currentStreak} wins
-                </div>
-                <div className="text-sm font-medium text-indigo-300">
-                  Best streak: {performanceData.winLossStats.longestWinStreak} wins
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Profit Factor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {performanceData.winLossStats.profitFactor.toFixed(1)}
-                </div>
-                <div className="text-sm font-medium text-gray-300">
-                  Avg win: {performanceData.winLossStats.avgWin.toFixed(1)}%
-                </div>
-                <div className="text-sm font-medium text-gray-300">
-                  Avg loss: {performanceData.winLossStats.avgLoss.toFixed(1)}%
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Tabs defaultValue="performance" className="mb-6">
-            <TabsList className="mb-6 bg-black/40 backdrop-blur">
-              <TabsTrigger value="performance" className="data-[state=active]:bg-indigo-900/50">
-                <LineChart className="w-4 h-4 mr-2" />
-                Performance
-              </TabsTrigger>
-              <TabsTrigger value="tokens" className="data-[state=active]:bg-indigo-900/50">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Token Performance
-              </TabsTrigger>
-              <TabsTrigger value="stats" className="data-[state=active]:bg-indigo-900/50">
-                <PieChart className="w-4 h-4 mr-2" />
-                Statistics
-              </TabsTrigger>
-              <TabsTrigger value="history" className="data-[state=active]:bg-indigo-900/50">
-                <History className="w-4 h-4 mr-2" />
-                Transaction History
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="performance">
-              <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-                <CardHeader>
-                  <CardTitle>Portfolio Performance</CardTitle>
-                  <CardDescription>Your trading performance over time</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={performanceData.dailyPerformance}
-                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#444" opacity={0.1} />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fill: '#999', fontSize: 11 }}
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return `${date.getDate()}/${date.getMonth() + 1}`;
-                        }}
-                      />
-                      <YAxis 
-                        tick={{ fill: '#999', fontSize: 11 }} 
-                        domain={['dataMin - 10', 'dataMax + 10']}
-                        tickFormatter={(value) => `${value.toFixed(0)} SOL`}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#8B5CF6" 
-                        fillOpacity={1} 
-                        fill="url(#colorValue)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
                 </CardContent>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="tokens">
-              <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
+              
+              {/* Trade History Table */}
+              <Card>
                 <CardHeader>
-                  <CardTitle>Performance by Token</CardTitle>
-                  <CardDescription>Profit/Loss breakdown by token</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Trade History</CardTitle>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
                 </CardHeader>
-                <CardContent className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={performanceData.tokenPerformance}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#444" opacity={0.1} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: '#999', fontSize: 11 }}
-                      />
-                      <YAxis 
-                        tick={{ fill: '#999', fontSize: 11 }}
-                        tickFormatter={(value) => `${value}%`}
-                      />
-                      <Tooltip 
-                        formatter={(value) => [`${value}%`, 'Profit/Loss']}
-                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
-                        labelStyle={{ color: '#fff' }}
-                      />
-                      <Legend />
-                      <Bar dataKey="profit" name="Profit/Loss %" fill="#8B5CF6" radius={[4, 4, 0, 0]}>
-                        {performanceData.tokenPerformance.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={entry.profit >= 0 ? '#22C55E' : '#EF4444'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="stats">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="col-span-1 bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-                  <CardHeader>
-                    <CardTitle>Trade Distribution</CardTitle>
-                    <CardDescription>Breakdown by trade type</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={performanceData.tradeDistribution}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          labelLine={false}
-                        >
-                          {performanceData.tradeDistribution.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <CardContent>
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Skeleton key={i} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Token</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead>Profit/Loss</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {mockTradeHistory.map((trade) => (
+                            <TableRow key={trade.id}>
+                              <TableCell>
+                                {new Date(trade.timestamp).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>{trade.tokenSymbol}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center">
+                                  {trade.side === 'buy' ? (
+                                    <Badge variant="outline" className="bg-green-900/20 text-green-500 border-green-500/30">
+                                      <TrendingUp className="h-3 w-3 mr-1" /> Buy
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-red-900/20 text-red-500 border-red-500/30">
+                                      <TrendingDown className="h-3 w-3 mr-1" /> Sell
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>{trade.amount}</TableCell>
+                              <TableCell>{formatCurrency(trade.price)}</TableCell>
+                              <TableCell>{formatCurrency(trade.amount * trade.price)}</TableCell>
+                              <TableCell className={trade.profit >= 0 ? 'text-green-500' : 'text-red-500'}>
+                                {trade.profit >= 0 ? '+' : ''}{trade.profit} SOL
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                
-                <Card className="col-span-1 lg:col-span-2 bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-                  <CardHeader>
-                    <CardTitle>Trading Statistics</CardTitle>
-                    <CardDescription>Key performance metrics</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                        <div className="text-sm text-gray-400">Total Trades</div>
-                        <div className="text-xl font-bold">{performanceData.winLossStats.totalTrades}</div>
-                      </div>
-                      
-                      <div className="p-3 bg-green-900/20 rounded-lg border border-green-500/10">
-                        <div className="text-sm text-gray-400">Winning Trades</div>
-                        <div className="text-xl font-bold text-green-400">
-                          {performanceData.winLossStats.winningTrades}
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 bg-red-900/20 rounded-lg border border-red-500/10">
-                        <div className="text-sm text-gray-400">Losing Trades</div>
-                        <div className="text-xl font-bold text-red-400">
-                          {performanceData.winLossStats.losingTrades}
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                        <div className="text-sm text-gray-400">Largest Win</div>
-                        <div className="text-xl font-bold text-green-400">
-                          {performanceData.winLossStats.largestWin}%
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                        <div className="text-sm text-gray-400">Largest Loss</div>
-                        <div className="text-xl font-bold text-red-400">
-                          {performanceData.winLossStats.largestLoss}%
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                        <div className="text-sm text-gray-400">Win/Loss Ratio</div>
-                        <div className="text-xl font-bold">
-                          {(performanceData.winLossStats.winningTrades / Math.max(1, performanceData.winLossStats.losingTrades)).toFixed(1)}
-                        </div>
-                      </div>
+                          
+                          {mockTradeHistory.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                                No trade history found
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
                     </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="text-lg font-medium mb-3">Streaks</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                          <div className="text-sm text-gray-400">Current Streak</div>
-                          <div className="text-xl font-bold text-green-400">
-                            {performanceData.winLossStats.currentStreak} wins
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                          <div className="text-sm text-gray-400">Longest Win Streak</div>
-                          <div className="text-xl font-bold text-green-400">
-                            {performanceData.winLossStats.longestWinStreak} wins
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/10">
-                          <div className="text-sm text-gray-400">Longest Loss Streak</div>
-                          <div className="text-xl font-bold text-red-400">
-                            {performanceData.winLossStats.longestLossStreak} losses
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 border-indigo-500/20">
-                <CardHeader>
-                  <CardTitle>Transaction History</CardTitle>
-                  <CardDescription>Your complete trading history</CardDescription>
-                </CardHeader>
-                <CardContent className="max-h-[600px] overflow-y-auto p-0">
-                  <TransactionHistory />
+                  )}
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+          )}
+        </motion.div>
       </main>
+      
       <Footer />
     </div>
   );

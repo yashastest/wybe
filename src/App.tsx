@@ -1,55 +1,47 @@
-
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Discover from './pages/Discover';
-import Trade from './pages/Trade';
-import TradeDemo from './pages/TradeDemo';
-import AdminLogin from './pages/AdminLogin';
-import TradingHistory from './pages/TradingHistory';
-import NotFoundPage from './pages/NotFound';
-import Admin from './pages/Admin';
-import AdminTokens from './pages/AdminTokens';
-import TokenDeployment from './pages/TokenDeployment';
-import SecurityReport from './pages/SecurityReport';
-import Index from './pages/Index';
-import Dashboard from './pages/Dashboard';
-import Launch from './pages/Launch';
-import BondingCurves from './pages/BondingCurves';
-import LaunchPackage from './pages/LaunchPackage';
-import TokenTrade from './pages/TokenTrade';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import Index from '@/pages/Index';
+import Launch from '@/pages/Launch';
+import LaunchToken from '@/pages/LaunchToken';
+import LaunchPackage from '@/pages/LaunchPackage';
+import Dashboard from '@/pages/Dashboard';
+import Discover from '@/pages/Discover';
+import TradeDemo from '@/pages/TradeDemo';
+import Trade from '@/pages/Trade';
+import TokenTrade from '@/pages/TokenTrade';
+import TradingHistory from '@/pages/TradingHistory';
+import AdminLayout from '@/pages/AdminLayout';
+import AdminLogin from '@/pages/AdminLogin';
+import NotFound from '@/pages/NotFound';
+import AuthenticatedRoute from '@/components/AuthenticatedRoute';
 
-const App = () => {
+function App() {
   return (
-    <BrowserRouter>
+    <Router>
+      <Toaster position="bottom-right" />
       <Routes>
         <Route path="/" element={<Index />} />
-        <Route path="/about" element={<Discover />} />
+        <Route path="/launch" element={<Launch />} />
+        <Route path="/launch-token" element={<LaunchToken />} />
+        <Route path="/package" element={<LaunchPackage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/discover" element={<Discover />} />
-        <Route path="/create" element={<Discover />} />
-        <Route path="/trade/:tokenId?" element={<Trade />} />
         <Route path="/trade-demo" element={<TradeDemo />} />
+        <Route path="/trade" element={<Trade />} />
+        <Route path="/trade/:tokenId" element={<Trade />} />
         <Route path="/token/:tokenId" element={<TokenTrade />} />
         <Route path="/trading-history" element={<TradingHistory />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/launch" element={<Launch />} />
-        <Route path="/package" element={<LaunchPackage />} />
-        <Route path="/bonding-curves" element={<BondingCurves />} />
-        <Route path="/security-report" element={<SecurityReport />} />
-          
+        
         {/* Admin routes */}
+        <Route path="/admin" element={<AuthenticatedRoute><AdminLayout /></AuthenticatedRoute>} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/tokens" element={<AdminTokens />} />
-        <Route path="/admin/token-deployment" element={<TokenDeployment />} />
-        <Route path="/admin/token-deployment/:tokenId" element={<TokenDeployment />} />
-        <Route path="/admin/security-report" element={<SecurityReport />} />
-        <Route path="/admin/smart-contract-deployment" element={<Admin />} />
-        <Route path="/admin/deployment" element={<Admin />} />
-          
-        <Route path="*" element={<NotFoundPage />} />
+        {/* Add more admin routes here as needed */}
+        
+        <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
-};
+}
 
 export default App;

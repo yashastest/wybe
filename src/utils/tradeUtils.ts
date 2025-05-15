@@ -1,84 +1,44 @@
 
 /**
- * Helper to handle async operations in trading functions
- * Resolves a Promise and formats the result with the specified number of decimal places
+ * Format a number as a currency with appropriate precision
+ * @param value - Number to format
+ * @param precision - Number of decimal places (default: 6 for small numbers, 2 for larger numbers)
  */
-export const resolveAndFormat = async (
-  promiseFn: () => Promise<number>,
-  defaultValue: number = 0,
-  decimalPlaces: number = 4
-): Promise<string> => {
-  try {
-    const result = await promiseFn();
-    return result.toFixed(decimalPlaces);
-  } catch (error) {
-    console.error('Error in calculation:', error);
-    return defaultValue.toFixed(decimalPlaces);
+export const formatCurrency = (value: number, precision?: number): string => {
+  if (value === undefined || value === null || isNaN(value)) return '0';
+  
+  // Determine precision based on value size if not specified
+  if (precision === undefined) {
+    precision = value < 0.01 ? 6 : value < 1 ? 4 : 2;
+  }
+  
+  // Format the value with the appropriate precision
+  return value.toFixed(precision);
+};
+
+/**
+ * Format a large number with appropriate abbreviations (K, M, B)
+ * @param value - Number to format
+ */
+export const formatLargeNumber = (value: number): string => {
+  if (value === undefined || value === null || isNaN(value)) return '0';
+  
+  if (value >= 1000000000) {
+    return (value / 1000000000).toFixed(2) + 'B';
+  } else if (value >= 1000000) {
+    return (value / 1000000).toFixed(2) + 'M';
+  } else if (value >= 1000) {
+    return (value / 1000).toFixed(2) + 'K';
+  } else {
+    return value.toFixed(2);
   }
 };
 
 /**
- * Estimate tokens that will be received for a given SOL amount
+ * Format a wallet address for display (truncate middle)
+ * @param address - Wallet address to format
  */
-export const estimateTokensFromSol = async (
-  tokenTradingService: any, 
-  tokenSymbol: string, 
-  solAmount: number
-): Promise<string> => {
-  if (!solAmount || solAmount <= 0 || !tokenSymbol) return '0.0000';
-  
-  return resolveAndFormat(
-    async () => await tokenTradingService.estimateTokenAmount(tokenSymbol, solAmount)
-  );
-};
-
-/**
- * Estimate SOL amount required for a given token amount
- */
-export const estimateSolFromTokens = async (
-  tokenTradingService: any,
-  tokenSymbol: string,
-  tokenAmount: number
-): Promise<string> => {
-  if (!tokenAmount || tokenAmount <= 0 || !tokenSymbol) return '0.0000';
-  
-  return resolveAndFormat(
-    async () => await tokenTradingService.estimateSolAmount(tokenSymbol, tokenAmount)
-  );
-};
-
-/**
- * Format currency value with specified decimal places
- */
-export const formatCurrency = (
-  value: number | string,
-  decimalPlaces: number = 2,
-  prefix: string = ''
-): string => {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(numValue)) return `${prefix}0.${'0'.repeat(decimalPlaces)}`;
-  return `${prefix}${numValue.toFixed(decimalPlaces)}`;
-};
-
-/**
- * Calculate percentage change between two values
- */
-export const calculatePercentageChange = (
-  currentValue: number,
-  previousValue: number
-): number => {
-  if (previousValue === 0) return 0;
-  return ((currentValue - previousValue) / Math.abs(previousValue)) * 100;
-};
-
-/**
- * Format percentage value for display
- */
-export const formatPercentage = (
-  value: number,
-  decimalPlaces: number = 2,
-  includeSymbol: boolean = true
-): string => {
-  const formattedValue = value.toFixed(decimalPlaces);
-  return includeSymbol ? `${value >= 0 ? '+' : ''}${formattedValue}%` : formattedValue;
+export const formatWalletAddress = (address: string): string => {
+  if (!address || address.length < 10) return address || '';
+  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 };

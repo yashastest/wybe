@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -8,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowDown, ArrowUp, Search, Share, Facebook, Twitter, Linkedin } from 'lucide-react';
 import BondingCurveChart from '@/components/BondingCurveChart';
+import TradingViewChart from '@/components/TradingViewChart';
+import TraderActivity from '@/components/TraderActivity';
 import { 
   Dialog, 
   DialogContent, 
@@ -48,6 +51,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [tradeAmount, setTradeAmount] = useState<number>(0);
   const [tokenPrice, setTokenPrice] = useState<number>(0.0015);
+  const [chartType, setChartType] = useState<'price' | 'marketCap'>('price');
   const [tradeHistory, setTradeHistory] = useState<TradeHistoryItem[]>([
     { id: "1", type: 'buy', amount: 500, price: 0.0015, timestamp: new Date().toLocaleTimeString() },
     { id: "2", type: 'sell', amount: 200, price: 0.00148, timestamp: new Date(Date.now() - 120000).toLocaleTimeString() },
@@ -164,9 +168,9 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   const shareableUrl = getShareableUrl();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
       {/* Token Search Card */}
-      <Card className="md:col-span-2">
+      <Card className="mb-6">
         <CardContent className="pt-4">
           <div className="flex items-center space-x-2">
             <Input 
@@ -187,219 +191,271 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Token Trading</CardTitle>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Share className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Share {tokenName} ({tokenSymbol})</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="flex justify-center space-x-4">
-                  {/* Social Media Share Buttons */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline">
-                        <Facebook className="h-4 w-4 mr-2" />
-                        Share on Facebook
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <p className="text-sm">Copy link to share on Facebook:</p>
-                      <div className="mt-2">
-                        <Input readOnly value={shareableUrl} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chart Section - Now Prominently Displayed */}
+        <div className="lg:col-span-2">
+          <Card className="mb-6">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Price Chart</CardTitle>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Share className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Share {tokenName} ({tokenSymbol})</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="flex justify-center space-x-4">
+                      {/* Social Media Share Buttons */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline">
+                            <Facebook className="h-4 w-4 mr-2" />
+                            Share on Facebook
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <p className="text-sm">Copy link to share on Facebook:</p>
+                          <div className="mt-2">
+                            <Input readOnly value={shareableUrl} />
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="mt-2 w-full"
+                              onClick={() => {
+                                navigator.clipboard.writeText(shareableUrl);
+                                toast.success("Link copied to clipboard");
+                              }}
+                            >
+                              Copy Link
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline">
+                            <Twitter className="h-4 w-4 mr-2" />
+                            Share on Twitter
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <p className="text-sm">Copy text to share on Twitter:</p>
+                          <div className="mt-2">
+                            <Input readOnly value={shareableText} />
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="mt-2 w-full"
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${shareableText} ${shareableUrl}`);
+                                toast.success("Text copied to clipboard");
+                              }}
+                            >
+                              Copy Text
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {contractAddress && (
+                      <div className="pt-2">
+                        <p className="text-sm font-medium mb-2">Contract Address:</p>
+                        <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                          {contractAddress}
+                        </div>
                         <Button 
                           variant="secondary" 
                           size="sm" 
-                          className="mt-2 w-full"
+                          className="mt-2"
+                          onClick={() => {
+                            navigator.clipboard.writeText(contractAddress);
+                            toast.success("Contract address copied to clipboard");
+                          }}
+                        >
+                          Copy Contract Address
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <p className="text-sm font-medium mb-2">Share Link:</p>
+                      <div className="flex space-x-2">
+                        <Input readOnly value={shareableUrl} />
+                        <Button 
+                          variant="secondary" 
                           onClick={() => {
                             navigator.clipboard.writeText(shareableUrl);
                             toast.success("Link copied to clipboard");
                           }}
                         >
-                          Copy Link
+                          Copy
                         </Button>
                       </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline">
-                        <Twitter className="h-4 w-4 mr-2" />
-                        Share on Twitter
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <p className="text-sm">Copy text to share on Twitter:</p>
-                      <div className="mt-2">
-                        <Input readOnly value={shareableText} />
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          className="mt-2 w-full"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`${shareableText} ${shareableUrl}`);
-                            toast.success("Text copied to clipboard");
-                          }}
-                        >
-                          Copy Text
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {contractAddress && (
-                  <div className="pt-2">
-                    <p className="text-sm font-medium mb-2">Contract Address:</p>
-                    <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
-                      {contractAddress}
                     </div>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => {
-                        navigator.clipboard.writeText(contractAddress);
-                        toast.success("Contract address copied to clipboard");
-                      }}
-                    >
-                      Copy Contract Address
-                    </Button>
-                  </div>
-                )}
 
-                <div className="pt-2">
-                  <p className="text-sm font-medium mb-2">Share Link:</p>
-                  <div className="flex space-x-2">
-                    <Input readOnly value={shareableUrl} />
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => {
-                        navigator.clipboard.writeText(shareableUrl);
-                        toast.success("Link copied to clipboard");
-                      }}
-                    >
-                      Copy
-                    </Button>
+                    <div className="bg-muted p-3 rounded-md mt-2">
+                      <div className="flex items-center space-x-2">
+                        <img 
+                          src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
+                          alt="Wybe Logo" 
+                          className="h-5 w-5" 
+                        />
+                        <p className="text-sm font-medium">Powered by Wybe.fun</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="bg-muted p-3 rounded-md mt-2">
-                  <div className="flex items-center space-x-2">
-                    <img 
-                      src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
-                      alt="Wybe Logo" 
-                      className="h-5 w-5" 
-                    />
-                    <p className="text-sm font-medium">Powered by Wybe.fun</p>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Close</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Token</label>
-              <Input type="text" value={tokenSymbol} readOnly />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Trade Type</label>
-              <div className="flex space-x-4">
-                <Button
-                  variant={tradeType === 'buy' ? 'default' : 'outline'}
-                  onClick={() => handleTradeTypeChange('buy')}
-                >
-                  Buy <ArrowUp className="ml-2" />
-                </Button>
-                <Button
-                  variant={tradeType === 'sell' ? 'default' : 'outline'}
-                  onClick={() => handleTradeTypeChange('sell')}
-                  disabled={!connected}
-                >
-                  Sell <ArrowDown className="ml-2" />
-                </Button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Amount</label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                value={tradeAmount || ''}
-                onChange={handleTradeAmountChange}
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Close</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              <TradingViewChart 
+                symbol={tokenSymbol} 
+                chartType={chartType}
+                onChartTypeChange={setChartType}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Estimated Price</label>
-              <Input type="text" value={tokenPrice > 0 ? `${tokenPrice} SOL` : '0 SOL'} readOnly />
-            </div>
-            <Button onClick={handleExecuteTrade} disabled={loading} className="w-full">
-              {loading ? "Trading..." : `Execute ${tradeType} Trade`}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        
+          {/* Trade Activity - Prominently Displayed */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TraderActivity tokenSymbol={tokenSymbol} />
+              <div className="mt-4 text-center">
+                <Link to="/trading-history">
+                  <Button variant="outline" size="sm">
+                    View Full Trading History
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Trade History</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Timestamp</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tradeHistory.map((trade) => (
-                <TableRow key={trade.id}>
-                  <TableCell className={trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                    {trade.type.toUpperCase()}
-                  </TableCell>
-                  <TableCell>{trade.amount}</TableCell>
-                  <TableCell>{trade.price.toFixed(6)} SOL</TableCell>
-                  <TableCell>{trade.timestamp}</TableCell>
-                </TableRow>
-              ))}
-              {tradeHistory.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                    No trade history yet
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-      <Card className="col-span-2">
-        <CardHeader>
-          <CardTitle>Bonding Curve Visualization</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BondingCurveChart tokenSymbol={tokenSymbol} />
-        </CardContent>
-      </Card>
+        {/* Trading Interface */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Token Trading</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Token</label>
+                  <div className="flex items-center gap-3">
+                    {tokenImage ? (
+                      <img src={tokenImage} alt={tokenName} className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                        {tokenSymbol.charAt(0)}
+                      </div>
+                    )}
+                    <Input type="text" value={tokenSymbol} readOnly />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Trade Type</label>
+                  <div className="flex space-x-4">
+                    <Button
+                      variant={tradeType === 'buy' ? 'default' : 'outline'}
+                      onClick={() => handleTradeTypeChange('buy')}
+                      className={tradeType === 'buy' ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                      Buy <ArrowUp className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={tradeType === 'sell' ? 'default' : 'outline'}
+                      onClick={() => handleTradeTypeChange('sell')}
+                      disabled={!connected}
+                      className={tradeType === 'sell' ? "bg-red-600 hover:bg-red-700" : ""}
+                    >
+                      Sell <ArrowDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Amount</label>
+                  <Input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={tradeAmount || ''}
+                    onChange={handleTradeAmountChange}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Estimated Price</label>
+                  <Input type="text" value={tokenPrice > 0 ? `${tokenPrice} SOL` : '0 SOL'} readOnly />
+                </div>
+                <Button onClick={handleExecuteTrade} disabled={loading || !connected} className="w-full">
+                  {loading ? "Trading..." : connected ? `Execute ${tradeType} Trade` : "Connect Wallet to Trade"}
+                </Button>
+                
+                {!connected && (
+                  <p className="text-sm text-center text-gray-400 mt-2">
+                    You need to connect your wallet to trade.
+                  </p>
+                )}
+                
+                <div className="pt-4">
+                  <Link to="/trade-demo">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Switch to Enhanced Trading Interface
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Recent Trades</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Price</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tradeHistory.slice(0, 5).map((trade) => (
+                    <TableRow key={trade.id}>
+                      <TableCell className={trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                        {trade.type.toUpperCase()}
+                      </TableCell>
+                      <TableCell>{trade.amount}</TableCell>
+                      <TableCell>{trade.price.toFixed(6)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {tradeHistory.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                        No trade history yet
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
