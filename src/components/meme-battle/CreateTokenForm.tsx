@@ -61,7 +61,9 @@ const CreateTokenForm = () => {
         .order('waiting_time_end', { ascending: true });
 
       if (error) throw error;
-      setAvailableRooms(data || []);
+      
+      // Type cast the data as we know the structure matches our BattleRoom type
+      setAvailableRooms(data as BattleRoom[] || []);
       
       // Auto-select the first room if available and none selected
       if (data && data.length > 0 && !selectedRoom) {
@@ -138,7 +140,7 @@ const CreateTokenForm = () => {
       
       // Navigate to the battle detail page
       navigate(`/meme-battle-royale/${selectedRoom}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating token:', error);
       toast.error(error.message || 'Failed to create token');
     } finally {

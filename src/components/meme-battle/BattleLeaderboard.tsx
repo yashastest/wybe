@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,7 +59,9 @@ const BattleLeaderboard = () => {
         .limit(20);
 
       if (error) throw error;
-      setTokens(data || []);
+      
+      // Type cast the data as we know the structure matches our TokenLeaderboard type
+      setTokens(data as TokenLeaderboard[] || []);
     } catch (error) {
       console.error('Error fetching token leaderboard:', error);
     } finally {

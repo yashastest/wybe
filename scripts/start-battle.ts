@@ -1,16 +1,17 @@
 
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import fs from 'fs';
-import { program } from 'commander';
+import { program as commanderProgram } from 'commander';
 import { initMemeBattleProgram } from './utils/program';
+import { web3 } from '@coral-xyz/anchor';
 
-program
+commanderProgram
   .option('-k, --keypair <path>', 'Path to admin keypair')
   .option('-b, --battle-room <pubkey>', 'Battle room public key to start')
   .option('-c, --cluster <url>', 'Solana cluster URL', 'https://api.devnet.solana.com')
   .parse(process.argv);
 
-const options = program.opts();
+const options = commanderProgram.opts();
 
 async function main() {
   try {

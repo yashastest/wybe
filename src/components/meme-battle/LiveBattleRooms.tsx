@@ -56,7 +56,9 @@ const LiveBattleRooms = () => {
         .order('waiting_time_end', { ascending: true });
 
       if (error) throw error;
-      setBattleRooms(data || []);
+      
+      // Type cast the data as we know the structure matches our BattleRoom type
+      setBattleRooms(data as BattleRoom[] || []);
     } catch (error) {
       console.error('Error fetching battle rooms:', error);
     } finally {

@@ -90,17 +90,21 @@ const RewardsSection = () => {
       const newTokenMap: {[key: string]: BattleToken} = {};
       const newRoomMap: {[key: string]: BattleRoom} = {};
       
-      tokensData?.forEach(token => {
-        newTokenMap[token.id] = token;
-      });
+      if (tokensData) {
+        tokensData.forEach((token: BattleToken) => {
+          newTokenMap[token.id] = token;
+        });
+      }
       
-      roomsData?.forEach(room => {
-        newRoomMap[room.id] = room;
-      });
+      if (roomsData) {
+        roomsData.forEach((room: BattleRoom) => {
+          newRoomMap[room.id] = room;
+        });
+      }
       
       setTokenMap(newTokenMap);
       setRoomMap(newRoomMap);
-      setRewards(rewardsData);
+      setRewards(rewardsData as Reward[]);
     } catch (error) {
       console.error('Error fetching rewards:', error);
       toast.error('Failed to fetch rewards');
