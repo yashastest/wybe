@@ -36,14 +36,15 @@ const LaunchPackage = () => {
               <DollarSign className="text-wybe-primary mr-2" size={24} />
               <span className="text-xl font-semibold">All-inclusive package: $500</span>
             </div>
-            <Button 
-              size="lg" 
-              className="btn-primary animate-pulse-glow text-lg px-8 py-6"
-              onClick={handleGetStarted}
-            >
-              Get Started Now
-              <ArrowRight className="ml-2" />
-            </Button>
+            <Link to="/launch?mode=assisted">
+              <Button 
+                size="lg" 
+                className="btn-primary animate-pulse-glow text-lg px-8 py-6"
+              >
+                Get Started Now
+                <ArrowRight className="ml-2" />
+              </Button>
+            </Link>
           </motion.div>
           
           {/* Package Features */}
@@ -205,14 +206,15 @@ const LaunchPackage = () => {
               Get started today with our all-inclusive package and join the next generation of successful token launches.
             </p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-              <Button 
-                size="lg" 
-                className="btn-primary animate-pulse-glow text-lg px-8"
-                onClick={handleGetStarted}
-              >
-                Get Started Now
-              </Button>
-              <Link to="/contact">
+              <Link to="/launch?mode=assisted">
+                <Button 
+                  size="lg" 
+                  className="btn-primary animate-pulse-glow text-lg px-8"
+                >
+                  Get Started Now
+                </Button>
+              </Link>
+              <Link to="/launch?mode=assisted">
                 <Button 
                   variant="outline" 
                   size="lg" 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, AlertTriangle, Check, ChevronRight, Shield, Rocket, Globe, MessageCircle, Link as LinkIcon } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ const Launch = () => {
   const [website, setWebsite] = useState("");
   const [telegramChannel, setTelegramChannel] = useState("");
   const isMobile = useIsMobile();
+  const location = useLocation();
   
   // Image upload states
   const [tokenLogo, setTokenLogo] = useState<File | null>(null);
@@ -69,7 +71,14 @@ const Launch = () => {
     if (wallet) {
       setIsWalletConnected(true);
     }
-  }, [wallet]);
+
+    // Check if there's a mode query parameter to set the active tab
+    const searchParams = new URLSearchParams(location.search);
+    const mode = searchParams.get('mode');
+    if (mode === 'assisted') {
+      setActiveTab('assisted');
+    }
+  }, [wallet, location]);
   
   useEffect(() => {
     // Clean up object URLs to avoid memory leaks

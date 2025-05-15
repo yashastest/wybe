@@ -25,6 +25,13 @@ interface TradeHistoryItem {
   timestamp: string;
 }
 
+// Define the TradeParams type to match what useTokenTrading expects
+interface TradeParams {
+  tokenSymbol: string;
+  amount: number;
+  tradeType: 'buy' | 'sell';
+}
+
 const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenId, tokenName, tokenImage }) => {
   const { connected, address } = useWallet();
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
@@ -60,8 +67,14 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenI
 
     setLoading(true);
     try {
-      // Pass only the symbol to executeTrade as per its signature
-      const result = await executeTrade(tokenSymbol || '');
+      // Create proper trade params object
+      const tradeParams: TradeParams = {
+        tokenSymbol: tokenSymbol || '',
+        amount: tradeAmount,
+        tradeType: tradeType
+      };
+      
+      const result = await executeTrade(tradeParams);
       if (result.success) {
         setTokenPrice(result.price);
         toast.success(`Successfully executed ${tradeType} of ${tradeAmount} tokens at price: ${result.price} SOL per token`);

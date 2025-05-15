@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useWallet } from "@/hooks/useWallet.tsx";  // Updated import with .tsx extension
+import { useWallet } from "@/hooks/useWallet.tsx";
 
 interface HeaderProps {
   adminOnly?: boolean;
@@ -49,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     }
   };
 
-  // Regular navigation links
+  // Regular navigation links - Added Trade in the main navigation
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/discover", label: "Discover" },
@@ -120,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             ))}
           </nav>
           
-          {/* Wallet Connection Button - Desktop */}
+          {/* Wallet Connection Button - Desktop - Removed Launch Token button */}
           {!adminOnly && (
             <div className="hidden md:flex items-center gap-4">
               <motion.div
@@ -142,19 +141,6 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                     "Connect Wallet"
                   )}
                 </Button>
-              </motion.div>
-              
-              {/* Launch Token Button - Desktop */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <Link to="/launch">
-                  <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                    Launch a Token
-                  </Button>
-                </Link>
               </motion.div>
             </div>
           )}
@@ -218,15 +204,6 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                           "Connect Wallet"
                         )}
                       </Button>
-                    </DropdownMenuItem>
-                    
-                    {/* Launch Button - Mobile */}
-                    <DropdownMenuItem asChild>
-                      <Link to="/launch" className="w-full">
-                        <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                          Launch a Token
-                        </Button>
-                      </Link>
                     </DropdownMenuItem>
                   </>
                 )}
