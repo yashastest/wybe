@@ -5,14 +5,16 @@ import { tokenTradingService, TradeParams } from '@/services/tokenTradingService
 import { useWalletBalance } from './useWalletBalance';
 import { useWallet } from './useWallet.tsx';
 
-interface TokenTrade {
+export interface TokenTrade {
   tokenSymbol: string;
   side: 'buy' | 'sell';
   amount: number;
   price?: number;
   timestamp: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'completed' | 'pending' | 'failed' | 'confirmed'; // Added 'confirmed' to make compatible with TokenTransaction
   txHash?: string;
+  amountTokens?: number; // Added to align with TokenTransaction
+  amountSol?: number;    // Added to align with TokenTransaction
 }
 
 export interface TradeHistoryFilters {
@@ -64,7 +66,9 @@ export const useTokenTrading = (tokenSymbol?: string) => {
           price: result.price,
           timestamp: new Date().toISOString(),
           status: 'completed',
-          txHash: result.txHash
+          txHash: result.txHash,
+          amountTokens: result.amountTokens,
+          amountSol: result.amountSol
         };
         
         setTrades(prevTrades => [newTrade, ...prevTrades]);
@@ -87,8 +91,22 @@ export const useTokenTrading = (tokenSymbol?: string) => {
     setIsLoading(true);
     try {
       const history = await tokenTradingService.getUserTransactions(walletAddress, filters);
-      setTradeHistory(history);
-      return history;
+      
+      // Convert TokenTransaction[] to TokenTrade[]
+      const tradeHistory: TokenTrade[] = history.map(tx => ({
+        tokenSymbol: tx.tokenSymbol,
+        side: tx.side,
+        amount: tx.amount,
+        price: tx.price,
+        timestamp: tx.timestamp,
+        status: tx.status as 'completed' | 'pending' | 'failed' | 'confirmed',
+        txHash: tx.txHash,
+        amountTokens: tx.amountTokens,
+        amountSol: tx.amountSol
+      }));
+      
+      setTradeHistory(tradeHistory);
+      return tradeHistory;
     } catch (error) {
       console.error("Error fetching trade history:", error);
       toast.error("Failed to fetch trading history");

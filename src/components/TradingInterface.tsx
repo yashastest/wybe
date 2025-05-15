@@ -126,7 +126,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
       } else {
         toast.error(
           `Failed to ${tab} ${tokenSymbol}`, 
-          { id: toastId, description: result.errorMessage }
+          { id: toastId, description: result.error || 'Unknown error' }  // Using result.error instead of result.errorMessage
         );
       }
     } catch (error) {

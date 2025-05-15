@@ -1,169 +1,202 @@
-
-import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowUpRight, RefreshCw, Wallet, X, Check, Loader } from 'lucide-react';
-import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingService';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
+import { useTokenTrading, TradeHistoryFilters } from '@/hooks/useTokenTrading';
 import { toast } from 'sonner';
-import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
+import { Badge } from '@/components/ui/badge';
 
 interface TransactionHistoryProps {
   tokenSymbol?: string;
-  fullSize?: boolean;  // Add the fullSize prop
+  fullSize?: boolean; // Add fullSize prop to align with TokenTrade.tsx usage
 }
 
-const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, fullSize }) => {
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, fullSize = false }) => {
   const { connected, address } = useWallet();
-  const [transactions, setTransactions] = useState<TokenTransaction[]>([]);
+  const { fetchTradeHistory } = useTokenTrading();
+  const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedTokenFilter, setSelectedTokenFilter] = useState('');
+  const [selectedActionFilter, setSelectedActionFilter] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
-  const loadTransactions = async () => {
-    if (!connected || !address) {
-      setTransactions([]);
-      return;
+  const tradeApi = useTokenTrading();
+  
+  // Fetch transaction history when wallet is connected or filter changes
+  useEffect(() => {
+    if (connected && address) {
+      fetchTransactions();
     }
+  }, [connected, address, selectedTokenFilter, selectedActionFilter, startDate, endDate]);
+  
+  const fetchTransactions = async () => {
+    if (!address) return;
     
     setIsLoading(true);
+    
     try {
-      // Create a proper filter object
-      const filters: TradeHistoryFilters = tokenSymbol ? { tokenSymbol } : {};
-      const txs = await tokenTradingService.getUserTransactions(address, filters);
-      setTransactions(txs);
+      // Create filter object
+      const filters: TradeHistoryFilters = {};
+      
+      if (selectedTokenFilter) {
+        filters.tokenSymbol = selectedTokenFilter;
+      } else if (tokenSymbol) {
+        // If component has a tokenSymbol prop, use it as default filter
+        filters.tokenSymbol = tokenSymbol;
+      }
+      
+      if (selectedActionFilter) {
+        filters.side = selectedActionFilter as 'buy' | 'sell';
+      }
+      
+      if (startDate) {
+        filters.startDate = startDate;
+      }
+      
+      if (endDate) {
+        filters.endDate = endDate;
+      }
+      
+      // Fetch transactions with filters
+      const transactions = await tradeApi.fetchTradeHistory(address, filters);
+      setTransactions(transactions || []);
     } catch (error) {
-      console.error('Failed to load transactions:', error);
-      toast.error('Failed to load transaction history');
+      console.error("Error fetching transactions:", error);
+      toast.error("Failed to load transaction history");
     } finally {
       setIsLoading(false);
     }
   };
   
-  useEffect(() => {
-    loadTransactions();
-  }, [connected, address, tokenSymbol]);
+  // Function to clear filters
+  const clearFilters = () => {
+    setSelectedTokenFilter('');
+    setSelectedActionFilter('');
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
   
-  if (!connected) {
-    return (
-      <div className="bg-indigo-950/50 rounded-xl p-4 md:p-6 border border-indigo-500/20 text-center">
-        <Wallet className="w-8 h-8 mx-auto mb-3 text-indigo-400 opacity-70" />
-        <h3 className="text-lg font-bold text-indigo-200 mb-2">Connect Your Wallet</h3>
-        <p className="text-gray-400 text-sm">
-          Connect your wallet to view your transaction history for this token.
-        </p>
-      </div>
-    );
-  }
+  // Function to format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+  
+  // Sorting transactions
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
   
   return (
-    <div className={`bg-indigo-950/50 rounded-xl overflow-hidden border border-indigo-500/20 ${fullSize ? 'h-full' : ''}`}>
-      <div className="flex items-center justify-between p-4 border-b border-indigo-500/20">
-        <h3 className="font-bold text-lg text-indigo-200">
-          {tokenSymbol ? `${tokenSymbol} Transactions` : 'Your Transactions'}
-        </h3>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={loadTransactions}
-          disabled={isLoading}
-          className="text-indigo-300 hover:text-indigo-100"
-        >
-          {isLoading ? (
-            <Loader className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-        </Button>
+    <div className={`w-full ${fullSize ? 'h-full' : 'max-h-[400px]'} overflow-y-auto rounded-md`}>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Transaction History</h3>
+        <div className="flex items-center space-x-2">
+          <select
+            value={selectedTokenFilter}
+            onChange={(e) => setSelectedTokenFilter(e.target.value)}
+            className="bg-black/40 border border-gray-700 text-white rounded-md p-2 text-sm"
+          >
+            <option value="">All Tokens</option>
+            <option value="PEPE">PEPE</option>
+            <option value="DOGE">DOGE</option>
+            <option value="SHIB">SHIB</option>
+            {/* Add more tokens as needed */}
+          </select>
+          <select
+            value={selectedActionFilter}
+            onChange={(e) => setSelectedActionFilter(e.target.value)}
+            className="bg-black/40 border border-gray-700 text-white rounded-md p-2 text-sm"
+          >
+            <option value="">All Actions</option>
+            <option value="buy">Buy</option>
+            <option value="sell">Sell</option>
+          </select>
+          <input
+            type="date"
+            onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+            className="bg-black/40 border border-gray-700 text-white rounded-md p-2 text-sm"
+          />
+          <input
+            type="date"
+            onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : undefined)}
+            className="bg-black/40 border border-gray-700 text-white rounded-md p-2 text-sm"
+          />
+          <button
+            onClick={clearFilters}
+            className="bg-gray-700 hover:bg-gray-600 text-white rounded-md p-2 text-sm"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
-      
-      <div className="overflow-x-auto">
-        {isLoading && transactions.length === 0 ? (
-          <div className="text-center p-8">
-            <Loader className="h-6 w-6 mx-auto mb-3 animate-spin text-indigo-400" />
-            <p className="text-indigo-200">Loading transactions...</p>
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="text-center p-8">
-            <p className="text-gray-400">No transactions found.</p>
-          </div>
-        ) : (
-          <table className="w-full min-w-full">
-            <thead className="bg-indigo-900/40">
-              <tr>
-                <th className="py-2 px-4 text-left text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="py-2 px-4 text-left text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Type
-                </th>
-                {!tokenSymbol && (
-                  <th className="py-2 px-4 text-left text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                    Token
-                  </th>
+      {isLoading ? (
+        <div className="text-center py-4">Loading transactions...</div>
+      ) : transactions.length === 0 ? (
+        <div className="text-center py-4">No transactions found.</div>
+      ) : (
+        <table className="min-w-full divide-y divide-gray-800">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 text-left text-gray-400">Date</th>
+              <th className="px-4 py-2 text-left text-gray-400">Type</th>
+              <th className="px-4 py-2 text-left text-gray-400">Token</th>
+              <th className="px-4 py-2 text-left text-gray-400">Amount</th>
+              <th className="px-4 py-2 text-left text-gray-400">Value</th>
+              <th className="px-4 py-2 text-left text-gray-400">Status</th>
+              <th className="px-4 py-2 text-left text-gray-400">TX Hash</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+          {sortedTransactions.map((tx) => (
+            <tr key={tx.txHash || tx.id} className="border-b border-gray-800">
+              <td className="py-3 px-4">
+                {formatDate(tx.timestamp)}
+              </td>
+              <td className="py-3 px-4">
+                <div className="flex items-center">
+                  <span className={`font-mono ${
+                    tx.side === 'buy' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {tx.side === 'buy' ? 'BUY' : 'SELL'}
+                  </span>
+                </div>
+              </td>
+              <td className="py-3 px-4 font-mono">
+                {tx.tokenSymbol}
+              </td>
+              <td className="py-3 px-4 font-mono">
+                {(tx.amountTokens || tx.amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </td>
+              <td className="py-3 px-4 font-mono">
+                {(tx.amountSol || (tx.amount * (tx.price || 0))).toFixed(5)} SOL
+              </td>
+              <td className="py-3 px-4">
+                <Badge variant={
+                  tx.status === 'completed' || tx.status === 'confirmed' ? 'success' : 
+                  tx.status === 'pending' ? 'outline' : 'destructive'
+                }>
+                  {tx.status === 'confirmed' ? 'Completed' : 
+                   tx.status === 'completed' ? 'Completed' : 
+                   tx.status === 'pending' ? 'Pending' : 'Failed'}
+                </Badge>
+              </td>
+              <td className="py-3 px-4">
+                {tx.txHash && (
+                  <a 
+                    href={`https://explorer.solana.com/tx/${tx.txHash}?cluster=devnet`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-indigo-400 hover:text-indigo-300"
+                  >
+                    {tx.txHash.substring(0, 8)}...
+                  </a>
                 )}
-                <th className="py-2 px-4 text-right text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="py-2 px-4 text-right text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Value
-                </th>
-                <th className="py-2 px-4 text-center text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="py-2 px-4 text-right text-xs font-medium text-indigo-300 uppercase tracking-wider">
-                  Explorer
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-indigo-800/30">
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-indigo-900/20 transition-colors">
-                  <td className="py-3 px-4 text-sm text-gray-300 font-mono">
-                    {new Date(tx.timestamp).toLocaleDateString()} {new Date(tx.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      tx.side === 'buy' 
-                        ? 'bg-green-900/30 text-green-400 border border-green-500/30' 
-                        : 'bg-red-900/30 text-red-400 border border-red-500/30'
-                    }`}>
-                      {tx.side}
-                    </span>
-                  </td>
-                  {!tokenSymbol && (
-                    <td className="py-3 px-4 text-sm text-white font-medium">
-                      {tx.tokenSymbol}
-                    </td>
-                  )}
-                  <td className="py-3 px-4 text-right text-sm text-white font-mono">
-                    {tx.amountTokens.toLocaleString(undefined, {maximumFractionDigits: 2})} {tx.tokenSymbol}
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm text-white font-mono">
-                    {tx.amountSol.toFixed(5)} SOL
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    {tx.status === 'confirmed' ? (
-                      <Check className="h-4 w-4 text-green-400 mx-auto" />
-                    ) : tx.status === 'pending' ? (
-                      <Loader className="h-4 w-4 text-yellow-400 animate-spin mx-auto" />
-                    ) : (
-                      <X className="h-4 w-4 text-red-400 mx-auto" />
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <a 
-                      href={`https://explorer.solana.com/tx/${tx.txHash}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-indigo-400 hover:text-indigo-200 inline-flex items-center"
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </td>
+            </tr>
+          ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

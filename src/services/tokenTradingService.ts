@@ -32,19 +32,19 @@ export interface TradeResult {
   txHash?: string;
   price?: number;
   error?: string;
+  errorMessage?: string; // Added to fix the error in TradingInterface.tsx
 }
 
 export interface TokenTransaction {
   id: string;
   tokenSymbol: string;
-  side: 'buy' | 'sell';  // Changed from 'action' to 'side' to match component usage
+  side: 'buy' | 'sell';  
   amount: number;
   price: number;
-  timestamp: string;     // Changed from 'createdAt' to 'timestamp'
+  timestamp: string;
   walletAddress: string;
-  status: 'confirmed' | 'pending' | 'failed';  // Changed 'completed' to 'confirmed' to match component
+  status: 'confirmed' | 'pending' | 'failed';
   txHash?: string;
-  // Add these properties to match usage in TransactionHistory component
   amountTokens: number;
   amountSol: number;
 }
@@ -124,7 +124,8 @@ const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
     console.error("Trade execution error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorMessage: error instanceof Error ? error.message : 'Unknown error occurred' // Added to match usage in TradingInterface
     };
   }
 };
