@@ -58,7 +58,6 @@ const AdminTokens: React.FC = () => {
         </div>
         
         <div className="space-y-6">
-          {/* @ts-ignore - The component accepts these props based on the implementation */}
           <TokensList 
             tokens={tokens} 
             isLoading={isLoadingTokens} 

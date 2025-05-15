@@ -1,343 +1,358 @@
+
 import React, { useState } from 'react';
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Play,
-  Shield,
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  AlertCircle, 
+  CheckCircle, 
+  XCircle, 
   AlertTriangle,
-  Info,
-  RefreshCcw,
-  CheckCircle2,
-  Zap,
-  Server,
-  Check
-} from "lucide-react";
-import { TabsContent } from "@/components/ui/tabs";
+  Flame, 
+  Loader2,
+  ShieldAlert,
+  ShieldCheck,
+  Zap
+} from 'lucide-react';
 import { smartContractService } from '@/services/smartContractService';
-import { Badge } from '@/components/ui/badge';
-import { integrationService } from '@/services/integrationService';
+import { toast } from "sonner";
+import { Progress } from '@/components/ui/progress';
 
-// Add this method to the IntegrationService
-integrationService.updateChecklistItem = async (id: string, isComplete: boolean) => {
-  try {
-    // Implement the method to update a checklist item
-    console.log(`Updating checklist item ${id} to ${isComplete ? 'complete' : 'incomplete'}`);
-    // In a real application, this would make an API call
-    // For now we'll simulate success
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to update checklist item:", error);
-    return { success: false, error };
-  }
-};
-
-const ContractSecurityAudit = () => {
-  const [isRunningAudit, setIsRunningAudit] = useState(false);
-  const [isAnalyzingGas, setIsAnalyzingGas] = useState(false);
-  const [isRunningTests, setIsRunningTests] = useState(false);
-  
+const ContractSecurityAudit: React.FC = () => {
+  const [isScanning, setIsScanning] = useState(false);
   const [auditResults, setAuditResults] = useState<{
-    issues: Array<{severity: 'high' | 'medium' | 'low' | 'info'; description: string; location?: string}>;
-    passedChecks: string[];
+    score: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    findings: { severity: string; description: string; location: string; }[];
+    issues?: number;
+    passedChecks?: number;
   } | null>(null);
   
-  const [gasResults, setGasResults] = useState<{
-    gasEstimates: {[key: string]: number};
+  const [tokenProgramId, setTokenProgramId] = useState('Wyb111111111111111111111111111111111111111');
+  
+  const [gasAnalysisResults, setGasAnalysisResults] = useState<{
+    gasEstimates: any;
     optimizationSuggestions: string[];
+    results: { functionName: string; averageGasUsed: number; }[];
   } | null>(null);
   
-  const [testResults, setTestResults] = useState<{
-    results: Array<{
-      function: string;
-      status: 'passed' | 'failed';
-      error?: string;
-      txHash?: string;
-    }>;
-  } | null>(null);
-
-  const handleRunSecurityAudit = async () => {
-    setIsRunningAudit(true);
-    
+  const [testingResults, setTestingResults] = useState<{
+    results: { function: string; status: 'passed' | 'failed'; error?: string; txHash?: string; }[];
+  }>({ results: [] });
+  
+  const runSecurityAudit = async () => {
+    setIsScanning(true);
     try {
-      toast.info("Running smart contract security audit...");
-      
-      // Run security audit
-      const results = await smartContractService.runSecurityAudit();
-      
-      // Fixed: Only extract and set the required properties instead of the full result
-      setAuditResults({
-        issues: results.issues || [],
-        passedChecks: results.passedChecks || []
-      });
-      
-      // Update checklist
-      integrationService.updateChecklistItem('5', true);
-      
-      // Find high risk issues
-      const highRisks = results.issues?.filter(issue => issue.severity === 'high') || [];
-      
-      if (highRisks.length > 0) {
-        toast.error("Security audit found high risk issues", {
-          description: "Please address them before deploying to mainnet."
-        });
-      } else {
-        toast.success("Security audit completed", {
-          description: "No critical issues found."
-        });
-      }
+      const results = await smartContractService.runSecurityAudit(tokenProgramId);
+      setAuditResults(results);
+      toast.success('Security audit completed');
     } catch (error) {
-      console.error("Security audit error:", error);
-      toast.error("Failed to complete security audit");
+      console.error("Error running security audit:", error);
+      toast.error("Failed to run security audit");
     } finally {
-      setIsRunningAudit(false);
+      setIsScanning(false);
     }
   };
-
-  const handleAnalyzeGasUsage = async () => {
-    setIsAnalyzingGas(true);
-    
+  
+  const runGasAnalysis = async () => {
+    setIsScanning(true);
     try {
-      toast.info("Analyzing gas usage...");
+      const results = await smartContractService.analyzeGasUsage(tokenProgramId);
       
-      // Analyze gas usage
-      const results = await smartContractService.analyzeGasUsage();
-      
-      // Fixed: Only extract and set the required properties instead of the full result
-      setGasResults({
+      const formattedResults = {
         gasEstimates: results.gasEstimates || {},
-        optimizationSuggestions: results.optimizationSuggestions || []
-      });
+        optimizationSuggestions: results.optimizationSuggestions || [],
+        results: results.map(item => ({
+          functionName: item.functionName,
+          averageGasUsed: item.averageGasUsed
+        }))
+      };
       
-      toast.success("Gas analysis completed");
+      setGasAnalysisResults(formattedResults);
+      toast.success('Gas analysis completed');
     } catch (error) {
-      console.error("Gas analysis error:", error);
-      toast.error("Failed to analyze gas usage");
+      console.error("Error running gas analysis:", error);
+      toast.error("Failed to run gas analysis");
     } finally {
-      setIsAnalyzingGas(false);
+      setIsScanning(false);
     }
   };
-
-  const handleRunTestnetTests = async () => {
-    setIsRunningTests(true);
-    
+  
+  const runTestnetTests = async () => {
+    setIsScanning(true);
     try {
-      toast.info("Running testnet validation...");
+      const results = await smartContractService.testOnTestnet(tokenProgramId, 'all');
       
-      // Run testnet tests
-      const results = await smartContractService.testOnTestnet();
+      // Convert to the format expected by our state
+      const convertedResults = {
+        results: results.results.map(item => ({
+          function: item.name,
+          status: item.passed ? 'passed' as const : 'failed' as const,
+          error: item.passed ? undefined : item.message,
+          txHash: item.passed ? `tx_${Math.random().toString(36).substring(2, 10)}` : undefined
+        }))
+      };
       
-      // Fixed: Set the full test results object
-      setTestResults(results);
-      
-      // Check for failures
-      const failures = results.results.filter(result => result.status === 'failed');
-      
-      if (failures.length > 0) {
-        toast.error(`${failures.length} test(s) failed`, {
-          description: "Please fix issues before deploying to mainnet."
-        });
-      } else {
-        toast.success("All testnet tests passed successfully!");
-      }
+      setTestingResults(convertedResults);
+      toast.success('Testnet tests completed');
     } catch (error) {
-      console.error("Testnet testing error:", error);
+      console.error("Error running testnet tests:", error);
       toast.error("Failed to run testnet tests");
     } finally {
-      setIsRunningTests(false);
+      setIsScanning(false);
     }
   };
-
+  
+  const getSeverityIcon = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return <Flame className="text-red-500" size={16} />;
+      case 'high':
+        return <AlertCircle className="text-orange-500" size={16} />;
+      case 'medium':
+        return <AlertTriangle className="text-yellow-500" size={16} />;
+      case 'low':
+        return <AlertCircle className="text-blue-400" size={16} />;
+      default:
+        return <AlertCircle className="text-gray-400" size={16} />;
+    }
+  };
+  
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="text-orange-500" size={18} />
-              Smart Contract Security Audit
-            </CardTitle>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <Input
+            value={tokenProgramId}
+            onChange={(e) => setTokenProgramId(e.target.value)}
+            placeholder="Program ID"
+            className="font-mono"
+          />
+        </div>
+        <Button 
+          variant="orange" 
+          onClick={runSecurityAudit}
+          disabled={isScanning}
+          className="md:w-auto w-full"
+        >
+          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldAlert className="mr-2 h-4 w-4" />}
+          Run Security Audit
+        </Button>
+        <Button 
+          variant="secondary" 
+          onClick={runGasAnalysis}
+          disabled={isScanning}
+          className="md:w-auto w-full"
+        >
+          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+          Analyze Gas Usage
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={runTestnetTests}
+          disabled={isScanning}
+          className="md:w-auto w-full"
+        >
+          {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+          Run Tests
+        </Button>
+      </div>
+      
+      {auditResults && (
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <h3 className="text-lg font-semibold flex items-center">
+              <ShieldAlert className="mr-2 text-orange-500" size={20} />
+              Security Audit Results
+            </h3>
+            <Badge 
+              variant="outline" 
+              className={
+                auditResults.score >= 80 ? 'border-green-500 text-green-500' : 
+                auditResults.score >= 50 ? 'border-yellow-500 text-yellow-500' : 
+                'border-red-500 text-red-500'
+              }
+            >
+              Score: {auditResults.score}/100
+            </Badge>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full bg-orange-500 hover:bg-orange-600 mb-4"
-              onClick={handleRunSecurityAudit}
-              disabled={isRunningAudit}
-              data-run-audit-btn
-            >
-              {isRunningAudit ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Running Audit...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Run Security Audit
-                </>
-              )}
-            </Button>
-            
-            {auditResults && (
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Audit Results</h4>
-                  {auditResults.issues.length > 0 ? (
-                    <>
-                      <p className="text-sm mb-2">Found {auditResults.issues.length} issues to review:</p>
-                      <div className="space-y-2">
-                        {auditResults.issues.map((issue, index) => (
-                          <div key={index} className="bg-black/30 p-3 rounded-lg border border-white/10">
-                            <div className="flex items-center gap-2 mb-1">
-                              {issue.severity === 'high' && <AlertTriangle size={14} className="text-red-500" />}
-                              {issue.severity === 'medium' && <AlertTriangle size={14} className="text-amber-500" />}
-                              {issue.severity === 'low' && <AlertTriangle size={14} className="text-yellow-500" />}
-                              {issue.severity === 'info' && <Info size={14} className="text-blue-500" />}
-                              <span className="text-sm capitalize">{issue.severity} Risk</span>
-                            </div>
-                            {issue.location && <div className="text-xs text-gray-400 mb-1">{issue.location}</div>}
-                            <p className="text-sm">{issue.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20 text-center">
-                      <CheckCircle2 size={24} className="text-green-500 mx-auto mb-2" />
-                      <p className="text-sm">No issues found!</p>
-                    </div>
-                  )}
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-3 justify-between">
+                <div className="bg-black/20 rounded-lg p-3 flex items-center">
+                  <div className="mr-3 bg-red-500/20 p-2 rounded-full">
+                    <Flame className="text-red-500" size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Critical</p>
+                    <p className="font-bold text-lg">{auditResults.critical}</p>
+                  </div>
                 </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Passed Security Checks</h4>
-                  <ul className="space-y-2">
-                    {auditResults.passedChecks.map((check, index) => (
-                      <li key={index} className="text-sm flex items-start gap-2">
-                        <Check size={14} className="text-green-500 mt-1 flex-shrink-0" />
-                        <span>{check}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="bg-black/20 rounded-lg p-3 flex items-center">
+                  <div className="mr-3 bg-orange-500/20 p-2 rounded-full">
+                    <AlertCircle className="text-orange-500" size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">High</p>
+                    <p className="font-bold text-lg">{auditResults.high}</p>
+                  </div>
+                </div>
+                <div className="bg-black/20 rounded-lg p-3 flex items-center">
+                  <div className="mr-3 bg-yellow-500/20 p-2 rounded-full">
+                    <AlertTriangle className="text-yellow-500" size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Medium</p>
+                    <p className="font-bold text-lg">{auditResults.medium}</p>
+                  </div>
+                </div>
+                <div className="bg-black/20 rounded-lg p-3 flex items-center">
+                  <div className="mr-3 bg-blue-500/20 p-2 rounded-full">
+                    <AlertCircle className="text-blue-400" size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Low</p>
+                    <p className="font-bold text-lg">{auditResults.low}</p>
+                  </div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="text-orange-500" size={18} />
-              Gas Optimization
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              className="w-full bg-green-600 hover:bg-green-700 mb-4"
-              onClick={handleAnalyzeGasUsage}
-              disabled={isAnalyzingGas}
-            >
-              {isAnalyzingGas ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing Gas...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Analyze Gas Usage
-                </>
-              )}
-            </Button>
-            
-            {gasResults && (
-              <div className="space-y-4">
+              
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Security Check Progress</span>
+                  <span>
+                    {auditResults.passedChecks || 0}/{(auditResults.passedChecks || 0) + (auditResults.issues || 0)} Passed
+                  </span>
+                </div>
+                <Progress 
+                  value={(auditResults.passedChecks || 0) / ((auditResults.passedChecks || 0) + (auditResults.issues || 0)) * 100} 
+                  className="h-2"
+                />
+              </div>
+              
+              {auditResults.findings.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Gas Usage Estimates</h4>
+                  <h4 className="font-medium mb-2">Findings:</h4>
                   <div className="space-y-2">
-                    {Object.entries(gasResults.gasEstimates).map(([fn, gas]) => (
-                      <div key={fn} className="flex justify-between items-center">
-                        <span className="text-sm">{fn}</span>
-                        <Badge variant="secondary" className="bg-black/30">{gas.toLocaleString()} gas</Badge>
+                    {auditResults.findings.map((finding, index) => (
+                      <div key={index} className="bg-black/30 p-2 rounded-md">
+                        <div className="flex items-start">
+                          {getSeverityIcon(finding.severity)}
+                          <div className="ml-2">
+                            <p className="text-sm font-medium">{finding.description}</p>
+                            <p className="text-xs text-gray-400">
+                              Location: <span className="font-mono">{finding.location}</span>
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Optimization Suggestions</h4>
-                  <ul className="space-y-2 list-disc pl-5">
-                    {gasResults.optimizationSuggestions.map((suggestion, index) => (
-                      <li key={index} className="text-sm text-gray-300">{suggestion}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
-        
-        <Card className="glass-card border-wybe-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Server className="text-orange-500" size={18} />
-              Testnet Validation
-            </CardTitle>
+      )}
+      
+      {gasAnalysisResults && (
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <h3 className="text-lg font-semibold flex items-center">
+              <Zap className="mr-2 text-orange-500" size={20} />
+              Gas Usage Analysis
+            </h3>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 mb-4"
-              onClick={handleRunTestnetTests}
-              disabled={isRunningTests}
-            >
-              {isRunningTests ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Running Tests...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Run Testnet Tests
-                </>
-              )}
-            </Button>
-            
-            {testResults && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Test Results</h4>
-                <div className="space-y-2">
-                  {testResults.results.map((result, index) => (
-                    <div key={index} className="bg-black/30 p-2 rounded-lg border border-white/10">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">{result.function}</span>
-                        <Badge 
-                          variant={result.status === 'passed' ? 'default' : 'destructive'} 
-                          className={result.status === 'passed' ? 'bg-green-500/80' : ''}
-                        >
-                          {result.status}
-                        </Badge>
-                      </div>
-                      {result.txHash && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          TX: <span className="font-mono">{result.txHash}</span>
-                        </div>
-                      )}
-                      {result.error && (
-                        <div className="text-xs text-red-400 mt-1">
-                          Error: {result.error}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Function
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Average Gas (units)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {gasAnalysisResults.results.map((item, index) => (
+                      <tr key={index} className="hover:bg-black/20">
+                        <td className="px-4 py-2 text-sm font-mono">
+                          {item.functionName}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right font-mono">
+                          {item.averageGasUsed.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+              
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Optimization Suggestions:</h4>
+                <ul className="space-y-1">
+                  {gasAnalysisResults.optimizationSuggestions.map((suggestion, idx) => (
+                    <li key={idx} className="text-sm flex items-start">
+                      <AlertCircle className="text-blue-400 mr-2 shrink-0 mt-0.5" size={14} />
+                      <span>{suggestion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+      
+      {testingResults.results.length > 0 && (
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <h3 className="text-lg font-semibold flex items-center">
+              <ShieldCheck className="mr-2 text-orange-500" size={20} />
+              Testnet Test Results
+            </h3>
+            <Badge variant="outline" className="border-blue-500 text-blue-500">
+              {testingResults.results.filter(r => r.status === 'passed').length}/{testingResults.results.length} Passed
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {testingResults.results.map((result, idx) => (
+                <div 
+                  key={idx} 
+                  className={`flex items-start p-3 rounded-md ${
+                    result.status === 'passed' 
+                      ? 'bg-green-500/10 border border-green-500/20' 
+                      : 'bg-red-500/10 border border-red-500/20'
+                  }`}
+                >
+                  {result.status === 'passed' 
+                    ? <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={16} /> 
+                    : <XCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
+                  }
+                  <div className="ml-2">
+                    <p className="text-sm font-medium">{result.function}</p>
+                    {result.error && (
+                      <p className="text-xs text-red-400">{result.error}</p>
+                    )}
+                    {result.txHash && (
+                      <p className="text-xs text-gray-400 font-mono">{result.txHash}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

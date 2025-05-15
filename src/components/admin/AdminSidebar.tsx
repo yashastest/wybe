@@ -1,107 +1,102 @@
 
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Trophy,
-  Wallet,
-  Settings,
-  LogOut,
-  FileCode,
-  Shield,
-  Code,
-  Server,
-  Bug,
-  FileCode2,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
-import { cn } from '@/lib/utils';
+import { motion } from "framer-motion";
+import { 
+  Home, 
+  BarChart2, 
+  Settings, 
+  Package, 
+  LogOut, 
+  FileCog, 
+  Server, 
+  ShieldAlert, 
+  FileCode,
+  Users
+} from "lucide-react";
+import { Button } from '@/components/ui/button';
 
-const AdminSidebar = () => {
+const AdminSidebar: React.FC = () => {
   const { logout } = useAdmin();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/admin-login');
-  };
-
-  const NavItem = ({ 
-    to, 
-    icon: Icon, 
-    children 
-  }: { 
-    to: string; 
-    icon: React.ElementType; 
-    children: React.ReactNode;
-  }) => (
-    <NavLink 
-      to={to}
-      className={({ isActive }) => cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-        isActive 
-          ? "bg-orange-500/20 text-orange-500" 
-          : "text-gray-300 hover:bg-white/10"
-      )}
-    >
-      <Icon size={18} />
-      <span>{children}</span>
-    </NavLink>
-  );
-
+  
   return (
-    <div className="fixed left-0 top-0 h-screen w-64 bg-wybe-background-light border-r border-white/10 p-4 flex flex-col">
-      <div className="mb-8 px-3 py-4">
-        <h1 className="text-xl font-bold">
-          <span className="text-white">Wybe </span>
-          <span className="text-orange-500">Admin</span>
-        </h1>
-      </div>
-
-      <div className="space-y-1 mb-6">
-        <NavItem to="/admin" icon={LayoutDashboard}>Dashboard</NavItem>
-        <NavItem to="/admin/tokens" icon={Trophy}>Tokens</NavItem>
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-xs uppercase text-gray-500 font-medium px-3 mb-2">Deployment</h2>
-        <div className="space-y-1">
-          <NavItem to="/admin/token-deployment" icon={FileCode}>Token Deployment</NavItem>
-          <NavItem to="/admin/smart-contract-deployment" icon={Code}>Smart Contract</NavItem>
-          <NavItem to="/admin/deployment" icon={Server}>Deployment Tests</NavItem>
+    <motion.div
+      initial={{ x: -250 }}
+      animate={{ x: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed left-0 top-0 bottom-0 w-64 bg-black border-r border-white/10 p-4 z-10"
+    >
+      <div className="flex flex-col h-full">
+        <div className="py-4">
+          <Link to="/admin" className="flex items-center justify-center">
+            <h1 className="font-bold text-2xl text-orange-500">WYBE Admin</h1>
+          </Link>
+        </div>
+        
+        <nav className="flex-1 py-6 space-y-2">
+          <Link to="/admin">
+            <Button variant="ghost" className="w-full justify-start">
+              <Home className="mr-2 h-4 w-4" />
+              Dashboard
+            </Button>
+          </Link>
+          
+          <Link to="/admin/tokens">
+            <Button variant="ghost" className="w-full justify-start">
+              <Package className="mr-2 h-4 w-4" />
+              Tokens
+            </Button>
+          </Link>
+          
+          <Link to="/admin/smart-contract-deployment">
+            <Button variant="ghost" className="w-full justify-start">
+              <FileCode className="mr-2 h-4 w-4" />
+              Smart Contracts
+            </Button>
+          </Link>
+          
+          <Link to="/admin/deployment">
+            <Button variant="ghost" className="w-full justify-start">
+              <Server className="mr-2 h-4 w-4" />
+              Deployment
+            </Button>
+          </Link>
+          
+          <Link to="/admin/security-report">
+            <Button variant="ghost" className="w-full justify-start">
+              <ShieldAlert className="mr-2 h-4 w-4" />
+              Security Report
+            </Button>
+          </Link>
+          
+          <Link to="/admin/token-deployment">
+            <Button variant="ghost" className="w-full justify-start">
+              <FileCog className="mr-2 h-4 w-4" />
+              Token Deployment
+            </Button>
+          </Link>
+        </nav>
+        
+        <div className="pb-6 space-y-2 border-t border-white/10 pt-4">
+          <Link to="/admin/settings">
+            <Button variant="ghost" className="w-full justify-start">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </Link>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
         </div>
       </div>
-
-      <div className="mb-6">
-        <h2 className="text-xs uppercase text-gray-500 font-medium px-3 mb-2">Security</h2>
-        <div className="space-y-1">
-          <NavItem to="/admin/security-report" icon={Shield}>Security Report</NavItem>
-          <NavItem to="/admin/tokens" icon={Bug}>Audit Tokens</NavItem>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-xs uppercase text-gray-500 font-medium px-3 mb-2">Administration</h2>
-        <div className="space-y-1">
-          <NavItem to="/admin" icon={Users}>User Management</NavItem>
-          <NavItem to="/admin" icon={Wallet}>Treasury</NavItem>
-          <NavItem to="/admin" icon={Settings}>Settings</NavItem>
-        </div>
-      </div>
-
-      <div className="mt-auto">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-gray-400 hover:text-white hover:bg-white/10"
-          onClick={handleLogout}
-        >
-          <LogOut size={18} className="mr-2" />
-          Log out
-        </Button>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

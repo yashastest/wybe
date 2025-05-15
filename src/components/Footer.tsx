@@ -1,114 +1,63 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { Twitter, BookOpen } from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const Footer = () => {
-  const currentYear = 2025;
-  
+const Footer: React.FC = () => {
   return (
-    <footer className="mt-auto border-t border-white/10 py-8">
+    <footer className="bg-black border-t border-white/10 py-8 mt-auto">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4 flex items-center">
-              <img 
-                src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
-                alt="Wybe Logo" 
-                className="h-8 w-8 mr-2" 
-              />
-              <span className="text-white font-poppins font-extrabold italic tracking-wide">Wybe</span>
-            </h3>
-            <p className="text-gray-400 mb-4">
-              The first fully AI-powered, Solana-based meme coin launchpad with built-in bonding curves and creator incentives.
+            <h3 className="text-lg font-bold mb-4">WYBE Token</h3>
+            <p className="text-gray-400 text-sm">
+              The next generation of meme tokens with built-in utility
+              and sustainable tokenomics.
             </p>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/launch" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Launch a Coin
-                </Link>
-              </li>
-              <li>
-                <Link to="/trade" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Trade
-                </Link>
-              </li>
-              <li>
-                <Link to="/dashboard" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Creator Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/bonding-curves" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
-                  <BookOpen size={16} className="mr-2" />
-                  <span>Learn About Bonding Curves</span>
-                </Link>
-              </li>
+            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/" className="text-gray-400 hover:text-white">Home</Link></li>
+              <li><Link to="/trade" className="text-gray-400 hover:text-white">Trade</Link></li>
+              <li><Link to="/launch" className="text-gray-400 hover:text-white">Launch Token</Link></li>
+              <li><Link to="/discover" className="text-gray-400 hover:text-white">Discover</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-4">Resources</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Solana Explorer
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors">
-                  Terms of Service
-                </a>
-              </li>
+            <h3 className="text-lg font-bold mb-4">Resources</h3>
+            <ul className="space-y-2 text-sm">
+              <li><a href="#" className="text-gray-400 hover:text-white">Documentation</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white">Tutorials</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white">FAQs</a></li>
+              <li><Link to="/security-report" className="text-gray-400 hover:text-white">Security Report</Link></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-bold mb-4">Connect</h3>
+            <ul className="space-y-2 text-sm">
+              <li><a href="#" className="text-gray-400 hover:text-white">Twitter</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white">Discord</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white">Telegram</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white">Github</a></li>
             </ul>
           </div>
         </div>
         
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">© {currentYear} <span className="text-white font-poppins font-extrabold italic">Wybe</span>. All rights reserved.</p>
-          <div className="flex space-x-4 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
-              <Twitter className="h-4 w-4 mr-1" />
-              <span>Twitter</span>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
-              <span className="font-mono text-lg mr-1">t</span>
-              <span>Telegram</span>
-            </a>
-            <a href="#" className="text-gray-400 hover:text-wybe-primary transition-colors flex items-center">
-              <span className="font-mono text-lg mr-1">ﾠﾠﾠ</span>
-              <span>Discord</span>
-            </a>
+          <p className="text-gray-400 text-sm mb-4 md:mb-0">
+            &copy; {new Date().getFullYear()} WYBE Token. All rights reserved.
+          </p>
+          
+          <div className="flex space-x-6">
+            <a href="#" className="text-gray-400 hover:text-white text-sm">Privacy Policy</a>
+            <a href="#" className="text-gray-400 hover:text-white text-sm">Terms of Service</a>
+            <Link to="/security-report" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+              Security Report
+            </Link>
           </div>
-        </div>
-        
-        <div className="mt-6 text-center">
-          <Link 
-            to="/bonding-curves" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-poppins font-bold rounded-full hover:from-indigo-500 hover:to-purple-500 transition-all shadow-glow-sm hover:shadow-glow-md"
-          >
-            <BookOpen size={18} />
-            Learn About Bonding Curves
-          </Link>
         </div>
       </div>
     </footer>

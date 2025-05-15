@@ -4,6 +4,10 @@ export interface ContractConfig {
   anchorInstalled: boolean;
   anchorVersion: string;
   solanaVersion: string;
+  bondingCurveEnabled?: boolean;
+  bondingCurveLimit?: number;
+  creatorFeePercentage?: number;
+  platformFeePercentage?: number;
 }
 
 export interface DeploymentResult {
@@ -11,6 +15,8 @@ export interface DeploymentResult {
   programId?: string;
   error?: string;
   logs?: string[];
+  message?: string;
+  transactionId?: string;
 }
 
 export interface DeployedContract {
@@ -41,6 +47,8 @@ export interface SecurityAuditResult {
     description: string;
     location: string;
   }[];
+  issues?: number;
+  passedChecks?: number;
 }
 
 export interface GasUsageResult {
@@ -49,6 +57,26 @@ export interface GasUsageResult {
   minGasUsed: number;
   maxGasUsed: number;
   recommendedOptimizations: string[];
+  gasEstimates?: any;
+  optimizationSuggestions?: string[];
+}
+
+// Token bonding curve test return types
+interface MintTokenResult {
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  tokens?: number;
+  cost?: number;
+}
+
+interface TradeTokenResult {
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  tokenAmount?: number;
+  solAmount?: number;
+  newPrice?: number;
 }
 
 // Smart contract service implementation
@@ -57,7 +85,11 @@ const getContractConfig = (): ContractConfig => {
   return {
     anchorInstalled: true,
     anchorVersion: '0.29.0',
-    solanaVersion: '1.16.0'
+    solanaVersion: '1.16.0',
+    bondingCurveEnabled: true,
+    bondingCurveLimit: 1000000,
+    creatorFeePercentage: 2.5,
+    platformFeePercentage: 2.5
   };
 };
 
@@ -84,7 +116,9 @@ const deployContract = async (contractName: string, idlContent: string, programA
   return {
     success: true,
     programId: programAddress || 'generated-program-id-12345',
-    logs: ['Deploying...', 'Contract deployed successfully']
+    logs: ['Deploying...', 'Contract deployed successfully'],
+    message: 'Contract deployed successfully',
+    transactionId: 'tx_' + Date.now().toString(16)
   };
 };
 
@@ -99,7 +133,6 @@ const getDeploymentLogs = async (contractName: string): Promise<string[]> => {
   ];
 };
 
-// Add missing methods
 const getDeployedContracts = async (): Promise<DeployedContract[]> => {
   // This would fetch actual deployed contracts from the backend
   return [
@@ -163,7 +196,9 @@ const runSecurityAudit = async (programId: string): Promise<SecurityAuditResult>
         description: 'Potential integer overflow',
         location: 'src/processor.rs:156'
       }
-    ]
+    ],
+    issues: 7,
+    passedChecks: 42
   };
 };
 
@@ -171,7 +206,7 @@ const analyzeGasUsage = async (programId: string): Promise<GasUsageResult[]> => 
   // This would analyze gas usage of the contract
   console.log(`Analyzing gas usage for program: ${programId}`);
   
-  return [
+  const results = [
     {
       functionName: 'initialize',
       averageGasUsed: 125000,
@@ -187,9 +222,27 @@ const analyzeGasUsage = async (programId: string): Promise<GasUsageResult[]> => 
       recommendedOptimizations: ['Optimize loops', 'Cache calculations']
     }
   ];
+  
+  // Add the aggregate properties
+  const gasEstimates = {
+    totalAverage: 170000,
+    highestFunction: 'executeTrade',
+    lowestFunction: 'initialize'
+  };
+  
+  const optimizationSuggestions = [
+    'Reduce storage operations in initialize',
+    'Optimize loops in executeTrade',
+    'Cache calculations in executeTrade'
+  ];
+  
+  return Object.assign(results, { 
+    gasEstimates, 
+    optimizationSuggestions 
+  }) as GasUsageResult[];
 };
 
-const testOnTestnet = async (programId: string, testCase: string): Promise<{
+const testOnTestnet = async (programId: string, testCase: string = 'all'): Promise<{
   success: boolean;
   results: { name: string; passed: boolean; message?: string }[];
 }> => {
@@ -210,12 +263,14 @@ const testOnTestnet = async (programId: string, testCase: string): Promise<{
 const mintTokensWithBondingCurve = async (
   tokenSymbol: string,
   amount: number
-): Promise<{ success: boolean; txHash?: string; error?: string }> => {
+): Promise<MintTokenResult> => {
   console.log(`Minting ${amount} tokens for ${tokenSymbol} using bonding curve`);
   
   return {
     success: true,
-    txHash: 'sim-tx-hash-' + Math.random().toString(36).substring(2, 10)
+    txHash: 'sim-tx-hash-' + Math.random().toString(36).substring(2, 10),
+    tokens: amount,
+    cost: amount * 0.01
   };
 };
 
@@ -223,12 +278,15 @@ const executeTokenTrade = async (
   tokenSymbol: string,
   side: 'buy' | 'sell',
   amount: number
-): Promise<{ success: boolean; txHash?: string; error?: string }> => {
+): Promise<TradeTokenResult> => {
   console.log(`Executing ${side} trade for ${amount} ${tokenSymbol} tokens`);
   
   return {
     success: true,
-    txHash: 'sim-tx-hash-' + Math.random().toString(36).substring(2, 10)
+    txHash: 'sim-tx-hash-' + Math.random().toString(36).substring(2, 10),
+    tokenAmount: amount,
+    solAmount: amount * 0.01,
+    newPrice: 0.01 + (amount * 0.0001)
   };
 };
 

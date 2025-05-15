@@ -1,313 +1,306 @@
+
 import React, { useState, useEffect } from 'react';
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { TrendingUp, Zap, Coins, Info, RefreshCcw, CheckCircle, AlertTriangle, ArrowRightLeft } from "lucide-react";
-import { smartContractService, ContractConfig } from "@/services/smartContractService";
-import { tradingService, TokenTradingStatus } from "@/services/tradingService";
-import { useWallet } from '@/hooks/useWallet';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { smartContractService, ContractConfig } from '@/services/smartContractService';
+import { ArrowRight, ChevronRight, Settings, TrendingUp } from 'lucide-react';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
-const BondingCurveTester = () => {
-  const [config, setConfig] = useState<ContractConfig | null>(null);
-  const [tokens, setTokens] = useState<TokenTradingStatus[]>([]);
-  const [selectedTokenSymbol, setSelectedTokenSymbol] = useState<string>('');
+const BondingCurveTester: React.FC = () => {
+  const [tokenSymbol, setTokenSymbol] = useState<string>('WYBE');
   const [mintAmount, setMintAmount] = useState<number>(100);
-  const [tradeAmount, setTradeAmount] = useState<number>(10);
-  const [isBuy, setIsBuy] = useState<boolean>(true);
-  const [mintResult, setMintResult] = useState<string>('');
-  const [tradeResult, setTradeResult] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const { address: walletAddress } = useWallet();
-
-  useEffect(() => {
-    setConfig(smartContractService.getContractConfig());
-    const fetchedTokens = tradingService.getAllTokenStatuses();
-    setTokens(fetchedTokens);
-    if (fetchedTokens.length > 0) {
-      const firstActiveToken = fetchedTokens.find(t => t.isBondingCurveActive);
-      if (firstActiveToken) {
-        setSelectedTokenSymbol(firstActiveToken.symbol);
-        setCurrentPrice(firstActiveToken.price || 0);
-      } else if (fetchedTokens.length > 0) {
-        setSelectedTokenSymbol(fetchedTokens[0].symbol);
-        setCurrentPrice(fetchedTokens[0].price || 0);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (selectedTokenSymbol) {
-      const selectedToken = tokens.find(t => t.symbol === selectedTokenSymbol);
-      setCurrentPrice(selectedToken?.price || 0);
-    }
-  }, [selectedTokenSymbol, tokens]);
-
-  const handleMintTokens = async () => {
-    if (!selectedTokenSymbol || mintAmount <= 0) {
-      toast.error("Please select a token and enter a valid amount.");
-      return;
-    }
-    if (!walletAddress) {
-      toast.error("Please connect your wallet first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setMintResult('');
-    
+  const [tradeAmount, setTradeAmount] = useState<number>(50);
+  const [tradeDirection, setTradeDirection] = useState<'buy' | 'sell'>('buy');
+  const [isMinting, setIsMinting] = useState<boolean>(false);
+  const [isTrading, setIsTrading] = useState<boolean>(false);
+  const [contractConfig, setContractConfig] = useState<ContractConfig>(
+    smartContractService.getContractConfig()
+  );
+  
+  const [lastMintResult, setLastMintResult] = useState<{
+    tokens: number;
+    cost: number;
+    txHash: string;
+  } | null>(null);
+  
+  const [lastTradeResult, setLastTradeResult] = useState<{
+    tokenAmount: number;
+    solAmount: number;
+    price: number;
+    txHash: string;
+  } | null>(null);
+  
+  const testMintTokens = async () => {
+    setIsMinting(true);
     try {
-      // Ensure mintTokensWithBondingCurve is called with correct arguments
-      // Original call: smartContractService.mintTokensWithBondingCurve(mintAmount, walletAddress || '', selectedTokenSymbol)
-      // Corrected call: Pass only amount and recipient address
-      const mintRes = await smartContractService.mintTokensWithBondingCurve(mintAmount, walletAddress);
+      const result = await smartContractService.mintTokensWithBondingCurve(
+        tokenSymbol,
+        mintAmount.toString()
+      );
       
-      if (mintRes.success) {
-        setMintResult(`Successfully minted ${mintRes.tokens} tokens. Cost: ${mintRes.cost.toFixed(4)} SOL. Tx: ${mintRes.txHash}`);
-        toast.success("Tokens minted successfully!");
-        // Update token list or specific token details if necessary
-        const updatedTokens = tokens.map(t => 
-          t.symbol === selectedTokenSymbol 
-            ? { ...t, totalSupply: (t.totalSupply || 0) + mintRes.tokens } 
-            : t
-        );
-        setTokens(updatedTokens);
+      if (result.success && result.tokens && result.cost) {
+        setLastMintResult({
+          tokens: result.tokens,
+          cost: result.cost,
+          txHash: result.txHash || 'unknown'
+        });
+        toast.success(`Successfully minted ${result.tokens} ${tokenSymbol} tokens`);
       } else {
-        setMintResult(mintRes.error || 'Error minting tokens');
-        toast.error("Failed to mint tokens", { description: mintRes.error });
+        toast.error(`Failed to mint tokens: ${result.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
-      setMintResult(`Error: ${error.message}`);
-      toast.error("An unexpected error occurred during minting.");
+    } catch (error) {
+      console.error("Error minting tokens:", error);
+      toast.error("Error minting tokens. Please check console for details.");
     } finally {
-      setIsLoading(false);
+      setIsMinting(false);
     }
   };
-
-  const handleExecuteTrade = async () => {
-    if (!selectedTokenSymbol || tradeAmount <= 0) {
-      toast.error("Please select a token and enter a valid amount.");
-      return;
-    }
-    if (!walletAddress) {
-      toast.error("Please connect your wallet first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setTradeResult('');
-
+  
+  const testTradeTokens = async () => {
+    setIsTrading(true);
     try {
-      // Ensure executeTokenTrade is called with correct arguments
-      // Original call: smartContractService.executeTokenTrade(tradeAmount, isBuy, walletAddress || '', selectedTokenSymbol, currentPrice)
-      // Corrected call: Pass only tokenAmount, isBuy, and wallet address
-      const tradeRes = await smartContractService.executeTokenTrade(tradeAmount, isBuy, walletAddress);
-
-      if (tradeRes.success) {
-        setTradeResult(`Trade successful! Amount: ${tradeRes.tokenAmount}, SOL: ${tradeRes.solAmount.toFixed(4)}, New Price: ${tradeRes.newPrice.toFixed(6)}. Tx: ${tradeRes.txHash}`);
-        toast.success("Trade executed successfully!");
-        // Update token list or specific token details
-        const updatedTokens = tokens.map(t =>
-          t.symbol === selectedTokenSymbol
-            ? { ...t, price: tradeRes.newPrice, marketCap: (t.totalSupply || 0) * tradeRes.newPrice }
-            : t
-        );
-        setTokens(updatedTokens);
-        setCurrentPrice(tradeRes.newPrice);
+      const result = await smartContractService.executeTokenTrade(
+        tokenSymbol,
+        tradeDirection,
+        tradeAmount.toString()
+      );
+      
+      if (result.success && result.tokenAmount && result.solAmount && result.newPrice) {
+        setLastTradeResult({
+          tokenAmount: result.tokenAmount,
+          solAmount: result.solAmount,
+          price: result.newPrice,
+          txHash: result.txHash || 'unknown'
+        });
+        
+        if (tradeDirection === 'buy') {
+          toast.success(`Successfully bought ${result.tokenAmount} ${tokenSymbol} tokens for ${result.solAmount} SOL`);
+        } else {
+          toast.success(`Successfully sold ${result.tokenAmount} ${tokenSymbol} tokens for ${result.solAmount} SOL`);
+        }
+        
+        // Update the price display
+        setContractConfig(prev => ({
+          ...prev,
+          currentPrice: result.newPrice
+        }));
       } else {
-        setTradeResult(tradeRes.error || 'Error executing trade');
-        toast.error("Failed to execute trade", { description: tradeRes.error });
+        toast.error(`Failed to execute trade: ${result.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
-      setTradeResult(`Error: ${error.message}`);
-      toast.error("An unexpected error occurred during trade.");
+    } catch (error) {
+      console.error("Error trading tokens:", error);
+      toast.error("Error trading tokens. Please check console for details.");
     } finally {
-      setIsLoading(false);
+      setIsTrading(false);
+    }
+  };
+  
+  const toggleBondingCurve = async (enabled: boolean) => {
+    try {
+      const updatedConfig = await smartContractService.updateContractConfig({
+        bondingCurveEnabled: enabled
+      });
+      
+      setContractConfig(updatedConfig);
+      toast.success(`Bonding curve ${enabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error("Error updating bonding curve config:", error);
+      toast.error("Failed to update bonding curve settings");
     }
   };
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
-    >
+    <div className="space-y-6">
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Zap className="mr-2 text-orange-500" />
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <h3 className="text-lg font-semibold flex items-center">
+            <Settings className="mr-2 text-orange-500" size={20} />
             Bonding Curve Configuration
-          </CardTitle>
+          </h3>
         </CardHeader>
         <CardContent>
-          {config ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <p><strong>Bonding Curve Enabled:</strong> {config.bondingCurveEnabled ? 'Yes' : 'No'}</p>
-              <p><strong>Limit:</strong> ${config.bondingCurveLimit.toLocaleString()}</p>
-              <p><strong>Creator Fee:</strong> {config.creatorFeePercentage}%</p>
-              <p><strong>Platform Fee:</strong> {config.platformFeePercentage}%</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="bonding-curve-switch"
+                  checked={contractConfig.bondingCurveEnabled}
+                  onCheckedChange={toggleBondingCurve}
+                />
+                <Label htmlFor="bonding-curve-switch">
+                  {contractConfig.bondingCurveEnabled ? 'Bonding Curve Enabled' : 'Bonding Curve Disabled'}
+                </Label>
+              </div>
+              
+              <div className="text-sm">
+                <span className="text-gray-400">Curve Limit:</span>
+                <span className="ml-2 font-mono">{contractConfig.bondingCurveLimit?.toLocaleString()}</span>
+              </div>
             </div>
-          ) : (
-            <p>Loading configuration...</p>
-          )}
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm text-gray-400">Creator Fee</Label>
+                <div className="font-mono text-lg">{contractConfig.creatorFeePercentage}%</div>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-400">Platform Fee</Label>
+                <div className="font-mono text-lg">{contractConfig.platformFeePercentage}%</div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              <Coins className="mr-2 text-green-500" />
-              Mint Tokens
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Select Token</label>
-              <Select value={selectedTokenSymbol} onValueChange={setSelectedTokenSymbol}>
-                <SelectTrigger className="bg-black/30">
-                  <SelectValue placeholder="Select a token" />
-                </SelectTrigger>
-                <SelectContent className="bg-wybe-background-light">
-                  {tokens.filter(t => t.isBondingCurveActive).map(token => (
-                    <SelectItem key={token.symbol} value={token.symbol}>
-                      {token.symbol} (Price: ${token.price?.toFixed(6) || 'N/A'})
-                    </SelectItem>
-                  ))}
-                  {tokens.filter(t => t.isBondingCurveActive).length === 0 && (
-                    <div className="p-4 text-center text-gray-400">No active bonding curve tokens.</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label htmlFor="mintAmount" className="block text-sm font-medium mb-1">Amount to Mint</label>
-              <Input
-                id="mintAmount"
-                type="number"
-                value={mintAmount}
-                onChange={(e) => setMintAmount(parseFloat(e.target.value))}
-                placeholder="e.g., 100"
-                className="bg-black/30"
-                min="0"
-              />
-            </div>
-            <Button 
-              onClick={handleMintTokens} 
-              disabled={isLoading || !selectedTokenSymbol || !config?.bondingCurveEnabled}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              {isLoading ? <RefreshCcw className="animate-spin mr-2" /> : <Coins className="mr-2" />}
-              Mint Tokens
-            </Button>
-            {!config?.bondingCurveEnabled && (
-              <Alert variant="warning" className="mt-2">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Bonding curve is currently disabled in the configuration.
-                </AlertDescription>
-              </Alert>
-            )}
-            {mintResult && (
-              <Alert variant={mintResult.startsWith("Error") || mintResult.startsWith("Failed") ? "destructive" : "default"} className="mt-4 break-all">
-                {mintResult.startsWith("Error") || mintResult.startsWith("Failed") ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                <AlertDescription>{mintResult}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              <ArrowRightLeft className="mr-2 text-blue-500" />
-              Execute Trade
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Select Token</label>
-               <Select value={selectedTokenSymbol} onValueChange={setSelectedTokenSymbol}>
-                <SelectTrigger className="bg-black/30">
-                  <SelectValue placeholder="Select a token" />
-                </SelectTrigger>
-                <SelectContent className="bg-wybe-background-light">
-                  {tokens.map(token => (
-                    <SelectItem key={token.symbol} value={token.symbol}>
-                      {token.symbol} (Price: ${token.price?.toFixed(6) || 'N/A'})
-                    </SelectItem>
-                  ))}
-                   {tokens.length === 0 && (
-                    <div className="p-4 text-center text-gray-400">No tokens available.</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            {currentPrice !== null && (
-              <p className="text-sm text-gray-400">Current Price: ${currentPrice.toFixed(6)}</p>
-            )}
-            <div>
-              <label htmlFor="tradeAmount" className="block text-sm font-medium mb-1">Token Amount</label>
-              <Input
-                id="tradeAmount"
-                type="number"
-                value={tradeAmount}
-                onChange={(e) => setTradeAmount(parseFloat(e.target.value))}
-                placeholder="e.g., 10"
-                className="bg-black/30"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Trade Type</label>
-              <Select value={isBuy ? "buy" : "sell"} onValueChange={(value) => setIsBuy(value === "buy")}>
-                <SelectTrigger className="bg-black/30">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-wybe-background-light">
-                  <SelectItem value="buy">Buy Tokens</SelectItem>
-                  <SelectItem value="sell">Sell Tokens</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button 
-              onClick={handleExecuteTrade} 
-              disabled={isLoading || !selectedTokenSymbol}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              {isLoading ? <RefreshCcw className="animate-spin mr-2" /> : <ArrowRightLeft className="mr-2" />}
-              Execute Trade
-            </Button>
-             {tradeResult && (
-              <Alert variant={tradeResult.startsWith("Error") || tradeResult.startsWith("Failed") ? "destructive" : "default"} className="mt-4 break-all">
-                {tradeResult.startsWith("Error") || tradeResult.startsWith("Failed") ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                <AlertDescription>{tradeResult}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Info className="mr-2 text-yellow-500" />
-            Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-gray-300">
-          <p>This tool allows you to test the bonding curve mechanics by minting new tokens (simulating initial liquidity or creator mints) and executing buy/sell trades against the curve.</p>
-          <p>Minting tokens increases the total supply, which should affect the price based on the bonding curve formula.</p>
-          <p>Trading tokens simulates market activity. Buys should increase the price, and sells should decrease it, according to the curve.</p>
-          <p>Fees (creator & platform) are applied on trades as per the current contract configuration.</p>
-          <p>Ensure your wallet is connected to interact with these functions.</p>
-        </CardContent>
-      </Card>
-    </motion.div>
+      
+      {contractConfig.bondingCurveEnabled && (
+        <>
+          <Card className="glass-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h3 className="text-lg font-semibold flex items-center">
+                <TrendingUp className="mr-2 text-orange-500" size={20} />
+                Test Token Minting
+              </h3>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="token-symbol">Token Symbol</Label>
+                    <Input
+                      id="token-symbol"
+                      value={tokenSymbol}
+                      onChange={(e) => setTokenSymbol(e.target.value)}
+                      placeholder="WYBE"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mint-amount">Amount to Mint</Label>
+                    <Input
+                      id="mint-amount"
+                      type="number"
+                      value={mintAmount}
+                      onChange={(e) => setMintAmount(parseInt(e.target.value))}
+                      min={1}
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  variant="orange" 
+                  onClick={testMintTokens}
+                  disabled={isMinting || !contractConfig.bondingCurveEnabled}
+                >
+                  {isMinting ? 'Minting...' : 'Test Mint Tokens'}
+                </Button>
+                
+                {lastMintResult && (
+                  <div className="mt-4 p-4 border border-orange-500/20 rounded-md bg-orange-500/5">
+                    <h4 className="text-sm font-semibold mb-2">Last Mint Result:</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tokens Minted:</span>
+                        <span className="font-mono">{lastMintResult.tokens} {tokenSymbol}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Cost:</span>
+                        <span className="font-mono">{lastMintResult.cost} SOL</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">TX Hash:</span>
+                        <span className="font-mono text-xs truncate max-w-48">{lastMintResult.txHash}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h3 className="text-lg font-semibold flex items-center">
+                <ArrowRight className="mr-2 text-orange-500" size={20} />
+                Test Token Trading
+              </h3>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="trade-direction">Trade Direction</Label>
+                    <div className="flex mt-2">
+                      <Button
+                        variant={tradeDirection === 'buy' ? 'default' : 'outline'}
+                        className={tradeDirection === 'buy' ? 'bg-green-600' : ''}
+                        onClick={() => setTradeDirection('buy')}
+                      >
+                        Buy
+                      </Button>
+                      <Button
+                        variant={tradeDirection === 'sell' ? 'default' : 'outline'}
+                        className={`ml-2 ${tradeDirection === 'sell' ? 'bg-red-600' : ''}`}
+                        onClick={() => setTradeDirection('sell')}
+                      >
+                        Sell
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="trade-amount">Amount to {tradeDirection === 'buy' ? 'Buy' : 'Sell'}</Label>
+                    <Input
+                      id="trade-amount"
+                      type="number"
+                      value={tradeAmount}
+                      onChange={(e) => setTradeAmount(parseInt(e.target.value))}
+                      min={1}
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  variant={tradeDirection === 'buy' ? 'green' : 'destructive'} 
+                  onClick={testTradeTokens}
+                  disabled={isTrading || !contractConfig.bondingCurveEnabled}
+                >
+                  {isTrading ? 'Processing...' : `Test ${tradeDirection === 'buy' ? 'Buy' : 'Sell'} Tokens`}
+                </Button>
+                
+                {lastTradeResult && (
+                  <div className="mt-4 p-4 border border-orange-500/20 rounded-md bg-orange-500/5">
+                    <h4 className="text-sm font-semibold mb-2">Last Trade Result:</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Token Amount:</span>
+                        <span className="font-mono">{lastTradeResult.tokenAmount} {tokenSymbol}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">SOL Amount:</span>
+                        <span className="font-mono">{lastTradeResult.solAmount} SOL</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">New Token Price:</span>
+                        <span className="font-mono">{lastTradeResult.price.toFixed(6)} SOL</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">TX Hash:</span>
+                        <span className="font-mono text-xs truncate max-w-48">{lastTradeResult.txHash}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
   );
 };
 

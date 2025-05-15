@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
 import { 
   Shield, 
   FileCheck, 
@@ -9,7 +9,8 @@ import {
   CheckCircle, 
   Download, 
   Terminal,
-  Code
+  Code,
+  ArrowLeft
 } from "lucide-react";
 
 const SecurityReport = () => {
@@ -20,6 +21,12 @@ const SecurityReport = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
+        {/* Back to home navigation */}
+        <Link to="/" className="inline-flex items-center text-indigo-400 hover:text-indigo-300 mb-8">
+          <ArrowLeft size={16} className="mr-2" />
+          Back to Home
+        </Link>
+
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
           <div className="flex items-center">
             <Shield className="text-green-500 mr-4" size={36} />
@@ -325,6 +332,17 @@ const SecurityReport = () => {
             <div>Report Version: 1.0</div>
           </div>
         </div>
+
+        {/* Back to home button */}
+        <div className="flex justify-center mt-10">
+          <Link to="/">
+            <Button variant="outline" className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
+              <ArrowLeft size={16} className="mr-2" />
+              Return to Homepage
+            </Button>
+          </Link>
+        </div>
+
       </motion.div>
     </div>
   );
