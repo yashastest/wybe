@@ -21,6 +21,15 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Node.js module aliases for browser compatibility
+      "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist/lib/client/websocket.browser": path.resolve(__dirname, "src/empty-module.js"),
+      "stream": "stream-browserify",
+      "crypto": "crypto-browserify",
+      "ws": path.resolve(__dirname, "src/empty-module.js"),
+      "net": path.resolve(__dirname, "src/empty-module.js"),
+      "tls": path.resolve(__dirname, "src/empty-module.js"),
+      "fs": path.resolve(__dirname, "src/empty-module.js"),
     },
   },
   build: {
@@ -28,6 +37,17 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
   },
   optimizeDeps: {
-    exclude: ["@project-serum/anchor", "@solana/web3.js"] // Don't optimize these packages
+    exclude: ["@project-serum/anchor", "@solana/web3.js"], // Don't optimize these packages
+    esbuildOptions: {
+      // Node.js global to browser globalThis
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
+  define: {
+    // For Buffer global
+    'process.env': {},
+    'global': 'window',
   }
 }));
