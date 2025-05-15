@@ -645,7 +645,6 @@ const Trade = () => {
                   tokenSymbol={token.symbol}
                   tokenName={token.name}
                   tokenPrice={token.price}
-                  tokenLogo={token.logo}
                 />
               </motion.div>
             </div>

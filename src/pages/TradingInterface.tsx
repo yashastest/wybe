@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowUpDown, Wallet, TrendingUp, ArrowRight } from "lucide-react";
+import { ArrowUpDown, Wallet, TrendingUp, ArrowRight, ArrowDown } from "lucide-react";
 import { toast } from 'sonner';
 import { useWallet } from '@/hooks/useWallet';
 import { tradingService } from '@/services/token/tradingService';
@@ -16,9 +15,10 @@ export interface TradingInterfaceProps {
   tokenSymbol: string;
   tokenName: string;
   tokenPrice: number;
+  tokenLogo?: string;
 }
 
-const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenName, tokenPrice }) => {
+const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenName, tokenPrice, tokenLogo }) => {
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
   const [amountSol, setAmountSol] = useState<number>(0.1);
   const [amountTokens, setAmountTokens] = useState<number>(0);
