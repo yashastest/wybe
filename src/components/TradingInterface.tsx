@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Link } from 'react-router-dom';
@@ -21,6 +20,8 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import DexScreenerListingProgress from './DexScreenerListingProgress';
+import TokenBondingCurve from './TokenBondingCurve';
 
 interface TradingInterfaceProps {
   tokenSymbol?: string;
@@ -170,7 +171,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   return (
     <div>
       {/* Token Search Card */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-black/30 border-gray-800">
         <CardContent className="pt-4">
           <div className="flex items-center space-x-2">
             <Input 
@@ -194,9 +195,9 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section - Now Prominently Displayed */}
         <div className="lg:col-span-2">
-          <Card className="mb-6">
+          <Card className="mb-6 bg-black/30 border-gray-800">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg">Price Chart</CardTitle>
+              <CardTitle className="text-lg">{tokenSymbol} Price Chart</CardTitle>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="icon">
@@ -327,52 +328,43 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
             </CardContent>
           </Card>
         
-          {/* Trade Activity - Prominently Displayed */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TraderActivity tokenSymbol={tokenSymbol} />
-              <div className="mt-4 text-center">
-                <Link to="/trading-history">
-                  <Button variant="outline" size="sm">
-                    View Full Trading History
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Activity and Analytics Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Trade Activity */}
+            <TraderActivity tokenSymbol={tokenSymbol} updateInterval={3000} />
+            
+            {/* Bonding Curve */}
+            <TokenBondingCurve tokenSymbol={tokenSymbol} currentPrice={tokenPrice} />
+          </div>
+
+          {/* DEX Screener Listing Progress */}
+          <DexScreenerListingProgress tokenSymbol={tokenSymbol} progress={65} />
         </div>
 
         {/* Trading Interface */}
         <div>
-          <Card>
+          <Card className="bg-black/30 border-gray-800">
             <CardHeader>
-              <CardTitle>Token Trading</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                {tokenImage ? (
+                  <img src={tokenImage} alt={tokenName} className="w-6 h-6 rounded-full" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs">
+                    {tokenSymbol.charAt(0)}
+                  </div>
+                )}
+                <span>Trade {tokenSymbol}</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Token</label>
-                  <div className="flex items-center gap-3">
-                    {tokenImage ? (
-                      <img src={tokenImage} alt={tokenName} className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                        {tokenSymbol.charAt(0)}
-                      </div>
-                    )}
-                    <Input type="text" value={tokenSymbol} readOnly />
-                  </div>
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Trade Type</label>
                   <div className="flex space-x-4">
                     <Button
                       variant={tradeType === 'buy' ? 'default' : 'outline'}
                       onClick={() => handleTradeTypeChange('buy')}
-                      className={tradeType === 'buy' ? "bg-green-600 hover:bg-green-700" : ""}
+                      className={`flex-1 ${tradeType === 'buy' ? "bg-green-600 hover:bg-green-700" : ""}`}
                     >
                       Buy <ArrowUp className="ml-2 h-4 w-4" />
                     </Button>
@@ -380,7 +372,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                       variant={tradeType === 'sell' ? 'default' : 'outline'}
                       onClick={() => handleTradeTypeChange('sell')}
                       disabled={!connected}
-                      className={tradeType === 'sell' ? "bg-red-600 hover:bg-red-700" : ""}
+                      className={`flex-1 ${tradeType === 'sell' ? "bg-red-600 hover:bg-red-700" : ""}`}
                     >
                       Sell <ArrowDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -399,7 +391,23 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                   <label className="block text-sm font-medium mb-2">Estimated Price</label>
                   <Input type="text" value={tokenPrice > 0 ? `${tokenPrice} SOL` : '0 SOL'} readOnly />
                 </div>
-                <Button onClick={handleExecuteTrade} disabled={loading || !connected} className="w-full">
+                
+                {/* Quick Amount Buttons */}
+                {tradeType === 'buy' && (
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(100)}>100</Button>
+                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(500)}>500</Button>
+                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(1000)}>1000</Button>
+                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(5000)}>5000</Button>
+                  </div>
+                )}
+                
+                <Button 
+                  onClick={handleExecuteTrade} 
+                  disabled={loading || !connected} 
+                  className="w-full"
+                  variant={tradeType === 'buy' ? "default" : "destructive"}
+                >
                   {loading ? "Trading..." : connected ? `Execute ${tradeType} Trade` : "Connect Wallet to Trade"}
                 </Button>
                 
@@ -420,7 +428,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
             </CardContent>
           </Card>
 
-          <Card className="mt-6">
+          <Card className="mt-6 bg-black/30 border-gray-800">
             <CardHeader>
               <CardTitle>Recent Trades</CardTitle>
             </CardHeader>

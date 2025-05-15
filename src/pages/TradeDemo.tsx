@@ -15,64 +15,28 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import TradingViewChart from '@/components/TradingViewChart';
-
-// Mock tokens data with more complete information
-const mockTokens = [
-  { 
-    id: "wybe-1", 
-    symbol: "WYBE", 
-    name: "Wybe Token", 
-    price: 0.0015, 
-    priceChange24h: 12.5,
-    description: "The native token of the Wybe platform",
-    contractAddress: "wybeHg9sbUYEFSj6SXZ5yzERF8WjT6zyXJDj1YCnx",
-    marketCap: 1500000,
-    volume24h: 125000,
-    totalSupply: 1000000000,
-    isAssisted: false,
-    creatorAddress: "8zjX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1BhR"
-  },
-  { 
-    id: "pepe-2", 
-    symbol: "PEPE", 
-    name: "Pepe Token", 
-    price: 0.000032, 
-    priceChange24h: 5.7,
-    description: "A popular meme token in the crypto space",
-    contractAddress: "pepeHg9sbHJYEFSj6SXZ5yzERF8WjT6zyXJDj1YC5x",
-    marketCap: 2500000,
-    volume24h: 350000,
-    totalSupply: 100000000000,
-    isAssisted: false,
-    creatorAddress: "9ajX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1CyZ"
-  },
-  { 
-    id: "doge-3", 
-    symbol: "DOGE", 
-    name: "Dogecoin", 
-    price: 0.23, 
-    priceChange24h: -3.2,
-    description: "The original meme token that started it all",
-    contractAddress: null, // Assisted launch, no contract yet
-    marketCap: 30000000,
-    volume24h: 1250000,
-    totalSupply: 132500000000,
-    isAssisted: true,
-    creatorAddress: "7wpX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1AiJ"
-  }
-];
+import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
 
 const TradeDemo = () => {
-  const [selectedToken, setSelectedToken] = useState(mockTokens[0]);
+  const [tokens, setTokens] = useState<ListedToken[]>([]);
+  const [selectedToken, setSelectedToken] = useState<ListedToken | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [interfaceType, setInterfaceType] = useState<'standard' | 'enhanced'>('standard');
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const fetchTokens = async () => {
+      try {
+        const listedTokens = await tokenTradingService.getListedTokens();
+        setTokens(listedTokens);
+        setSelectedToken(listedTokens[0]); // Set the first token as default
+      } catch (error) {
+        console.error("Failed to fetch tokens:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTokens();
   }, []);
 
   return (
@@ -87,20 +51,21 @@ const TradeDemo = () => {
         >
           <h1 className="text-3xl font-bold mb-6">Trading Demo</h1>
           
-          <Tabs defaultValue="standard" onValueChange={(v) => setInterfaceType(v as 'standard' | 'enhanced')} className="mb-6">
+          <Tabs defaultValue={interfaceType} onValueChange={(v) => setInterfaceType(v as 'standard' | 'enhanced')} className="mb-6">
             <TabsList>
               <TabsTrigger value="standard">Standard Trading Interface</TabsTrigger>
               <TabsTrigger value="enhanced">Enhanced Trading Interface</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="standard" className="mt-4">
-              <Card>
+              <Card className="bg-black/30 border-gray-800">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>Standard Trading Interface</CardTitle>
                       <CardDescription>Basic trading interface with chart and trade history</CardDescription>
                     </div>
-                    <Badge variant="secondary">For Beginners</Badge>
+                    <Badge variant="secondary" className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20">For Beginners</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -108,26 +73,26 @@ const TradeDemo = () => {
                     <div className="flex items-center justify-center h-64">
                       <div className="animate-pulse text-xl">Loading trading interface...</div>
                     </div>
-                  ) : (
+                  ) : selectedToken && (
                     <div>
-                      <Card>
+                      <Card className="bg-black/30 border-gray-800">
                         <CardHeader>
                           <CardTitle>Select Token to Trade</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Tabs defaultValue={selectedToken.id} onValueChange={(value) => {
-                            const token = mockTokens.find(t => t.id === value);
+                            const token = tokens.find(t => t.id === value);
                             if (token) setSelectedToken(token);
                           }}>
                             <TabsList className="mb-4">
-                              {mockTokens.map(token => (
+                              {tokens.map(token => (
                                 <TabsTrigger key={token.id} value={token.id}>
                                   {token.symbol}
                                 </TabsTrigger>
                               ))}
                             </TabsList>
                             
-                            {mockTokens.map(token => (
+                            {tokens.map(token => (
                               <TabsContent key={token.id} value={token.id}>
                                 <div className="flex items-center gap-4 mb-4">
                                   <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -137,8 +102,8 @@ const TradeDemo = () => {
                                     <h2 className="text-xl font-bold">{token.name}</h2>
                                     <div className="flex items-center">
                                       <span className="text-lg font-medium">${token.price.toFixed(6)}</span>
-                                      <span className={`ml-2 ${token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                        {token.priceChange24h > 0 ? '+' : ''}{token.priceChange24h}%
+                                      <span className={`ml-2 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                        {token.priceChange24h && token.priceChange24h > 0 ? '+' : ''}{token.priceChange24h}%
                                       </span>
                                     </div>
                                   </div>
@@ -186,7 +151,7 @@ const TradeDemo = () => {
             </TabsContent>
             
             <TabsContent value="enhanced" className="mt-4">
-              <Card>
+              <Card className="bg-black/30 border-gray-800">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -201,26 +166,26 @@ const TradeDemo = () => {
                     <div className="flex items-center justify-center h-64">
                       <div className="animate-pulse text-xl">Loading enhanced trading interface...</div>
                     </div>
-                  ) : (
+                  ) : selectedToken && (
                     <div>
-                      <Card>
+                      <Card className="bg-black/30 border-gray-800">
                         <CardHeader>
                           <CardTitle>Select Token to Trade</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Tabs defaultValue={selectedToken.id} onValueChange={(value) => {
-                            const token = mockTokens.find(t => t.id === value);
+                            const token = tokens.find(t => t.id === value);
                             if (token) setSelectedToken(token);
                           }}>
                             <TabsList className="mb-4">
-                              {mockTokens.map(token => (
+                              {tokens.map(token => (
                                 <TabsTrigger key={token.id} value={token.id}>
                                   {token.symbol}
                                 </TabsTrigger>
                               ))}
                             </TabsList>
                             
-                            {mockTokens.map(token => (
+                            {tokens.map(token => (
                               <TabsContent key={token.id} value={token.id}>
                                 <div className="flex items-center gap-4 mb-4">
                                   <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -230,8 +195,8 @@ const TradeDemo = () => {
                                     <h2 className="text-xl font-bold">{token.name}</h2>
                                     <div className="flex items-center">
                                       <span className="text-lg font-medium">${token.price.toFixed(6)}</span>
-                                      <span className={`ml-2 ${token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                        {token.priceChange24h > 0 ? '+' : ''}{token.priceChange24h}%
+                                      <span className={`ml-2 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                        {token.priceChange24h && token.priceChange24h > 0 ? '+' : ''}{token.priceChange24h}%
                                       </span>
                                     </div>
                                   </div>
@@ -265,7 +230,7 @@ const TradeDemo = () => {
                       
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                         <div className="lg:col-span-2">
-                          <Card>
+                          <Card className="bg-black/30 border-gray-800">
                             <CardHeader className="pb-2">
                               <CardTitle>Advanced Chart</CardTitle>
                             </CardHeader>

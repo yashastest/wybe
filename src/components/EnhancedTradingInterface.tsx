@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Button } from "@/components/ui/button";
@@ -21,19 +20,41 @@ import {
   AlertCircle,
   RefreshCw,
   Check,
-  X
+  X,
+  Search,
+  Activity,
+  ChartBar
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { tokenTradingService } from '@/services/tokenTradingService';
-import { TradeResult } from '@/services/token/types';
 import { formatCurrency } from '@/utils/tradeUtils';
+import TokenBondingCurve from './TokenBondingCurve';
+import DexScreenerListingProgress from './DexScreenerListingProgress';
 
 interface EnhancedTradingInterfaceProps {
   tokenSymbol: string;
   tokenName: string;
   tokenPrice?: number;
   tokenLogo?: string;
+}
+
+interface WhaleActivity {
+  symbol: string;
+  action: 'buy' | 'sell';
+  amount: number;
+  time: string;
+  price?: number;
+  wallet?: string;
+}
+
+interface TrendingToken {
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  logo?: string;
+  volume?: number;
 }
 
 const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
@@ -52,25 +73,101 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   const [isEstimating, setIsEstimating] = useState<boolean>(false);
   const [isBuying, setIsBuying] = useState<boolean>(false);
   const [isSelling, setIsSelling] = useState<boolean>(false);
-  const [tradeResult, setTradeResult] = useState<TradeResult | null>(null);
+  const [tradeResult, setTradeResult] = useState<any | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   
-  // Mock trending tokens data
-  const [trendingTokens, setTrendingTokens] = useState([
-    { symbol: 'PEPE', name: 'Pepe Token', price: 0.000023, change24h: 12.5 },
-    { symbol: 'DOGE', name: 'Dogecoin', price: 0.12, change24h: -3.2 },
-    { symbol: 'SHIB', name: 'Shiba Inu', price: 0.000009, change24h: 5.8 },
-    { symbol: 'FLOKI', name: 'Floki Inu', price: 0.00015, change24h: 8.2 },
+  // Mock trending tokens data with more realistic data and logos
+  const [trendingTokens, setTrendingTokens] = useState<TrendingToken[]>([
+    { symbol: 'PEPE', name: 'Pepe Token', price: 0.000023, change24h: 12.5, logo: '/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png', volume: 2450000 },
+    { symbol: 'DOGE', name: 'Dogecoin', price: 0.12, change24h: -3.2, logo: '/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png', volume: 5670000 },
+    { symbol: 'SHIB', name: 'Shiba Inu', price: 0.000009, change24h: 5.8, logo: '/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png', volume: 3420000 },
+    { symbol: 'FLOKI', name: 'Floki Inu', price: 0.00015, change24h: 8.2, logo: null, volume: 890000 },
   ]);
   
   // Mock whale activity data
-  const [whaleActivity, setWhaleActivity] = useState([
-    { symbol: 'WYBE', action: 'buy', amount: 25000, time: '10 mins ago' },
-    { symbol: 'PEPE', action: 'sell', amount: 15000, time: '25 mins ago' },
-    { symbol: 'DOGE', action: 'buy', amount: 100000, time: '1 hour ago' },
+  const [whaleActivity, setWhaleActivity] = useState<WhaleActivity[]>([
+    { symbol: 'WYBE', action: 'buy', amount: 25000, time: '10 mins ago', price: 0.0015, wallet: '8zjX...BhR' },
+    { symbol: 'PEPE', action: 'sell', amount: 15000, time: '25 mins ago', price: 0.000023, wallet: '9ajX...CyZ' },
+    { symbol: 'DOGE', action: 'buy', amount: 100000, time: '1 hour ago', price: 0.12, wallet: '7wpX...AiJ' },
   ]);
   
   const inputRef = React.useRef<HTMLInputElement>(null);
+  
+  // Generate random new whale activities
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Choose a random token
+      const tokens = ['WYBE', 'PEPE', 'DOGE', 'SHIB', 'FLOKI'];
+      const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
+      
+      // Get token price
+      const tokenInfo = trendingTokens.find(t => t.symbol === randomToken);
+      const price = tokenInfo?.price || Math.random() * 0.1;
+      
+      // Generate action
+      const action: 'buy' | 'sell' = Math.random() > 0.5 ? 'buy' : 'sell';
+      
+      // Generate amount (larger for whale transactions)
+      const amount = Math.floor(Math.random() * 90000) + 10000;
+      
+      // Generate time (just now)
+      const time = 'just now';
+      
+      // Generate wallet
+      const wallet = `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`;
+      
+      // Create new activity
+      const newActivity: WhaleActivity = {
+        symbol: randomToken,
+        action,
+        amount,
+        time,
+        price,
+        wallet
+      };
+      
+      // Update state
+      setWhaleActivity(prev => {
+        const updated = [newActivity, ...prev];
+        return updated.slice(0, 5); // Keep only 5 most recent
+      });
+      
+    }, 8000); // Update every 8 seconds
+    
+    return () => clearInterval(interval);
+  }, [trendingTokens]);
+  
+  // Update trending tokens periodically with random price changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrendingTokens(prev => 
+        prev.map(token => {
+          // Random price change (-2% to +2%)
+          const priceChange = token.price * (Math.random() * 0.04 - 0.02);
+          
+          // Update price
+          const newPrice = Math.max(0.000001, token.price + priceChange);
+          
+          // Update 24h change (-1% to +1%)
+          const change24hDelta = (Math.random() * 2) - 1;
+          const newChange24h = Math.max(-15, Math.min(15, token.change24h + change24hDelta));
+          
+          // Random volume change (-5% to +5%)
+          const volumeChange = (token.volume || 0) * (Math.random() * 0.1 - 0.05);
+          const newVolume = Math.max(100000, (token.volume || 500000) + volumeChange);
+          
+          return {
+            ...token,
+            price: newPrice,
+            change24h: newChange24h,
+            volume: newVolume
+          };
+        })
+      );
+    }, 5000); // Update every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const estimateAmount = useCallback(async () => {
     if (!inputAmount || isNaN(Number(inputAmount))) {
@@ -121,7 +218,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
     }
   };
 
-  const formatTradeResult = (result: TradeResult): string => {
+  const formatTradeResult = (result: any): string => {
     if (!result.success) {
       return result.error || result.errorMessage || 'Trade failed';
     }
@@ -152,7 +249,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
       // Mock trade execution with simulated delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      let result: TradeResult;
+      let result: any;
       
       if (tradeType === 'buy') {
         setIsBuying(true);
@@ -204,69 +301,129 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   };
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card bg-black/30 border-gray-800">
       <Tabs defaultValue="trade" className="w-full">
-        <TabsList>
-          <TabsTrigger value="trade">Trade</TabsTrigger>
-          <TabsTrigger value="trending">Trending</TabsTrigger>
-          <TabsTrigger value="whales">Whale Activity</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid grid-cols-4 gap-0">
+          <TabsTrigger value="trade" className="flex items-center">
+            <ArrowRightLeft className="h-3 w-3 mr-2" /> Trade
+          </TabsTrigger>
+          <TabsTrigger value="trending" className="flex items-center">
+            <TrendingUp className="h-3 w-3 mr-2" /> Trending
+          </TabsTrigger>
+          <TabsTrigger value="whales" className="flex items-center">
+            <Activity className="h-3 w-3 mr-2" /> Whales
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center">
+            <ChartBar className="h-3 w-3 mr-2" /> Analytics
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="trade">
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {tradeType === 'buy' ? 'Buy' : 'Sell'} {tokenName} ({tokenSymbol})
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                {tokenLogo ? (
+                  <img src={tokenLogo} alt={tokenName} className="w-6 h-6 rounded-full" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs">
+                    {tokenSymbol.charAt(0)}
+                  </div>
+                )}
+                {tradeType === 'buy' ? 'Buy' : 'Sell'} {tokenSymbol}
               </h2>
-              {tokenLogo && (
-                <img src={tokenLogo} alt={tokenName} className="w-8 h-8 rounded-full" />
-              )}
+              <div className="text-sm text-gray-400 flex items-center">
+                <span className="mr-1">$</span>
+                <span>{tokenPrice.toFixed(6)}</span>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
               <Button 
                 variant={tradeType === 'buy' ? 'default' : 'outline'}
                 onClick={() => setTradeType('buy')}
-                className={tradeType === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}
+                className={`flex-1 ${tradeType === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}`}
               >
                 Buy
               </Button>
               <Button 
                 variant={tradeType === 'sell' ? 'default' : 'outline'}
                 onClick={() => setTradeType('sell')}
-                className={tradeType === 'sell' ? 'bg-red-600 hover:bg-red-700' : ''}
+                className={`flex-1 ${tradeType === 'sell' ? 'bg-red-600 hover:bg-red-700' : ''}`}
               >
                 Sell
               </Button>
             </div>
             
             <div className="grid gap-2">
-              <Input 
-                type="number"
-                placeholder={`Enter ${tradeType === 'buy' ? 'SOL' : tokenSymbol} amount`}
-                value={inputAmount}
-                onChange={(e) => handleInputChange(e.target.value)}
-                ref={inputRef}
-              />
-              <p className="text-sm text-gray-400">
-                Estimated {tradeType === 'buy' ? tokenSymbol : 'SOL'}:{' '}
-                {isEstimating ? <RefreshCw className="inline-block h-4 w-4 animate-spin" /> : estimatedAmount.toLocaleString()}
-              </p>
+              <div className="bg-black/40 p-3 rounded-md">
+                <div className="flex justify-between mb-1">
+                  <label className="text-xs text-gray-400">
+                    {tradeType === 'buy' ? 'SOL Amount' : `${tokenSymbol} Amount`}
+                  </label>
+                  <span className="text-xs text-gray-400">
+                    Balance: {tradeType === 'buy' ? '2.45 SOL' : `12,500 ${tokenSymbol}`}
+                  </span>
+                </div>
+                <Input 
+                  type="number"
+                  placeholder={`Enter ${tradeType === 'buy' ? 'SOL' : tokenSymbol} amount`}
+                  value={inputAmount}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  ref={inputRef}
+                  className="bg-black/20 border-gray-700"
+                />
+              </div>
+              
+              <div className="flex justify-center">
+                <div className="bg-black/30 p-1 rounded-full">
+                  <ArrowRightLeft className="h-4 w-4" />
+                </div>
+              </div>
+              
+              <div className="bg-black/40 p-3 rounded-md">
+                <div className="flex justify-between mb-1">
+                  <label className="text-xs text-gray-400">
+                    {tradeType === 'buy' ? `${tokenSymbol} Amount` : 'SOL Amount'}
+                  </label>
+                </div>
+                <div className="bg-black/20 border border-gray-700 px-3 py-2 rounded-md flex justify-between">
+                  <span>
+                    {isEstimating ? 
+                      <RefreshCw className="inline-block h-4 w-4 animate-spin" /> : 
+                      estimatedAmount.toLocaleString(undefined, {maximumFractionDigits: 6})
+                    }
+                  </span>
+                  <span className="text-gray-400">
+                    {tradeType === 'buy' ? tokenSymbol : 'SOL'}
+                  </span>
+                </div>
+              </div>
             </div>
             
-            {/* Quick Buy Options */}
-            {tradeType === 'buy' && (
-              <div className="grid grid-cols-4 gap-2">
-                <Button size="sm" variant="outline" onClick={() => setInputAmount('0.1')}>0.1 SOL</Button>
-                <Button size="sm" variant="outline" onClick={() => setInputAmount('0.5')}>0.5 SOL</Button>
-                <Button size="sm" variant="outline" onClick={() => setInputAmount('1')}>1 SOL</Button>
-                <Button size="sm" variant="outline" onClick={() => setInputAmount('5')}>5 SOL</Button>
-              </div>
-            )}
+            {/* Quick Buy/Sell Options */}
+            <div className="grid grid-cols-4 gap-2">
+              {tradeType === 'buy' ? (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('0.1')}>0.1 SOL</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('0.5')}>0.5 SOL</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('1')}>1 SOL</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('5')}>5 SOL</Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('100')}>100</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('500')}>500</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('1000')}>1K</Button>
+                  <Button size="sm" variant="outline" onClick={() => setInputAmount('5000')}>5K</Button>
+                </>
+              )}
+            </div>
             
             {/* Gas Settings Summary */}
-            <div className="flex items-center justify-between text-xs bg-gray-800/50 p-2 rounded">
-              <span>Gas: {getGasPriorityValue(gasPriority)}</span>
+            <div className="flex items-center justify-between text-xs bg-black/40 p-2 rounded">
+              <div className="flex items-center space-x-1">
+                <Fuel className="h-3 w-3" />
+                <span>Gas: {getGasPriorityValue(gasPriority)}</span>
+              </div>
               <span>Slippage: {isAutoSlippage ? 'Auto' : `${slippageTolerance}%`}</span>
             </div>
             
@@ -274,6 +431,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
               className="w-full"
               onClick={executeTrade}
               disabled={!connected || isBuying || isSelling}
+              variant={tradeType === 'buy' ? "default" : "destructive"}
             >
               {connected ? (
                 isBuying ? (
@@ -288,8 +446,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                   </>
                 ) : (
                   <>
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    Execute Trade
+                    {tradeType === 'buy' ? 'Buy' : 'Sell'} {tokenSymbol}
                   </>
                 )
               ) : (
@@ -325,15 +482,24 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
         
         <TabsContent value="trending">
           <CardContent className="space-y-4">
-            <h3 className="text-base font-medium">Trending Tokens</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-medium">Trending Tokens</h3>
+              <div className="text-xs text-gray-400">
+                Updates every 5s
+              </div>
+            </div>
             
             <div className="space-y-3">
               {trendingTokens.map((token, index) => (
-                <div key={index} className="flex items-center justify-between bg-black/20 p-3 rounded-lg">
+                <div key={index} className="flex items-center justify-between bg-black/30 hover:bg-black/40 transition-colors p-3 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {token.symbol.charAt(0)}
-                    </div>
+                    {token.logo ? (
+                      <img src={token.logo} alt={token.name} className="h-8 w-8 rounded-full" />
+                    ) : (
+                      <div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {token.symbol.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <p className="font-medium">{token.name}</p>
                       <p className="text-xs text-gray-400">{token.symbol}</p>
@@ -342,22 +508,40 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                   <div className="text-right">
                     <p className="font-medium">${token.price.toFixed(6)}</p>
                     <p className={`text-xs ${token.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {token.change24h >= 0 ? '+' : ''}{token.change24h}%
+                      {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
                     </p>
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="pt-2">
+              <div className="text-sm font-medium mb-2">Market Sentiment</div>
+              <div className="bg-black/30 p-3 rounded-md">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">Bullish</span>
+                  <span className="text-green-500 text-sm">64%</span>
+                </div>
+                <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-green-600 to-green-400" style={{ width: '64%' }}></div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </TabsContent>
         
         <TabsContent value="whales">
           <CardContent className="space-y-4">
-            <h3 className="text-base font-medium">Recent Whale Activity</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-medium">Whale Activity</h3>
+              <div className="text-xs text-gray-400">
+                Live updates
+              </div>
+            </div>
             
             <div className="space-y-3">
               {whaleActivity.map((activity, index) => (
-                <div key={index} className="bg-black/20 p-3 rounded-lg">
+                <div key={index} className="bg-black/30 hover:bg-black/40 transition-colors p-3 rounded-lg">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <div className={`p-1 rounded-full ${activity.action === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
@@ -367,65 +551,82 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                           <TrendingDown className={`h-4 w-4 text-red-500`} />
                         )}
                       </div>
-                      <span className="font-medium">{activity.symbol}</span>
+                      <div>
+                        <span className="font-medium">{activity.symbol}</span>
+                        <span className="text-xs text-gray-400 ml-2">{activity.wallet}</span>
+                      </div>
                     </div>
                     <span className="text-xs text-gray-400">{activity.time}</span>
                   </div>
                   <p className="mt-1 text-sm">
                     Whale {activity.action === 'buy' ? 'bought' : 'sold'} <span className="font-medium">{activity.amount.toLocaleString()}</span> tokens
+                    {activity.price && (
+                      <span className="text-gray-400 ml-1">@ ${activity.price.toFixed(6)}</span>
+                    )}
                   </p>
-                  <div className="mt-2">
-                    <Button variant="secondary" size="sm" className="w-full">
+                  <div className="mt-2 flex gap-2">
+                    <Button variant="secondary" size="sm" className="flex-1">
                       View Token
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      Copy Trade
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
+            
+            <div className="bg-black/30 p-3 rounded-md">
+              <p className="text-sm mb-2 flex justify-between">
+                <span>Whale Alert Settings</span>
+                <Switch checked={true} />
+              </p>
+              <p className="text-xs text-gray-400">
+                Get notified when whale activity is detected on tokens you follow.
+              </p>
+            </div>
           </CardContent>
         </TabsContent>
         
-        <TabsContent value="settings">
+        <TabsContent value="analytics">
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Transaction Settings</h3>
-              <p className="text-sm text-gray-500">Customize your transaction preferences.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TokenBondingCurve tokenSymbol={tokenSymbol} currentPrice={tokenPrice} />
+              <DexScreenerListingProgress tokenSymbol={tokenSymbol} progress={65} />
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium block">Gas Priority</label>
-              <Select value={gasPriority.toString()} onValueChange={(value) => setGasPriority(parseInt(value))}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select gas priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Low <Fuel className="inline-block h-3 w-3 text-green-500 ml-1" /></SelectItem>
-                  <SelectItem value="2">Medium <Fuel className="inline-block h-3 w-3 text-yellow-500 ml-1" /></SelectItem>
-                  <SelectItem value="3">High <Fuel className="inline-block h-3 w-3 text-red-500 ml-1" /></SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-400">Higher gas priority may result in faster transaction confirmation.</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Auto Slippage Tolerance</label>
-                <Switch id="auto-slippage" checked={isAutoSlippage} onCheckedChange={setIsAutoSlippage} />
-              </div>
-              
-              {!isAutoSlippage && (
+            <Card className="bg-black/30 border-gray-800">
+              <CardContent className="p-4">
+                <div className="text-sm font-medium mb-2">Token Analytics</div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Slippage Tolerance (%)</label>
-                  <Input 
-                    type="number" 
-                    placeholder="Enter slippage tolerance" 
-                    value={slippageTolerance.toString()}
-                    onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
-                  />
-                  <p className="text-xs text-gray-400">Slippage tolerance is the percentage of price movement you are willing to accept.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/40 p-2 rounded">
+                      <div className="text-xs text-gray-400">24h Volume</div>
+                      <div className="font-medium">$124,560</div>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded">
+                      <div className="text-xs text-gray-400">Market Cap</div>
+                      <div className="font-medium">$1.5M</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-black/40 p-2 rounded">
+                      <div className="text-xs text-gray-400">Holders</div>
+                      <div className="font-medium">843</div>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded">
+                      <div className="text-xs text-gray-400">Trades (24h)</div>
+                      <div className="font-medium">324</div>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded">
+                      <div className="text-xs text-gray-400">Buys / Sells</div>
+                      <div className="font-medium">65% / 35%</div>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
           </CardContent>
         </TabsContent>
       </Tabs>
