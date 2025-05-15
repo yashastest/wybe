@@ -1,412 +1,450 @@
-// Integration services for connecting to Solana blockchain and external platforms
 
-export interface DeploymentStep {
+import { supabase } from "@/integrations/supabase/client";
+import tradingService from "./tradingService";
+import { toast } from "sonner";
+
+export type DeploymentStep = {
   id: string;
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
-  command?: string;
-  prerequisite?: string[];
-  output?: string;
-  verificationSteps?: {
-    id: string;
-    title: string;
-    status: 'pending' | 'success' | 'error';
-    message?: string;
-  }[];
-}
+  errorMessage?: string;
+};
 
-export interface AdminUserAccess {
-  email: string;
-  role: 'superadmin' | 'admin' | 'manager' | 'viewer';
-  permissions: string[];
-  walletAddress?: string;
-  twoFactorEnabled?: boolean;
-}
-
-export interface DeploymentResult {
-  success: boolean;
-  message: string;
-  transactionId?: string;
-  timestamp?: Date;
-  network?: string;
-  tokenAddress?: string;
-}
-
-interface IntegrationStatus {
-  connected: boolean;
-  nodeVersion?: string;
-  lastSynced?: Date;
-}
-
-interface SolanaNetworkConfig {
-  endpoint: string;
-  network: 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet';
-  explorerUrl: string;
-  isConnected: boolean;
-}
-
-interface ProjectConfig {
+export type DeploymentConfig = {
   name: string;
-  version: string;
-  description?: string;
-  repositoryUrl?: string;
-  licenseType?: string;
-}
-
-type DeploymentEnvironment = {
-  id: string;
-  name: string;
-  description: string;
-  status: 'ready' | 'in-progress' | 'failed' | 'completed';
-  completedTasks: number;
-  totalTasks: number;
+  symbol: string;
+  initialSupply: number;
+  creatorWallet: string;
+  networkType: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  tokenDecimals: number;
+  mintAuthority: string;
+  freezeAuthority?: string;
+  bondingCurveType: 'linear' | 'exponential' | 'logarithmic';
+  platformFee: number;
+  creatorFee: number;
 };
 
 class IntegrationService {
-  private solanaStatus: IntegrationStatus = {
-    connected: true,
-    nodeVersion: '1.16.0',
-    lastSynced: new Date()
-  };
-  
-  private networkConfig: SolanaNetworkConfig = {
-    endpoint: 'https://api.devnet.solana.com',
-    network: 'devnet',
-    explorerUrl: 'https://explorer.solana.com/?cluster=devnet',
-    isConnected: true
-  };
-  
-  private projectConfig: ProjectConfig = {
-    name: 'Wybe Token Platform',
-    version: '0.1.0',
-    description: 'Meme coin launchpad platform on Solana',
-    repositoryUrl: 'https://github.com/wybe-finance/platform',
-    licenseType: 'MIT'
-  };
-
-  private mockDeploymentResult: DeploymentResult = {
-    success: true,
-    message: "Token deployed successfully to devnet",
-    transactionId: "4XE7c8QV5h6J3UeGm5Z7c9U8Bj5UkEGHCUE3LkJsGBrt5FUquo5RJx5a8NkT4dDq",
-    timestamp: new Date(),
-    network: "devnet",
-    tokenAddress: "WYB9XfvH51TgXdXihZ7Z7PTzdSP5iw89i9ybuP3vuBPX"
-  };
-
-  private mockAdminUsers: AdminUserAccess[] = [
+  private deploymentSteps: DeploymentStep[] = [
     {
-      email: 'admin@wybe.finance',
-      role: 'superadmin',
-      permissions: ['all'],
-      walletAddress: 'WybeF1nance11111111111111111111111111111111',
-      twoFactorEnabled: true
+      id: 'initialize',
+      title: 'Initialize Deployment',
+      description: 'Setting up deployment environment',
+      status: 'pending'
     },
     {
-      email: 'manager@wybe.finance',
-      role: 'manager',
-      permissions: ['analytics_view', 'token_creation'],
-      walletAddress: '',
-      twoFactorEnabled: false
+      id: 'compile',
+      title: 'Compile Token Program',
+      description: 'Compiling Anchor program for deployment',
+      status: 'pending'
+    },
+    {
+      id: 'deploy',
+      title: 'Deploy to Blockchain',
+      description: 'Deploying the token program to the selected network',
+      status: 'pending'
+    },
+    {
+      id: 'mint',
+      title: 'Mint Initial Supply',
+      description: 'Creating the initial token supply',
+      status: 'pending'
+    },
+    {
+      id: 'bonding-curve',
+      title: 'Configure Bonding Curve',
+      description: 'Setting up the token bonding curve parameters',
+      status: 'pending'
+    },
+    {
+      id: 'treasury',
+      title: 'Initialize Treasury',
+      description: 'Setting up the treasury for fee collection',
+      status: 'pending'
+    },
+    {
+      id: 'verify',
+      title: 'Verify Deployment',
+      description: 'Verifying successful deployment',
+      status: 'pending'
     }
   ];
 
-  private mockDeploymentSteps: Record<string, DeploymentStep[]> = {
-    testnet: [
-      {
-        id: 'setup',
-        title: 'Environment Setup',
-        description: 'Prepare your development environment with necessary tools',
-        status: 'completed',
-        command: 'npm install -g @solana/web3.js @project-serum/anchor',
-        output: 'Successfully installed all dependencies'
-      },
-      {
-        id: 'build',
-        title: 'Build Smart Contract',
-        description: 'Compile your smart contract',
-        status: 'pending',
-        prerequisite: ['setup'],
-        command: 'anchor build'
-      },
-      {
-        id: 'deploy',
-        title: 'Deploy to Testnet',
-        description: 'Deploy your compiled contract to Solana Testnet',
-        status: 'pending',
-        prerequisite: ['build'],
-        command: 'anchor deploy --provider.cluster testnet'
-      }
-    ],
-    devnet: [
-      {
-        id: 'setup',
-        title: 'Environment Setup',
-        description: 'Prepare your development environment with necessary tools',
-        status: 'pending',
-        command: 'npm install -g @solana/web3.js @project-serum/anchor'
-      },
-      {
-        id: 'build',
-        title: 'Build Smart Contract',
-        description: 'Compile your smart contract',
-        status: 'pending',
-        prerequisite: ['setup'],
-        command: 'anchor build'
-      },
-      {
-        id: 'deploy',
-        title: 'Deploy to Devnet',
-        description: 'Deploy your compiled contract to Solana Devnet',
-        status: 'pending',
-        prerequisite: ['build'],
-        command: 'anchor deploy --provider.cluster devnet'
-      }
-    ],
-    mainnet: [
-      {
-        id: 'setup',
-        title: 'Environment Setup',
-        description: 'Prepare your production environment',
-        status: 'pending',
-        command: 'npm install -g @solana/web3.js @project-serum/anchor'
-      },
-      {
-        id: 'audit',
-        title: 'Security Audit',
-        description: 'Complete security audit of your smart contract',
-        status: 'pending',
-        prerequisite: ['setup']
-      },
-      {
-        id: 'build',
-        title: 'Build Smart Contract',
-        description: 'Compile your smart contract for production',
-        status: 'pending',
-        prerequisite: ['audit'],
-        command: 'anchor build --production'
-      },
-      {
-        id: 'deploy',
-        title: 'Deploy to Mainnet',
-        description: 'Deploy your compiled contract to Solana Mainnet',
-        status: 'pending',
-        prerequisite: ['build'],
-        command: 'anchor deploy --provider.cluster mainnet-beta'
-      }
-    ]
-  };
+  private currentStepIndex: number = 0;
+  private deploymentNetwork: string = 'devnet';
+  private deploymentInProgress: boolean = false;
+  private deploymentComplete: boolean = false;
+  private deploymentSuccess: boolean = false;
+  private deploymentProgress: number = 0;
+  private deploymentConfig: DeploymentConfig | null = null;
+  private deploymentId: string | null = null;
 
-  private deploymentChecklist: {id: string, title: string, description: string, checked: boolean}[] = [
-    {
-      id: '1',
-      title: 'Environment Setup',
-      description: 'Ensure all development tools are installed',
-      checked: true
-    },
-    {
-      id: '2',
-      title: 'Contract Code Review',
-      description: 'Review smart contract code for any issues',
-      checked: false
-    },
-    {
-      id: '3',
-      title: 'Test Coverage',
-      description: 'Ensure all functions have test coverage',
-      checked: false
-    },
-    {
-      id: '4',
-      title: 'Gas Optimization',
-      description: 'Optimize contract for gas efficiency',
-      checked: false
-    },
-    {
-      id: '5',
-      title: 'Security Audit',
-      description: 'Complete security audit',
-      checked: false
-    }
-  ];
-  
-  // Get Solana connection status
-  public getSolanaStatus(): IntegrationStatus {
-    // In a real implementation, this would check connection to Solana
-    return this.solanaStatus;
-  }
-  
-  // Get current network configuration
-  public getNetworkConfig(): SolanaNetworkConfig {
-    return this.networkConfig;
-  }
-  
-  // Update network configuration
-  public updateNetworkConfig(newConfig: Partial<SolanaNetworkConfig>): void {
-    this.networkConfig = { ...this.networkConfig, ...newConfig };
-  }
-  
-  // Switch network
-  public switchNetwork(network: 'mainnet-beta' | 'testnet' | 'devnet' | 'localnet'): SolanaNetworkConfig {
-    let endpoint: string;
-    let explorerUrl: string;
-    
-    switch (network) {
-      case 'mainnet-beta':
-        endpoint = 'https://api.mainnet-beta.solana.com';
-        explorerUrl = 'https://explorer.solana.com';
-        break;
-      case 'testnet':
-        endpoint = 'https://api.testnet.solana.com';
-        explorerUrl = 'https://explorer.solana.com/?cluster=testnet';
-        break;
-      case 'devnet':
-        endpoint = 'https://api.devnet.solana.com';
-        explorerUrl = 'https://explorer.solana.com/?cluster=devnet';
-        break;
-      case 'localnet':
-        endpoint = 'http://localhost:8899';
-        explorerUrl = 'http://localhost:8899';
-        break;
-    }
-    
-    this.networkConfig = {
-      ...this.networkConfig,
-      network,
-      endpoint,
-      explorerUrl
-    };
-    
-    return this.networkConfig;
-  }
-  
-  // Get project configuration
-  public getProjectConfig(): ProjectConfig {
-    return this.projectConfig;
-  }
-  
-  // Update project configuration
-  public updateProjectConfig(newConfig: Partial<ProjectConfig>): void {
-    this.projectConfig = { ...this.projectConfig, ...newConfig };
-  }
-  
-  // Test connection to Solana network
-  public async testConnection(): Promise<{success: boolean, latency: number, error?: string}> {
-    const startTime = Date.now();
-    
-    try {
-      // In a real implementation, this would make an actual RPC call to Solana
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const endTime = Date.now();
-      this.solanaStatus.lastSynced = new Date();
-      
-      return {
-        success: true,
-        latency: endTime - startTime
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        latency: -1,
-        error: error.message || "Connection failed"
-      };
-    }
-  }
+  constructor() {}
 
-  // Get deployment steps for a specific network
-  public getDeploymentSteps(network: string): DeploymentStep[] {
-    return this.mockDeploymentSteps[network] || [];
-  }
-
-  // Get admin users
-  public getAdminUsers(walletAddress: string): AdminUserAccess[] {
-    // In a real implementation, this would check if the requesting wallet has permission
-    return this.mockAdminUsers;
-  }
-
-  // Add admin user
-  public addAdminUser(user: AdminUserAccess, requestingWallet: string): boolean {
-    // Check if user already exists
-    if (this.mockAdminUsers.some(u => u.email === user.email)) {
-      return false;
-    }
-
-    this.mockAdminUsers.push(user);
-    return true;
-  }
-
-  // Update admin user permissions
-  public updateAdminUserPermissions(
-    email: string,
-    role: AdminUserAccess['role'],
-    permissions: string[],
-    requestingWallet: string
-  ): boolean {
-    const userIndex = this.mockAdminUsers.findIndex(u => u.email === email);
-    
-    if (userIndex === -1) {
-      return false;
-    }
-
-    this.mockAdminUsers[userIndex].role = role;
-    this.mockAdminUsers[userIndex].permissions = permissions;
-    
-    return true;
-  }
-
-  // Remove admin user
-  public removeAdminUser(email: string, requestingWallet: string): boolean {
-    const initialLength = this.mockAdminUsers.length;
-    this.mockAdminUsers = this.mockAdminUsers.filter(user => user.email !== email);
-    
-    return this.mockAdminUsers.length < initialLength;
-  }
-
-  // Get deployment checklist
-  public getDeploymentChecklist(): {id: string, title: string, description: string, checked: boolean}[] {
-    return this.deploymentChecklist;
-  }
-
-  // Update checklist item
-  public updateChecklistItem(id: string, checked: boolean): void {
-    const item = this.deploymentChecklist.find(item => item.id === id);
-    if (item) {
-      item.checked = checked;
-    }
-  }
-
-  // Deploy full environment
-  public async deployFullEnvironment(
-    network: string,
-    contractName: string
-  ): Promise<DeploymentEnvironment> {
-    // Simulate deployment process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+  // Get current deployment status
+  public getDeploymentStatus() {
     return {
-      id: `deploy-${Date.now()}`,
-      name: `${contractName} Deployment`,
-      description: `Deployment of ${contractName} to ${network}`,
-      status: 'completed',
-      completedTasks: 5,
-      totalTasks: 5
+      steps: this.deploymentSteps,
+      currentStepIndex: this.currentStepIndex,
+      deploymentProgress: this.deploymentProgress,
+      deploymentNetwork: this.deploymentNetwork,
+      deploymentInProgress: this.deploymentInProgress,
+      deploymentComplete: this.deploymentComplete,
+      deploymentSuccess: this.deploymentSuccess,
+      deploymentConfig: this.deploymentConfig,
+      deploymentId: this.deploymentId
     };
   }
 
-  // Get deployment result (new method)
-  public getDeploymentResult(): DeploymentResult {
-    return this.mockDeploymentResult;
+  // Set deployment network
+  public setDeploymentNetwork(network: 'mainnet' | 'testnet' | 'devnet' | 'localnet') {
+    this.deploymentNetwork = network;
+    tradingService.setNetworkType(network);
+    return this.deploymentNetwork;
   }
 
-  // Set deployment result (new method)
-  public setDeploymentResult(result: DeploymentResult): void {
-    this.mockDeploymentResult = result;
+  // Reset deployment status
+  public resetDeployment() {
+    this.deploymentSteps.forEach(step => {
+      step.status = 'pending';
+      step.errorMessage = undefined;
+    });
+    this.currentStepIndex = 0;
+    this.deploymentProgress = 0;
+    this.deploymentInProgress = false;
+    this.deploymentComplete = false;
+    this.deploymentSuccess = false;
+    return this.getDeploymentStatus();
   }
 
-  // Get deployment environment (alias for getDeploymentResult for backward compatibility)
-  public getDeploymentEnvironment(): DeploymentResult {
-    return this.getDeploymentResult();
+  // Initialize new deployment
+  public async initializeDeployment(config: DeploymentConfig): Promise<string> {
+    if (this.deploymentInProgress) {
+      throw new Error('Another deployment is already in progress');
+    }
+
+    this.resetDeployment();
+    this.deploymentConfig = config;
+    this.deploymentNetwork = config.networkType;
+    this.deploymentInProgress = true;
+
+    // Create a record in the database for this deployment
+    const { data, error } = await supabase
+      .from('tokens')
+      .insert({
+        name: config.name,
+        symbol: config.symbol,
+        creator_wallet: config.creatorWallet,
+        market_cap: 0,
+        bonding_curve: {
+          type: config.bondingCurveType,
+          initialSupply: config.initialSupply,
+          decimals: config.tokenDecimals,
+          platformFee: config.platformFee,
+          creatorFee: config.creatorFee
+        },
+        launched: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      this.handleDeploymentError('initialize', `Failed to create token record: ${error.message}`);
+      throw new Error(`Failed to initialize deployment: ${error.message}`);
+    }
+
+    this.deploymentId = data.id;
+    
+    // Update first step to completed
+    this.updateStepStatus('initialize', 'completed');
+    this.calculateProgress();
+    
+    return data.id;
+  }
+
+  // Start the deployment process
+  public async startDeployment(): Promise<void> {
+    if (!this.deploymentConfig || !this.deploymentId) {
+      throw new Error('Deployment not initialized');
+    }
+
+    try {
+      // Simulate the deployment process with timeouts
+      this.processCompileStep();
+    } catch (error) {
+      this.handleDeploymentError('initialize', `Failed to start deployment: ${error.message}`);
+      throw error;
+    }
+  }
+
+  // Process the compile step
+  private async processCompileStep(): Promise<void> {
+    try {
+      this.updateStepStatus('compile', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate compilation (in a real implementation, this would compile the Anchor program)
+      await this.simulateOperation(2000);
+      
+      this.updateStepStatus('compile', 'completed');
+      this.calculateProgress();
+      
+      // Move to next step
+      this.processDeployStep();
+    } catch (error) {
+      this.handleDeploymentError('compile', `Compilation failed: ${error.message}`);
+    }
+  }
+
+  // Process the deploy step
+  private async processDeployStep(): Promise<void> {
+    try {
+      this.updateStepStatus('deploy', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate deployment to blockchain
+      await this.simulateOperation(3000);
+      
+      // Generate a mock program ID
+      const programId = `Wybe${Math.random().toString(16).substring(2, 10)}`;
+      
+      // Update the token record with the program ID
+      const { error } = await supabase
+        .from('tokens')
+        .update({
+          token_address: programId
+        })
+        .eq('id', this.deploymentId);
+      
+      if (error) {
+        throw new Error(`Failed to update token address: ${error.message}`);
+      }
+      
+      this.updateStepStatus('deploy', 'completed');
+      this.calculateProgress();
+      
+      // Move to next step
+      this.processMintStep();
+    } catch (error) {
+      this.handleDeploymentError('deploy', `Deployment failed: ${error.message}`);
+    }
+  }
+
+  // Process the mint step
+  private async processMintStep(): Promise<void> {
+    try {
+      this.updateStepStatus('mint', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate minting initial supply
+      await this.simulateOperation(2500);
+      
+      this.updateStepStatus('mint', 'completed');
+      this.calculateProgress();
+      
+      // Move to next step
+      this.processBondingCurveStep();
+    } catch (error) {
+      this.handleDeploymentError('mint', `Minting failed: ${error.message}`);
+    }
+  }
+
+  // Process the bonding curve step
+  private async processBondingCurveStep(): Promise<void> {
+    try {
+      this.updateStepStatus('bonding-curve', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate bonding curve setup
+      await this.simulateOperation(1500);
+      
+      this.updateStepStatus('bonding-curve', 'completed');
+      this.calculateProgress();
+      
+      // Move to next step
+      this.processTreasuryStep();
+    } catch (error) {
+      this.handleDeploymentError('bonding-curve', `Bonding curve setup failed: ${error.message}`);
+    }
+  }
+
+  // Process the treasury step
+  private async processTreasuryStep(): Promise<void> {
+    try {
+      this.updateStepStatus('treasury', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate treasury setup
+      await this.simulateOperation(2000);
+      
+      this.updateStepStatus('treasury', 'completed');
+      this.calculateProgress();
+      
+      // Move to next step
+      this.processVerificationStep();
+    } catch (error) {
+      this.handleDeploymentError('treasury', `Treasury setup failed: ${error.message}`);
+    }
+  }
+
+  // Process the verification step
+  private async processVerificationStep(): Promise<void> {
+    try {
+      this.updateStepStatus('verify', 'in-progress');
+      this.calculateProgress();
+      
+      // Simulate verification
+      await this.simulateOperation(1000);
+      
+      // Update token as launched in database
+      const { error } = await supabase
+        .from('tokens')
+        .update({
+          launched: true,
+          launch_date: new Date().toISOString()
+        })
+        .eq('id', this.deploymentId);
+      
+      if (error) {
+        throw new Error(`Failed to update token launch status: ${error.message}`);
+      }
+      
+      this.updateStepStatus('verify', 'completed');
+      this.deploymentComplete = true;
+      this.deploymentSuccess = true;
+      this.deploymentInProgress = false;
+      this.calculateProgress();
+      
+      toast.success("Token deployment completed successfully!");
+    } catch (error) {
+      this.handleDeploymentError('verify', `Verification failed: ${error.message}`);
+    }
+  }
+
+  // Handle deployment errors
+  private handleDeploymentError(stepId: string, errorMessage: string): void {
+    const stepIndex = this.deploymentSteps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1) {
+      this.deploymentSteps[stepIndex].status = 'failed';
+      this.deploymentSteps[stepIndex].errorMessage = errorMessage;
+    }
+    
+    this.deploymentComplete = true;
+    this.deploymentSuccess = false;
+    this.deploymentInProgress = false;
+    this.calculateProgress();
+    
+    toast.error(`Deployment failed: ${errorMessage}`);
+  }
+
+  // Update a step's status
+  private updateStepStatus(stepId: string, status: 'pending' | 'in-progress' | 'completed' | 'failed'): void {
+    const stepIndex = this.deploymentSteps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1) {
+      this.deploymentSteps[stepIndex].status = status;
+      if (status === 'in-progress') {
+        this.currentStepIndex = stepIndex;
+      }
+    }
+  }
+
+  // Calculate overall deployment progress
+  private calculateProgress(): void {
+    const totalSteps = this.deploymentSteps.length;
+    const completedSteps = this.deploymentSteps.filter(step => step.status === 'completed').length;
+    const inProgressStep = this.deploymentSteps.find(step => step.status === 'in-progress');
+    
+    if (inProgressStep) {
+      // If a step is in progress, count it as half completed
+      this.deploymentProgress = Math.round(((completedSteps + 0.5) / totalSteps) * 100);
+    } else {
+      this.deploymentProgress = Math.round((completedSteps / totalSteps) * 100);
+    }
+  }
+
+  // Simulate an asynchronous operation
+  private simulateOperation(duration: number): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(resolve, duration);
+    });
+  }
+
+  // Get token by ID
+  public async getTokenById(id: string) {
+    const { data, error } = await supabase
+      .from('tokens')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      throw new Error(`Failed to get token: ${error.message}`);
+    }
+    
+    return data;
+  }
+
+  // Get tokens by creator wallet
+  public async getTokensByCreator(walletAddress: string) {
+    const { data, error } = await supabase
+      .from('tokens')
+      .select('*')
+      .eq('creator_wallet', walletAddress);
+    
+    if (error) {
+      throw new Error(`Failed to get tokens: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+
+  // Get all launched tokens
+  public async getLaunchedTokens() {
+    const { data, error } = await supabase
+      .from('tokens')
+      .select('*')
+      .eq('launched', true)
+      .order('launch_date', { ascending: false });
+    
+    if (error) {
+      throw new Error(`Failed to get launched tokens: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+
+  // Approve token for launch
+  public async approveToken(id: string) {
+    const { error } = await supabase
+      .from('tokens')
+      .update({ approved: true })
+      .eq('id', id);
+    
+    if (error) {
+      throw new Error(`Failed to approve token: ${error.message}`);
+    }
+    
+    toast.success("Token approved successfully");
+    return true;
+  }
+
+  // Reject token
+  public async rejectToken(id: string, reason: string) {
+    const { error } = await supabase
+      .from('tokens')
+      .update({ 
+        approved: false,
+        rejection_reason: reason
+      })
+      .eq('id', id);
+    
+    if (error) {
+      throw new Error(`Failed to reject token: ${error.message}`);
+    }
+    
+    toast.success("Token rejected successfully");
+    return true;
   }
 }
 

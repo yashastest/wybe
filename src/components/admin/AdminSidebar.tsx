@@ -50,6 +50,7 @@ const AdminSidebar = () => {
     { icon: Wallet, label: 'Treasury Management', path: '/admin/treasury', permission: 'treasury_update', category: 'main' },
     { icon: BarChart2, label: 'Analytics', path: '/admin/analytics', permission: 'analytics_view', category: 'main' },
     { icon: Info, label: 'About Project', path: '/admin/about', category: 'main' },
+    { icon: Database, label: 'Token Management', path: '/admin/tokens', category: 'main' },
     
     // Platform Category
     { icon: Server, label: 'Platform', path: '/admin/platform', permission: 'settings_change', category: 'platform' },
