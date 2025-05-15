@@ -9,6 +9,7 @@ import Launch from './pages/Launch';
 import LaunchPackage from './pages/LaunchPackage';
 import Discover from './pages/Discover';
 import Trade from './pages/Trade';
+import TokenTrade from './pages/TokenTrade';
 import NotFound from './pages/NotFound';
 import { Toaster } from "sonner";
 import SecurityReport from './pages/SecurityReport';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/launch-token" element={<LaunchToken />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/trade" element={<Trade />} />
+          <Route path="/trade/:tokenId" element={<TokenTrade />} />
           <Route path="/security-report" element={<SecurityReport />} />
           <Route path="/token-deployment" element={<TokenDeployment />} />
           <Route path="/token-deployment/:tokenId" element={<TokenDeployment />} />

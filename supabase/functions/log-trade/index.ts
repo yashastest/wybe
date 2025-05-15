@@ -1,14 +1,8 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.33.1';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
-
-interface TradeLogRequest {
+// Define the structure of the request body
+interface TradeData {
   wallet_address: string;
   token_symbol: string;
   side: 'buy' | 'sell';
@@ -16,76 +10,87 @@ interface TradeLogRequest {
   tx_hash?: string;
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
+// Create a single Deno server for all requests
+Deno.serve(async (req) => {
   try {
-    // Only accept POST requests
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), {
-        status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // CORS headers to allow requests from any origin
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    };
+
+    // Handle OPTIONS request for CORS preflight
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders });
     }
 
-    // Parse request body
-    const reqData: TradeLogRequest = await req.json();
-    
+    // Get request body
+    const requestData: TradeData = await req.json();
+
     // Validate request data
-    if (!reqData.wallet_address || !reqData.token_symbol || !reqData.side || reqData.amount === undefined) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!requestData.wallet_address || !requestData.token_symbol || !requestData.side || requestData.amount === undefined) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Missing required fields. Required: wallet_address, token_symbol, side, amount' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Create a Supabase client with the Deno runtime
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Insert trade record
-    const { data, error } = await supabase.from('trades').insert({
-      wallet_address: reqData.wallet_address,
-      token_symbol: reqData.token_symbol,
-      side: reqData.side,
-      amount: reqData.amount,
-      tx_hash: reqData.tx_hash
-    }).select();
+    // Insert the trade record
+    const { data, error } = await supabase
+      .from('trades')
+      .insert([
+        {
+          wallet_address: requestData.wallet_address,
+          token_symbol: requestData.token_symbol,
+          side: requestData.side,
+          amount: requestData.amount,
+          tx_hash: requestData.tx_hash || null,
+        },
+      ]);
 
     if (error) {
-      console.error("Error inserting trade:", error);
-      return new Response(JSON.stringify({ error: "Failed to log trade" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error('Error inserting trade:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Return success response
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Trade logged successfully", 
-      trade: data[0] 
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Trade logged successfully' 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   } catch (error) {
-    // Handle unexpected errors
-    console.error("Unexpected error:", error);
-    return new Response(JSON.stringify({ 
-      error: "An unexpected error occurred", 
-      details: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Handle any unexpected errors
+    console.error('Unexpected error:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }),
+      { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });

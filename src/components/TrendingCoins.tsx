@@ -10,6 +10,7 @@ const TrendingCoins = () => {
   // Mock data
   const trendingCoins = [
     {
+      id: "pepes",
       name: "Pepe Solana",
       symbol: "PEPES",
       price: "0.00023",
@@ -25,6 +26,7 @@ const TrendingCoins = () => {
       }
     },
     {
+      id: "dsol",
       name: "Doge Sol",
       symbol: "DSOL",
       price: "0.00056",
@@ -40,6 +42,7 @@ const TrendingCoins = () => {
       }
     },
     {
+      id: "shibsol",
       name: "Shiba Solana",
       symbol: "SHIBSOL",
       price: "0.00012",
@@ -55,6 +58,7 @@ const TrendingCoins = () => {
       }
     },
     {
+      id: "flokisun",
       name: "Floki Sun",
       symbol: "FLOKISUN",
       price: "0.00034",
@@ -155,7 +159,7 @@ const TrendingCoinCard = ({ coin, delay }) => {
         </div>
       </div>
       
-      <Link to={`/trade/${coin.symbol.toLowerCase()}`}>
+      <Link to={`/trade/${coin.id}`}>
         <Button className="w-full btn-primary text-sm py-1 h-8 flex items-center justify-center gap-1 group">
           <span>Trade {coin.symbol}</span>
           <Rocket size={14} className="group-hover:translate-x-1 transition-transform" />

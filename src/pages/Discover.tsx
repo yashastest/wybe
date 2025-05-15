@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, DollarSign, User, Code, Rocket } from "lucide-react";
@@ -404,14 +405,16 @@ const CoinCard = ({ coin, index }) => {
         </div>
         
         <div className="flex gap-2">
-          <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="flex-1">
+          <Link to={`/trade/${coin.id}`} className="flex-1">
             <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/80 text-white font-poppins font-bold rounded-full">
               Trade 💱
             </Button>
           </Link>
-          <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 active:bg-wybe-background-light/70 font-poppins rounded-full">
-            Details 📊
-          </Button>
+          <Link to={`/trade/${coin.id}?tab=info`}>
+            <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 active:bg-wybe-background-light/70 font-poppins rounded-full">
+              Details 📊
+            </Button>
+          </Link>
         </div>
       </div>
     </motion.div>

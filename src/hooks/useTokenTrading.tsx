@@ -1,190 +1,98 @@
 
 import { useState } from 'react';
-import { useWallet } from './useWallet.tsx';
-import { useWalletBalance } from './useWalletBalance';
-import { tokenTradingService } from '@/services/tokenTradingService';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tokenTradingService, TradeParams } from '@/services/tokenTradingService';
 
-export interface TradeParams {
+interface TokenTrade {
   tokenSymbol: string;
-  action: 'buy' | 'sell';
-  amountSol?: number;
-  amountTokens?: number;
-  gasPriority?: number;
+  side: 'buy' | 'sell';
+  amount: number;
+  price?: number;
+  timestamp: string;
+  status: 'completed' | 'pending' | 'failed';
+  txHash?: string;
 }
 
-export const useTokenTrading = (tokenSymbol: string) => {
-  const { connected, address } = useWallet();
-  const { solBalance, tokenBalances, refreshBalances } = useWalletBalance(tokenSymbol);
+export interface TradeHistoryFilters {
+  tokenSymbol?: string;
+  side?: 'buy' | 'sell';
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const useTokenTrading = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const [trades, setTrades] = useState<TokenTrade[]>([]);
+  const [tradeHistory, setTradeHistory] = useState<TokenTrade[]>([]);
 
-  // Get token balance if available
-  const tokenBalance = tokenBalances[tokenSymbol]?.balance || 0;
-
-  // Execute buy transaction
-  const buyTokens = async (amountSol: number, gasPriority: number = 1) => {
-    if (!connected || !address) {
-      toast.error('Wallet not connected');
-      return null;
-    }
-
-    if (!amountSol || amountSol <= 0) {
-      toast.error('Please enter a valid amount');
-      return null;
-    }
-
-    if (amountSol > solBalance) {
-      toast.error('Insufficient SOL balance');
-      return null;
-    }
-
+  const executeTrade = async (tradeParams: TradeParams) => {
     setIsLoading(true);
-    const toastId = toast.loading(`Buying ${tokenSymbol}...`);
-
+    let result;
+    
     try {
-      // Execute trade
-      const result = await tokenTradingService.executeTrade({
-        walletAddress: address,
-        tokenSymbol,
-        action: 'buy',
-        amountSol,
-        gasPriority
-      });
-
+      // Use the tokenTradingService to execute the trade
+      result = await tokenTradingService.executeTrade(tradeParams);
+      
       if (result.success) {
-        // Log transaction to our service
+        // Log the trade to database via the Edge Function
         await tokenTradingService.logTradeInDatabase({
-          wallet_address: address,
-          token_symbol: tokenSymbol,
-          side: 'buy',
-          amount: result.amountTokens || 0,
-          tx_hash: result.txHash
+          wallet_address: tradeParams.walletAddress,
+          token_symbol: tradeParams.tokenSymbol,
+          side: tradeParams.action,
+          amount: tradeParams.action === 'buy' 
+            ? result.amountTokens || 0 
+            : tradeParams.amountTokens || 0
         });
-
-        toast.success(
-          `Bought ${tokenSymbol}`, 
-          { 
-            id: toastId,
-            description: `Purchased ${result.amountTokens?.toFixed(2)} ${tokenSymbol} for ${amountSol.toFixed(5)} SOL` 
-          }
-        );
         
-        setLastTxHash(result.txHash || null);
+        // Update local state with new trade
+        const newTrade: TokenTrade = {
+          tokenSymbol: tradeParams.tokenSymbol,
+          side: tradeParams.action,
+          amount: tradeParams.action === 'buy' ? (result.amountTokens || 0) : (tradeParams.amountTokens || 0),
+          price: result.price,
+          timestamp: new Date().toISOString(),
+          status: 'completed',
+          txHash: result.txHash
+        };
         
-        // Refresh balances
-        setTimeout(() => refreshBalances(), 1000);
-        
-        return result;
-      } else {
-        toast.error(
-          `Failed to buy ${tokenSymbol}`, 
-          { id: toastId, description: result.errorMessage }
-        );
-        return null;
+        setTrades(prevTrades => [newTrade, ...prevTrades]);
       }
     } catch (error) {
-      console.error('Error buying tokens:', error);
-      toast.error(
-        `Failed to buy ${tokenSymbol}`, 
-        { id: toastId, description: error instanceof Error ? error.message : 'Unknown error occurred' }
-      );
-      return null;
+      console.error("Trade execution error:", error);
+      toast.error("Failed to execute trade");
+      result = {
+        success: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      };
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Execute sell transaction
-  const sellTokens = async (amountTokens: number, gasPriority: number = 1) => {
-    if (!connected || !address) {
-      toast.error('Wallet not connected');
-      return null;
-    }
-
-    if (!amountTokens || amountTokens <= 0) {
-      toast.error('Please enter a valid amount');
-      return null;
-    }
-
-    if (amountTokens > tokenBalance) {
-      toast.error(`Insufficient ${tokenSymbol} balance`);
-      return null;
-    }
-
-    setIsLoading(true);
-    const toastId = toast.loading(`Selling ${tokenSymbol}...`);
-
-    try {
-      // Execute trade
-      const result = await tokenTradingService.executeTrade({
-        walletAddress: address,
-        tokenSymbol,
-        action: 'sell',
-        amountTokens,
-        gasPriority
-      });
-
-      if (result.success) {
-        // Log transaction to our service
-        await tokenTradingService.logTradeInDatabase({
-          wallet_address: address,
-          token_symbol: tokenSymbol,
-          side: 'sell',
-          amount: amountTokens,
-          tx_hash: result.txHash
-        });
-
-        toast.success(
-          `Sold ${tokenSymbol}`, 
-          { 
-            id: toastId,
-            description: `Sold ${amountTokens.toFixed(2)} ${tokenSymbol} for ${result.amountSol?.toFixed(5)} SOL` 
-          }
-        );
-        
-        setLastTxHash(result.txHash || null);
-        
-        // Refresh balances
-        setTimeout(() => refreshBalances(), 1000);
-        
-        return result;
-      } else {
-        toast.error(
-          `Failed to sell ${tokenSymbol}`, 
-          { id: toastId, description: result.errorMessage }
-        );
-        return null;
-      }
-    } catch (error) {
-      console.error('Error selling tokens:', error);
-      toast.error(
-        `Failed to sell ${tokenSymbol}`, 
-        { id: toastId, description: error instanceof Error ? error.message : 'Unknown error occurred' }
-      );
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Sell all tokens
-  const sellAllTokens = async (gasPriority: number = 1) => {
-    if (tokenBalance <= 0) {
-      toast.error(`No ${tokenSymbol} tokens to sell`);
-      return null;
     }
     
-    return sellTokens(tokenBalance, gasPriority);
+    return result;
+  };
+
+  const fetchTradeHistory = async (walletAddress: string, filters?: TradeHistoryFilters) => {
+    setIsLoading(true);
+    try {
+      // This will now be implemented in tokenTradingService
+      const history = await tokenTradingService.getUserTransactions(walletAddress, filters);
+      setTradeHistory(history);
+      return history;
+    } catch (error) {
+      console.error("Error fetching trade history:", error);
+      toast.error("Failed to fetch trading history");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
-    buyTokens,
-    sellTokens,
-    sellAllTokens,
     isLoading,
-    lastTxHash,
-    solBalance,
-    tokenBalance
+    trades,
+    tradeHistory,
+    executeTrade,
+    fetchTradeHistory
   };
 };
