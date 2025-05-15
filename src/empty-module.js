@@ -50,4 +50,3 @@ export const NodeWebSocketClient = Client;
 export const RpcWebSocketCommonClient = Client;
 // Also export createRpc for the websocket.browser import
 export const createRpc = () => new Client();
-
