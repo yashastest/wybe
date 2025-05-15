@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Badge } from '@/components/ui/badge';
-import { tokenTradingService } from '@/services/tokenTradingService';
-import { TokenTransaction } from '@/services/token/types';
+import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingService';
 import { ArrowDown, ArrowUp, History, Wallet, BarChart3, StopCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 

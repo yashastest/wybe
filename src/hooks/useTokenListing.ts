@@ -2,12 +2,14 @@
 import { useState } from 'react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
-import { ListedToken, TokenLaunchParams, TokenLaunchResponse } from '@/services/token/types';
+import { ListedToken, TokenLaunchParams } from '@/services/token/types';
 
 export interface LaunchedToken extends ListedToken {
   banner?: string;
   category: string[];
   devWallet: string;
+  creatorWallet: string;
+  totalSupply: number;
 }
 
 export const useTokenListing = () => {
@@ -83,12 +85,14 @@ export const useTokenListing = () => {
     try {
       const tokens = await tokenTradingService.getListedTokens();
       
-      // Convert ListedToken[] to LaunchedToken[]
+      // Ensure all tokens have the required fields for LaunchedToken type
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
         banner: undefined,
         category: token.category || [],
-        devWallet: token.devWallet || ''
+        devWallet: token.devWallet || token.creatorWallet || '',
+        creatorWallet: token.creatorWallet || '',
+        totalSupply: token.totalSupply || 1000000000
       }));
       
       setLaunchedTokens(launchedTokensData);

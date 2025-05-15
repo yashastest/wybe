@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -7,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { TokenData } from '@/types/supabase';
 
 interface CoinData {
   id: string;
@@ -84,7 +84,7 @@ const MemeCoins: React.FC = () => {
         }
         
         // Map database tokens to CoinData format
-        const coinData: CoinData[] = tokensData.map((token: TokenData) => {
+        const coinData: CoinData[] = tokensData.map((token: any) => {
           // Handle calculation of change24h from bonding curve data if available
           const bondingCurve = token.bonding_curve || {};
           const change24h = bondingCurve.change_24h !== undefined 
