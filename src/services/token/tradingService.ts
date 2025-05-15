@@ -94,7 +94,7 @@ const logTradeInDatabase = async (tradeData: {
         token_symbol: tradeData.tokenSymbol,
         side: tradeData.side,
         amount: tradeData.amount,
-        wallet_address: tradeData.walletAddress,
+        wallet_address: tradeData.walletAddress, // Key is snake_case in DB
         created_at: new Date().toISOString()
       }]);
       

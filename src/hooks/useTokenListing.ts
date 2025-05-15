@@ -22,9 +22,10 @@ export const useTokenListing = () => {
         name: params.name,
         symbol: params.symbol,
         initialSupply: params.initialSupply,
-        totalSupply: params.totalSupply,
-        creatorWallet: params.creatorWallet,
-        creator: { wallet: params.creatorWallet }
+        totalSupply: params.totalSupply || params.initialSupply, // Use initialSupply as fallback
+        creator: { 
+          wallet: params.creatorWallet || params.creator.wallet // Support both formats
+        }
       };
       
       const result = await tokenTradingService.launchToken(serviceParams);

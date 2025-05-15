@@ -9,6 +9,7 @@ import { useWallet } from '@/hooks/useWallet.tsx';
 import { motion } from 'framer-motion';
 import { useTokenTrading } from '@/hooks/useTokenTrading';
 import { tokenTradingService } from '@/services/tokenTradingService';
+import { resolveAndFormat, estimateTokensFromSol, estimateSolFromTokens } from '@/utils/tradeUtils';
 
 interface EnhancedTradingInterfaceProps {
   tokenSymbol: string;
@@ -37,7 +38,11 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   const [amount, setAmount] = useState('');
   const [receiveAmount, setReceiveAmount] = useState('0.00');
   const [gasPriority, setGasPriority] = useState(3); // Default to high gas priority
-  
+  const [solAmount, setSolAmount] = useState('');
+  const [estimatedTokens, setEstimatedTokens] = useState('0.0000');
+  const [estimatedSol, setEstimatedSol] = useState('0.0000');
+  const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
+
   // Calculate receive amount based on input and selected tab
   useEffect(() => {
     const calculateReceiveAmount = async () => {
@@ -120,6 +125,40 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
     
     return () => clearInterval(interval);
   }, []);
+
+  // Update the handleSolAmountChange method
+  const handleSolAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setSolAmount(e.target.value);
+    
+    if (value > 0) {
+      setIsLoadingEstimate(true);
+      const estimatedTokens = await estimateTokensFromSol(
+        tokenTradingService, tokenSymbol, value
+      );
+      setEstimatedTokens(estimatedTokens);
+      setIsLoadingEstimate(false);
+    } else {
+      setEstimatedTokens('0.0000');
+    }
+  };
+  
+  // Update the handleTokenAmountChange method
+  const handleTokenAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setTokenAmount(e.target.value);
+    
+    if (value > 0) {
+      setIsLoadingEstimate(true);
+      const estimatedSol = await estimateSolFromTokens(
+        tokenTradingService, tokenSymbol, value
+      );
+      setEstimatedSol(estimatedSol);
+      setIsLoadingEstimate(false);
+    } else {
+      setEstimatedSol('0.0000');
+    }
+  };
 
   return (
     <div className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-4 md:p-6 rounded-xl border border-white/10 shadow-glow-sm">

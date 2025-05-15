@@ -72,6 +72,8 @@ export interface ListedToken {
     retail: number;
     devs: number;
   };
+  initialSupply?: number;
+  currentSupply?: number;
 }
 
 export interface TokenLaunchParams {
@@ -79,12 +81,12 @@ export interface TokenLaunchParams {
   symbol: string;
   initialSupply: number;
   totalSupply: number;
-  creatorWallet: string;
-  initialPrice?: number;
   creator: {
     wallet: string;
     email?: string;
   };
+  creatorWallet?: string; // Added for backwards compatibility
+  initialPrice?: number;
 }
 
 export interface TokenLaunchResponse {
@@ -98,4 +100,20 @@ export interface InitialSupplyPurchaseResponse {
   amountSol?: number;
   amountTokens?: number;
   error?: string;
+}
+
+// Database schema representation - for better type safety when interfacing with the database
+export interface TokenDatabaseSchema {
+  id: string;
+  name: string;
+  symbol: string;
+  creator_wallet: string;
+  token_address?: string;
+  market_cap: number;
+  launched: boolean;
+  launch_date?: string;
+  created_at: string;
+  bonding_curve?: any;
+  initial_supply?: number;
+  current_supply?: number;
 }

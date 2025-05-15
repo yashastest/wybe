@@ -9,6 +9,7 @@ import { useWallet } from '@/hooks/useWallet.tsx';
 import { motion } from 'framer-motion';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { tokenTradingService, TradeResult } from '@/services/tokenTradingService';
+import { resolveAndFormat, estimateTokensFromSol, estimateSolFromTokens } from '@/utils/tradeUtils';
 
 interface TradingInterfaceProps {
   tokenSymbol: string;
@@ -32,6 +33,10 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   const [gasPriority, setGasPriority] = useState(1); // Default gas priority multiplier
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastTradeResult, setLastTradeResult] = useState<TradeResult | null>(null);
+  const [solAmount, setSolAmount] = useState('');
+  const [estimatedTokens, setEstimatedTokens] = useState('0.0000');
+  const [estimatedSol, setEstimatedSol] = useState('0.0000');
+  const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
   
   // Get token balance if available
   const tokenBalance = tokenBalances[tokenSymbol]?.balance || 0;
@@ -138,6 +143,38 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSolAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setSolAmount(e.target.value);
+    
+    if (value > 0) {
+      setIsLoadingEstimate(true);
+      const estimatedTokens = await estimateTokensFromSol(
+        tokenTradingService, tokenSymbol, value
+      );
+      setEstimatedTokens(estimatedTokens);
+      setIsLoadingEstimate(false);
+    } else {
+      setEstimatedTokens('0.0000');
+    }
+  };
+  
+  const handleTokenAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setTokenAmount(e.target.value);
+    
+    if (value > 0) {
+      setIsLoadingEstimate(true);
+      const estimatedSol = await estimateSolFromTokens(
+        tokenTradingService, tokenSymbol, value
+      );
+      setEstimatedSol(estimatedSol);
+      setIsLoadingEstimate(false);
+    } else {
+      setEstimatedSol('0.0000');
     }
   };
 

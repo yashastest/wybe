@@ -1,9 +1,10 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { tokenTradingService, TradeParams } from '@/services/tokenTradingService';
+import { tokenTradingService } from '@/services/tokenTradingService';
 import { useWalletBalance } from './useWalletBalance';
 import { useWallet } from './useWallet.tsx';
+import { TradeParams } from '@/services/token/types';
 
 export interface TokenTrade {
   tokenSymbol: string;
