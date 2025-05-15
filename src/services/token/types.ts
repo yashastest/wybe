@@ -77,6 +77,7 @@ export interface TokenTransaction {
   tokenSymbol: string;
   tokenName?: string;
   type: 'buy' | 'sell' | 'transfer' | 'mint';
+  side?: 'buy' | 'sell'; // Adding side for compatibility with existing code
   amount: number;
   amountUsd?: number;
   price?: number;
@@ -84,6 +85,8 @@ export interface TokenTransaction {
   timestamp: string;
   walletAddress: string;
   status: 'pending' | 'confirmed' | 'failed';
+  amountTokens?: number; // Adding for compatibility with existing code
+  amountSol?: number; // Adding for compatibility with existing code
 }
 
 export interface DeploymentOptions {
@@ -102,4 +105,12 @@ export interface SmartContractStatus {
   deploymentDate?: string;
   lastAuditDate?: string;
   auditScore?: number;
+}
+
+// Add the trade history filters interface
+export interface TradeHistoryFilters {
+  tokenSymbol?: string;
+  side?: 'buy' | 'sell';
+  startDate?: Date;
+  endDate?: Date;
 }

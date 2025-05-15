@@ -59,7 +59,7 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
       walletAddress,
       amountSol,
       amountTokens,
-      gasPriority
+      gasPriority: gasPriority || 'medium' // Default to medium if not specified
     });
     
     // Log the trade in the database
@@ -122,4 +122,3 @@ export const tradingService = {
   executeTrade,
   logTradeInDatabase
 };
-

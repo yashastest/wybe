@@ -14,9 +14,7 @@ const getUserTransactions = async (
     const queryParams: Record<string, any> = { walletAddress };
     
     // Add filters if provided
-    if (typeof filters === 'string') {
-      queryParams.tokenSymbol = filters;
-    } else if (filters && typeof filters === 'object') {
+    if (filters) {
       if (filters.tokenSymbol) queryParams.tokenSymbol = filters.tokenSymbol;
       if (filters.side) queryParams.side = filters.side;
       if (filters.startDate) queryParams.startDate = filters.startDate.toISOString();
@@ -50,7 +48,8 @@ const getUserTransactions = async (
       return (data || []).map(record => ({
         id: record.id,
         tokenSymbol: record.token_symbol,
-        side: record.side as 'buy' | 'sell',
+        type: record.side as 'buy' | 'sell', // Map side to type
+        side: record.side as 'buy' | 'sell', // Keep side for backwards compatibility
         amount: record.amount,
         price: 0.0001, // Default price since it's not in the database
         timestamp: record.created_at,
@@ -150,4 +149,3 @@ export const transactionService = {
   getUserTransactions,
   getTransactionStats
 };
-

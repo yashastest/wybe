@@ -9,10 +9,24 @@ import {
   TokenLaunchResponse, 
   InitialSupplyPurchaseResponse,
   ListedToken,
-  TokenTransaction
+  TokenTransaction,
+  TradeHistoryFilters
 } from './token/types';
 import { tokenLaunchService } from './token/tokenLaunchService';
 import { tradingService } from './token/tradingService';
+import { transactionService } from './token/transactionService';
+
+// Export types for other components to use
+export type {
+  TradeParams,
+  TradeResult,
+  ListedToken,
+  TokenTransaction,
+  TokenLaunchParams,
+  TokenLaunchResponse,
+  InitialSupplyPurchaseResponse,
+  TradeHistoryFilters
+};
 
 // Wrapper service to combine both token and trading functionality
 export const tokenTradingService = {
@@ -20,6 +34,7 @@ export const tokenTradingService = {
   estimateTokenAmount: tradingService.estimateTokenAmount,
   estimateSolAmount: tradingService.estimateSolAmount,
   executeTrade: tradingService.executeTrade,
+  logTradeInDatabase: tradingService.logTradeInDatabase,
   
   // Token launch methods
   launchToken: tokenLaunchService.launchToken,
@@ -27,33 +42,6 @@ export const tokenTradingService = {
   getListedTokens: tokenLaunchService.getListedTokens,
   
   // Transaction history methods
-  getUserTransactions: async (walletAddress: string): Promise<TokenTransaction[]> => {
-    try {
-      const response = await apiClient.get<TokenTransaction[]>(API_CONFIG.ENDPOINTS.USER_TRANSACTIONS, {
-        walletAddress
-      });
-      
-      return response;
-    } catch (error) {
-      console.error('Error fetching user transactions:', error);
-      return [];
-    }
-  },
-  
-  getTransactionStats: async (tokenSymbol?: string): Promise<any> => {
-    try {
-      const response = await apiClient.get(API_CONFIG.ENDPOINTS.TRANSACTION_STATS, {
-        tokenSymbol
-      });
-      
-      return response;
-    } catch (error) {
-      console.error('Error fetching transaction stats:', error);
-      return {
-        volume24h: 0,
-        trades24h: 0,
-        uniqueTraders24h: 0
-      };
-    }
-  }
+  getUserTransactions: transactionService.getUserTransactions,
+  getTransactionStats: transactionService.getTransactionStats
 };

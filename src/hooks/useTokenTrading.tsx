@@ -1,10 +1,9 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { tokenTradingService } from '@/services/tokenTradingService';
+import { tokenTradingService, TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/tokenTradingService';
 import { useWalletBalance } from './useWalletBalance';
 import { useWallet } from './useWallet.tsx';
-import { TradeParams } from '@/services/token/types';
 
 export interface TokenTrade {
   tokenSymbol: string;
@@ -16,13 +15,6 @@ export interface TokenTrade {
   txHash?: string;
   amountTokens?: number; // Added to align with TokenTransaction
   amountSol?: number;    // Added to align with TokenTransaction
-}
-
-export interface TradeHistoryFilters {
-  tokenSymbol?: string;
-  side?: 'buy' | 'sell';
-  startDate?: Date;
-  endDate?: Date;
 }
 
 export const useTokenTrading = (tokenSymbol?: string) => {
@@ -42,25 +34,23 @@ export const useTokenTrading = (tokenSymbol?: string) => {
 
   const executeTrade = async (tradeParams: TradeParams) => {
     setIsLoading(true);
-    let result;
+    let result: TradeResult;
     
     try {
       // Use the tokenTradingService to execute the trade
-      result = await tokenTradingService.executeTrade(tradeParams);
+      result = await tokenTradingService.executeTrade({
+        ...tradeParams,
+        // Convert numeric gasPriority to string format expected by the API
+        gasPriority: tradeParams.gasPriority ? 
+          (typeof tradeParams.gasPriority === 'number' ? 
+            (tradeParams.gasPriority <= 1 ? 'low' : 
+             tradeParams.gasPriority >= 3 ? 'high' : 'medium') : 
+            tradeParams.gasPriority) : 
+          'medium'
+      });
       
       if (result.success) {
-        // Log the trade to database via the Edge Function
-        await tokenTradingService.logTradeInDatabase({
-          tokenSymbol: tradeParams.tokenSymbol,
-          side: tradeParams.action,
-          amount: tradeParams.action === 'buy' 
-            ? result.amountTokens || 0 
-            : tradeParams.amountTokens || 0,
-          price: result.price || 0,
-          walletAddress: tradeParams.walletAddress,
-          amountTokens: result.amountTokens || 0
-        });
-        
+        // Create transaction record (but don't need to log it as the service already does)
         // Update local state with new trade
         const newTrade: TokenTrade = {
           tokenSymbol: tradeParams.tokenSymbol,
@@ -93,19 +83,19 @@ export const useTokenTrading = (tokenSymbol?: string) => {
   const fetchTradeHistory = async (walletAddress: string, filters?: TradeHistoryFilters) => {
     setIsLoading(true);
     try {
-      const history = await tokenTradingService.getUserTransactions(walletAddress, filters);
+      const history = await tokenTradingService.getUserTransactions(walletAddress);
       
       // Convert TokenTransaction[] to TokenTrade[]
       const tradeHistory: TokenTrade[] = history.map(tx => ({
         tokenSymbol: tx.tokenSymbol,
-        side: tx.side,
+        side: tx.side || (tx.type as 'buy' | 'sell'), // Use side if available, fall back to type
         amount: tx.amount,
         price: tx.price,
         timestamp: tx.timestamp,
         status: tx.status as 'completed' | 'pending' | 'failed' | 'confirmed',
         txHash: tx.txHash,
-        amountTokens: tx.amountTokens,
-        amountSol: tx.amountSol
+        amountTokens: tx.amountTokens || tx.amount, // Fall back to amount if amountTokens isn't available
+        amountSol: tx.amountSol || (tx.price ? tx.amount * tx.price : undefined)
       }));
       
       setTradeHistory(tradeHistory);
@@ -131,7 +121,7 @@ export const useTokenTrading = (tokenSymbol?: string) => {
       tokenSymbol: tokenSymbol || '',
       action: 'buy',
       amountSol: amountSol,
-      gasPriority
+      gasPriority: gasPriority <= 1 ? 'low' : gasPriority >= 3 ? 'high' : 'medium'
     });
   };
   
@@ -146,7 +136,7 @@ export const useTokenTrading = (tokenSymbol?: string) => {
       tokenSymbol: tokenSymbol || '',
       action: 'sell',
       amountTokens: amountTokens,
-      gasPriority
+      gasPriority: gasPriority <= 1 ? 'low' : gasPriority >= 3 ? 'high' : 'medium'
     });
   };
   

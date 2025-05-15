@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Badge } from '@/components/ui/badge';
-import { tokenTradingService } from '@/services/tokenTradingService';
-import { TokenTransaction } from '@/services/token/types';
+import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingService';
 import { ArrowDown, ArrowUp, History, Wallet, BarChart3, StopCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -28,13 +28,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
 
       try {
         // Fetch transactions for the current user and token
-        let filters;
-        if (tokenSymbol) {
-          filters = { tokenSymbol };
-        }
-
-        const userTransactions = await tokenTradingService.getUserTransactions(address, filters);
-        setTransactions(userTransactions);
+        const userTransactions = await tokenTradingService.getUserTransactions(address);
+        
+        // Filter by token if needed
+        const filteredTransactions = tokenSymbol 
+          ? userTransactions.filter(tx => tx.tokenSymbol.toLowerCase() === tokenSymbol.toLowerCase())
+          : userTransactions;
+          
+        setTransactions(filteredTransactions);
       } catch (error) {
         console.error('Error fetching transaction history:', error);
         setIsError(true);
@@ -67,7 +68,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
       demoTransactions.push({
         id: `tx-${i}`,
         tokenSymbol: currentSymbol,
-        side: type,
+        type: type,
+        side: type, // Adding side for compatibility
         amount,
         amountTokens: type === 'buy' ? amount : undefined,
         amountSol: type === 'sell' ? amount * price : undefined,
@@ -139,65 +141,70 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
 
   return (
     <div className="space-y-3 p-1">
-      {transactions.map((tx, index) => (
-        <motion.div
-          key={tx.id || index}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className={`p-3 rounded-lg border ${
-            tx.side === 'buy' 
-              ? 'bg-green-900/20 border-green-500/30' 
-              : 'bg-red-900/20 border-red-500/30'
-          }`}
-        >
-          <div className="flex justify-between mb-1">
-            <div className="flex items-center">
-              <div className={`p-1.5 rounded-full mr-2 ${
-                tx.side === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'
-              }`}>
-                {tx.side === 'buy' ? (
-                  <ArrowDown className="h-3.5 w-3.5 text-green-400" />
-                ) : (
-                  <ArrowUp className="h-3.5 w-3.5 text-red-400" />
-                )}
+      {transactions.map((tx, index) => {
+        // Use side if available, otherwise fall back to type
+        const transactionType = tx.side || tx.type;
+        
+        return (
+          <motion.div
+            key={tx.id || index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className={`p-3 rounded-lg border ${
+              transactionType === 'buy' 
+                ? 'bg-green-900/20 border-green-500/30' 
+                : 'bg-red-900/20 border-red-500/30'
+            }`}
+          >
+            <div className="flex justify-between mb-1">
+              <div className="flex items-center">
+                <div className={`p-1.5 rounded-full mr-2 ${
+                  transactionType === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'
+                }`}>
+                  {transactionType === 'buy' ? (
+                    <ArrowDown className="h-3.5 w-3.5 text-green-400" />
+                  ) : (
+                    <ArrowUp className="h-3.5 w-3.5 text-red-400" />
+                  )}
+                </div>
+                <span className="font-medium text-sm">
+                  {transactionType === 'buy' ? 'Buy' : 'Sell'} {tx.tokenSymbol}
+                </span>
               </div>
-              <span className="font-medium text-sm">
-                {tx.side === 'buy' ? 'Buy' : 'Sell'} {tx.tokenSymbol}
-              </span>
-            </div>
-            <Badge variant={tx.status === 'confirmed' ? 'green' : 'secondary'} className="text-xs font-medium">
-              {tx.status === 'confirmed' ? 'Confirmed' : tx.status}
-            </Badge>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-1 mt-2 text-xs">
-            <div className="text-gray-400">Amount:</div>
-            <div className="text-right font-mono">
-              {tx.side === 'buy' ? tx.amountTokens : tx.amount} {tx.tokenSymbol}
+              <Badge variant={tx.status === 'confirmed' ? 'green' : 'secondary'} className="text-xs font-medium">
+                {tx.status === 'confirmed' ? 'Confirmed' : tx.status}
+              </Badge>
             </div>
             
-            <div className="text-gray-400">Price:</div>
-            <div className="text-right font-mono">
-              {typeof tx.price === 'number' ? tx.price.toFixed(6) : 'N/A'} SOL
+            <div className="grid grid-cols-2 gap-1 mt-2 text-xs">
+              <div className="text-gray-400">Amount:</div>
+              <div className="text-right font-mono">
+                {transactionType === 'buy' ? (tx.amountTokens || tx.amount) : tx.amount} {tx.tokenSymbol}
+              </div>
+              
+              <div className="text-gray-400">Price:</div>
+              <div className="text-right font-mono">
+                {typeof tx.price === 'number' ? tx.price.toFixed(6) : 'N/A'} SOL
+              </div>
+              
+              <div className="text-gray-400">Total Value:</div>
+              <div className="text-right font-mono">
+                {transactionType === 'sell' ? (tx.amountSol || (tx.price ? tx.amount * tx.price : 'N/A')) : (tx.price && tx.amount ? (tx.price * tx.amount).toFixed(4) : 'N/A')} SOL
+              </div>
             </div>
             
-            <div className="text-gray-400">Total Value:</div>
-            <div className="text-right font-mono">
-              {tx.side === 'sell' ? tx.amountSol : (tx.price && tx.amount ? (tx.price * tx.amount).toFixed(4) : 'N/A')} SOL
+            <div className="mt-2 flex justify-between items-center border-t border-white/10 pt-2 text-[11px] text-gray-500">
+              <div className="truncate max-w-[150px]">
+                {tx.txHash ? `Tx: ${tx.txHash.substring(0, 8)}...` : 'No hash'}
+              </div>
+              <div>
+                {tx.timestamp && formatDistanceToNow(new Date(tx.timestamp), { addSuffix: true })}
+              </div>
             </div>
-          </div>
-          
-          <div className="mt-2 flex justify-between items-center border-t border-white/10 pt-2 text-[11px] text-gray-500">
-            <div className="truncate max-w-[150px]">
-              {tx.txHash ? `Tx: ${tx.txHash.substring(0, 8)}...` : 'No hash'}
-            </div>
-            <div>
-              {tx.timestamp && formatDistanceToNow(new Date(tx.timestamp), { addSuffix: true })}
-            </div>
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        );
+      })}
     </div>
   );
 };
