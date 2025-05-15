@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     nodePolyfills({
+      // Whether to polyfill specific nodejs globals and modules
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
       // Whether to polyfill `node:` protocol imports
       protocolImports: true,
     }),
@@ -26,6 +32,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Add aliases for problematic packages
+      "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
     },
   },
   build: {

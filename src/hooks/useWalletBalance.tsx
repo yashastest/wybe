@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { toast } from 'sonner';
@@ -47,6 +46,26 @@ export const useWalletBalance = (tokenSymbol?: string): WalletBalanceState => {
     }
   };
 
+  // Helper function to safely extract values from bonding_curve JSONB data
+  const extractFromBondingCurve = (bondingCurve: any, field: string, defaultValue: any) => {
+    if (!bondingCurve) return defaultValue;
+    if (typeof bondingCurve !== 'object') return defaultValue;
+    
+    // Handle both object form and array form (PostgreSQL JSON can be either)
+    if (Array.isArray(bondingCurve)) {
+      // If it's an array, try to find an object with the field
+      for (const item of bondingCurve) {
+        if (typeof item === 'object' && item !== null && field in item) {
+          return item[field];
+        }
+      }
+      return defaultValue;
+    }
+    
+    // Otherwise, treat it as an object
+    return bondingCurve[field] || defaultValue;
+  };
+
   // Fetch token balance for a specific token
   const fetchTokenBalance = async (walletAddress: string, symbol: string): Promise<TokenBalance> => {
     try {
@@ -93,10 +112,8 @@ export const useWalletBalance = (tokenSymbol?: string): WalletBalanceState => {
       }
       
       // Get current token price (would come from oracle in production)
-      // Handle bonding_curve as it might be a JSONB object or null
-      const tokenPrice = token.bonding_curve && 
-                        typeof token.bonding_curve === 'object' ? 
-                        (token.bonding_curve.price || 0.01) : 0.01;
+      // Use the extractFromBondingCurve helper to safely get the price
+      const tokenPrice = extractFromBondingCurve(token.bonding_curve, 'price', 0.01);
       
       return {
         symbol,

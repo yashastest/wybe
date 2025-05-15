@@ -22,6 +22,19 @@ interface CoinData {
 const extractFromBondingCurve = (bondingCurve: any, field: string, defaultValue: any) => {
   if (!bondingCurve) return defaultValue;
   if (typeof bondingCurve !== 'object') return defaultValue;
+  
+  // Handle both object form and array form (PostgreSQL JSON can be either)
+  if (Array.isArray(bondingCurve)) {
+    // If it's an array, try to find an object with the field
+    for (const item of bondingCurve) {
+      if (typeof item === 'object' && item !== null && field in item) {
+        return item[field];
+      }
+    }
+    return defaultValue;
+  }
+  
+  // Otherwise, treat it as an object
   return bondingCurve[field] || defaultValue;
 };
 
@@ -74,21 +87,21 @@ const MemeCoins: React.FC = () => {
         
         // Map database tokens to CoinData format
         const coinData: CoinData[] = tokensData.map(token => {
-          // Handle calculation of change24h from bonding curve data if available
+          // Use the updated safe extraction function for all properties
           const change24h = extractFromBondingCurve(token.bonding_curve, 'change_24h', Math.random() * 20 - 10);
-          
-          // Extract categories from tags if available
           const categories = extractFromBondingCurve(token.bonding_curve, 'tags', ['Meme']);
+          const price = extractFromBondingCurve(token.bonding_curve, 'price', 0.01);
+          const volume24h = extractFromBondingCurve(token.bonding_curve, 'volume_24h', token.market_cap * 0.1 || 1000);
           
           return {
             id: token.id,
             name: token.name,
             symbol: token.symbol,
             logo: null, // Will be updated with storage URL when available
-            price: extractFromBondingCurve(token.bonding_curve, 'price', 0.01),
+            price: price,
             change24h: change24h,
             marketCap: token.market_cap || 10000,
-            volume24h: extractFromBondingCurve(token.bonding_curve, 'volume_24h', token.market_cap * 0.1 || 1000),
+            volume24h: volume24h,
             category: Array.isArray(categories) ? categories : [categories],
           };
         });

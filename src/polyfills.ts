@@ -9,3 +9,10 @@ window.Buffer = Buffer;
 if (typeof global === 'undefined') {
   (window as any).global = window;
 }
+
+// Additional polyfills for browser compatibility
+(window as any).process = {
+  env: { NODE_ENV: 'production' },
+  version: '',
+  nextTick: (fn: Function) => setTimeout(fn, 0)
+};

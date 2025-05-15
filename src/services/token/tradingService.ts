@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { TradeParams, TradeResult } from './types';
 
@@ -6,6 +5,19 @@ import { TradeParams, TradeResult } from './types';
 const extractFromBondingCurve = (bondingCurve: any, field: string, defaultValue: any) => {
   if (!bondingCurve) return defaultValue;
   if (typeof bondingCurve !== 'object') return defaultValue;
+  
+  // Handle both object form and array form (PostgreSQL JSON can be either)
+  if (Array.isArray(bondingCurve)) {
+    // If it's an array, try to find an object with the field
+    for (const item of bondingCurve) {
+      if (typeof item === 'object' && item !== null && field in item) {
+        return item[field];
+      }
+    }
+    return defaultValue;
+  }
+  
+  // Otherwise, treat it as an object
   return bondingCurve[field] || defaultValue;
 };
 
