@@ -1,5 +1,5 @@
 
-import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
+import { TradeHistoryFilters } from './token/types';
 import { tradingService } from './token/tradingService';
 import { transactionService } from './token/transactionService';
 import { tokenLaunchService } from './token/tokenLaunchService';

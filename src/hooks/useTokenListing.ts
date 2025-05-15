@@ -38,20 +38,28 @@ export const useTokenListing = () => {
   const launchToken = async (params: TokenLaunchParams) => {
     setIsLaunching(true);
     try {
-      const result = await tokenTradingService.launchToken(params);
+      // Convert TokenLaunchParams to format expected by the service
+      const serviceParams = {
+        name: params.name,
+        symbol: params.symbol,
+        initialSupply: params.totalSupply,
+        creator: { wallet: params.creatorWallet }
+      };
       
-      if (result.success && result.tokenId) {
+      const tokenId = await tokenTradingService.launchToken(serviceParams);
+      
+      if (tokenId) {
         return {
           success: true,
-          tokenId: result.tokenId
+          tokenId: tokenId
         };
       } else {
         toast.error('Failed to launch token', { 
-          description: result.error || 'Please try again later' 
+          description: 'Please try again later' 
         });
         return {
           success: false,
-          error: result.error || 'Failed to launch token'
+          error: 'Failed to launch token'
         };
       }
     } catch (error) {

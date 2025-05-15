@@ -1,4 +1,3 @@
-
 // DeploymentResult interface defines the structure of deployment results
 export interface DeploymentResult {
   success: boolean;
@@ -14,6 +13,15 @@ export interface DeploymentStep {
   description: string;
   status: 'completed' | 'pending' | 'in-progress' | 'failed';
   dependsOn?: string[];
+  prerequisite?: string[];
+  command?: string;
+  output?: string;
+  verificationSteps?: {
+    id: string;
+    title: string;
+    status: 'pending' | 'success' | 'error';
+    message?: string;
+  }[];
 }
 
 // DeploymentStatus interface defines the structure of deployment status

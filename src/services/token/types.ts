@@ -35,3 +35,36 @@ export interface TokenMetrics {
   totalSupply: number;
   holders: number;
 }
+
+export interface TradeParams {
+  tokenSymbol: string;
+  action: 'buy' | 'sell';
+  walletAddress: string;
+  amountSol?: number;
+  amountTokens?: number;
+  gasPriority?: number;
+}
+
+export interface TradeResult {
+  success: boolean;
+  amountSol?: number;
+  amountTokens?: number;
+  txHash?: string;
+  price?: number;
+  error?: string;
+  errorMessage?: string;
+}
+
+export interface ListedToken {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  change24h: number;
+  marketCap: number;
+  volume24h: number;
+  logo?: string;
+  category?: string[];
+  holders?: number;
+  devWallet?: string;
+}

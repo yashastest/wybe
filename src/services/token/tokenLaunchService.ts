@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ListedToken } from './types';
 
 export interface TokenLaunchOptions {
   name: string;
@@ -56,8 +56,8 @@ const getTokenById = async (id: string): Promise<TokenDetails | null> => {
       id: data.id,
       name: data.name,
       symbol: data.symbol,
-      initialSupply: data.initial_supply,
-      currentSupply: data.current_supply,
+      initialSupply: data.initial_supply || 0,
+      currentSupply: data.current_supply || 0,
       marketCap: data.market_cap,
       launchDate: data.launch_date,
       creatorWallet: data.creator_wallet,
@@ -185,6 +185,62 @@ const launchToken = async (tokenId: string): Promise<boolean> => {
   }
 };
 
+// Buy initial supply
+const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number): Promise<{
+  success: boolean;
+  amountSol?: number;
+  amountTokens?: number;
+  error?: string;
+}> => {
+  try {
+    const token = await getTokenById(tokenId);
+    
+    if (!token) {
+      return {
+        success: false,
+        error: "Token not found"
+      };
+    }
+    
+    // Calculate price based on bonding curve
+    const tokenPrice = getTokenPrice(token);
+    
+    // Calculate token amount
+    const amountTokens = amount / tokenPrice;
+    
+    // Simulate transaction
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Insert transaction record
+    const { error } = await supabase
+      .from('transactions')
+      .insert({
+        wallet: walletAddress,
+        token_id: tokenId,
+        type: 'buy',
+        amount: amountTokens,
+        price: tokenPrice,
+        fee: amount * 0.01 // 1% fee
+      });
+      
+    if (error) {
+      throw error;
+    }
+    
+    return {
+      success: true,
+      amountSol: amount,
+      amountTokens
+    };
+  } catch (error) {
+    console.error('Error buying initial supply:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+};
+
 // Get token listing
 const getTokenListing = async (limit: number = 10): Promise<TokenDetails[]> => {
   try {
@@ -237,12 +293,62 @@ const getTokenListing = async (limit: number = 10): Promise<TokenDetails[]> => {
   }
 };
 
+// Get listed tokens for trading interface
+const getListedTokens = async (): Promise<ListedToken[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('tokens')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data.map(token => {
+      const tokenDetails = {
+        id: token.id,
+        name: token.name,
+        symbol: token.symbol,
+        price: 0.001,
+        change24h: Math.random() * 10 - 5, // Mock data
+        marketCap: token.market_cap || 0,
+        volume24h: Math.random() * 1000, // Mock data
+        logo: null,
+        holders: Math.floor(Math.random() * 100) + 10 // Mock data
+      };
+      
+      // Calculate price if we have a bonding curve
+      if (token.current_supply && token.bonding_curve) {
+        const tokenObj: TokenDetails = {
+          id: token.id,
+          name: token.name,
+          symbol: token.symbol,
+          initialSupply: token.initial_supply || 0,
+          currentSupply: token.current_supply || 0,
+          creatorWallet: token.creator_wallet,
+          bondingCurve: token.bonding_curve as TokenDetails['bondingCurve']
+        };
+        tokenDetails.price = getTokenPrice(tokenObj);
+      }
+      
+      return tokenDetails;
+    });
+  } catch (error) {
+    console.error('Error fetching listed tokens:', error);
+    return [];
+  }
+};
+
 export const tokenLaunchService = {
   getTokenById,
   createToken,
   getTokenPrice,
   launchToken,
-  getTokenListing
+  getTokenListing,
+  buyInitialSupply,
+  getListedTokens
 };
 
 export default tokenLaunchService;
