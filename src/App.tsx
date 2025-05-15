@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Discover from './pages/Discover';
@@ -12,6 +11,8 @@ import { WalletProvider } from '@/hooks/useWallet.tsx';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
 import Launch from './pages/Launch';
+import MemeBattleRoyale from "./pages/MemeBattleRoyale";
+import BattleDetail from "./pages/BattleDetail";
 
 const App = () => {
   // You can add any global context providers or initial setup here
@@ -34,6 +35,8 @@ const App = () => {
           <Route path="/admin/token-deployment" element={<TokenDeployment />} />
           <Route path="/admin/token-deployment/:tokenId" element={<TokenDeployment />} />
           <Route path="/admin/reset-password" element={<Discover />} />
+          <Route path="/meme-battle-royale" element={<MemeBattleRoyale />} />
+          <Route path="/meme-battle-royale/:battleId" element={<BattleDetail />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
