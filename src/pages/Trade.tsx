@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -9,7 +8,7 @@ import TradingViewChart from '@/components/TradingViewChart';
 import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, ArrowUpDown } from 'lucide-react';
 import { useWallet } from '@/lib/wallet';
 import TradingInterface from '@/components/TradingInterface';
 import TransactionHistory from '@/components/TransactionHistory';

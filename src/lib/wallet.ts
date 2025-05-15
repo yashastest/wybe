@@ -6,4 +6,15 @@ export { useWallet, WalletProvider } from '@/hooks/useWallet.tsx';
 export type { WalletContextType } from '@/hooks/useWallet.tsx';
 
 // Export a Wallet type alias for convenience
-export type Wallet = WalletContextType;
+export type Wallet = {
+  wallet: string | null;
+  isConnecting: boolean;
+  connected: boolean;
+  address: string;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  connectPhantom: () => Promise<void>;
+  connectHardwareWallet: () => Promise<void>;
+  isSolanaAvailable: boolean;
+  isHardwareWallet: boolean;
+};
