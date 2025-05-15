@@ -1,9 +1,11 @@
-
 // Smart Contract Service for managing Solana token deployments
 
 export interface ContractConfig {
   anchorInstalled: boolean;
   anchorVersion?: string;
+  creatorFeePercentage: number;
+  rewardClaimPeriodDays: number;
+  dexScreenerThreshold: number;
 }
 
 interface DeployedContract {
@@ -51,13 +53,25 @@ class SmartContractService {
 
   private localConfig: ContractConfig = {
     anchorInstalled: true,
-    anchorVersion: '0.29.0'
+    anchorVersion: '0.29.0',
+    creatorFeePercentage: 0, // Default value
+    rewardClaimPeriodDays: 0,  // Default value
+    dexScreenerThreshold: 0    // Default value
   };
   
   // Get contract configuration status
   public getContractConfig(): ContractConfig {
     // In a real implementation, this would check if Anchor CLI is installed
     return this.localConfig;
+  }
+  
+  // Update contract configuration
+  public updateContractConfig(updates: Partial<Pick<ContractConfig, 'creatorFeePercentage' | 'rewardClaimPeriodDays' | 'dexScreenerThreshold'>>): void {
+    this.localConfig = {
+      ...this.localConfig,
+      ...updates
+    };
+    console.log("SmartContractService config updated:", this.localConfig);
   }
   
   // Set mock Anchor CLI status for testing
