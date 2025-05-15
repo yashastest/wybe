@@ -1,4 +1,3 @@
-
 // Integration services for connecting to Solana blockchain and external platforms
 
 export interface DeploymentStep {
@@ -23,6 +22,15 @@ export interface AdminUserAccess {
   permissions: string[];
   walletAddress?: string;
   twoFactorEnabled?: boolean;
+}
+
+export interface DeploymentResult {
+  success: boolean;
+  message: string;
+  transactionId?: string;
+  timestamp?: Date;
+  network?: string;
+  tokenAddress?: string;
 }
 
 interface IntegrationStatus {
@@ -75,6 +83,15 @@ class IntegrationService {
     description: 'Meme coin launchpad platform on Solana',
     repositoryUrl: 'https://github.com/wybe-finance/platform',
     licenseType: 'MIT'
+  };
+
+  private mockDeploymentResult: DeploymentResult = {
+    success: true,
+    message: "Token deployed successfully to devnet",
+    transactionId: "4XE7c8QV5h6J3UeGm5Z7c9U8Bj5UkEGHCUE3LkJsGBrt5FUquo5RJx5a8NkT4dDq",
+    timestamp: new Date(),
+    network: "devnet",
+    tokenAddress: "WYB9XfvH51TgXdXihZ7Z7PTzdSP5iw89i9ybuP3vuBPX"
   };
 
   private mockAdminUsers: AdminUserAccess[] = [
@@ -375,6 +392,21 @@ class IntegrationService {
       completedTasks: 5,
       totalTasks: 5
     };
+  }
+
+  // Get deployment result (new method)
+  public getDeploymentResult(): DeploymentResult {
+    return this.mockDeploymentResult;
+  }
+
+  // Set deployment result (new method)
+  public setDeploymentResult(result: DeploymentResult): void {
+    this.mockDeploymentResult = result;
+  }
+
+  // Get deployment environment (alias for getDeploymentResult for backward compatibility)
+  public getDeploymentEnvironment(): DeploymentResult {
+    return this.getDeploymentResult();
   }
 }
 

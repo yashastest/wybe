@@ -18,7 +18,7 @@ import {
   Settings2
 } from "lucide-react";
 import { tradingService, DeploymentEnvironment as TradingDeploymentEnvironment } from "@/services/tradingService";
-import { integrationService, DeploymentResult } from "@/services/integrationService"; // Assuming DeploymentResult is exported
+import { integrationService, DeploymentResult } from "@/services/integrationService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DeploymentChecklistItem {
@@ -45,9 +45,9 @@ const DeploymentEnvironment = () => {
 
   useEffect(() => {
     setEnvironment(tradingService.getDeploymentEnvironment());
-    const savedResult = integrationService.getDeploymentEnvironment(); // This is getDeploymentResult essentially
+    const savedResult = integrationService.getDeploymentResult();
     if (savedResult) {
-      setDeploymentResult(savedResult); // No cast needed if types match
+      setDeploymentResult(savedResult);
     }
     
     // Load checklist from localStorage

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { TrendingUp, Zap, Coins, Info, RefreshCcw, CheckCircle, AlertTriangle, ArrowRightLeft } from "lucide-react";
 import { smartContractService, ContractConfig } from "@/services/smartContractService";
-import { tradingService, TokenTradingStatus } from "@/services/tradingService"; // Assuming TokenTradingStatus is exported
+import { tradingService, TokenTradingStatus } from "@/services/tradingService";
 import { useWallet } from '@/hooks/useWallet';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
