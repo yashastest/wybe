@@ -38,6 +38,33 @@ console.error = (...args) => {
   originalConsoleError(...args);
 };
 
+// Add mock implementations for node-specific modules
+if (!(window as any).crypto) {
+  (window as any).crypto = window.crypto || {};
+}
+
+// Ensure WebSocket is properly defined - provide a mock implementation if needed
+if (typeof WebSocket === 'undefined') {
+  class MockWebSocket {
+    onopen: any = null;
+    onclose: any = null;
+    onmessage: any = null;
+    onerror: any = null;
+    
+    constructor(url: string, protocols?: string | string[]) {
+      console.log('Mock WebSocket initialized');
+      setTimeout(() => {
+        if (this.onopen) this.onopen({ target: this });
+      }, 100);
+    }
+    
+    send() {}
+    close() {}
+  }
+  
+  (window as any).WebSocket = MockWebSocket;
+}
+
 // Patch fetch API for potential issues with Solana Web3.js
 const originalFetch = window.fetch;
 window.fetch = function(...args) {
@@ -47,6 +74,3 @@ window.fetch = function(...args) {
       throw err;
     });
 };
-
-// Inject additional global mocks that might be needed
-(window as any).crypto = window.crypto || {};

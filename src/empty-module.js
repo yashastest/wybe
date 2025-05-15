@@ -1,8 +1,7 @@
 
 // Empty module to handle imports of unsupported browser modules
-export default {};
 
-// Mock implementations of rpc-websockets classes
+// Export the Client class properly to ensure it's recognized by RPC imports
 export class Client {
   constructor() {
     this.connected = false;
@@ -31,6 +30,7 @@ export class Client {
   }
 }
 
+// Create a WebSocket client implementation
 export class w3cwebsocket {
   constructor() {
     this.onopen = null;
@@ -42,11 +42,24 @@ export class w3cwebsocket {
   close() {}
 }
 
-// Additional exports from rpc-websockets
+// Exports needed for specific imports in Solana Web3.js
 export const WebSocketClient = Client;
 export const NodeWebSocketClient = Client;
 
-// Ensure we export RpcWebSocketCommonClient which is specifically being imported
+// Specifically export RpcWebSocketCommonClient for direct import 
 export const RpcWebSocketCommonClient = Client;
-// Also export createRpc for the websocket.browser import
-export const createRpc = () => new Client();
+
+// Export createRpc function for websocket.browser import
+export function createRpc() {
+  return new Client();
+}
+
+// Default export for basic module imports
+export default {
+  Client,
+  w3cwebsocket,
+  WebSocketClient,
+  NodeWebSocketClient,
+  RpcWebSocketCommonClient,
+  createRpc
+};

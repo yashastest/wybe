@@ -32,16 +32,19 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Add aliases for problematic packages - expand them to cover all possible import paths
+      // Comprehensive aliases for problematic packages
       "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket.browser": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist/lib/client/websocket": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist/lib/client/nodejs": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets/dist": path.resolve(__dirname, "src/empty-module.js"),
       "ws": path.resolve(__dirname, "src/empty-module.js"),
       "net": path.resolve(__dirname, "src/empty-module.js"),
       "tls": path.resolve(__dirname, "src/empty-module.js"),
-      "dgram": path.resolve(__dirname, "src/empty-module.js"), // Additional Node-specific module
-      "fs": path.resolve(__dirname, "src/empty-module.js"),    // Additional Node-specific module
-      "crypto": path.resolve(__dirname, "src/empty-module.js") // Additional Node-specific module that might be used
+      "dgram": path.resolve(__dirname, "src/empty-module.js"),
+      "fs": path.resolve(__dirname, "src/empty-module.js"),
+      "crypto": path.resolve(__dirname, "src/empty-module.js")
     },
   },
   build: {
