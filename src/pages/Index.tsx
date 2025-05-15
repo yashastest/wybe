@@ -21,6 +21,9 @@ const Index = () => {
       {/* Hero Section with updated animations */}
       <HeroSection />
       
+      {/* Trading Demo Call to Action */}
+      <TradingDemoCallout />
+      
       {/* Creator Fees Section */}
       <CreatorFeesSection />
       
@@ -29,6 +32,114 @@ const Index = () => {
       
       <Footer />
     </div>
+  );
+};
+
+// New Trading Demo Callout Section
+const TradingDemoCallout = () => {
+  const controls = useAnimation();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.2 });
+  
+  useEffect(() => {
+    if (inView) {
+      controls.start("visible");
+    }
+  }, [controls, inView]);
+  
+  return (
+    <motion.section 
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={{
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.5 } }
+      }}
+      className="py-12 bg-gradient-to-br from-orange-900/20 via-black to-black"
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { 
+                opacity: 1, 
+                x: 0, 
+                transition: { delay: 0.2, duration: 0.4 }
+              }
+            }}
+            className="md:w-1/2"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold font-poppins mb-4">
+              <span className="text-white">Experience Our </span>
+              <span className="text-orange-400">Trading Platform</span>
+            </h2>
+            <p className="text-gray-300 mb-6">
+              Test drive our intuitive trading interface with mock tokens. 
+              See how bonding curves work in real-time and get familiar with our platform.
+            </p>
+            <Link to="/trade-demo">
+              <Button variant="orange" className="font-poppins" size="lg">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                Try Trading Demo
+              </Button>
+            </Link>
+          </motion.div>
+          
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, scale: 0.9 },
+              visible: { 
+                opacity: 1, 
+                scale: 1, 
+                transition: { delay: 0.3, duration: 0.5 }
+              }
+            }}
+            className="md:w-1/2"
+          >
+            <div className="relative h-64 bg-gradient-to-br from-orange-900/30 to-black rounded-xl overflow-hidden border border-orange-500/20 p-4">
+              <div className="relative h-full w-full bg-black/40 rounded-lg p-2 backdrop-blur-sm">
+                <div className="flex justify-between items-center mb-4 p-2 border-b border-orange-500/20">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-gradient-to-br from-orange-600 to-purple-600 rounded-full"></div>
+                    <div>
+                      <div className="font-bold">WYBE</div>
+                      <div className="text-xs text-green-500">+12.5%</div>
+                    </div>
+                  </div>
+                  <div className="text-lg font-mono">$0.0015</div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-green-500/10 border border-green-500/30 rounded p-2 text-center">
+                    <div className="text-xs text-gray-400">Buy</div>
+                    <div className="text-green-500 font-bold">↑</div>
+                  </div>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-center">
+                    <div className="text-xs text-gray-400">Sell</div>
+                    <div className="text-red-500 font-bold">↓</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 h-20 bg-black/30 rounded relative overflow-hidden">
+                  <div className="absolute inset-0">
+                    <svg viewBox="0 0 100 20" className="w-full h-full">
+                      <path 
+                        d="M0,20 L10,15 L20,18 L30,12 L40,16 L50,10 L60,14 L70,8 L80,12 L90,6 L100,0" 
+                        stroke="rgba(249, 115, 22, 0.7)" 
+                        strokeWidth="1.5" 
+                        fill="rgba(249, 115, 22, 0.1)"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.section>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X, Wallet, DollarSign } from "lucide-react";
+import { Menu, X, Wallet, DollarSign, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -48,11 +48,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     }
   };
 
-  // Regular navigation links - Added Trade in the main navigation
+  // Regular navigation links - Added Trade Demo in the main navigation
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/discover", label: "Discover" },
-    { to: "/trade", label: "Trade" },
+    { to: "/trade-demo", label: "Trade Demo", icon: <TrendingUp className="h-4 w-4 mr-1" /> },
     { to: "/dashboard", label: "Dashboard" },
     { to: "/launch", label: "Launch" },
     { to: "/package", label: "Launch Package" },
@@ -96,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             </motion.div>
           </Link>
           
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Now with Trade Demo link highlighted */}
           <nav className="hidden md:flex items-center gap-8">
             {linksToDisplay.map((link, index) => (
               <motion.div
@@ -107,19 +107,20 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               >
                 <Link
                   to={link.to}
-                  className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary ${
+                  className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary flex items-center ${
                     location.pathname === link.to 
                       ? 'active-nav-link' 
                       : 'text-white hover:text-wybe-primary/90'
-                  }`}
+                  } ${link.to === '/trade-demo' ? 'bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1 rounded-md' : ''}`}
                 >
+                  {link.icon && link.icon}
                   {link.label}
                 </Link>
               </motion.div>
             ))}
           </nav>
           
-          {/* Wallet Connection Button - Desktop - Removed Launch Token button */}
+          {/* Wallet Connection Button - Desktop */}
           {!adminOnly && (
             <div className="hidden md:flex items-center gap-4">
               <motion.div
@@ -164,10 +165,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                   <DropdownMenuItem key={link.to} asChild>
                     <Link
                       to={link.to}
-                      className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md ${
+                      className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
                         location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
-                      }`}
+                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30' : ''}`}
                     >
+                      {link.icon && link.icon}
                       {link.label}
                     </Link>
                   </DropdownMenuItem>

@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Discover from './pages/Discover';
 import Trade from './pages/Trade';
+import TradeDemo from './pages/TradeDemo';
 import AdminLogin from './pages/AdminLogin';
 import TradingHistory from './pages/TradingHistory';
 import NotFoundPage from './pages/NotFound';
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/discover" element={<Discover />} />
         <Route path="/create" element={<Discover />} />
         <Route path="/trade/:tokenId?" element={<Trade />} />
+        <Route path="/trade-demo" element={<TradeDemo />} />
         <Route path="/token/:tokenId" element={<TokenTrade />} />
         <Route path="/trading-history" element={<TradingHistory />} />
         <Route path="/dashboard" element={<Dashboard />} />
