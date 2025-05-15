@@ -1,4 +1,3 @@
-
 import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -230,7 +229,7 @@ const getUserTransactions = async (
     const transactions: TokenTransaction[] = filteredData.map(record => ({
       id: record.id,
       tokenSymbol: record.token_symbol,
-      side: record.side,
+      side: record.side as 'buy' | 'sell', // Type assertion to ensure it's 'buy' or 'sell'
       amount: record.amount,
       price: 0.0001, // Should be retrieved from the database or calculated
       timestamp: record.created_at,
@@ -238,7 +237,7 @@ const getUserTransactions = async (
       status: 'confirmed',
       txHash: record.tx_hash,
       amountTokens: record.amount,
-      amountSol: record.amount * 0.0001 // Calculate based on price
+      amountSol: Number(record.amount) * 0.0001 // Calculate based on price
     }));
     
     return transactions;
@@ -328,8 +327,13 @@ const buyInitialSupply = async (
       };
     }
     
+    // Get the initial price from the bonding curve
+    const initialPrice = token.bonding_curve && 
+                         typeof token.bonding_curve === 'object' && 
+                         'initial_price' in token.bonding_curve ? 
+                         (token.bonding_curve as any).initial_price : 0.0001;
+    
     // Calculate token amount based on initial price
-    const initialPrice = token.bonding_curve?.initial_price || 0.0001;
     const tokensReceived = amountSol / initialPrice;
     
     // Update token record
@@ -411,7 +415,11 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
       const retailCount = holderCount - whalesCount - devsCount;
       
       // Calculate market metrics based on transactions
-      const initialPrice = token.bonding_curve?.initial_price || 0.0001;
+      const bondingCurve = token.bonding_curve && typeof token.bonding_curve === 'object' ? 
+                          token.bonding_curve as Record<string, any> : 
+                          { initial_price: 0.0001 };
+                          
+      const initialPrice = bondingCurve.initial_price || 0.0001;
       const currentPrice = initialPrice * 1.1; // Assume 10% increase from initial price
       const marketCap = currentPrice * 1000000; // Assuming total supply
       const volume24h = marketCap * 0.05; // Assume 5% of market cap traded daily

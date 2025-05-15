@@ -13,7 +13,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
-import { tokenTradingService } from "@/services/tokenTradingService";
+import { tokenTradingService, ListedToken } from "@/services/tokenTradingService";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -51,8 +51,8 @@ const Discover = () => {
   const [sortOption, setSortOption] = useState("marketCap");
   const [filterCategory, setFilterCategory] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
-  const [coins, setCoins] = useState([]);
-  const [allCategories, setAllCategories] = useState(["All"]);
+  const [coins, setCoins] = useState<ListedToken[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>(["All"]);
   
   useEffect(() => {
     const fetchTokens = async () => {
@@ -63,11 +63,13 @@ const Discover = () => {
         
         // Extract all unique categories
         const categories = ["All"];
-        const uniqueCategories = new Set();
+        const uniqueCategories = new Set<string>();
         
         listedTokens.forEach(coin => {
           coin.category.forEach(category => {
-            uniqueCategories.add(category);
+            if (typeof category === 'string') {
+              uniqueCategories.add(category);
+            }
           });
         });
         
