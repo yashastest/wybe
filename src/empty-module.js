@@ -74,15 +74,16 @@ export class w3cwebsocket {
   }
 }
 
-// Additional exports from rpc-websockets
-export const WebSocketClient = Client;
-export const NodeWebSocketClient = Client;
-
 // Export default for modules that import the whole client
 export default Client;
 
 // Export RpcWebSocketCommonClient which is specifically imported by @solana/web3.js
 export const RpcWebSocketCommonClient = Client;
+
+// Additional exports for other modules imported by @solana/web3.js
+// Used by websocket.browser
+export const WebSocketClient = Client;
+export const NodeWebSocketClient = Client;
 
 // Export createRpc for the websocket.browser import
 export function createRpc() {

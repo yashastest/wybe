@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Comprehensive aliases for all possible import paths
+      // Comprehensive aliases for all possible import paths used by Solana web3.js
       "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket": path.resolve(__dirname, "src/empty-module.js"),
