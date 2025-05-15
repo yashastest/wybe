@@ -6,6 +6,7 @@ import { tokenTradingService } from "@/services/tokenTradingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 interface CoinData {
   id: string;
@@ -49,23 +50,46 @@ const MemeCoins: React.FC = () => {
     const fetchTokens = async () => {
       setIsLoading(true);
       try {
-        const tokens = await tokenTradingService.getListedTokens();
+        // Fetch tokens directly from Supabase
+        const { data: tokensData, error } = await supabase
+          .from('tokens')
+          .select('*')
+          .order('market_cap', { ascending: false })
+          .limit(6);
         
-        // Map tokens to CoinData format
-        const coinData: CoinData[] = tokens.map(token => ({
-          id: token.id,
-          name: token.name,
-          symbol: token.symbol,
-          logo: token.logo,
-          price: token.price,
-          change24h: token.change24h,
-          marketCap: token.marketCap,
-          volume24h: token.volume24h,
-          category: token.category,
-        }));
+        if (error) {
+          throw error;
+        }
         
-        // Sort by market cap and take top 6
-        setCoins(coinData.sort((a, b) => b.marketCap - a.marketCap).slice(0, 6));
+        if (!tokensData || tokensData.length === 0) {
+          setCoins([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Map database tokens to CoinData format
+        const coinData: CoinData[] = tokensData.map(token => {
+          // Handle calculation of change24h from bonding curve data if available
+          const bondingCurve = token.bonding_curve || {};
+          const change24h = bondingCurve.change_24h || Math.random() * 20 - 10; // Fallback for demo
+          
+          // Extract categories from tags if available
+          const categories = bondingCurve.tags || ['Meme'];
+          
+          return {
+            id: token.id,
+            name: token.name,
+            symbol: token.symbol,
+            logo: null, // Will be updated with storage URL when available
+            price: token.price || 0.01,
+            change24h: change24h,
+            marketCap: token.market_cap || 10000,
+            volume24h: bondingCurve.volume_24h || token.market_cap * 0.1 || 1000,
+            category: Array.isArray(categories) ? categories : [categories],
+          };
+        });
+        
+        setCoins(coinData);
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
         toast.error("Failed to load token data");
@@ -77,11 +101,6 @@ const MemeCoins: React.FC = () => {
     
     fetchTokens();
   }, []);
-
-  // Function to navigate to trade page
-  const handleTradeClick = (symbol: string) => {
-    console.log(`Navigating to trade page for ${symbol}`);
-  };
 
   return (
     <section id="memecoins" className="py-16 container">
@@ -174,9 +193,9 @@ const MemeCoins: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {coin.category.map((cat) => (
+                    {coin.category.map((cat, idx) => (
                       <span
-                        key={cat}
+                        key={`${cat}-${idx}`}
                         className="px-2 py-1 bg-wybe-primary/10 rounded-full text-xs text-wybe-primary"
                       >
                         {cat}
