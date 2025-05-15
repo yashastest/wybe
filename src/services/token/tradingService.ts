@@ -1,26 +1,43 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TradeParams, TradeResult } from './types';
+import { apiClient } from '@/services/api/apiClient';
+import { API_CONFIG } from '@/config/api';
 
-// Mock trading service implementation
+// Real implementation of trading service using API
 const estimateTokenAmount = async (tokenSymbol: string, solAmount: number): Promise<number> => {
-  // Mock implementation - in a real app would call contract or API
-  const tokenPrice = 0.01; // Mock price
-  return solAmount / tokenPrice;
+  try {
+    const response = await apiClient.get<{ tokenAmount: number }>(API_CONFIG.ENDPOINTS.ESTIMATE_TOKEN, {
+      tokenSymbol,
+      solAmount
+    });
+    
+    return response.tokenAmount;
+  } catch (error) {
+    console.error('Error estimating token amount:', error);
+    throw new Error('Failed to estimate token amount');
+  }
 };
 
 const estimateSolAmount = async (tokenSymbol: string, tokenAmount: number): Promise<number> => {
-  // Mock implementation - in a real app would call contract or API
-  const tokenPrice = 0.01; // Mock price
-  return tokenAmount * tokenPrice;
+  try {
+    const response = await apiClient.get<{ solAmount: number }>(API_CONFIG.ENDPOINTS.ESTIMATE_SOL, {
+      tokenSymbol,
+      tokenAmount
+    });
+    
+    return response.solAmount;
+  } catch (error) {
+    console.error('Error estimating SOL amount:', error);
+    throw new Error('Failed to estimate SOL amount');
+  }
 };
 
 const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
   try {
-    // Mock implementation - in a real app would call blockchain
-    const { tokenSymbol, action, walletAddress, amountSol, amountTokens } = params;
+    const { tokenSymbol, action, walletAddress, amountSol, amountTokens, gasPriority } = params;
     
-    // Check required parameters based on action type
+    // Validate required parameters
     if (action === 'buy' && !amountSol) {
       return {
         success: false,
@@ -35,40 +52,29 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
       };
     }
     
-    // Mock execution delay to simulate blockchain transaction
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock exchange rate calculation
-    const tokenPrice = 0.01;
-    let solAmount = amountSol || 0;
-    let tokenAmount = amountTokens || 0;
-    
-    if (action === 'buy') {
-      tokenAmount = solAmount / tokenPrice;
-    } else {
-      solAmount = tokenAmount * tokenPrice;
-    }
-    
-    // Log the trade in the database
-    await logTradeInDatabase({
+    // Call API to execute the trade
+    const tradeResponse = await apiClient.post<TradeResult>(API_CONFIG.ENDPOINTS.EXECUTE_TRADE, {
       tokenSymbol,
       side: action,
-      amount: solAmount,
-      price: tokenPrice,
       walletAddress,
-      amountTokens: tokenAmount
+      amountSol,
+      amountTokens,
+      gasPriority
     });
     
-    // Generate a mock transaction hash
-    const txHash = `TX${Math.random().toString(36).substring(2, 15)}`;
+    // Log the trade in the database
+    if (tradeResponse.success) {
+      await logTradeInDatabase({
+        tokenSymbol,
+        side: action,
+        amount: tradeResponse.amountSol || 0,
+        price: tradeResponse.price || 0,
+        walletAddress,
+        amountTokens: tradeResponse.amountTokens || 0
+      });
+    }
     
-    return {
-      success: true,
-      txHash,
-      price: tokenPrice,
-      amountSol: solAmount,
-      amountTokens: tokenAmount
-    };
+    return tradeResponse;
   } catch (error) {
     console.error('Error executing trade:', error);
     return {
@@ -94,7 +100,7 @@ const logTradeInDatabase = async (tradeData: {
         token_symbol: tradeData.tokenSymbol,
         side: tradeData.side,
         amount: tradeData.amount,
-        wallet_address: tradeData.walletAddress, // Key is snake_case in DB
+        wallet_address: tradeData.walletAddress,
         created_at: new Date().toISOString()
       }]);
       
@@ -116,3 +122,4 @@ export const tradingService = {
   executeTrade,
   logTradeInDatabase
 };
+

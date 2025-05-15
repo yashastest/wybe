@@ -27,13 +27,17 @@ export const useTokenListing = () => {
       const result = await tokenTradingService.launchToken(serviceParams);
       
       if (result.success) {
+        toast.success('Token launched successfully', {
+          description: `${params.name} (${params.symbol}) has been launched.`
+        });
+        
         return {
           success: true,
           tokenId: result.tokenId
         };
       } else {
         toast.error('Failed to launch token', { 
-          description: 'Please try again later' 
+          description: result.error || 'Please try again later'
         });
         return {
           success: false,
@@ -57,12 +61,20 @@ export const useTokenListing = () => {
       const result = await tokenTradingService.buyInitialSupply(tokenId, walletAddress, amount);
       
       if (result.success) {
+        toast.success('Initial supply purchased', {
+          description: `You have purchased ${result.amountTokens} tokens for ${result.amountSol} SOL.`
+        });
+        
         return {
           success: true,
           amountSol: result.amountSol,
           amountTokens: result.amountTokens,
         };
       } else {
+        toast.error('Failed to purchase initial supply', {
+          description: result.error || 'Please try again later'
+        });
+        
         return {
           success: false,
           error: result.error || 'Failed to purchase initial supply'
@@ -70,6 +82,7 @@ export const useTokenListing = () => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error('Purchase error', { description: errorMessage });
       return {
         success: false,
         error: errorMessage
@@ -91,6 +104,9 @@ export const useTokenListing = () => {
       return launchedTokensData;
     } catch (error) {
       console.error('Error fetching listed tokens:', error);
+      toast.error('Failed to fetch tokens', {
+        description: 'Please try again later'
+      });
       return [];
     }
   };
