@@ -11,7 +11,9 @@ export type {
   TokenTransaction,
   ListedToken,
   TokenLaunchParams,
-  TokenLaunchResponse
+  TokenLaunchResponse,
+  InitialSupplyPurchaseResponse,
+  TradeHistoryFilters
 } from './token/types';
 
 // Re-export all services as a single service

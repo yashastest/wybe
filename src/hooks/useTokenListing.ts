@@ -6,8 +6,6 @@ import { ListedToken, TokenLaunchParams, TokenLaunchResponse } from '@/services/
 
 export interface LaunchedToken extends ListedToken {
   banner?: string;
-  category: string[];
-  devWallet: string;
 }
 
 export const useTokenListing = () => {
@@ -86,9 +84,7 @@ export const useTokenListing = () => {
       // Convert ListedToken[] to LaunchedToken[]
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
-        banner: undefined,
-        category: token.category || [],
-        devWallet: token.devWallet || ''
+        banner: undefined
       }));
       
       setLaunchedTokens(launchedTokensData);

@@ -12,6 +12,7 @@ import { WalletProvider } from '@/hooks/useWallet.tsx';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
 import Launch from './pages/Launch';
+import BondingCurves from './pages/BondingCurves';
 
 const App = () => {
   // You can add any global context providers or initial setup here
@@ -28,6 +29,7 @@ const App = () => {
           <Route path="/trading-history" element={<TradingHistory />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/launch" element={<Launch />} />
+          <Route path="/bonding-curves" element={<BondingCurves />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/tokens" element={<AdminDashboard />} />
