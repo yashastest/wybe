@@ -18,10 +18,12 @@ export const useTokenListing = () => {
     setIsLaunching(true);
     try {
       // Convert from UI params to service params
-      const serviceParams = {
+      const serviceParams: TokenLaunchParams = {
         name: params.name,
         symbol: params.symbol,
-        initialSupply: params.totalSupply,
+        initialSupply: params.initialSupply,
+        totalSupply: params.totalSupply,
+        creatorWallet: params.creatorWallet,
         creator: { wallet: params.creatorWallet }
       };
       

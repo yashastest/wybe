@@ -50,12 +50,14 @@ export const useTokenTrading = (tokenSymbol?: string) => {
       if (result.success) {
         // Log the trade to database via the Edge Function
         await tokenTradingService.logTradeInDatabase({
-          wallet_address: tradeParams.walletAddress,
-          token_symbol: tradeParams.tokenSymbol,
+          tokenSymbol: tradeParams.tokenSymbol,
           side: tradeParams.action,
           amount: tradeParams.action === 'buy' 
             ? result.amountTokens || 0 
-            : tradeParams.amountTokens || 0
+            : tradeParams.amountTokens || 0,
+          price: result.price || 0,
+          walletAddress: tradeParams.walletAddress,
+          amountTokens: result.amountTokens || 0
         });
         
         // Update local state with new trade

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,25 +40,26 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   
   // Calculate receive amount based on input and selected tab
   useEffect(() => {
-    const parsedAmount = parseFloat(amount) || 0;
+    const calculateReceiveAmount = async () => {
+      const parsedAmount = parseFloat(amount) || 0;
+      
+      try {
+        if (tab === 'buy') {
+          // Estimate token amount from SOL amount
+          const tokenAmount = await tokenTradingService.estimateTokenAmount(tokenSymbol, parsedAmount);
+          setReceiveAmount(tokenAmount.toFixed(2));
+        } else {
+          // Estimate SOL amount from token amount
+          const solAmount = await tokenTradingService.estimateSolAmount(tokenSymbol, parsedAmount);
+          setReceiveAmount(solAmount.toFixed(5));
+        }
+      } catch (error) {
+        console.error('Error calculating receive amount:', error);
+        setReceiveAmount('0.00');
+      }
+    };
     
-    if (tab === 'buy') {
-      // Estimate token amount from SOL amount
-      const tokenAmount = tokenTradingService.estimateTokenAmount(
-        tokenSymbol, 
-        parsedAmount, 
-        'buy'
-      );
-      setReceiveAmount(tokenAmount ? tokenAmount.toFixed(2) : '0.00');
-    } else {
-      // Estimate SOL amount from token amount
-      const solAmount = tokenTradingService.estimateSolAmount(
-        tokenSymbol, 
-        parsedAmount, 
-        'sell'
-      );
-      setReceiveAmount(solAmount ? solAmount.toFixed(5) : '0.00');
-    }
+    calculateReceiveAmount();
   }, [amount, tab, tokenSymbol, tokenPrice]);
 
   const handleMaxClick = () => {

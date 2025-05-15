@@ -53,9 +53,10 @@ const LaunchTokenForm: React.FC = () => {
       const result = await launchToken({
         name,
         symbol: normalizedSymbol,
+        initialSupply: parseFloat(totalSupply),
+        totalSupply: parseFloat(totalSupply),
         creatorWallet: address,
-        initialPrice: parseFloat(initialPrice),
-        totalSupply: parseFloat(totalSupply)
+        creator: { wallet: address }
       });
       
       if (result.success && result.tokenId) {

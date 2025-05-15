@@ -52,19 +52,22 @@ const getTokenById = async (id: string): Promise<TokenDetails | null> => {
     if (!data) {
       return null;
     }
+
+    // Type assertion to handle expected database fields
+    const tokenData = data as any;
     
     const tokenDetails: TokenDetails = {
-      id: data.id,
-      name: data.name,
-      symbol: data.symbol,
-      initialSupply: data.initial_supply || 0,
-      currentSupply: data.current_supply || 0,
-      marketCap: data.market_cap,
-      launchDate: data.launch_date,
-      creatorWallet: data.creator_wallet,
-      tokenAddress: data.token_address,
-      launched: data.launched,
-      bondingCurve: data.bonding_curve ? data.bonding_curve as TokenDetails['bondingCurve'] : undefined,
+      id: tokenData.id,
+      name: tokenData.name,
+      symbol: tokenData.symbol,
+      initialSupply: tokenData.initial_supply || 0,
+      currentSupply: tokenData.current_supply || 0,
+      marketCap: tokenData.market_cap,
+      launchDate: tokenData.launch_date,
+      creatorWallet: tokenData.creator_wallet,
+      tokenAddress: tokenData.token_address,
+      launched: tokenData.launched,
+      bondingCurve: tokenData.bonding_curve ? tokenData.bonding_curve as TokenDetails['bondingCurve'] : undefined,
     };
     
     return tokenDetails;
@@ -261,7 +264,7 @@ const getTokenListing = async (limit: number = 10): Promise<TokenDetails[]> => {
       throw error;
     }
     
-    return data.map(token => {
+    return data.map((token: any) => {
       // Handle bondingCurve conversion
       let bondingCurveData = null;
       
@@ -313,7 +316,7 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
       throw error;
     }
     
-    return data.map(token => {
+    return data.map((token: any) => {
       // Create mock holder stats for demonstration
       const mockHolderStats = {
         whales: Math.floor(Math.random() * 10) + 1,

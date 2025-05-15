@@ -78,6 +78,9 @@ export interface TokenLaunchParams {
   name: string;
   symbol: string;
   initialSupply: number;
+  totalSupply: number;
+  creatorWallet: string;
+  initialPrice?: number;
   creator: {
     wallet: string;
     email?: string;
