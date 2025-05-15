@@ -1,5 +1,6 @@
 
 // Empty module to handle imports of unsupported browser modules
+export default {};
 
 /**
  * Mock implementation for rpc-websockets/dist/lib/client
@@ -74,21 +75,15 @@ export class w3cwebsocket {
   }
 }
 
-// Export default for modules that import the whole client
-export default Client;
+// Additional exports from rpc-websockets
+export const WebSocketClient = Client;
+export const NodeWebSocketClient = Client;
 
 // Export RpcWebSocketCommonClient which is specifically imported by @solana/web3.js
 export const RpcWebSocketCommonClient = Client;
 
-// Additional exports for other modules imported by @solana/web3.js
-// Used by websocket.browser
-export const WebSocketClient = Client;
-export const NodeWebSocketClient = Client;
-
 // Export createRpc for the websocket.browser import
-export function createRpc() {
-  return new Client();
-}
+export const createRpc = () => new Client();
 
 // Mock WS module used by Solana's web socket connection
 export class WebSocketImpl extends w3cwebsocket {
@@ -98,12 +93,5 @@ export class WebSocketImpl extends w3cwebsocket {
   }
 }
 
-// Mock implementation for jayson/lib/client/browser
-export const jaysonClient = {
-  Client: class {
-    constructor() {}
-    request() {
-      return Promise.resolve({ result: null, error: null });
-    }
-  }
-};
+// Make sure the implementation is available as both default and named export
+export { Client as default };

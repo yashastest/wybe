@@ -72,10 +72,14 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     '';
 
   return (
-    <header className="border-b bg-background sticky top-0 z-40">
-      <div className="container flex h-16 items-center">
-        <div className="mr-4 flex">
-          <Link to="/" className="flex items-center space-x-2">
+    <header 
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 bg-black ${
+        scrolled ? 'py-2 shadow-lg' : 'py-3'
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -90,158 +94,130 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               <span className="ml-2 text-xl md:text-2xl text-white font-extrabold font-poppins tracking-wide italic">Wybe</span>
             </motion.div>
           </Link>
-        </div>
-        <div className="flex items-center space-x-6 text-sm font-medium">
-          {/* Regular navigation links */}
-          {linksToDisplay.map((link, index) => (
-            <motion.div
-              key={link.to}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-            >
-              <Link
-                to={link.to}
-                className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary ${
-                  location.pathname === link.to 
-                    ? 'active-nav-link' 
-                    : 'text-white hover:text-wybe-primary/90'
-                }`}
-              >
-                {link.label}
-              </Link>
-            </motion.div>
-          ))}
           
-          {/* Add Meme Battle Royale link with orange highlight */}
-          <Link
-            to="/meme-battle-royale"
-            className="flex items-center text-orange-500 font-bold hover:text-orange-600 transition-colors"
-          >
-            🐸 Meme Battle Royale
-          </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8">
+            {linksToDisplay.map((link, index) => (
+              <motion.div
+                key={link.to}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
+              >
+                <Link
+                  to={link.to}
+                  className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary ${
+                    location.pathname === link.to 
+                      ? 'active-nav-link' 
+                      : 'text-white hover:text-wybe-primary/90'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </motion.div>
+            ))}
+          </nav>
           
-          {/* Admin navigation links */}
-          {adminNavLinks.map((link, index) => (
-            <motion.div
-              key={link.to}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-            >
-              <Link
-                to={link.to}
-                className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary ${
-                  location.pathname === link.to 
-                    ? 'active-nav-link' 
-                    : 'text-white hover:text-wybe-primary/90'
-                }`}
+          {/* Wallet Connection Button - Desktop */}
+          {!adminOnly && (
+            <div className="hidden md:flex items-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                {link.label}
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-        
-        {/* Wallet Connection Button - Desktop */}
-        {!adminOnly && (
-          <div className="hidden md:flex items-center gap-4">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Button 
-                onClick={handleWalletConnection} 
-                className={connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}
-                disabled={isConnecting}
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                {isConnecting ? (
-                  "Connecting..."
-                ) : connected ? (
-                  truncatedAddress
-                ) : (
-                  "Connect Wallet"
-                )}
-              </Button>
-            </motion.div>
-            
-            {/* Launch Token Button - Desktop */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <Link to="/launch">
-                <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                  Launch a Token
+                <Button 
+                  onClick={handleWalletConnection} 
+                  className={connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}
+                  disabled={isConnecting}
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  {isConnecting ? (
+                    "Connecting..."
+                  ) : connected ? (
+                    truncatedAddress
+                  ) : (
+                    "Connect Wallet"
+                  )}
                 </Button>
-              </Link>
-            </motion.div>
-          </div>
-        )}
-        
-        {/* Mobile Menu Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="md:hidden"
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="p-2 text-white focus:outline-none"
+              </motion.div>
+              
+              {/* Launch Token Button - Desktop */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
               >
-                <Menu className="h-6 w-6" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-black border border-white/10 mr-4">
-              {linksToDisplay.map((link) => (
-                <DropdownMenuItem key={link.to} asChild>
-                  <Link
-                    to={link.to}
-                    className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md ${
-                      location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-              {!adminOnly && (
-                <>
-                  {/* Wallet Button - Mobile */}
-                  <DropdownMenuItem asChild>
-                    <Button 
-                      onClick={handleWalletConnection} 
-                      className={`w-full mt-2 ${connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}`}
-                      disabled={isConnecting}
+                <Link to="/launch">
+                  <Button className="btn-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
+                    Launch a Token
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
+          )}
+          
+          {/* Mobile Menu Button */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="md:hidden"
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2 text-white focus:outline-none"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-black border border-white/10 mr-4">
+                {linksToDisplay.map((link) => (
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link
+                      to={link.to}
+                      className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md ${
+                        location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
+                      }`}
                     >
-                      <Wallet className="mr-2 h-4 w-4" />
-                      {isConnecting ? (
-                        "Connecting..."
-                      ) : connected ? (
-                        truncatedAddress
-                      ) : (
-                        "Connect Wallet"
-                      )}
-                    </Button>
-                  </DropdownMenuItem>
-                  
-                  {/* Launch Button - Mobile */}
-                  <DropdownMenuItem asChild>
-                    <Link to="/launch" className="w-full">
-                      <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
-                        Launch a Token
-                      </Button>
+                      {link.label}
                     </Link>
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </motion.div>
+                ))}
+                {!adminOnly && (
+                  <>
+                    {/* Wallet Button - Mobile */}
+                    <DropdownMenuItem asChild>
+                      <Button 
+                        onClick={handleWalletConnection} 
+                        className={`w-full mt-2 ${connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}`}
+                        disabled={isConnecting}
+                      >
+                        <Wallet className="mr-2 h-4 w-4" />
+                        {isConnecting ? (
+                          "Connecting..."
+                        ) : connected ? (
+                          truncatedAddress
+                        ) : (
+                          "Connect Wallet"
+                        )}
+                      </Button>
+                    </DropdownMenuItem>
+                    
+                    {/* Launch Button - Mobile */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/launch" className="w-full">
+                        <Button className="btn-primary w-full mt-2 hover:bg-wybe-primary/90 active:bg-wybe-primary/70">
+                          Launch a Token
+                        </Button>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        </div>
       </div>
     </header>
   );

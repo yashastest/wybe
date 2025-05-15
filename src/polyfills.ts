@@ -70,17 +70,3 @@ if (typeof XMLHttpRequest === 'undefined') {
     send() {}
   };
 }
-
-// Make sure require is available (sometimes used by Solana's dependencies)
-(window as any).require = (window as any).require || function(module: string) {
-  if (module === 'rpc-websockets/dist/lib/client') {
-    return { Client: class {} };
-  }
-  if (module === 'rpc-websockets/dist/lib/client/websocket.browser') {
-    return () => ({ Client: class {} });
-  }
-  if (module === 'ws') {
-    return class {};
-  }
-  return {};
-};
