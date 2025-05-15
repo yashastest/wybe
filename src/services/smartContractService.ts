@@ -1,4 +1,3 @@
-
 // Type definitions for the contract configuration
 export interface ContractConfig {
   creatorFeePercentage: number;
@@ -10,6 +9,8 @@ export interface DeploymentResult {
   success: boolean;
   programId?: string;
   error?: string;
+  message?: string;
+  transactionId?: string;
 }
 
 export interface GasUsageResult {
@@ -116,21 +117,33 @@ class SmartContractService {
   }
   
   // Get testnet contracts
-  async getTestnetContracts(): Promise<TestnetDeployment[]> {
-    return [
+  async getTestnetContracts(): Promise<TestnetContract[]> {
+    const testnetDeployments = [
       {
         id: '1',
+        name: 'WYBE Token Program',
         programId: 'WyBE23KvMaD5jSmQQk2pyrGoJHvEWXLz9iGdQ9E4stU',
         deploymentDate: '2025-05-12T14:32:17Z',
-        status: 'active'
+        status: 'active',
+        address: 'WyBE23KvMaD5jSmQQk2pyrGoJHvEWXLz9iGdQ9E4stU',
+        deployedAt: '2025-05-12T14:32:17Z',
+        network: 'devnet',
+        testTxCount: 23
       },
       {
         id: '2',
+        name: 'Bonding Curve Logic',
         programId: 'BC23XzMvRT67DePQq8etHwyzL9E4psTwj92LqWaM',
         deploymentDate: '2025-05-10T09:15:43Z',
-        status: 'inactive'
+        status: 'inactive',
+        address: 'BC23XzMvRT67DePQq8etHwyzL9E4psTwj92LqWaM',
+        deployedAt: '2025-05-10T09:15:43Z',
+        network: 'testnet',
+        testTxCount: 12
       }
     ];
+    
+    return testnetDeployments;
   }
   
   // Run a security audit on the contract

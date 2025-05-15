@@ -176,7 +176,7 @@ const ContractSecurityAudit: React.FC = () => {
               onClick={handleTestnetTest} 
               disabled={isLoading}
               size="sm"
-              variant="outline"
+              variant="secondary"
             >
               {isLoading ? "Testing..." : "Run Testnet Test"}
             </Button>

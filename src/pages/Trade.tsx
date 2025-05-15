@@ -317,7 +317,7 @@ const Trade: React.FC = () => {
                         <CardTitle className="text-lg">Trader Activity</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <TraderActivity symbol={currentToken?.symbol} />
+                        <TraderActivity symbol={currentToken?.symbol} tokenSymbol={currentToken?.symbol} />
                       </CardContent>
                     </Card>
                   </div>

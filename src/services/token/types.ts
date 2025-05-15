@@ -1,4 +1,3 @@
-
 // Token trading related types
 export interface TokenTransaction {
   id: string;
@@ -103,8 +102,7 @@ export interface TokenLaunchResult {
   tokenId?: string;
   contractAddress?: string;
   error?: string;
-  // Adding missing properties
-  message?: string;
+  message?: string; // Added for backward compatibility
 }
 
 // Aliases for backward compatibility
@@ -126,7 +124,7 @@ export interface TestnetContract {
   name: string;
   address: string;
   deployedAt: string;
-  status: 'active' | 'inactive';
+  status: 'active' | 'testing' | 'failed' | 'inactive';
   programId: string;
   network: string;
   deploymentDate: string;
