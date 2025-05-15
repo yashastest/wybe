@@ -12,7 +12,7 @@ import {
   ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, 
   LineChart, Layers, Star, ArrowUpDown, Wallet, 
   Zap, Users, PieChart, CircleDollarSign, ShieldAlert,
-  Info
+  Info, History as HistoryIcon
 } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import EnhancedTradingInterface from '@/components/EnhancedTradingInterface';
@@ -29,6 +29,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { tradingService } from '@/services/tradingService';
+import TraderActivity from '@/components/TraderActivity';
 
 const Trade = () => {
   // Extract token symbol from URL params or use a default
@@ -390,7 +391,7 @@ const Trade = () => {
                   to="/trading-history"
                   className="flex-1 md:flex-none bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:shadow-indigo-600/30 transition-all"
                 >
-                  <History size={16} className="inline mr-1" /> History
+                  <HistoryIcon size={16} className="inline mr-1" /> History
                 </Link>
               </div>
             </div>

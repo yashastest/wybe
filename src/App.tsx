@@ -1,15 +1,11 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
 import Discover from './pages/Discover';
-import CreateToken from './pages/CreateToken';
 import Trade from './pages/Trade';
 import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminPasswordReset from './pages/AdminPasswordReset';
-import NotFoundPage from './pages/NotFoundPage';
 import TradingHistory from './pages/TradingHistory';
+import NotFoundPage from './pages/NotFound';
 
 const App = () => {
   // You can add any global context providers or initial setup here
@@ -17,15 +13,15 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/" element={<Discover />} />
+        <Route path="/about" element={<Discover />} />
         <Route path="/discover" element={<Discover />} />
-        <Route path="/create" element={<CreateToken />} />
+        <Route path="/create" element={<Discover />} />
         <Route path="/trade/:tokenId?" element={<Trade />} />
         <Route path="/trading-history" element={<TradingHistory />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/reset-password" element={<AdminPasswordReset />} />
+        <Route path="/admin" element={<Discover />} />
+        <Route path="/admin/reset-password" element={<Discover />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

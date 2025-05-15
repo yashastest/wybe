@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowUpDown, AlertCircle, Check, Loader, Wallet, ArrowDown, 
   Star, Settings, Zap, TrendingUp, ChevronRight, BarChart3, 
-  Flame, Users, CircleDollarSign 
+  Flame, Users, CircleDollarSign, ArrowUp
 } from 'lucide-react';
 import { Info } from './Icons'; // Import the Info icon from our custom Icons component
 import { useWallet } from '@/hooks/useWallet.tsx';
@@ -252,7 +252,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
       console.error(`Error during ${tab}:`, error);
       toast.error(
         `Failed to ${tab} ${tokenSymbol}`, 
-        { id: toastId, description: error instanceof Error ? error.message : 'Unknown error occurred' }
+        { id: toastId, description: error instanceof Error ? error.message : 'Unknown error' }
       );
     } finally {
       setIsSubmitting(false);
@@ -831,7 +831,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
           
           <div>
             <h3 className="text-base font-semibold mb-3 flex items-center">
-              <BadgeDollarSign size={16} className="text-blue-400 mr-2" />
+              <CircleDollarSign size={16} className="text-blue-400 mr-2" />
               Whale Activity
             </h3>
             <Card className="bg-gradient-to-r from-blue-900/20 to-indigo-900/10 border-blue-500/20">
@@ -1035,9 +1035,8 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="chart-type" className="text-sm">Default Chart Type</Label>
+                    <Label className="text-sm">Default Chart Type</Label>
                     <Select
-                      id="chart-type"
                       value={chartType}
                       onValueChange={(value) => setChartType(value as 'price' | 'marketCap')}
                     >
