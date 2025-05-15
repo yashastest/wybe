@@ -1,6 +1,78 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { TradeParams, TradeResult, ListedToken, TokenTransaction, TradeHistoryFilters } from '@/services/token/types';
+
+// Token trading related types
+export interface TokenTransaction {
+  id: string;
+  txHash: string;
+  tokenSymbol: string;
+  tokenName?: string;
+  type: 'buy' | 'sell';
+  side?: 'buy' | 'sell'; // For backward compatibility
+  amount: number;  // Amount in SOL
+  amountUsd?: number;
+  price: number;
+  fee?: number;
+  timestamp: string;
+  walletAddress?: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  amountTokens?: number;  // For backward compatibility
+  amountSol?: number; // For backward compatibility
+}
+
+export interface TradeHistoryFilters {
+  tokenSymbol?: string;
+  side?: 'buy' | 'sell'; // Type of transaction
+  startDate?: Date;
+  endDate?: Date;
+  status?: 'pending' | 'confirmed' | 'failed';
+  walletAddress?: string;
+}
+
+export interface ListedToken {
+  id: string;
+  symbol: string;
+  name: string;
+  price: number;
+  priceChange24h?: number;
+  logo?: string | null;
+  contractAddress?: string;
+  marketCap?: number;
+  volume24h?: number;
+  totalSupply?: number;
+  description?: string;
+  isAssisted?: boolean;
+  creatorAddress?: string;
+  // Add missing properties used in components
+  change24h?: number;
+  category?: string[];
+  holderStats?: {
+    whales: number;
+    retail: number;
+    devs: number;
+  };
+}
+
+export interface TradeParams {
+  walletAddress: string;
+  tokenSymbol: string;
+  action: 'buy' | 'sell';
+  gasPriority: 'low' | 'medium' | 'high';
+  amountSol?: number;
+  amountTokens?: number;
+}
+
+export interface TradeResult {
+  success: boolean;
+  txHash?: string;
+  amount?: number;
+  price?: number;
+  fee?: number;
+  error?: string;
+  // Adding backward compatibility properties
+  amountSol?: number;
+  amountTokens?: number;
+  errorMessage?: string;
+}
 
 // Interface for calculating token price
 interface PriceCalcParams {
@@ -30,7 +102,14 @@ class TokenTradingService {
         totalSupply: 1000000000,
         isAssisted: false,
         creatorAddress: "8zjX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1BhR",
-        logo: null
+        logo: null,
+        change24h: 12.5,
+        category: ['defi', 'utility'],
+        holderStats: {
+          whales: 2,
+          retail: 85,
+          devs: 3
+        }
       },
       {
         id: "pepe-2", 
@@ -45,7 +124,14 @@ class TokenTradingService {
         totalSupply: 100000000000,
         isAssisted: false,
         creatorAddress: "9ajX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1CyZ",
-        logo: null
+        logo: null,
+        change24h: 5.7,
+        category: ['meme'],
+        holderStats: {
+          whales: 4,
+          retail: 128,
+          devs: 1
+        }
       },
       {
         id: "doge-3", 
@@ -60,7 +146,14 @@ class TokenTradingService {
         totalSupply: 132500000000,
         isAssisted: true,
         creatorAddress: "7wpX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1AiJ",
-        logo: null
+        logo: null,
+        change24h: -3.2,
+        category: ['meme'],
+        holderStats: {
+          whales: 8,
+          retail: 340,
+          devs: 2
+        }
       }
     ]);
   }
@@ -193,7 +286,7 @@ class TokenTradingService {
           amount: 1000,
           price: 0.0015,
           timestamp: new Date(Date.now() - 3600000).toISOString(),
-          status: 'completed',
+          status: 'confirmed',
           txHash: `tx_${Math.random().toString(36).substring(2, 10)}`,
         },
         {
@@ -204,7 +297,7 @@ class TokenTradingService {
           amount: 5000,
           price: 0.000032,
           timestamp: new Date(Date.now() - 86400000).toISOString(),
-          status: 'completed',
+          status: 'confirmed',
           txHash: `tx_${Math.random().toString(36).substring(2, 10)}`,
         },
         {
@@ -215,7 +308,7 @@ class TokenTradingService {
           amount: 200,
           price: 0.23,
           timestamp: new Date(Date.now() - 172800000).toISOString(),
-          status: 'completed',
+          status: 'confirmed',
           txHash: `tx_${Math.random().toString(36).substring(2, 10)}`,
         }
       ];
@@ -223,6 +316,33 @@ class TokenTradingService {
       console.error("Failed to get user transactions:", error);
       return [];
     }
+  }
+
+  /**
+   * Launch a new token
+   */
+  async launchToken(params: any): Promise<any> {
+    // Mock implementation
+    console.log('Launching token:', params);
+    return Promise.resolve({
+      success: true,
+      tokenId: `token_${Date.now().toString(36)}`,
+      message: 'Token launched successfully'
+    });
+  }
+  
+  /**
+   * Buy initial supply of a token
+   */
+  async buyInitialSupply(tokenId: string, walletAddress: string, amount: number): Promise<any> {
+    // Mock implementation
+    console.log('Buying initial supply:', { tokenId, walletAddress, amount });
+    return Promise.resolve({
+      success: true,
+      amountSol: amount,
+      amountTokens: amount * 1000,
+      message: 'Initial supply purchased'
+    });
   }
 }
 
