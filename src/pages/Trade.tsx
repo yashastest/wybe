@@ -458,7 +458,7 @@ const Trade = () => {
                   </div>
                   <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
                     <span className="text-xs text-indigo-300 flex items-center gap-1">
-                      <ArrowDownUp size={12} className="text-indigo-400" />
+                      <ArrowUpDown size={12} className="text-indigo-400" />
                       24h Volume
                     </span>
                     <p className="font-bold font-mono text-sm md:text-lg text-white">${token.volume24h.toLocaleString()}</p>
