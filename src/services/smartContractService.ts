@@ -1,3 +1,4 @@
+
 // Type definitions for the contract configuration
 export interface ContractConfig {
   creatorFeePercentage: number;
@@ -31,6 +32,18 @@ export interface TestnetDeployment {
   programId: string;
   deploymentDate: string;
   status: string;
+}
+
+export interface TestnetContract {
+  id: string;
+  name: string;
+  programId: string;
+  deploymentDate: string;
+  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+  address: string;
+  deployedAt: string;
+  status: 'active' | 'testing' | 'failed' | 'inactive';
+  testTxCount: number;
 }
 
 export interface DeployedContract {
@@ -82,6 +95,8 @@ class SmartContractService {
     return {
       success: true,
       programId: programAddress || "WyBE23KvMaD5jSmQQk2pyrGoJHvEWXLz9iGdQ9E4stU",
+      message: "Contract deployed successfully",
+      transactionId: "5vLYEMmGv18S96gYPWHK2psJägbNyJ7UrP8xMSLiF2HxrpWcMBXrNsJ7bxALmTe2G4oDqK5vQYbHHDabMGqNxySA"
     };
   }
 
@@ -118,7 +133,7 @@ class SmartContractService {
   
   // Get testnet contracts
   async getTestnetContracts(): Promise<TestnetContract[]> {
-    const testnetDeployments = [
+    const testnetContracts: TestnetContract[] = [
       {
         id: '1',
         name: 'WYBE Token Program',
@@ -143,7 +158,7 @@ class SmartContractService {
       }
     ];
     
-    return testnetDeployments;
+    return testnetContracts;
   }
   
   // Run a security audit on the contract

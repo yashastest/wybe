@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,7 +103,7 @@ const ContractSecurityAudit: React.FC = () => {
               {securityResults.map((finding, index) => {
                 const { icon, color } = getSeverityDetails(finding.severity);
                 return (
-                  <Alert key={index} variant="outline" className="border-l-4" style={{ borderLeftColor: `var(--${color}-500)` }}>
+                  <Alert key={index} variant="default" className="border-l-4" style={{ borderLeftColor: `var(--${color}-500)` }}>
                     <div className="flex items-center gap-2">
                       {icon}
                       <AlertTitle className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import './index.css';
 import { Toaster } from './components/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { smartContractService } from './services/smartContractService.ts';
+import { WalletProvider } from '@/lib/wallet';
 
 // Initialize query client with default options
 const queryClient = new QueryClient({
@@ -32,8 +33,10 @@ try {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster position="top-right" />
+      <WalletProvider>
+        <App />
+        <Toaster position="top-right" />
+      </WalletProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
