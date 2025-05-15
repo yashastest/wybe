@@ -1,3 +1,4 @@
+
 import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -200,9 +201,13 @@ const getUserTransactions = async (
         );
       } else {
         if (filters.tokenSymbol) {
-          filteredData = filteredData.filter(tx => 
-            tx.token_symbol.toLowerCase() === filters.tokenSymbol?.toLowerCase()
-          );
+          filteredData = filteredData.filter(tx => {
+            // Safely check if token_symbol exists and is a string before calling toLowerCase
+            if (tx.token_symbol && typeof tx.token_symbol === 'string') {
+              return tx.token_symbol.toLowerCase() === filters.tokenSymbol?.toLowerCase();
+            }
+            return false;
+          });
         }
         
         if (filters.side) {
