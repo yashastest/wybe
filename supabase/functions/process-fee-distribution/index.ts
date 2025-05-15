@@ -124,10 +124,11 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        success: true,
         processed: results.filter(r => r.status === 'processed').length,
         skipped: results.filter(r => r.status === 'skipped').length,
         failed: results.filter(r => r.status === 'failed').length,
-        results,
+        results
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

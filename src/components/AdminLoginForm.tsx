@@ -1,139 +1,121 @@
 
 import React, { useState } from 'react';
+import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
-import AdminPasswordReset from "./AdminPasswordReset";
+import { Loader } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import AdminPasswordReset from './AdminPasswordReset';
 
 const AdminLoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+    
     setIsLoading(true);
-
+    
     try {
-      // Get the Supabase URL and key properly from the environment
-      const SUPABASE_URL = "https://hiisslyuwioisprllxvq.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpaXNzbHl1d2lvaXNwcmxseHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczMTY3MzgsImV4cCI6MjA2Mjg5MjczOH0.WMg3MGv77QorfG8_UfJ4iTrp_PMm9Y6u4qXV9jejr68";
-      
-      // Call the auth-admin Edge Function for enhanced authentication
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/auth-admin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify({ email, password })
+      // Call the auth-admin edge function to authenticate
+      const { data, error } = await supabase.functions.invoke('auth-admin', {
+        body: { email, password }
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Authentication failed');
+      
+      if (error || !data.success) {
+        throw new Error(error?.message || data?.error || 'Invalid credentials');
       }
-
-      // Admin is authenticated, create session data
-      const sessionData = {
-        id: result.user.id,
-        email: result.user.email,
-        userId: result.user.user_id,
-        permissions: ['all'], // Super admin has all permissions
-        loginTime: Date.now(),
-        expiryTime: Date.now() + (12 * 60 * 60 * 1000), // 12 hour expiry
-        accessToken: result.session.access_token
-      };
       
-      // Set session data
-      localStorage.setItem('wybeAdminLoggedIn', 'true');
-      sessionStorage.setItem('wybeAdminSession', JSON.stringify(sessionData));
-      
+      // Authentication successful
       toast.success('Login successful!');
       
-      // Navigate to admin page
-      setTimeout(() => {
-        navigate('/admin', { replace: true });
-        setIsLoading(false);
-      }, 500);
+      // Store admin session data
+      localStorage.setItem('wybeAdminLoggedIn', 'true');
+      sessionStorage.setItem('wybeAdminSession', JSON.stringify({
+        admin: data.admin,
+        session: data.session
+      }));
+      
+      // Redirect to admin dashboard
+      navigate('/admin', { replace: true });
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error('Invalid credentials. Please check email and password.');
+      console.error('Login error:', error);
+      toast.error('Login failed: ' + (error.message || 'Invalid credentials'));
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="glass-card p-6 w-full max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="email" className="block text-sm font-medium">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full"
-            placeholder="Enter your email"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <label htmlFor="password" className="block text-sm font-medium">
-            Password
-          </label>
-          <div className="relative">
-            <Input
+    <Card className="w-full bg-wybe-background-light border-white/5">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center">
+          <span className="text-white">Admin </span>
+          <span className="text-orange-500">Login</span>
+        </CardTitle>
+        <CardDescription className="text-center">Enter your credentials to access the administration panel</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input 
+              id="email"
+              type="email"
+              placeholder="admin@wybe.app"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-wybe-background/40"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+            </div>
+            <Input 
               id="password"
-              type={showPassword ? "text" : "password"}
+              type="password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="bg-wybe-background/40"
+              disabled={isLoading}
               required
-              className="w-full pr-10"
-              placeholder="Enter your password"
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOffIcon className="h-4 w-4 text-gray-400" />
-              ) : (
-                <EyeIcon className="h-4 w-4 text-gray-400" />
-              )}
-            </button>
           </div>
-          <div className="text-right text-sm">
-            <AdminPasswordReset />
-          </div>
-        </div>
-        
-        <Button
-          type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Logging in...' : 'Login'}
-        </Button>
-        
-        <p className="text-sm text-center text-gray-400 mt-4">
-          Demo credentials: <br />
-          Email: <span className="text-white font-mono">admin@wybe.app</span> <br />
-          Password: <span className="text-white font-mono">admin123</span>
-        </p>
-      </form>
-    </div>
+          <Button 
+            type="submit" 
+            className="w-full bg-orange-600 hover:bg-orange-700"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              'Log in'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <AdminPasswordReset />
+      </CardFooter>
+    </Card>
   );
 };
 

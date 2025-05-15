@@ -2,10 +2,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
+interface AdminLoginRequest {
+  email: string;
+  password: string;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Session expiration in seconds (24 hours)
+const SESSION_EXPIRATION = 24 * 60 * 60;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -17,129 +25,62 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client with the service role key (admin privileges)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { email, password } = await req.json();
-
+    
+    const { email, password }: AdminLoginRequest = await req.json();
+    
+    // Validate required fields
     if (!email || !password) {
       return new Response(
-        JSON.stringify({ 
-          error: "Email and password are required" 
-        }),
+        JSON.stringify({ error: 'Email and password are required' }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,
         }
       );
     }
-
-    // First check if the user exists in the admins table
-    const { data: adminData, error: adminError } = await supabase
-      .rpc('authenticate_admin', {
-        input_email: email,
-        input_password: password
-      });
-
-    if (adminError || !adminData || adminData.length === 0) {
+    
+    // Call the database function to authenticate admin
+    const { data, error } = await supabase.rpc('authenticate_admin', {
+      input_email: email,
+      input_password: password
+    });
+    
+    if (error || !data || data.length === 0) {
+      console.error('Authentication error:', error);
       return new Response(
-        JSON.stringify({ 
-          error: "Invalid credentials or user not found" 
-        }),
+        JSON.stringify({ error: 'Invalid credentials' }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 401,
         }
       );
     }
-
-    const adminId = adminData[0].id;
-
-    // Check if admin already has a corresponding auth user
-    const { data: adminUser, error: adminUserError } = await supabase
-      .from('admins')
-      .select('user_id')
-      .eq('id', adminId)
-      .single();
-
-    let userId = adminUser?.user_id;
-
-    // If no linked auth user exists, create one
-    if (!userId) {
-      // Create a new auth user
-      const { data: authUser, error: createUserError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
-
-      if (createUserError || !authUser.user) {
-        console.error("Error creating auth user:", createUserError);
-        return new Response(
-          JSON.stringify({ 
-            error: "Failed to create authentication user" 
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
-        );
-      }
-
-      userId = authUser.user.id;
-
-      // Link the auth user to the admin record
-      const { error: updateError } = await supabase
-        .from('admins')
-        .update({ user_id: userId })
-        .eq('id', adminId);
-
-      if (updateError) {
-        console.error("Error linking auth user to admin:", updateError);
-        return new Response(
-          JSON.stringify({ 
-            error: "Failed to link authentication user to admin record" 
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
-        );
-      }
-    }
-
-    // Generate a session for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: email,
-    });
-
-    if (sessionError) {
-      console.error("Error generating session:", sessionError);
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to generate authentication session" 
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
-    }
-
+    
+    // Admin authenticated successfully
+    const admin = data[0];
+    
+    // Generate a session token - in a real app, use JWT or other secure method
+    const sessionToken = crypto.randomUUID();
+    
+    // Current time
+    const now = new Date();
+    
+    // Calculate expiration time
+    const expiresAt = new Date(now.getTime() + (SESSION_EXPIRATION * 1000));
+    
     return new Response(
       JSON.stringify({
         success: true,
-        user: {
-          id: adminId,
-          email: email,
-          user_id: userId,
+        admin: {
+          id: admin.id,
+          email: admin.email
         },
         session: {
-          access_token: sessionData.properties?.action_link?.split('access_token=')[1]?.split('&')[0],
-          expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+          token: sessionToken,
+          expiresAt: expiresAt.toISOString()
         }
       }),
       {
@@ -147,13 +88,10 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error("Server error:", error);
+  } catch (err) {
+    console.error('Server error:', err);
     return new Response(
-      JSON.stringify({ 
-        error: "Internal server error",
-        details: error.message 
-      }),
+      JSON.stringify({ error: 'Internal server error', details: err.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
