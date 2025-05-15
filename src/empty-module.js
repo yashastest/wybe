@@ -1,84 +1,53 @@
 
-// Mock implementation for Node.js modules in the browser
-// This file provides lightweight mocks for modules that are not available in the browser
+// Empty module to handle imports of unsupported browser modules
+export default {};
 
-console.log('Loading empty module mocks');
-
-// Basic event emitter implementation for compatibility
-class EventEmitter {
+// Mock implementations of rpc-websockets classes
+export class Client {
   constructor() {
-    this._events = {};
+    this.connected = false;
   }
-  
-  on(event, listener) {
-    if (!this._events[event]) this._events[event] = [];
-    this._events[event].push(listener);
-    return this;
+  connect() {
+    this.connected = true;
+    return Promise.resolve();
   }
-  
-  off(event, listener) {
-    if (!this._events[event]) return this;
-    this._events[event] = this._events[event].filter(l => l !== listener);
-    return this;
+  disconnect() {
+    this.connected = false;
+    return Promise.resolve();
   }
-  
-  emit(event, ...args) {
-    if (!this._events[event]) return false;
-    this._events[event].forEach(listener => listener.apply(this, args));
-    return true;
+  call() {
+    return Promise.resolve(null);
   }
-}
-
-// Mock WebSocket implementation
-class MockWebSocket extends EventEmitter {
-  constructor(url, protocols) {
-    super();
-    this.url = url;
-    this.protocols = protocols;
-    this.readyState = 0; // CONNECTING
-    
-    // Simulate connection
-    setTimeout(() => {
-      this.readyState = 1; // OPEN
-      this.emit('open');
-    }, 100);
+  notify() {
+    return Promise.resolve();
   }
-  
-  send(data) {
-    console.log('[Mock WebSocket] Send:', data);
-    return true;
+  on() {}
+  once() {}
+  subscribe() {
+    return Promise.resolve(1); // Subscription ID
   }
-  
-  close(code, reason) {
-    this.readyState = 3; // CLOSED
-    this.emit('close', { code, reason });
+  unsubscribe() {
+    return Promise.resolve(true);
   }
 }
 
-// Mock RPC client
-const createRpcClient = () => {
-  return {
-    call: (method, params) => {
-      console.log('[Mock RPC] Call:', method, params);
-      return Promise.resolve({ result: null, error: null });
-    },
-    connect: () => Promise.resolve(),
-    disconnect: () => Promise.resolve(),
-    on: () => {},
-    once: () => {},
-    removeListener: () => {}
-  };
-};
+export class w3cwebsocket {
+  constructor() {
+    this.onopen = null;
+    this.onclose = null;
+    this.onmessage = null;
+    this.onerror = null;
+  }
+  send() {}
+  close() {}
+}
 
-// Export all required mocks
-export const w3cwebsocket = MockWebSocket;
-export const client = createRpcClient;
-export default {
-  w3cwebsocket: MockWebSocket,
-  client: createRpcClient
-};
+// Additional exports from rpc-websockets
+export const WebSocketClient = Client;
+export const NodeWebSocketClient = Client;
 
-// Mock exports for various specific imports
-export const WebSocketClient = MockWebSocket;
-export const NodeWebSocketClient = MockWebSocket;
-export const BrowserWebSocketClient = MockWebSocket;
+// Ensure we export RpcWebSocketCommonClient which is specifically being imported
+export const RpcWebSocketCommonClient = Client;
+// Also export createRpc for the websocket.browser import
+export const createRpc = () => new Client();
+
