@@ -15,18 +15,21 @@ export type Database = {
           email: string
           id: string
           password_hash: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           id?: string
           password_hash: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
           password_hash?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -36,6 +39,7 @@ export type Database = {
           id: string
           status: string | null
           telegram: string | null
+          user_id: string | null
           wallet: string
         }
         Insert: {
@@ -43,6 +47,7 @@ export type Database = {
           id?: string
           status?: string | null
           telegram?: string | null
+          user_id?: string | null
           wallet: string
         }
         Update: {
@@ -50,6 +55,7 @@ export type Database = {
           id?: string
           status?: string | null
           telegram?: string | null
+          user_id?: string | null
           wallet?: string
         }
         Relationships: []
@@ -167,6 +173,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_transactions_token"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "tokens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_token_id_fkey"
             columns: ["token_id"]
             isOneToOne: false
@@ -190,6 +203,14 @@ export type Database = {
       calculate_token_price: {
         Args: { total_supply: number; amount: number; curve_type?: string }
         Returns: number
+      }
+      get_creator_wallet_for_auth_user: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {

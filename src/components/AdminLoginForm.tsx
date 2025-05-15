@@ -20,28 +20,31 @@ const AdminLoginForm = () => {
     setIsLoading(true);
 
     try {
-      // Use the Supabase RPC function to authenticate admin
-      const { data, error } = await supabase.rpc('authenticate_admin', {
-        input_email: email,
-        input_password: password
+      // Call the auth-admin Edge Function for enhanced authentication
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/auth-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({ email, password })
       });
 
-      if (error) {
-        throw error;
-      }
+      const result = await response.json();
 
-      if (!data || data.length === 0) {
-        throw new Error('Invalid credentials');
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Authentication failed');
       }
 
       // Admin is authenticated, create session data
-      const adminData = data[0];
       const sessionData = {
-        id: adminData.id,
-        email: adminData.email,
+        id: result.user.id,
+        email: result.user.email,
+        userId: result.user.user_id,
         permissions: ['all'], // Super admin has all permissions
         loginTime: Date.now(),
         expiryTime: Date.now() + (12 * 60 * 60 * 1000), // 12 hour expiry
+        accessToken: result.session.access_token
       };
       
       // Set session data

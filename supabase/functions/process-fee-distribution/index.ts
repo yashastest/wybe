@@ -1,147 +1,143 @@
 
-// Follow Deno API documentation
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
+// Define the expected request structure
+interface ProcessFeeRequest {
+  tokenId?: string;
+  creatorWallet?: string;
+  forceSend?: boolean;
+}
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: corsHeaders,
       status: 204,
     });
   }
-  
-  // Get Supabase client
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
+
   try {
-    console.log("Starting fee distribution process...");
+    // Create a Supabase client with the Auth context of the request
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Get tokens that have been active for more than 48 hours with market cap > $50K
-    const thirtyMinutesAgo = new Date();
-    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
-    
-    const { data: eligibleTokens, error: tokensError } = await supabase
-      .from("tokens")
-      .select("id, creator_wallet, market_cap")
-      .gte("market_cap", 50000)  // Market cap > $50K
-      .lt("launch_date", thirtyMinutesAgo.toISOString()) // Launched more than 48 hours ago
-      .eq("launched", true);
+    // Parse the request body
+    const { tokenId, creatorWallet, forceSend = false } = await req.json() as ProcessFeeRequest;
 
-    if (tokensError) {
-      throw new Error(`Error fetching eligible tokens: ${tokensError.message}`);
+    // Initialize query to get eligible fee distributions
+    let query = supabase
+      .from('fee_distributions')
+      .select('*')
+      .eq('distributed', false);
+
+    // Filter by tokenId or creatorWallet if provided
+    if (tokenId) {
+      query = query.eq('token_id', tokenId);
+    }
+    if (creatorWallet) {
+      query = query.eq('creator_wallet', creatorWallet);
     }
 
-    console.log(`Found ${eligibleTokens?.length || 0} eligible tokens for 40% fee distribution`);
+    // Get all eligible distributions
+    const { data: distributions, error } = await query;
 
-    // 2. Get tokens that have been active for more than 7 days but don't meet the 50K threshold
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const { data: secondaryTokens, error: secondaryError } = await supabase
-      .from("tokens")
-      .select("id, creator_wallet, market_cap")
-      .lt("market_cap", 50000)  // Market cap <= $50K
-      .lt("launch_date", sevenDaysAgo.toISOString()) // Launched more than 7 days ago
-      .eq("launched", true);
-
-    if (secondaryError) {
-      throw new Error(`Error fetching secondary tokens: ${secondaryError.message}`);
+    if (error) {
+      console.error('Error fetching fee distributions:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch fee distributions' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
     }
 
-    console.log(`Found ${secondaryTokens?.length || 0} tokens for 20% fee distribution`);
+    if (!distributions || distributions.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'No eligible fee distributions found' }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
 
-    // 3. Process eligible tokens (40% to creator)
-    for (const token of (eligibleTokens || [])) {
-      // Calculate unpaid fees for this token
-      const { data: transactions, error: txError } = await supabase
-        .from("fee_distributions")
-        .select("*")
-        .eq("token_id", token.id)
-        .eq("distributed", false);
-      
-      if (txError) {
-        console.error(`Error fetching transactions for token ${token.id}: ${txError.message}`);
+    // Process each distribution
+    const results = [];
+    const now = new Date();
+
+    for (const distribution of distributions) {
+      // Skip if not eligible yet (unless force sending)
+      if (!forceSend && distribution.eligible_timestamp && new Date(distribution.eligible_timestamp) > now) {
+        results.push({
+          id: distribution.id,
+          status: 'skipped',
+          reason: 'Not yet eligible',
+          eligibleAt: distribution.eligible_timestamp,
+        });
         continue;
       }
 
-      if (!transactions || transactions.length === 0) {
-        console.log(`No pending fee distributions for token ${token.id}`);
-        continue;
-      }
-      
-      console.log(`Processing ${transactions.length} fee distributions for token ${token.id}`);
-      
-      // Update fee distribution records (40% to creator)
-      for (const tx of transactions) {
-        // In a real implementation, this would trigger sending SOL to the creator wallet
+      try {
+        // Here in a real implementation, we would:
+        // 1. Make the actual blockchain transaction to transfer the fee
+        // 2. Wait for confirmation
+        // 3. Update the distribution record with the transaction details
+
+        // For our demo, we'll simulate a successful distribution
         const { error: updateError } = await supabase
-          .from("fee_distributions")
+          .from('fee_distributions')
           .update({
             distributed: true,
-            distribution_timestamp: new Date().toISOString()
+            distribution_timestamp: now.toISOString()
           })
-          .eq("id", tx.id);
-        
+          .eq('id', distribution.id);
+
         if (updateError) {
-          console.error(`Error updating fee distribution ${tx.id}: ${updateError.message}`);
-          continue;
+          throw updateError;
         }
-        
-        console.log(`Updated fee distribution ${tx.id} as distributed`);
-      }
-    }
-    
-    // 4. Process secondary tokens (20% to creator)
-    for (const token of (secondaryTokens || [])) {
-      // Similar logic as above but with 20% distribution
-      const { data: transactions, error: txError } = await supabase
-        .from("fee_distributions")
-        .select("*")
-        .eq("token_id", token.id)
-        .eq("distributed", false);
-      
-      if (txError || !transactions || transactions.length === 0) {
-        continue;
-      }
-      
-      // Update fee distribution records (20% to creator)
-      for (const tx of transactions) {
-        // In a real implementation, this would trigger sending SOL to the creator wallet
-        const { error: updateError } = await supabase
-          .from("fee_distributions")
-          .update({
-            distributed: true,
-            distribution_timestamp: new Date().toISOString()
-          })
-          .eq("id", tx.id);
-        
-        if (updateError) {
-          console.error(`Error updating fee distribution ${tx.id}: ${updateError.message}`);
-        }
+
+        results.push({
+          id: distribution.id,
+          status: 'processed',
+          amount: distribution.amount,
+          creator: distribution.creator_wallet,
+          timestamp: now.toISOString(),
+        });
+      } catch (err) {
+        console.error(`Error processing distribution ${distribution.id}:`, err);
+        results.push({
+          id: distribution.id,
+          status: 'failed',
+          error: err.message,
+        });
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Fee distribution process completed" }),
+      JSON.stringify({
+        processed: results.filter(r => r.status === 'processed').length,
+        skipped: results.filter(r => r.status === 'skipped').length,
+        failed: results.filter(r => r.status === 'failed').length,
+        results,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
-  } catch (error) {
-    console.error("Error processing fee distribution:", error.message);
-    
+  } catch (err) {
+    console.error('Server error:', err);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: err.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
