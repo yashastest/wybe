@@ -1,55 +1,33 @@
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App.tsx';
-import './index.css';
-import { tradingService } from './services/tradingService';
-import { smartContractService } from './services/smartContractService';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { smartContractService } from './services/smartContractService.ts'
+import { BrowserRouter } from 'react-router-dom'
 
-// Sync configurations between services on startup
-const initializeServices = () => {
-  const tradingConfig = tradingService.getConfig();
-  
-  // Ensure trading service and smart contract service have consistent settings
+// Initialize default config values for services
+function initializeServices() {
+  // Set up default contract configuration
   smartContractService.updateContractConfig({
-    creatorFeePercentage: tradingConfig.creatorFeePercentage,
-    rewardClaimPeriodDays: tradingConfig.rewardClaimPeriod,
-    dexScreenerThreshold: tradingConfig.dexscreenerThreshold
+    creatorFeePercentage: 2,
+    rewardClaimPeriodDays: 7,
+    dexScreenerThreshold: 1000,
+    bondingCurveEnabled: true,
+    bondingCurveLimit: 10000,
+    platformFeePercentage: 1
   });
   
-  // Get updated contract config for logging
-  const contractConfig = smartContractService.getContractConfig();
-  
-  console.log("Services initialized with the following configuration:");
-  console.log("- Creator fee:", contractConfig.creatorFeePercentage + "%");
-  console.log("- Reward claim period:", contractConfig.rewardClaimPeriodDays + " days");
-  console.log("- DEXScreener threshold: $" + contractConfig.dexScreenerThreshold);
-};
-
-// Mock the solana object for testing
-if (typeof window !== 'undefined' && !window.solana) {
-  window.solana = {
-    isPhantom: false,
-    connect: async () => ({ 
-      publicKey: { 
-        toString: () => "PhantomMockWallet123456789" 
-      } 
-    }),
-    disconnect: async () => {}
-  };
+  console.log('Services initialized with default configuration');
 }
 
-// Initialize services
-initializeServices();
-
-const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error('Root element not found');
-
-createRoot(rootElement).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>
-);
+  </React.StrictMode>,
+)
+
+// Initialize services with default values
+initializeServices();
