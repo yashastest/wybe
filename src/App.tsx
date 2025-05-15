@@ -14,8 +14,7 @@ import NotFound from './pages/NotFound';
 import { Toaster } from "sonner";
 import SecurityReport from './pages/SecurityReport';
 import TokenDeployment from './pages/TokenDeployment';
-import { WalletProvider } from '@/hooks/useWallet.tsx';  // Updated import path with .tsx extension
-import LaunchToken from './pages/LaunchToken';
+import { WalletProvider } from '@/hooks/useWallet.tsx';
 import BondingCurves from './pages/BondingCurves';
 
 function App() {
@@ -30,7 +29,6 @@ function App() {
           <Route path="/launch" element={<Launch />} />
           <Route path="/package" element={<LaunchPackage />} />
           <Route path="/launch/:packageId" element={<LaunchPackage />} />
-          <Route path="/launch-token" element={<LaunchToken />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/trade" element={<Trade />} />
           <Route path="/trade/:tokenId" element={<TokenTrade />} />

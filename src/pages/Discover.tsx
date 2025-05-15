@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, DollarSign, User, Code, Rocket } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -13,126 +13,10 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import { tokenTradingService } from "@/services/tokenTradingService";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data for discovered coins
-const discoverCoins = [
-  {
-    id: "pepe",
-    name: "Pepe",
-    symbol: "PEPE",
-    logo: "/coins/pepe.png",
-    banner: "/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png",
-    price: 0.00000123,
-    change24h: 5.67,
-    marketCap: 420000000,
-    volume24h: 69000000,
-    category: ["Meme", "Frog"],
-    holders: 15800,
-    devWallet: "0x3a2d...f5e6",
-    holderStats: {
-      whales: 28,
-      retail: 15320,
-      devs: 3
-    }
-  },
-  {
-    id: "doge",
-    name: "Dogecoin",
-    symbol: "DOGE",
-    logo: "/coins/doge.png",
-    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
-    price: 0.123,
-    change24h: -2.34,
-    marketCap: 16000000000,
-    volume24h: 980000000,
-    category: ["Meme", "Dog"],
-    holders: 45700,
-    devWallet: "0x7c9d...a2b1",
-    holderStats: {
-      whales: 145,
-      retail: 45412,
-      devs: 12
-    }
-  },
-  {
-    id: "shib",
-    name: "Shiba Inu",
-    symbol: "SHIB",
-    logo: "/coins/shib.png",
-    banner: "/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png",
-    price: 0.00002345,
-    change24h: 7.89,
-    marketCap: 13500000000,
-    volume24h: 850000000,
-    category: ["Meme", "Dog"],
-    holders: 38900,
-    devWallet: "0x5f4a...d7e2",
-    holderStats: {
-      whales: 98,
-      retail: 38750,
-      devs: 7
-    }
-  },
-  {
-    id: "floki",
-    name: "Floki",
-    symbol: "FLOKI",
-    logo: "/coins/floki.png",
-    banner: "/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png",
-    price: 0.0001234,
-    change24h: 12.34,
-    marketCap: 1200000000,
-    volume24h: 320000000,
-    category: ["Meme", "Dog"],
-    holders: 24600,
-    devWallet: "0x2b3c...e9f0",
-    holderStats: {
-      whales: 54,
-      retail: 24520,
-      devs: 5
-    }
-  },
-  {
-    id: "bonk",
-    name: "Bonk",
-    symbol: "BONK",
-    logo: "/coins/bonk.png",
-    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
-    price: 0.00000234,
-    change24h: -3.45,
-    marketCap: 950000000,
-    volume24h: 210000000,
-    category: ["Meme", "Dog", "Solana"],
-    holders: 19800,
-    devWallet: "0x9a8b...c3d4",
-    holderStats: {
-      whales: 32,
-      retail: 19750,
-      devs: 4
-    }
-  },
-  {
-    id: "wojak",
-    name: "Wojak",
-    symbol: "WOJAK",
-    logo: "/coins/wojak.png",
-    banner: "/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png",
-    price: 0.0000789,
-    change24h: 9.87,
-    marketCap: 320000000,
-    volume24h: 78000000,
-    category: ["Meme", "Feels"],
-    holders: 8700,
-    devWallet: "0x4e5f...1a2b",
-    holderStats: {
-      whales: 15,
-      retail: 8670,
-      devs: 2
-    }
-  },
-];
-
-// Format functions
 const formatPrice = (price) => {
   if (price < 0.00001) {
     return price.toFixed(8);
@@ -166,9 +50,45 @@ const Discover = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("marketCap");
   const [filterCategory, setFilterCategory] = useState("All");
+  const [isLoading, setIsLoading] = useState(true);
+  const [coins, setCoins] = useState([]);
+  const [allCategories, setAllCategories] = useState(["All"]);
+  
+  useEffect(() => {
+    const fetchTokens = async () => {
+      setIsLoading(true);
+      try {
+        const listedTokens = await tokenTradingService.getListedTokens();
+        setCoins(listedTokens);
+        
+        // Extract all unique categories
+        const categories = ["All"];
+        const uniqueCategories = new Set();
+        
+        listedTokens.forEach(coin => {
+          coin.category.forEach(category => {
+            uniqueCategories.add(category);
+          });
+        });
+        
+        uniqueCategories.forEach(category => categories.push(category));
+        setAllCategories(categories);
+      } catch (error) {
+        console.error("Failed to fetch tokens:", error);
+        toast.error("Failed to load tokens", { 
+          description: "Please try again later"
+        });
+        setCoins([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTokens();
+  }, []);
   
   // Filter and sort coins
-  const filteredCoins = discoverCoins
+  const filteredCoins = coins
     .filter(coin => {
       const matchesSearch = coin.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           coin.symbol.toLowerCase().includes(searchTerm.toLowerCase());
@@ -183,9 +103,6 @@ const Discover = () => {
       if (sortOption === "change") return b.change24h - a.change24h;
       return 0;
     });
-
-  // All categories from data
-  const allCategories = ["All", ...new Set(discoverCoins.flatMap(coin => coin.category))];
   
   return (
     <div className="min-h-screen flex flex-col bg-black">
@@ -284,7 +201,36 @@ const Discover = () => {
         
         {/* Coins grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-          {filteredCoins.length > 0 ? (
+          {isLoading ? (
+            // Loading skeletons
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={`skeleton-${index}`} className="glass-card overflow-hidden">
+                <Skeleton className="w-full h-32 md:h-36" />
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Skeleton className="w-12 h-12 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="w-24 h-5 mb-2" />
+                      <Skeleton className="w-12 h-4" />
+                    </div>
+                    <Skeleton className="w-16 h-6 rounded-full" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <Skeleton className="h-16 rounded-lg" />
+                    <Skeleton className="h-16 rounded-lg" />
+                  </div>
+                  <div className="flex gap-1 mb-4">
+                    <Skeleton className="w-16 h-5 rounded-full" />
+                    <Skeleton className="w-16 h-5 rounded-full" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-10 flex-1 rounded-full" />
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : filteredCoins.length > 0 ? (
             filteredCoins.map((coin, index) => (
               <CoinCard key={coin.id} coin={coin} index={index} />
             ))
@@ -292,9 +238,29 @@ const Discover = () => {
             <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16">
               <h3 className="text-xl font-poppins font-bold mb-2">No coins found 😢</h3>
               <p className="text-gray-400">Try adjusting your search or filter criteria</p>
+              
+              <div className="mt-8">
+                <Link to="/launch">
+                  <Button className="bg-wybe-primary hover:bg-wybe-primary/90 text-white font-poppins py-6 px-8">
+                    <Rocket className="mr-2" />
+                    Launch Your Own Token
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>
+        
+        {!isLoading && filteredCoins.length > 0 && (
+          <div className="text-center pb-12">
+            <Link to="/launch">
+              <Button className="bg-wybe-primary hover:bg-wybe-primary/90 text-white font-poppins py-6 px-8">
+                <Rocket className="mr-2" />
+                Launch Your Own Token
+              </Button>
+            </Link>
+          </div>
+        )}
       </main>
       
       <Footer />
@@ -304,6 +270,10 @@ const Discover = () => {
 
 // Coin card component with banner
 const CoinCard = ({ coin, index }) => {
+  // Default placeholder images
+  const defaultBanner = "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png";
+  const defaultLogo = "/placeholder.svg";
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -315,11 +285,11 @@ const CoinCard = ({ coin, index }) => {
       <div className="w-full h-32 md:h-36 relative">
         <AspectRatio ratio={16 / 9}>
           <img
-            src={coin.banner}
+            src={coin.banner || defaultBanner}
             alt={`${coin.name} banner`}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.src = "/placeholder.svg";
+              e.currentTarget.src = defaultBanner;
             }}
           />
         </AspectRatio>
@@ -329,11 +299,11 @@ const CoinCard = ({ coin, index }) => {
       <div className="px-4 pt-4 flex items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm p-1 border-2 border-white/10">
           <img
-            src={coin.logo}
+            src={coin.logo || defaultLogo}
             alt={coin.name}
             className="w-full h-full object-cover rounded-full"
             onError={(e) => {
-              e.currentTarget.src = "/placeholder.svg";
+              e.currentTarget.src = defaultLogo;
             }}
           />
         </div>
@@ -405,12 +375,12 @@ const CoinCard = ({ coin, index }) => {
         </div>
         
         <div className="flex gap-2">
-          <Link to={`/trade/${coin.id}`} className="flex-1">
+          <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="flex-1">
             <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/80 text-white font-poppins font-bold rounded-full">
               Trade 💱
             </Button>
           </Link>
-          <Link to={`/trade/${coin.id}?tab=info`}>
+          <Link to={`/trade/${coin.symbol.toLowerCase()}?tab=info`}>
             <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 active:bg-wybe-background-light/70 font-poppins rounded-full">
               Details 📊
             </Button>

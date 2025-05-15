@@ -1,85 +1,108 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, Rocket, Users, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Rocket, Users, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { tokenTradingService } from "@/services/tokenTradingService";
+import { toast } from "sonner";
 
 const TrendingCoins = () => {
-  // Mock data
-  const trendingCoins = [
-    {
-      id: "pepes",
-      name: "Pepe Solana",
-      symbol: "PEPES",
-      price: "0.00023",
-      change: "+15.4%",
-      volume: "$52,000",
-      marketCap: "$230,000",
-      positive: true,
-      sparkline: [20, 22, 25, 22, 26, 27, 30, 28, 30, 35],
-      holderStats: {
-        whales: 12,
-        devs: 2,
-        retail: 4850
+  const [trendingCoins, setTrendingCoins] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchTrendingCoins = async () => {
+      setIsLoading(true);
+      try {
+        const allCoins = await tokenTradingService.getListedTokens();
+        
+        // Sort by volume/change and take top 4 as trending
+        const trending = allCoins
+          .sort((a, b) => b.volume24h - a.volume24h)
+          .slice(0, 4)
+          .map(coin => ({
+            id: coin.id,
+            name: coin.name,
+            symbol: coin.symbol,
+            price: coin.price.toString(),
+            change: coin.change24h >= 0 ? `+${coin.change24h.toFixed(1)}%` : `${coin.change24h.toFixed(1)}%`,
+            volume: formatVolume(coin.volume24h),
+            marketCap: formatVolume(coin.marketCap),
+            positive: coin.change24h >= 0,
+            sparkline: generateMockSparkline(coin.change24h >= 0),
+            holderStats: coin.holderStats
+          }));
+        
+        setTrendingCoins(trending);
+      } catch (error) {
+        console.error("Failed to fetch trending coins:", error);
+        toast.error("Failed to load trending coins", { description: "Please try again later" });
+      } finally {
+        setIsLoading(false);
       }
-    },
-    {
-      id: "dsol",
-      name: "Doge Sol",
-      symbol: "DSOL",
-      price: "0.00056",
-      change: "+8.2%",
-      volume: "$120,000",
-      marketCap: "$560,000",
-      positive: true,
-      sparkline: [40, 42, 45, 42, 46, 44, 48, 52, 50, 55],
-      holderStats: {
-        whales: 28,
-        devs: 4,
-        retail: 8750
-      }
-    },
-    {
-      id: "shibsol",
-      name: "Shiba Solana",
-      symbol: "SHIBSOL",
-      price: "0.00012",
-      change: "-4.7%",
-      volume: "$32,000",
-      marketCap: "$120,000",
-      positive: false,
-      sparkline: [25, 22, 20, 18, 20, 22, 18, 16, 18, 15],
-      holderStats: {
-        whales: 8,
-        devs: 1,
-        retail: 2450
-      }
-    },
-    {
-      id: "flokisun",
-      name: "Floki Sun",
-      symbol: "FLOKISUN",
-      price: "0.00034",
-      change: "+22.3%",
-      volume: "$78,000",
-      marketCap: "$340,000",
-      positive: true,
-      sparkline: [30, 35, 38, 40, 38, 42, 45, 50, 48, 55],
-      holderStats: {
-        whales: 16,
-        devs: 3,
-        retail: 5320
-      }
+    };
+    
+    fetchTrendingCoins();
+  }, []);
+  
+  // Format volume for display
+  const formatVolume = (volume) => {
+    if (volume >= 1000000) {
+      return `$${(volume / 1000000).toFixed(2)}M`;
+    } else if (volume >= 1000) {
+      return `$${(volume / 1000).toFixed(2)}K`;
+    } else {
+      return `$${volume.toFixed(2)}`;
     }
-  ];
+  };
+  
+  // Generate mock sparkline data based on positive/negative trend
+  const generateMockSparkline = (isPositive) => {
+    if (isPositive) {
+      return [20, 22, 25, 22, 26, 27, 30, 28, 30, 35];
+    } else {
+      return [35, 32, 30, 28, 30, 27, 26, 22, 20, 18];
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {trendingCoins.map((coin, index) => (
-        <TrendingCoinCard key={index} coin={coin} delay={index * 0.1} />
-      ))}
+      {isLoading ? (
+        // Show skeletons while loading
+        Array.from({ length: 4 }).map((_, index) => (
+          <div key={`skeleton-${index}`} className="glass-card p-5">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <Skeleton className="h-5 w-24 mb-1" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            <Skeleton className="mb-4 h-16 rounded-xl" />
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-16 rounded-xl" />
+            </div>
+            <Skeleton className="mb-4 h-24 rounded-xl" />
+            <Skeleton className="h-10 rounded-xl" />
+          </div>
+        ))
+      ) : trendingCoins.length > 0 ? (
+        trendingCoins.map((coin, index) => (
+          <TrendingCoinCard key={index} coin={coin} delay={index * 0.1} />
+        ))
+      ) : (
+        <div className="col-span-1 md:col-span-2 lg:col-span-4 text-center py-12 glass-card">
+          <AlertCircle className="mx-auto mb-4 text-gray-400" size={32} />
+          <h3 className="text-xl font-medium mb-2">No Trending Coins</h3>
+          <p className="text-gray-400 mb-6">Launch your own token to be featured here!</p>
+          <Link to="/launch">
+            <Button variant="default">Launch a Token</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
@@ -159,7 +182,7 @@ const TrendingCoinCard = ({ coin, delay }) => {
         </div>
       </div>
       
-      <Link to={`/trade/${coin.id}`}>
+      <Link to={`/trade/${coin.symbol.toLowerCase()}`}>
         <Button className="w-full btn-primary text-sm py-1 h-8 flex items-center justify-center gap-1 group">
           <span>Trade {coin.symbol}</span>
           <Rocket size={14} className="group-hover:translate-x-1 transition-transform" />

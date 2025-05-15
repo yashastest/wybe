@@ -1,22 +1,25 @@
+
 import React, { useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
+import { useTokenListing } from '@/hooks/useTokenListing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader, Rocket, Wallet, AlertCircle, Check } from 'lucide-react';
-import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 const LaunchTokenForm: React.FC = () => {
   const navigate = useNavigate();
   const { connected, address, connect } = useWallet();
+  const { launchToken, buyInitialSupply } = useTokenListing();
   
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
   const [description, setDescription] = useState('');
   const [initialPrice, setInitialPrice] = useState('0.0001');
+  const [totalSupply, setTotalSupply] = useState('1000000');
   const [buyAmount, setBuyAmount] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,11 +51,12 @@ const LaunchTokenForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const result = await tokenTradingService.launchToken({
+      const result = await launchToken({
         name,
         symbol: normalizedSymbol,
         creatorWallet: address,
-        initialPrice: parseFloat(initialPrice)
+        initialPrice: parseFloat(initialPrice),
+        totalSupply: parseFloat(totalSupply)
       });
       
       if (result.success && result.tokenId) {
@@ -88,12 +92,7 @@ const LaunchTokenForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Updated to match the tokenTradingService method signature
-      const result = await tokenTradingService.buyInitialSupply(
-        tokenId,
-        address,
-        amount
-      );
+      const result = await buyInitialSupply(tokenId, address, amount);
       
       if (result.success) {
         setLaunchStep('success');
@@ -197,6 +196,22 @@ const LaunchTokenForm: React.FC = () => {
                 />
                 <p className="text-xs text-indigo-300 mt-1">
                   The starting price for your token in SOL
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="totalSupply" className="text-indigo-200">Total Supply</Label>
+                <Input
+                  id="totalSupply"
+                  type="number"
+                  value={totalSupply}
+                  onChange={(e) => setTotalSupply(e.target.value)}
+                  className="bg-indigo-900/40 border-indigo-600/30 text-white"
+                  min="1000"
+                  step="1000"
+                />
+                <p className="text-xs text-indigo-300 mt-1">
+                  The total number of tokens that will be created
                 </p>
               </div>
               
