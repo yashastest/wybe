@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,20 @@ import { TabsContent } from "@/components/ui/tabs";
 import { smartContractService } from '@/services/smartContractService';
 import { Badge } from '@/components/ui/badge';
 import { integrationService } from '@/services/integrationService';
+
+// Add this method to the IntegrationService
+integrationService.updateChecklistItem = async (id: string, isComplete: boolean) => {
+  try {
+    // Implement the method to update a checklist item
+    console.log(`Updating checklist item ${id} to ${isComplete ? 'complete' : 'incomplete'}`);
+    // In a real application, this would make an API call
+    // For now we'll simulate success
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update checklist item:", error);
+    return { success: false, error };
+  }
+};
 
 const ContractSecurityAudit = () => {
   const [isRunningAudit, setIsRunningAudit] = useState(false);
