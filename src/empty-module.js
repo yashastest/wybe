@@ -45,3 +45,9 @@ export class w3cwebsocket {
 // Additional exports from rpc-websockets
 export const WebSocketClient = Client;
 export const NodeWebSocketClient = Client;
+
+// Ensure we export RpcWebSocketCommonClient which is specifically being imported
+export const RpcWebSocketCommonClient = Client;
+// Also export createRpc for the websocket.browser import
+export const createRpc = () => new Client();
+

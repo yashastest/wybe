@@ -37,3 +37,16 @@ console.error = (...args) => {
   }
   originalConsoleError(...args);
 };
+
+// Patch fetch API for potential issues with Solana Web3.js
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  return originalFetch.apply(this, args)
+    .catch(err => {
+      console.log('[Fetch Error]', err);
+      throw err;
+    });
+};
+
+// Inject additional global mocks that might be needed
+(window as any).crypto = window.crypto || {};
