@@ -194,7 +194,7 @@ const getUserTransactions = async (
     
     if (filters) {
       if (typeof filters === 'string') {
-        // Filter by token symbol
+        // Filter by token symbol - making sure both sides are strings before toLowerCase comparison
         const tokenSymbolFilter = filters.toLowerCase();
         filteredData = filteredData.filter(tx => {
           const txTokenSymbol = tx.token_symbol;
