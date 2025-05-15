@@ -20,19 +20,25 @@ const TrendingCoins = () => {
         
         // Sort by volume/change and take top 4 as trending
         const trending = allCoins
-          .sort((a, b) => b.volume24h - a.volume24h)
+          .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
           .slice(0, 4)
           .map(coin => ({
             id: coin.id,
             name: coin.name,
             symbol: coin.symbol,
             price: coin.price.toString(),
-            change: coin.change24h >= 0 ? `+${coin.change24h.toFixed(1)}%` : `${coin.change24h.toFixed(1)}%`,
-            volume: formatVolume(coin.volume24h),
-            marketCap: formatVolume(coin.marketCap),
-            positive: coin.change24h >= 0,
-            sparkline: generateMockSparkline(coin.change24h >= 0),
-            holderStats: coin.holderStats
+            change: (coin.change24h || coin.priceChange24h || 0) >= 0 
+              ? `+${(coin.change24h || coin.priceChange24h || 0).toFixed(1)}%` 
+              : `${(coin.change24h || coin.priceChange24h || 0).toFixed(1)}%`,
+            volume: formatVolume(coin.volume24h || 0),
+            marketCap: formatVolume(coin.marketCap || 0),
+            positive: (coin.change24h || coin.priceChange24h || 0) >= 0,
+            sparkline: generateMockSparkline((coin.change24h || coin.priceChange24h || 0) >= 0),
+            holderStats: coin.holderStats || {
+              whales: Math.floor(Math.random() * 5),
+              retail: Math.floor(Math.random() * 100) + 20,
+              devs: 1
+            }
           }));
         
         setTrendingCoins(trending);

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { tokenTradingService, TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/tokenTradingService';
@@ -50,18 +49,19 @@ export const useTokenTrading = (tokenSymbol?: string) => {
       });
       
       if (result.success) {
-        // Create transaction record (but don't need to log it as the service already does)
-        // Update local state with new trade
+        // Create transaction record and update local state with new trade
         const newTrade: TokenTrade = {
           tokenSymbol: tradeParams.tokenSymbol,
           side: tradeParams.action,
-          amount: tradeParams.action === 'buy' ? (result.amountTokens || 0) : (tradeParams.amountTokens || 0),
+          amount: tradeParams.action === 'buy' 
+            ? (result.amountTokens || result.amount || 0) 
+            : (tradeParams.amountTokens || 0),
           price: result.price,
           timestamp: new Date().toISOString(),
           status: 'completed',
           txHash: result.txHash,
-          amountTokens: result.amountTokens,
-          amountSol: result.amountSol
+          amountTokens: result.amountTokens || (tradeParams.action === 'buy' ? result.amount : undefined),
+          amountSol: result.amountSol || result.amount
         };
         
         setTrades(prevTrades => [newTrade, ...prevTrades]);

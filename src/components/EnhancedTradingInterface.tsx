@@ -24,7 +24,8 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { tokenTradingService, TradeResult } from '@/services/tokenTradingService';
+import { tokenTradingService } from '@/services/tokenTradingService';
+import { TradeResult } from '@/services/token/types';
 import { formatCurrency } from '@/utils/tradeUtils';
 
 interface EnhancedTradingInterfaceProps {
@@ -101,10 +102,15 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
 
   const formatTradeResult = (result: TradeResult): string => {
     if (!result.success) {
-      return result.errorMessage || result.error || 'Trade failed';
+      return result.error || result.errorMessage || 'Trade failed';
     }
     
-    const amount = result.amountSol ? formatCurrency(result.amountSol) + ' SOL' : result.amountTokens ? result.amountTokens + ' ' + tokenSymbol : 'Unknown amount';
+    const amount = result.amount || result.amountSol 
+      ? formatCurrency(result.amount || result.amountSol || 0) + ' SOL' 
+      : result.amountTokens 
+        ? result.amountTokens + ' ' + tokenSymbol 
+        : 'Unknown amount';
+        
     return `Trade successful! You ${tradeType === 'buy' ? 'bought' : 'sold'} ${amount}. Tx: ${result.txHash}`;
   };
 

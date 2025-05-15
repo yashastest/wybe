@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
@@ -12,36 +11,34 @@ export const useTokenListing = () => {
   const [isLaunching, setIsLaunching] = useState(false);
   const [launchedTokens, setLaunchedTokens] = useState<LaunchedToken[]>([]);
 
-  const launchToken = async (params: TokenLaunchParams) => {
+  const launchToken = async (tokenParams: TokenLaunchParams) => {
     setIsLaunching(true);
+    
     try {
-      // Convert from UI params to service params
-      const serviceParams: TokenLaunchParams = {
-        name: params.name,
-        symbol: params.symbol,
-        initialSupply: params.initialSupply,
-        totalSupply: params.totalSupply || params.initialSupply, // Use initialSupply as fallback
-        creatorWallet: params.creatorWallet || params.creator?.wallet // Support both formats
-      };
+      // Make sure we use the correct properties based on the updated type
+      const response = await tokenTradingService.launchToken({
+        ...tokenParams,
+        initialSupply: tokenParams.initialSupply || tokenParams.totalSupply,
+        creatorWallet: tokenParams.creatorWallet || tokenParams.creatorAddress || 
+          (tokenParams.creator?.wallet || ''),
+      });
       
-      const result = await tokenTradingService.launchToken(serviceParams);
-      
-      if (result.success) {
+      if (response.success) {
         toast.success('Token launched successfully', {
-          description: `${params.name} (${params.symbol}) has been launched.`
+          description: `${tokenParams.name} (${tokenParams.symbol}) has been launched.`
         });
         
         return {
           success: true,
-          tokenId: result.tokenId
+          tokenId: response.tokenId
         };
       } else {
         toast.error('Failed to launch token', { 
-          description: result.error || 'Please try again later'
+          description: response.error || 'Please try again later'
         });
         return {
           success: false,
-          error: result.error || 'Failed to launch token'
+          error: response.error || 'Failed to launch token'
         };
       }
     } catch (error) {

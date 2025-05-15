@@ -33,6 +33,7 @@ export interface ListedToken {
   symbol: string;
   price: number;
   priceChange24h?: number;
+  change24h?: number; // Added for backward compatibility
   volume24h?: number;
   marketCap?: number;
   totalSupply?: number;
@@ -42,6 +43,16 @@ export interface ListedToken {
   createdAt: string;
   contractAddress?: string;
   creatorAddress?: string;
+  // Additional properties for backward compatibility
+  category?: string[];
+  holderStats?: {
+    whales: number;
+    retail: number;
+    devs: number;
+  };
+  creatorWallet?: string;
+  devWallet?: string;
+  holders?: number;
 }
 
 export interface TradeParams {
@@ -60,6 +71,10 @@ export interface TradeResult {
   price?: number;
   fee?: number;
   error?: string;
+  // Adding backward compatibility properties
+  amountSol?: number;
+  amountTokens?: number;
+  errorMessage?: string;
 }
 
 // Token launch related types
@@ -67,13 +82,20 @@ export interface TokenLaunchParams {
   name: string;
   symbol: string;
   totalSupply: number;
-  description: string;
+  description?: string;
   logoUrl?: string;
-  initialPrice: number;
-  creatorAddress: string;
-  bondingCurveType: 'linear' | 'quadratic' | 'exponential';
-  creatorFeePercentage: number;
-  platformFeePercentage: number;
+  initialPrice?: number;
+  creatorAddress?: string;
+  bondingCurveType?: 'linear' | 'quadratic' | 'exponential';
+  creatorFeePercentage?: number;
+  platformFeePercentage?: number;
+  // Adding backward compatibility properties
+  initialSupply?: number;
+  creatorWallet?: string;
+  logo?: File;
+  creator?: {
+    wallet: string;
+  };
 }
 
 export interface TokenLaunchResult {
@@ -81,4 +103,26 @@ export interface TokenLaunchResult {
   tokenId?: string;
   contractAddress?: string;
   error?: string;
+}
+
+// Aliases for backward compatibility
+export type TokenLaunchResponse = TokenLaunchResult;
+export type InitialSupplyPurchaseResponse = TradeResult;
+
+// Smart contract service related types
+export interface DeploymentResult {
+  success: boolean;
+  programId?: string;
+  error?: string;
+  // Backward compatibility
+  message?: string;
+  transactionId?: string;
+}
+
+export interface TestnetContract {
+  id: string;
+  name: string;
+  address: string;
+  deployedAt: string;
+  status: 'active' | 'inactive';
 }

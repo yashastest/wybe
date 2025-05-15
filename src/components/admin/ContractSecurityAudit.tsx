@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,7 +188,7 @@ const ContractSecurityAudit: React.FC = () => {
               No testnet test results yet. Run a test to verify contract functionality.
             </div>
           ) : (
-            <Alert variant={testnetTestPassed ? "default" : "destructive"}>
+            <Alert variant="default" className="mb-6">
               <div className="flex items-center gap-2">
                 {testnetTestPassed ? 
                   <CheckCircleIcon className="h-5 w-5" /> : 

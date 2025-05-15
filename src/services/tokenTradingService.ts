@@ -6,7 +6,8 @@ import {
   TradeParams, 
   TradeResult, 
   TokenLaunchParams, 
-  TokenLaunchResponse, 
+  TokenLaunchResult,
+  TokenLaunchResponse,
   InitialSupplyPurchaseResponse,
   ListedToken,
   TokenTransaction,
@@ -23,6 +24,7 @@ export type {
   ListedToken,
   TokenTransaction,
   TokenLaunchParams,
+  TokenLaunchResult,
   TokenLaunchResponse,
   InitialSupplyPurchaseResponse,
   TradeHistoryFilters

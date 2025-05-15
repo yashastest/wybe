@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@/hooks/useWallet.tsx';
@@ -9,9 +8,10 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface TransactionHistoryProps {
   tokenSymbol?: string;
+  limit?: number;
 }
 
-const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) => {
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, limit }) => {
   const { connected, address } = useWallet();
   const [transactions, setTransactions] = useState<TokenTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +35,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
           ? userTransactions.filter(tx => tx.tokenSymbol.toLowerCase() === tokenSymbol.toLowerCase())
           : userTransactions;
           
-        setTransactions(filteredTransactions);
+        // Apply limit if specified
+        const limitedTransactions = limit ? filteredTransactions.slice(0, limit) : filteredTransactions;
+          
+        setTransactions(limitedTransactions);
       } catch (error) {
         console.error('Error fetching transaction history:', error);
         setIsError(true);
@@ -48,7 +51,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
     };
 
     fetchTransactions();
-  }, [connected, address, tokenSymbol]);
+  }, [connected, address, tokenSymbol, limit]);
 
   // Generate demo transactions if none are available or for testing
   const generateDemoTransactions = () => {
@@ -57,7 +60,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
     const currentSymbol = tokenSymbol || 'TOKEN';
     
     // Generate 10 random transactions in the past week
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < (limit || 10); i++) {
       const type = types[Math.floor(Math.random() * types.length)];
       const amount = Math.floor(Math.random() * 10000) + 100;
       const price = 0.00023 * (1 + (Math.random() * 0.1 - 0.05)); // Price with some variation
@@ -68,12 +71,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
       demoTransactions.push({
         id: `tx-${i}`,
         tokenSymbol: currentSymbol,
-        type: type,
+        tokenName: `${currentSymbol} Token`,
+        type,
         side: type, // Adding side for compatibility
         amount,
         amountTokens: type === 'buy' ? amount : undefined,
         amountSol: type === 'sell' ? amount * price : undefined,
         price,
+        amountUsd: amount * price * 30, // Approximating USD value
+        fee: amount * price * 0.025, // 2.5% fee
         timestamp: timestamp.toISOString(),
         status: 'confirmed',
         txHash: `TX${Math.random().toString(36).substring(2, 10)}`,

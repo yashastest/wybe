@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -58,10 +57,10 @@ const MemeCoins: React.FC = () => {
           symbol: token.symbol,
           logo: token.logo,
           price: token.price,
-          change24h: token.change24h,
-          marketCap: token.marketCap,
-          volume24h: token.volume24h,
-          category: token.category,
+          change24h: token.change24h || token.priceChange24h || 0,
+          marketCap: token.marketCap || 0,
+          volume24h: token.volume24h || 0,
+          category: token.category || ['meme'],
         }));
         
         // Sort by market cap and take top 6

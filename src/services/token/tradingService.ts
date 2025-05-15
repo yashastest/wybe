@@ -67,10 +67,10 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
       await logTradeInDatabase({
         tokenSymbol,
         side: action,
-        amount: tradeResponse.amountSol || 0,
+        amount: tradeResponse.amount || amountSol || 0,
         price: tradeResponse.price || 0,
         walletAddress,
-        amountTokens: tradeResponse.amountTokens || 0
+        amountTokens: tradeResponse.amountTokens || amountTokens || 0
       });
     }
     

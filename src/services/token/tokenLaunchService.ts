@@ -1,10 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   TokenLaunchParams, 
+  TokenLaunchResult,
   TokenLaunchResponse, 
   ListedToken, 
-  InitialSupplyPurchaseResponse 
+  InitialSupplyPurchaseResponse
 } from './types';
 import { apiClient } from '@/services/api/apiClient';
 import { API_CONFIG } from '@/config/api';
@@ -13,16 +13,17 @@ import { API_CONFIG } from '@/config/api';
 const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchResponse> => {
   try {
     // Validation
-    if (!params.name || !params.symbol || !params.initialSupply) {
+    if (!params.name || !params.symbol || !(params.totalSupply || params.initialSupply)) {
       return {
         success: false,
         message: 'Missing required fields',
-        error: 'Name, symbol and initial supply are required'
+        error: 'Name, symbol and supply are required'
       };
     }
     
     // Get the creator wallet from either direct field or creator object
-    const creatorWallet = params.creatorWallet || (params.creator ? params.creator.wallet : undefined);
+    const creatorWallet = params.creatorWallet || params.creatorAddress || 
+      (params.creator ? params.creator.wallet : undefined);
     
     if (!creatorWallet) {
       return {
@@ -36,7 +37,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     const response = await apiClient.post<TokenLaunchResponse>(API_CONFIG.ENDPOINTS.LAUNCH_TOKEN, {
       name: params.name,
       symbol: params.symbol,
-      initialSupply: params.initialSupply,
+      initialSupply: params.initialSupply || params.totalSupply,
       totalSupply: params.totalSupply || params.initialSupply,
       creatorWallet: creatorWallet,
       logo: params.logo ? await convertFileToBase64(params.logo) : undefined
@@ -178,6 +179,8 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
           creatorWallet: token.creator_wallet,
           totalSupply: 1000000, // Default if not specified
           category: tags,
+          status: token.status || 'active',
+          createdAt: token.created_at || new Date().toISOString(),
           devWallet: token.creator_wallet,
           holderStats: {
             whales: Math.floor(Math.random() * 5),

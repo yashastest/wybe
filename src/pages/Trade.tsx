@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -29,6 +28,17 @@ import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Clock, DollarSign, S
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { useWallet } from '@/hooks/useWallet.tsx';
 
+const TradingViewChartWrapper = ({ symbol }: { symbol: string }) => {
+  return (
+    <div className="mb-6">
+      <TradingViewChart 
+        symbol={symbol} 
+        style={{ height: '400px' }}
+      />
+    </div>
+  );
+};
+
 const Trade: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
   const navigate = useNavigate();
@@ -40,6 +50,7 @@ const Trade: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('trade');
   const [showAdvancedTrading, setShowAdvancedTrading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   // Fetch tokens on mount
   useEffect(() => {
@@ -212,11 +223,7 @@ const Trade: React.FC = () => {
                   <CardTitle className="text-lg">Price Chart</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TradingViewChart 
-                    symbol={currentToken.symbol} 
-                    theme="dark" 
-                    style={{ height: '400px' }} 
-                  />
+                  <TradingViewChartWrapper symbol={currentToken.symbol} />
                 </CardContent>
               </Card>
               
@@ -283,7 +290,13 @@ const Trade: React.FC = () => {
                       <CardTitle className="text-lg">Trading History</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <TransactionHistory tokenSymbol={currentToken.symbol} limit={10} />
+                      {isMobile ? (
+                        <div className="mt-4">
+                          <TransactionHistory tokenSymbol={currentToken.symbol} />
+                        </div>
+                      ) : (
+                        <TradingViewChartWrapper symbol={currentToken.symbol} />
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -333,10 +346,11 @@ const Trade: React.FC = () => {
                       <Button onClick={handleConnectWallet}>Connect Wallet</Button>
                     </div>
                   ) : showAdvancedTrading ? (
-                    <EnhancedTradingInterface 
-                      tokenSymbol={currentToken.symbol} 
-                      tokenName={currentToken.name}
-                      tokenImage={currentToken.logo || ''}
+                    <EnhancedTradingInterface
+                      tokenSymbol={currentToken.symbol}
+                      tokenName={tokenDetails?.name || tokenSymbol}
+                      tokenPrice={tokenDetails?.price || 0}
+                      tokenLogo={tokenDetails?.logo || undefined}
                     />
                   ) : (
                     <TradingInterface 
