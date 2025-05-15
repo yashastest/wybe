@@ -5,6 +5,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { tokenTradingService } from "@/services/tokenTradingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CoinData {
   id: string;
@@ -67,6 +68,7 @@ const MemeCoins: React.FC = () => {
         setCoins(coinData.sort((a, b) => b.marketCap - a.marketCap).slice(0, 6));
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
+        toast.error("Failed to load token data");
         setCoins([]);
       } finally {
         setIsLoading(false);
@@ -75,6 +77,11 @@ const MemeCoins: React.FC = () => {
     
     fetchTokens();
   }, []);
+
+  // Function to navigate to trade page
+  const handleTradeClick = (symbol: string) => {
+    console.log(`Navigating to trade page for ${symbol}`);
+  };
 
   return (
     <section id="memecoins" className="py-16 container">
@@ -178,8 +185,11 @@ const MemeCoins: React.FC = () => {
                   </div>
                   
                   <div className="mt-3">
-                    <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="text-wybe-primary hover:text-wybe-primary/80 text-sm font-medium">
-                      Trade Now →
+                    <Link 
+                      to={`/trade/${coin.symbol.toLowerCase()}`} 
+                      className="w-full inline-block py-2 px-4 text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-lg text-white font-medium transition-all duration-300 shadow-glow-sm hover:shadow-glow-md"
+                    >
+                      Trade {coin.symbol}
                     </Link>
                   </div>
                 </div>
@@ -189,7 +199,7 @@ const MemeCoins: React.FC = () => {
             <div className="col-span-3 text-center py-12">
               <h3 className="text-lg font-medium mb-2">No coins available yet</h3>
               <p className="text-muted-foreground mb-4">Be the first to launch a token on our platform!</p>
-              <Link to="/launch" className="text-wybe-primary hover:text-wybe-primary/80">
+              <Link to="/launch" className="text-wybe-primary hover:text-wybe-primary/80 py-2 px-4 bg-wybe-primary/10 rounded-lg">
                 Launch Your Token →
               </Link>
             </div>

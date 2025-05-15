@@ -1,3 +1,4 @@
+
 import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -194,21 +195,23 @@ const getUserTransactions = async (
     
     if (filters) {
       if (typeof filters === 'string') {
-        // Filter by token symbol - making sure both sides are strings before toLowerCase comparison
+        // Filter by token symbol as string
         const tokenSymbolFilter = filters.toLowerCase();
         filteredData = filteredData.filter(tx => {
           // Check if token_symbol exists and is a string before using toLowerCase
-          return typeof tx.token_symbol === 'string' && 
-                 tx.token_symbol.toLowerCase() === tokenSymbolFilter;
+          const txTokenSymbol = tx.token_symbol;
+          return typeof txTokenSymbol === 'string' && 
+                 txTokenSymbol.toLowerCase() === tokenSymbolFilter;
         });
-      } else {
-        // Explicitly check if tokenSymbol exists and is a string before using toLowerCase
+      } else if (filters && typeof filters === 'object') {
+        // Apply object-based filters
         if (filters.tokenSymbol && typeof filters.tokenSymbol === 'string') {
           const tokenSymbolFilter = filters.tokenSymbol.toLowerCase();
           filteredData = filteredData.filter(tx => {
             // Check if token_symbol exists and is a string before using toLowerCase
-            return typeof tx.token_symbol === 'string' && 
-                   tx.token_symbol.toLowerCase() === tokenSymbolFilter;
+            const txTokenSymbol = tx.token_symbol;
+            return typeof txTokenSymbol === 'string' && 
+                   txTokenSymbol.toLowerCase() === tokenSymbolFilter;
           });
         }
         
