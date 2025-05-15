@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +40,10 @@ interface Token {
   approved?: boolean;
   rejection_reason?: string;
 }
+
+// This is a pseudo fix since we don't have full access to this file
+// Import the supabase client at the beginning of the file
+import { supabase } from "@/integrations/supabase/client";
 
 const TokensList: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);

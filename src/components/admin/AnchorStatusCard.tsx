@@ -11,7 +11,7 @@ const AnchorStatusCard = () => {
   const [isAnchorInstalled, setIsAnchorInstalled] = useState<boolean>(false);
   const [anchorVersion, setAnchorVersion] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [networkConfig, setNetworkConfig] = useState(integrationService.getNetworkConfig());
+  const [networkConfig, setNetworkConfig] = useState(integrationService.getNetworkConfig('devnet'));
   
   useEffect(() => {
     checkAnchorStatus();
@@ -25,7 +25,7 @@ const AnchorStatusCard = () => {
       const config = smartContractService.getContractConfig();
       setIsAnchorInstalled(config.anchorInstalled);
       setAnchorVersion(config.anchorVersion);
-      setNetworkConfig(integrationService.getNetworkConfig());
+      setNetworkConfig(integrationService.getNetworkConfig('devnet'));
       setIsLoading(false);
     }, 500);
   };
@@ -88,10 +88,10 @@ const AnchorStatusCard = () => {
             <span className="text-sm text-gray-400">RPC Endpoint</span>
             <div className="flex items-center">
               <span className="text-sm font-mono truncate max-w-[150px] md:max-w-[200px]">
-                {networkConfig.endpoint}
+                {networkConfig.rpcEndpoint}
               </span>
               <a 
-                href={networkConfig.endpoint} 
+                href={networkConfig.rpcEndpoint} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="ml-1 text-gray-400 hover:text-white"
@@ -104,7 +104,7 @@ const AnchorStatusCard = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Status</span>
             <div className="flex items-center">
-              {networkConfig.isConnected ? (
+              {networkConfig.isActive ? (
                 <>
                   <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                   <span className="text-sm text-green-500">Connected</span>

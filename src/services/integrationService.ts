@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import tradingService from "./tradingService";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export type AdminUserAccess = {
   email: string;
@@ -16,6 +17,22 @@ export type DeploymentStep = {
   description: string;
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
   errorMessage?: string;
+  command?: string;
+  prerequisite?: string[];
+  output?: string;
+  verificationSteps?: {
+    id: string;
+    title: string;
+    status: 'pending' | 'success' | 'error';
+    message?: string;
+  }[];
+};
+
+export type DeploymentResult = {
+  success: boolean;
+  message: string;
+  transactionId?: string;
+  timestamp?: string;
 };
 
 export type DeploymentConfig = {
@@ -30,6 +47,16 @@ export type DeploymentConfig = {
   bondingCurveType: 'linear' | 'exponential' | 'logarithmic';
   platformFee: number;
   creatorFee: number;
+};
+
+export type NetworkConfig = {
+  network: string;
+  rpcEndpoint: string;
+  explorerUrl: string;
+  programId: string;
+  isActive: boolean;
+  endpoint: string;
+  isConnected: boolean;
 };
 
 class IntegrationService {
@@ -86,6 +113,7 @@ class IntegrationService {
   private deploymentProgress: number = 0;
   private deploymentConfig: DeploymentConfig | null = null;
   private deploymentId: string | null = null;
+  private deploymentResult: DeploymentResult | null = null;
 
   constructor() {}
 
@@ -107,7 +135,13 @@ class IntegrationService {
   // Set deployment network
   public setDeploymentNetwork(network: 'mainnet' | 'testnet' | 'devnet' | 'localnet') {
     this.deploymentNetwork = network;
-    tradingService.setNetworkType(network);
+    // Only pass valid network types to tradingService
+    if (network !== 'localnet') {
+      tradingService.setNetworkType(network as 'mainnet' | 'testnet' | 'devnet');
+    } else {
+      // Handle localnet as devnet for tradingService
+      tradingService.setNetworkType('devnet');
+    }
     return this.deploymentNetwork;
   }
 
@@ -425,7 +459,9 @@ class IntegrationService {
   public async approveToken(id: string) {
     const { error } = await supabase
       .from('tokens')
-      .update({ approved: true })
+      .update({ 
+        approved: true 
+      } as any)
       .eq('id', id);
     
     if (error) {
@@ -443,7 +479,7 @@ class IntegrationService {
       .update({ 
         approved: false,
         rejection_reason: reason
-      })
+      } as any)
       .eq('id', id);
     
     if (error) {
@@ -506,14 +542,25 @@ class IntegrationService {
   }
 
   // New methods for network configuration
-  public getNetworkConfig(network: string) {
+  public getNetworkConfig(network: string = 'devnet'): NetworkConfig {
     return {
       network,
       rpcEndpoint: `https://api.${network.toLowerCase()}.solana.com`,
       explorerUrl: `https://explorer.solana.com/?cluster=${network.toLowerCase()}`,
       programId: 'Wybe' + Math.random().toString(16).substring(2, 10),
-      isActive: network === 'devnet'
+      isActive: network === 'devnet',
+      endpoint: `https://api.${network.toLowerCase()}.solana.com`,
+      isConnected: true
     };
+  }
+
+  // Add deployment result storage and retrieval methods
+  public setDeploymentResult(result: DeploymentResult): void {
+    this.deploymentResult = result;
+  }
+  
+  public getDeploymentResult(): DeploymentResult | null {
+    return this.deploymentResult;
   }
 
   // Method for MasterDeploymentGuide

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 // Import DeploymentStep from integrationService
 import { DeploymentStep, integrationService } from '@/services/integrationService';
@@ -62,7 +63,7 @@ const MasterDeploymentGuide = () => {
     
     // Get steps from integration service
     setTimeout(() => {
-      const deploymentSteps = integrationService.getDeploymentSteps(activeNetwork);
+      const deploymentSteps = integrationService.getDeploymentSteps();
       setSteps(deploymentSteps);
       setIsLoading(false);
     }, 1000);
