@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
@@ -11,13 +12,18 @@ import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, ArrowUpDown } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import EnhancedTradingInterface from '@/components/EnhancedTradingInterface';
+import TradingInterface from '@/components/TradingInterface';
 import TransactionHistory from '@/components/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 
 const Trade = () => {
-  const { symbol } = useParams();
+  // Extract token symbol from URL params or use a default
+  const { tokenId } = useParams();
+  const defaultToken = "SOL";
+  const symbol = tokenId || defaultToken;
+  
   const { connected, address } = useWallet();
   const { refreshBalances } = useWalletBalance(symbol);
   
@@ -28,161 +34,54 @@ const Trade = () => {
   const [nextClaimDate, setNextClaimDate] = useState<Date | null>(null);
   const [tokenData, setTokenData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEnhanced, setShowEnhanced] = useState(false);
 
   const normalizedSymbol = symbol?.toLowerCase() || '';
 
-  // Get token data from Supabase
+  // Get token data from Supabase or use demo data
   useEffect(() => {
     const fetchTokenData = async () => {
       if (!normalizedSymbol) return;
       
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('tokens')
-          .select('*')
-          .eq('symbol', normalizedSymbol.toUpperCase())
-          .single();
-          
-        if (error) {
-          throw error;
+        // For demo purposes, always use sample data
+        setTokenData({
+          name: symbol.charAt(0).toUpperCase() + symbol.slice(1).toLowerCase(),
+          symbol: symbol.toUpperCase(),
+          market_cap: 250000,
+          creator_wallet: '',
+          price: 0.00023,
+          change24h: 15.4
+        });
+        
+        // Check if current user is creator (demo)
+        if (connected && address) {
+          setIsCreator(Math.random() > 0.8); // Random chance of being creator for demo
         }
         
-        if (data) {
-          setTokenData(data);
-          
-          // Check if current user is creator
-          if (connected && address && data.creator_wallet === address) {
-            setIsCreator(true);
-          } else {
-            setIsCreator(false);
-          }
-        } else {
-          toast.error('Token not found');
-        }
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 500);
       } catch (error) {
         console.error('Error fetching token data:', error);
         // Use mock data if token not found in database
         setTokenData({
-          name: (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`) || 'Token',
-          symbol: symbol?.toUpperCase() || 'TOKEN',
+          name: `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`,
+          symbol: symbol?.toUpperCase(),
           market_cap: 50000,
           creator_wallet: '',
+          price: 0.00023,
+          change24h: 15.4
         });
-      } finally {
         setIsLoading(false);
       }
     };
     
     fetchTokenData();
   }, [normalizedSymbol, connected, address]);
-  
-  // Check if creator can claim rewards
-  useEffect(() => {
-    const checkCreatorRewards = async () => {
-      if (isCreator && tokenData) {
-        try {
-          // In a real implementation, fetch this from Supabase
-          // For now, we'll use a mock implementation
-          setCanClaimRewards(Math.random() > 0.5);
-          
-          if (!canClaimRewards) {
-            const nextDate = new Date();
-            nextDate.setDate(nextDate.getDate() + 7); // Next claim in 7 days
-            setNextClaimDate(nextDate);
-          }
-        } catch (error) {
-          console.error('Error checking creator rewards:', error);
-        }
-      }
-    };
-    
-    checkCreatorRewards();
-  }, [isCreator, tokenData]);
 
-  // Handle creator reward claims
-  const handleClaimRewards = async () => {
-    if (!connected || !isCreator) return;
-    
-    toast.loading('Processing claim...');
-    
-    // In a real implementation, this would call a Supabase function
-    // For now, we simulate a successful claim
-    setTimeout(() => {
-      toast.success('Rewards claimed successfully!', {
-        description: 'You received 0.25 SOL in rewards'
-      });
-      setCanClaimRewards(false);
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + 7);
-      setNextClaimDate(nextDate);
-    }, 2000);
-  };
-
-  // Sample trader activities for the chart
-  const traderActivities = [
-    {
-      type: 'developer' as const,
-      price: 0.00021,
-      timestamp: '2024-04-20T10:30:00Z',
-      action: 'buy' as const,
-      quantity: 50000,
-      percentage: 12
-    },
-    {
-      type: 'whale' as const,
-      price: 0.00022,
-      timestamp: '2024-04-21T14:15:00Z',
-      action: 'buy' as const,
-      quantity: 200000
-    },
-    {
-      type: 'retail' as const,
-      price: 0.00023,
-      timestamp: '2024-04-22T09:45:00Z',
-      action: 'sell' as const,
-      quantity: 10000
-    },
-    {
-      type: 'whale' as const,
-      price: 0.00024,
-      timestamp: '2024-04-23T16:20:00Z',
-      action: 'sell' as const,
-      quantity: 100000
-    }
-  ];
-
-  const fadeUpVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (delay = 0) => ({
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut", delay }
-    })
-  };
-
-  const pulseVariants = {
-    pulse: {
-      scale: [1, 1.03, 1],
-      transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-    }
-  };
-  
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
-        <Header />
-        <main className="flex-grow w-full px-4 pt-20 md:pt-24 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl text-indigo-200">Loading token data...</h2>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
+  // Demo data
   const token = {
     id: normalizedSymbol,
     name: tokenData?.name || (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`),
@@ -203,12 +102,67 @@ const Trade = () => {
     }
   }, [connected, normalizedSymbol]);
 
+  const fadeUpVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (delay = 0) => ({
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut", delay }
+    })
+  };
+
+  const pulseVariants = {
+    pulse: {
+      scale: [1, 1.03, 1],
+      transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+    }
+  };
+
+  // Sample token options for demo
+  const demoTokens = [
+    { id: "bonk", name: "Bonk", symbol: "BONK" },
+    { id: "samo", name: "Samoyedcoin", symbol: "SAMO" },
+    { id: "meme", name: "Memecoin", symbol: "MEME" },
+    { id: "pepe", name: "Pepe", symbol: "PEPE" }
+  ];
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
+        <Header />
+        <main className="flex-grow w-full px-4 pt-20 md:pt-24 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl text-indigo-200">Loading token data...</h2>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
       <Header />
       
       <main className="flex-grow w-full px-4 pt-20 md:pt-24">
         <div className="max-w-7xl mx-auto py-4 md:py-8">
+          {/* Demo Token Selection */}
+          <div className="mb-6 p-4 bg-indigo-900/30 rounded-xl">
+            <h3 className="font-bold mb-2">Select a demo token to trade:</h3>
+            <div className="flex flex-wrap gap-2">
+              {demoTokens.map(token => (
+                <Link 
+                  key={token.id}
+                  to={`/trade/${token.id}`}
+                  className="px-3 py-1 bg-indigo-700/50 hover:bg-indigo-600/50 rounded-full text-sm transition-colors"
+                >
+                  {token.symbol}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <motion.div
             initial="hidden"
             animate="visible"
@@ -234,7 +188,7 @@ const Trade = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 via-indigo-500 to-blue-400 opacity-50" />
                   <img 
-                    src={token.logo.startsWith('/') ? token.logo : `/coins/${token.id}.png`} 
+                    src={token.logo.startsWith('/') ? token.logo : `/placeholder.svg`} 
                     alt={token.name} 
                     className="h-10 w-10 md:h-12 md:w-12 rounded-full relative z-10 object-cover"
                     onError={(e) => {
@@ -288,80 +242,15 @@ const Trade = () => {
             </div>
           </motion.div>
 
-          {/* Market cap progress to DEXScreener */}
-          {!token.isDexscreenerListed && (
-            <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={fadeUpVariants}
-              custom={0.05}
-              className="mb-8 p-4 border border-white/10 rounded-xl bg-indigo-900/20 backdrop-blur-sm"
+          {/* Toggle between normal and enhanced interfaces for demo */}
+          <div className="mb-6 flex justify-center">
+            <button 
+              onClick={() => setShowEnhanced(!showEnhanced)}
+              className="px-4 py-2 bg-indigo-700 hover:bg-indigo-600 rounded-lg text-sm transition-colors"
             >
-              <div className="flex justify-between mb-2">
-                <h3 className="font-poppins font-semibold text-indigo-200 flex items-center gap-2">
-                  DEXScreener Eligibility Progress
-                </h3>
-                <span className="font-mono text-indigo-200">
-                  ${token.marketCap.toLocaleString()} / $50,000
-                </span>
-              </div>
-              
-              <div className="w-full h-3 bg-black/30 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-                  style={{ width: `${Math.min(100, (token.marketCap / 50000) * 100)}%` }}
-                ></div>
-              </div>
-              
-              <p className="text-xs text-gray-300 mt-2">
-                When market cap reaches $50,000, this token will be automatically listed on DEXScreener while continuing to trade on our platform.
-              </p>
-            </motion.div>
-          )}
-
-          {/* Creator rewards banner */}
-          {isCreator && (
-            <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={fadeUpVariants}
-              custom={0.05}
-              className="mb-8"
-            >
-              <div className="p-4 border border-white/10 rounded-xl bg-gradient-to-r from-amber-900/20 to-orange-900/20 backdrop-blur-sm">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-poppins font-semibold text-amber-200 flex items-center gap-2">
-                      <Star size={16} className="text-amber-400" />
-                      Creator Rewards
-                    </h3>
-                    <p className="text-sm text-gray-300 mt-1">
-                      {canClaimRewards 
-                        ? "You have rewards available to claim!"
-                        : nextClaimDate 
-                          ? `Next claim available ${nextClaimDate.toLocaleDateString()}`
-                          : "Start earning rewards from your token's trading activity"}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handleClaimRewards}
-                    disabled={!canClaimRewards}
-                    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${canClaimRewards 
-                      ? "bg-amber-600 hover:bg-amber-500 text-white cursor-pointer" 
-                      : "bg-amber-600/30 text-amber-200 cursor-not-allowed"}`}
-                  >
-                    <Star size={16} />
-                    Claim Rewards
-                  </button>
-                </div>
-                
-                <p className="text-xs text-amber-200/70 mt-3">
-                  As creator, you earn 1% of all trading activity.
-                  Rewards can be claimed every 7 days.
-                </p>
-              </div>
-            </motion.div>
-          )}
+              Switch to {showEnhanced ? "Standard" : "Enhanced"} Trading Interface
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Chart Section */}
@@ -488,85 +377,23 @@ const Trade = () => {
               variants={fadeUpVariants}
               custom={0.2}
             >
-              <EnhancedTradingInterface 
-                tokenSymbol={token.symbol}
-                tokenName={token.name}
-                tokenPrice={token.price}
-                tokenLogo={token.logo}
-              />
+              {showEnhanced ? (
+                <EnhancedTradingInterface 
+                  tokenSymbol={token.symbol}
+                  tokenName={token.name}
+                  tokenPrice={token.price}
+                  tokenLogo={token.logo}
+                />
+              ) : (
+                <TradingInterface 
+                  tokenSymbol={token.symbol}
+                  tokenName={token.name}
+                  tokenPrice={token.price}
+                  tokenLogo={token.logo}
+                />
+              )}
             </motion.div>
           </div>
-          
-          {/* Bonding Curve Section */}
-          <Collapsible
-            open={isBondingOpen}
-            onOpenChange={setIsBondingOpen}
-            className="mt-6 md:mt-8"
-          >
-            <CollapsibleTrigger asChild>
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full py-3 flex items-center justify-between bg-gradient-to-r from-indigo-950/80 to-purple-900/60 backdrop-blur-lg rounded-xl border border-white/10 px-4 md:px-6 text-white font-poppins font-bold"
-              >
-                <div className="flex items-center">
-                  <Star className="mr-2 h-4 w-4 md:h-5 md:w-5 text-yellow-400" />
-                  <span className="bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent text-sm md:text-base">
-                    Bonding Curve Information
-                  </span>
-                </div>
-                <div className="text-indigo-300 text-sm">
-                  {isBondingOpen ? '↑ Hide' : '↓ Show'}
-                </div>
-              </motion.button>
-            </CollapsibleTrigger>
-            
-            <CollapsibleContent>
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ 
-                  opacity: isBondingOpen ? 1 : 0,
-                  height: isBondingOpen ? 'auto' : 0
-                }}
-                transition={{ duration: 0.3 }}
-                className="bg-gradient-to-br from-indigo-950/80 to-purple-900/60 backdrop-blur-lg p-4 md:p-6 rounded-xl border border-white/10 mt-2"
-              >
-                <h2 className="text-lg md:text-xl font-poppins font-bold mb-2 md:mb-4 bg-gradient-to-r from-white via-indigo-100 to-purple-200 bg-clip-text text-transparent">
-                  Bonding Curve
-                </h2>
-                <p className="text-indigo-200 mb-4 md:mb-6 text-sm md:text-base">
-                  This token uses a bonding curve mechanism to determine price. The price increases as more tokens are bought and decreases as tokens are sold.
-                </p>
-                
-                <div className="h-[250px] md:h-[300px]">
-                  <BondingCurveChart />
-                </div>
-                
-                <div className="mt-4 md:mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">How It Works</h3>
-                    <p className="text-xs md:text-sm text-gray-300">
-                      The bonding curve ensures price stability and liquidity for the token by algorithmically adjusting prices based on supply.
-                    </p>
-                  </div>
-                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">Benefits</h3>
-                    <p className="text-xs md:text-sm text-gray-300">
-                      Always available liquidity, predictable price movements, and incentivized early adoption.
-                    </p>
-                  </div>
-                  <div className="bg-black/30 p-3 md:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300">
-                    <h3 className="font-poppins font-bold mb-1 md:mb-2 text-indigo-200 text-sm md:text-base">Current Parameters</h3>
-                    <p className="text-xs md:text-sm font-mono">
-                      <span className="text-gray-400">Curve Type:</span> <span className="text-white">Exponential</span><br />
-                      <span className="text-gray-400">Reserve Ratio:</span> <span className="text-white">20%</span><br />
-                      <span className="text-gray-400">Initial Price:</span> <span className="text-white">0.0001 SOL</span>
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       </main>
       
