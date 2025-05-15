@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Button } from '@/components/ui/button';
@@ -112,6 +111,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenN
     }
   };
   
+  // Update the calculateFee function to fix the type error
   const calculateFee = () => {
     if (!amount || isNaN(parseFloat(amount))) return 0;
     const baseAmount = parseFloat(amount);

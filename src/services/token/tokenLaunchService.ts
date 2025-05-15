@@ -16,8 +16,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     if (!params.name || !params.symbol || !(params.totalSupply || params.initialSupply)) {
       return {
         success: false,
-        message: 'Missing required fields',
-        error: 'Name, symbol and supply are required'
+        error: 'Missing required fields'
       };
     }
     
@@ -28,8 +27,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     if (!creatorWallet) {
       return {
         success: false,
-        message: 'Creator wallet is required',
-        error: 'Please provide a creator wallet address'
+        error: 'Creator wallet is required'
       };
     }
     
@@ -76,7 +74,6 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     console.error('Error launching token:', error);
     return {
       success: false,
-      message: 'Failed to launch token',
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }

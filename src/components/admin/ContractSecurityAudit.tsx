@@ -132,7 +132,7 @@ const ContractSecurityAudit: React.FC = () => {
               onClick={handleRunGasAnalysis} 
               disabled={isLoading}
               size="sm"
-              variant="outline"
+              variant="secondary"
             >
               {isLoading ? "Analyzing..." : "Analyze Gas Usage"}
             </Button>

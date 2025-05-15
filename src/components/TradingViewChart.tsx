@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
@@ -12,6 +11,7 @@ interface TradingViewChartProps {
   timeframe?: string;
   chartType?: 'price' | 'marketCap';
   containerClassName?: string;
+  style?: React.CSSProperties;
   onChartTypeChange?: (type: 'price' | 'marketCap') => void;
 }
 
@@ -26,6 +26,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   timeframe = "1D",
   chartType = "price",
   containerClassName = "",
+  style,
   onChartTypeChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -192,7 +193,11 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           </TabsList>
         </Tabs>
       </div>
-      <AspectRatio ratio={isMobile ? 4/3 : 16/9} className={`relative ${containerClassName}`}>
+      <AspectRatio 
+        ratio={isMobile ? 4/3 : 16/9} 
+        className={`relative ${containerClassName}`}
+        style={style}
+      >
         {isLoading && (
           <motion.div 
             className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/90 to-indigo-950/90 z-10 rounded-xl backdrop-blur-sm"

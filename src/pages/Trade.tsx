@@ -33,7 +33,7 @@ const TradingViewChartWrapper = ({ symbol }: { symbol: string }) => {
     <div className="mb-6">
       <TradingViewChart 
         symbol={symbol} 
-        style={{ height: '400px' }}
+        containerClassName="h-[400px]"
       />
     </div>
   );
@@ -223,7 +223,7 @@ const Trade: React.FC = () => {
                   <CardTitle className="text-lg">Price Chart</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TradingViewChartWrapper symbol={currentToken.symbol} />
+                  <TradingViewChartWrapper symbol={currentToken?.symbol} />
                 </CardContent>
               </Card>
               
@@ -292,10 +292,10 @@ const Trade: React.FC = () => {
                     <CardContent>
                       {isMobile ? (
                         <div className="mt-4">
-                          <TransactionHistory tokenSymbol={currentToken.symbol} />
+                          <TransactionHistory tokenSymbol={currentToken?.symbol} />
                         </div>
                       ) : (
-                        <TradingViewChartWrapper symbol={currentToken.symbol} />
+                        <TradingViewChartWrapper symbol={currentToken?.symbol} />
                       )}
                     </CardContent>
                   </Card>
@@ -308,7 +308,7 @@ const Trade: React.FC = () => {
                         <CardTitle className="text-lg">Performance</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <TokenPerformanceChart tokenSymbol={currentToken.symbol} />
+                        <TokenPerformanceChart symbol={currentToken?.symbol} />
                       </CardContent>
                     </Card>
                     
@@ -317,7 +317,7 @@ const Trade: React.FC = () => {
                         <CardTitle className="text-lg">Trader Activity</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <TraderActivity tokenSymbol={currentToken.symbol} />
+                        <TraderActivity symbol={currentToken?.symbol} />
                       </CardContent>
                     </Card>
                   </div>
@@ -328,7 +328,7 @@ const Trade: React.FC = () => {
             <div>
               <Card className="mb-6">
                 <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Trade {currentToken.symbol}</CardTitle>
+                  <CardTitle className="text-lg">Trade {currentToken?.symbol}</CardTitle>
                   <div className="flex items-center">
                     <label className="text-xs mr-2">Advanced</label>
                     <input 
@@ -347,16 +347,16 @@ const Trade: React.FC = () => {
                     </div>
                   ) : showAdvancedTrading ? (
                     <EnhancedTradingInterface
-                      tokenSymbol={currentToken.symbol}
-                      tokenName={tokenDetails?.name || tokenSymbol}
-                      tokenPrice={tokenDetails?.price || 0}
-                      tokenLogo={tokenDetails?.logo || undefined}
+                      tokenSymbol={currentToken?.symbol}
+                      tokenName={currentToken?.name}
+                      tokenPrice={currentToken?.price || 0}
+                      tokenLogo={currentToken?.logo}
                     />
                   ) : (
                     <TradingInterface 
-                      tokenSymbol={currentToken.symbol} 
-                      tokenName={currentToken.name}
-                      tokenImage={currentToken.logo || ''}
+                      tokenSymbol={currentToken?.symbol} 
+                      tokenName={currentToken?.name}
+                      tokenImage={currentToken?.logo}
                     />
                   )}
                 </CardContent>

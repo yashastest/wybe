@@ -103,6 +103,8 @@ export interface TokenLaunchResult {
   tokenId?: string;
   contractAddress?: string;
   error?: string;
+  // Adding missing properties
+  message?: string;
 }
 
 // Aliases for backward compatibility
@@ -125,4 +127,21 @@ export interface TestnetContract {
   address: string;
   deployedAt: string;
   status: 'active' | 'inactive';
+  programId: string;
+  network: string;
+  deploymentDate: string;
+  testTxCount: number;
+}
+
+export interface SecurityAuditResult {
+  finding: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  location: string;
+  recommendation: string;
+}
+
+export interface GasUsageResult {
+  functionName: string;
+  estimatedGas: number;
+  suggestions: string[];
 }
