@@ -14,7 +14,8 @@ if (typeof global === 'undefined') {
 (window as any).process = {
   env: { NODE_ENV: 'production' },
   version: '',
-  nextTick: (fn: Function) => setTimeout(fn, 0)
+  nextTick: (fn: Function) => setTimeout(fn, 0),
+  browser: true, // Explicitly indicate browser environment
 };
 
 // WebSocket polyfill for @solana/web3.js
@@ -30,7 +31,8 @@ console.error = (...args) => {
     typeof args[0] === 'string' && 
     (args[0].includes('WebSocket connection error') || 
      args[0].includes('rpc-websockets') ||
-     args[0].includes('Failed to connect to websocket'))
+     args[0].includes('Failed to connect to websocket') ||
+     args[0].includes('Invalid response format'))
   ) {
     console.log('[Suppressed WebSocket Error]', ...args);
     return;
@@ -50,3 +52,21 @@ window.fetch = function(...args) {
 
 // Inject additional global mocks that might be needed
 (window as any).crypto = window.crypto || {};
+
+// Required for some BN.js operations which are used by @solana/web3.js
+if (!(window as any).crypto.getRandomValues) {
+  (window as any).crypto.getRandomValues = function(buffer: Uint8Array) {
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = Math.floor(Math.random() * 256);
+    }
+    return buffer;
+  };
+}
+
+// Add XMLHttpRequest if needed (some versions might use this instead of fetch)
+if (typeof XMLHttpRequest === 'undefined') {
+  (window as any).XMLHttpRequest = class {
+    open() {}
+    send() {}
+  };
+}
