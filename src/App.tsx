@@ -8,28 +8,31 @@ import TradingHistory from './pages/TradingHistory';
 import NotFoundPage from './pages/NotFound';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import TokenDeployment from './pages/TokenDeployment';
+import { WalletProvider } from '@/hooks/useWallet.tsx';
 
 const App = () => {
   // You can add any global context providers or initial setup here
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Discover />} />
-        <Route path="/about" element={<Discover />} />
-        <Route path="/discover" element={<Discover />} />
-        <Route path="/create" element={<Discover />} />
-        <Route path="/trade/:tokenId?" element={<Trade />} />
-        <Route path="/trading-history" element={<TradingHistory />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/tokens" element={<AdminDashboard />} />
-        <Route path="/admin/token-deployment" element={<TokenDeployment />} />
-        <Route path="/admin/token-deployment/:tokenId" element={<TokenDeployment />} />
-        <Route path="/admin/reset-password" element={<Discover />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+    <WalletProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Discover />} />
+          <Route path="/about" element={<Discover />} />
+          <Route path="/discover" element={<Discover />} />
+          <Route path="/create" element={<Discover />} />
+          <Route path="/trade/:tokenId?" element={<Trade />} />
+          <Route path="/trading-history" element={<TradingHistory />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/tokens" element={<AdminDashboard />} />
+          <Route path="/admin/token-deployment" element={<TokenDeployment />} />
+          <Route path="/admin/token-deployment/:tokenId" element={<TokenDeployment />} />
+          <Route path="/admin/reset-password" element={<Discover />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </BrowserRouter>
+    </WalletProvider>
   );
 };
 
