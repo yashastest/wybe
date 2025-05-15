@@ -1,11 +1,25 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Footer: React.FC = () => {
   return (
     <footer className="bg-black border-t border-white/10 py-8 mt-auto">
       <div className="container mx-auto px-4">
+        <div className="flex flex-col items-center justify-center mb-8">
+          <Link to="/security-report">
+            <Button variant="outline" className="border-white/20 hover:bg-white/5">
+              <ShieldCheck className="mr-2 h-5 w-5 text-green-500" />
+              Security Report
+            </Button>
+          </Link>
+          <p className="text-gray-400 text-sm mt-2">
+            View our comprehensive security report and smart contract audit
+          </p>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-lg font-bold mb-4">WYBE Token</h3>

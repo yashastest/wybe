@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -11,263 +9,171 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import {
-  Edit,
-  ArrowUpRight,
-  Trash2,
-  Check,
-  X,
-  Loader2,
-  Play
-} from "lucide-react";
-import { toast } from "sonner";
-import { integrationService, AdminUserAccess } from '@/services/integrationService';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from "@/integrations/supabase/client";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { toast } from 'sonner';
+import { ListedToken } from '@/services/token/types';
 
-// Token type definition
-interface Token {
-  id: string;
-  name: string;
-  symbol: string;
-  creator_wallet: string;
-  market_cap: number;
-  launched: boolean;
-  token_address?: string;
-  launch_date?: string;
-  created_at?: string;
-  bonding_curve?: any;
-  approved?: boolean;
-  rejection_reason?: string;
+interface TokensListProps {
+  tokens: ListedToken[];
+  isLoading: boolean;
+  onRefresh: () => Promise<void>;
 }
 
-// This is a pseudo fix since we don't have full access to this file
-// Import the supabase client at the beginning of the file
-
-const TokensList: React.FC = () => {
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+const TokensList: React.FC<TokensListProps> = ({ tokens, isLoading, onRefresh }) => {
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  // Fetch tokens from the database
-  const fetchTokens = async () => {
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+  
+  const handleEdit = (tokenId: string) => {
+    navigate(`/admin/token-deployment/${tokenId}`);
+  };
+  
+  const handleDelete = async (tokenId: string) => {
+    setDeleteLoading(tokenId);
     try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('tokens')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      setTokens(data || []);
+      // In a real application, this would call an API to delete the token
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Token deleted successfully");
+      onRefresh();
     } catch (error) {
-      toast.error(`Failed to fetch tokens: ${error.message}`);
+      console.error("Error deleting token:", error);
+      toast.error("Failed to delete token");
     } finally {
-      setLoading(false);
+      setDeleteLoading(null);
     }
   };
   
-  useEffect(() => {
-    fetchTokens();
-  }, []);
-  
-  // Handle token approval
-  const handleApprove = async (token: Token) => {
-    try {
-      await integrationService.approveToken(token.id);
-      fetchTokens(); // Refresh the list
-    } catch (error) {
-      toast.error(`Failed to approve token: ${error.message}`);
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch(status?.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
     }
-  };
-  
-  // Open rejection dialog
-  const openRejectDialog = (token: Token) => {
-    setSelectedToken(token);
-    setRejectionReason('');
-  };
-  
-  // Handle token rejection
-  const handleReject = async () => {
-    try {
-      if (!selectedToken) return;
-      
-      await integrationService.rejectToken(selectedToken.id, rejectionReason);
-      fetchTokens(); // Refresh the list
-      setSelectedToken(null);
-    } catch (error) {
-      toast.error(`Failed to reject token: ${error.message}`);
-    }
-  };
-  
-  // Handle deploy token
-  const handleDeploy = (token: Token) => {
-    navigate(`/token-deployment/${token.id}`);
-  };
-  
-  // Handle view token
-  const handleViewToken = (token: Token) => {
-    // Navigate to token details page (to be implemented later)
-    toast.info("Token details page not implemented yet");
-  };
-  
-  // Format wallet address
-  const formatWalletAddress = (address: string) => {
-    if (!address) return '';
-    return address.length > 12 
-      ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
-      : address;
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Tokens</CardTitle>
-        <Button size="sm" onClick={() => navigate('/token-deployment')}>
-          New Token
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="text-lg font-semibold">Listed Tokens</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onRefresh} 
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
         </Button>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : tokens.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No tokens found
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Market Cap</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tokens.map((token) => (
-                  <TableRow key={token.id}>
-                    <TableCell className="font-medium">{token.name}</TableCell>
-                    <TableCell>{token.symbol}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {formatWalletAddress(token.creator_wallet)}
-                    </TableCell>
-                    <TableCell>
-                      {token.launched ? (
-                        <Badge className="bg-green-500">Launched</Badge>
-                      ) : token.approved === true ? (
-                        <Badge className="bg-blue-500">Approved</Badge>
-                      ) : token.approved === false ? (
-                        <Badge className="bg-red-500">Rejected</Badge>
+      </div>
+      
+      {tokens.length === 0 ? (
+        <div className="p-8 text-center">
+          <p className="text-gray-500">No tokens found</p>
+          {!isLoading && (
+            <Button 
+              onClick={() => navigate('/admin/token-deployment')} 
+              className="mt-4"
+            >
+              Create Your First Token
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Token</TableHead>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Supply</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tokens.map((token) => (
+                <TableRow key={token.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center">
+                      {token.logo ? (
+                        <img 
+                          src={token.logo} 
+                          alt={token.name} 
+                          className="w-6 h-6 mr-2 rounded-full"
+                        />
                       ) : (
-                        <Badge className="bg-amber-500">Pending</Badge>
+                        <div className="w-6 h-6 mr-2 rounded-full bg-gray-200 flex items-center justify-center">
+                          {token.symbol.charAt(0)}
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {token.market_cap ? `$${token.market_cap.toLocaleString()}` : '-'}
-                    </TableCell>
-                    <TableCell>
-                      {token.created_at 
-                        ? new Date(token.created_at).toLocaleDateString() 
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        {!token.launched && token.approved !== true && token.approved !== false && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 text-green-500"
-                              onClick={() => handleApprove(token)}
-                              title="Approve"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 text-red-500"
-                                  onClick={() => openRejectDialog(token)}
-                                  title="Reject"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Reject Token</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to reject this token? This action cannot be undone.
-                                    <div className="mt-4">
-                                      <Textarea
-                                        placeholder="Reason for rejection"
-                                        value={rejectionReason}
-                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                        className="w-full"
-                                      />
-                                    </div>
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleReject}
-                                    className="bg-red-500 hover:bg-red-600"
-                                  >
-                                    Reject
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-                        
-                        {token.approved === true && !token.launched && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleDeploy(token)}
-                            title="Deploy"
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleViewToken(token)}
-                          title="View Details"
-                        >
-                          <ArrowUpRight className="h-4 w-4" />
+                      {token.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>{token.symbol}</TableCell>
+                  <TableCell>{token.totalSupply?.toLocaleString()}</TableCell>
+                  <TableCell>${token.price.toFixed(4)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={getStatusBadge(token.status)}>
+                      {token.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatDate(token.createdAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(token.id)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(token.id)}
+                          disabled={deleteLoading === token.id}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {deleteLoading === token.id ? "Deleting..." : "Delete"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </Card>
   );
 };

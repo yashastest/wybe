@@ -1,8 +1,30 @@
 
-export interface TokenHolderStats {
-  whales: number;
-  retail: number;
-  devs: number;
+// Token trading related types
+export interface TokenTransaction {
+  id: string;
+  txHash: string;
+  tokenSymbol: string;
+  tokenName: string;
+  type: 'buy' | 'sell';
+  side?: 'buy' | 'sell'; // For backward compatibility
+  amount: number;  // Amount in SOL
+  amountUsd: number;
+  price: number;
+  fee: number;
+  timestamp: string;
+  walletAddress: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  amountTokens?: number;  // For backward compatibility
+  amountSol?: number; // For backward compatibility
+}
+
+export interface TradeHistoryFilters {
+  tokenSymbol?: string;
+  side?: 'buy' | 'sell'; // Type of transaction
+  startDate?: Date;
+  endDate?: Date;
+  status?: 'pending' | 'confirmed' | 'failed';
+  walletAddress?: string;
 }
 
 export interface ListedToken {
@@ -10,107 +32,53 @@ export interface ListedToken {
   name: string;
   symbol: string;
   price: number;
-  change24h: number;
-  volume24h: number;
-  marketCap: number;
-  logo?: string | null;
-  creatorWallet: string;
+  priceChange24h?: number;
+  volume24h?: number;
+  marketCap?: number;
   totalSupply?: number;
-  category?: string[];
-  devWallet?: string;
-  holderStats?: TokenHolderStats;
-  holders?: number;
-}
-
-export interface TokenLaunchParams {
-  name: string;
-  symbol: string;
-  initialSupply: number;
-  totalSupply?: number;
-  creatorWallet?: string;
-  creator?: {
-    wallet: string;
-  };
-  logo?: File;
-}
-
-export interface TokenLaunchResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  tokenId?: string;
-}
-
-export interface InitialSupplyPurchaseResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  amountSol?: number;
-  amountTokens?: number;
-  tx?: string;
+  status: 'active' | 'pending' | 'inactive' | string;
+  description?: string;
+  logo?: string;
+  createdAt: string;
+  contractAddress?: string;
+  creatorAddress?: string;
 }
 
 export interface TradeParams {
+  walletAddress: string;
   tokenSymbol: string;
   action: 'buy' | 'sell';
-  walletAddress: string;
+  gasPriority: 'low' | 'medium' | 'high';
   amountSol?: number;
   amountTokens?: number;
-  gasPriority?: 'low' | 'medium' | 'high';
 }
 
 export interface TradeResult {
   success: boolean;
-  message?: string;
-  error?: string;
-  errorMessage?: string;
   txHash?: string;
-  amountSol?: number;
-  amountTokens?: number;
+  amount?: number;
   price?: number;
   fee?: number;
+  error?: string;
 }
 
-export interface TokenTransaction {
-  id: string;
-  txHash: string;
-  tokenSymbol: string;
-  tokenName?: string;
-  type: 'buy' | 'sell' | 'transfer' | 'mint';
-  side?: 'buy' | 'sell'; // Adding side for compatibility with existing code
-  amount: number;
-  amountUsd?: number;
-  price?: number;
-  fee?: number;
-  timestamp: string;
-  walletAddress: string;
-  status: 'pending' | 'confirmed' | 'failed';
-  amountTokens?: number; // Adding for compatibility with existing code
-  amountSol?: number; // Adding for compatibility with existing code
-}
-
-export interface DeploymentOptions {
-  network: 'devnet' | 'testnet' | 'mainnet';
-  bondingCurveType: 'linear' | 'exponential' | 'logarithmic';
+// Token launch related types
+export interface TokenLaunchParams {
+  name: string;
+  symbol: string;
+  totalSupply: number;
+  description: string;
+  logoUrl?: string;
   initialPrice: number;
-  platformFee: number;
-  creatorFee: number;
-  mintAuthority: string;
+  creatorAddress: string;
+  bondingCurveType: 'linear' | 'quadratic' | 'exponential';
+  creatorFeePercentage: number;
+  platformFeePercentage: number;
 }
 
-export interface SmartContractStatus {
-  deployed: boolean;
-  verified: boolean;
-  programId?: string;
-  deploymentDate?: string;
-  lastAuditDate?: string;
-  auditScore?: number;
-}
-
-// Add the trade history filters interface
-export interface TradeHistoryFilters {
-  tokenSymbol?: string;
-  side?: 'buy' | 'sell';
-  startDate?: Date;
-  endDate?: Date;
+export interface TokenLaunchResult {
+  success: boolean;
+  tokenId?: string;
+  contractAddress?: string;
+  error?: string;
 }

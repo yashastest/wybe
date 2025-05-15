@@ -1,233 +1,290 @@
-import React, { useState, useEffect } from 'react';
-import { useWallet } from '@/lib/wallet';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRightLeft, TrendingUp, TrendingDown } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { tokenTradingService, TradeResult } from '@/services/tokenTradingService';
+
+import React, { useState } from 'react';
+import { useWallet } from '@/hooks/useWallet.tsx';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { ArrowDown, Info } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { tokenTradingService } from '@/services/tokenTradingService';
+import { TradeResult } from '@/services/token/types';
+import { Skeleton } from './ui/skeleton';
 
 interface TradingInterfaceProps {
   tokenSymbol: string;
-  tokenName?: string;
-  tokenIcon?: string;
+  tokenName: string;
+  tokenImage?: string;
 }
 
-const TradingInterface: React.FC<TradingInterfaceProps> = ({
-  tokenSymbol,
-  tokenName = '',
-  tokenIcon
-}) => {
-  const { wallet, address, connected, isConnecting, connect } = useWallet();
-  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
-  const [inputAmount, setInputAmount] = useState('');
-  const [estimatedAmount, setEstimatedAmount] = useState('');
-  const [gasPriority, setGasPriority] = useState<number>(2); // 1: low, 2: medium, 3: high
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [isTrading, setIsTrading] = useState(false);
-  const [tradeResult, setTradeResult] = useState<TradeResult | null>(null);
+const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokenSymbol, tokenName, tokenImage }) => {
+  const { address: walletAddress, connected } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
+  const [amount, setAmount] = useState<string>('');
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
+  const [gasPriority, setGasPriority] = useState<string>('medium');
   
-  useEffect(() => {
-    if (inputAmount) {
-      calculateEstimatedAmount();
-    }
-  }, [inputAmount, tradeType]);
-  
-  const calculateEstimatedAmount = async () => {
-    if (!inputAmount) {
-      setEstimatedAmount('');
+  // Update estimated values when amount changes
+  const handleAmountChange = async (value: string) => {
+    setAmount(value);
+    
+    if (!value || isNaN(parseFloat(value))) {
+      setEstimatedPrice(null);
+      setEstimatedTokens(null);
       return;
     }
     
-    setIsCalculating(true);
     try {
-      if (tradeType === 'buy') {
-        const solAmount = parseFloat(inputAmount);
-        const tokenAmount = await tokenTradingService.estimateTokenAmount(tokenSymbol, solAmount);
-        setEstimatedAmount(tokenAmount.toFixed(4));
+      const numberAmount = parseFloat(value);
+      
+      if (activeTab === 'buy') {
+        // Buying with SOL, estimate tokens received
+        const tokens = await tokenTradingService.estimateTokenAmount(tokenSymbol, numberAmount);
+        setEstimatedTokens(tokens);
+        setEstimatedPrice(numberAmount / tokens);
       } else {
-        const tokenAmount = parseFloat(inputAmount);
-        const solAmount = await tokenTradingService.estimateSolAmount(tokenSymbol, tokenAmount);
-        setEstimatedAmount(solAmount.toFixed(4));
+        // Selling tokens, estimate SOL received
+        const sol = await tokenTradingService.estimateSolAmount(tokenSymbol, numberAmount);
+        setEstimatedPrice(sol / numberAmount);
+        setEstimatedTokens(sol);
       }
     } catch (error) {
-      console.error("Error calculating estimated amount:", error);
-      toast.error("Failed to calculate estimated amount");
-      setEstimatedAmount('Error');
-    } finally {
-      setIsCalculating(false);
+      console.error("Error estimating:", error);
     }
   };
-
-  // Convert gasPriority string to appropriate format
-  const getGasPriorityValue = (priority: number): 'low' | 'medium' | 'high' => {
-    switch(priority) {
-      case 1: return 'low';
-      case 3: return 'high';
-      default: return 'medium';
-    }
-  };
-
+  
+  // Handle trade execution
   const executeTrade = async () => {
-    if (!connected) {
-      toast.error("Please connect your wallet");
+    if (!connected || !walletAddress) {
+      toast.error("Please connect your wallet first");
       return;
     }
     
-    if (!inputAmount) {
-      toast.error("Please enter an amount");
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      toast.error("Please enter a valid amount");
       return;
     }
     
-    setIsTrading(true);
-    setTradeResult(null);
+    setIsLoading(true);
     
     try {
       const tradeParams = {
+        walletAddress,
         tokenSymbol,
-        action: tradeType as 'buy' | 'sell',
-        walletAddress: address,
-        gasPriority: getGasPriorityValue(gasPriority)
+        action: activeTab,
+        gasPriority: gasPriority as 'low' | 'medium' | 'high',
       };
       
-      let result: TradeResult;
-      
-      if (tradeType === 'buy') {
-        result = await tokenTradingService.executeTrade({
-          ...tradeParams,
-          amountSol: parseFloat(inputAmount)
-        });
+      if (activeTab === 'buy') {
+        // @ts-ignore - adding dynamic property
+        tradeParams.amountSol = parseFloat(amount);
       } else {
-        result = await tokenTradingService.executeTrade({
-          ...tradeParams,
-          amountTokens: parseFloat(inputAmount)
-        });
+        // @ts-ignore - adding dynamic property
+        tradeParams.amountTokens = parseFloat(amount);
       }
       
-      setTradeResult(result);
+      const result = await tokenTradingService.executeTrade(tradeParams);
       
       if (result.success) {
-        toast.success(`Trade executed successfully! Tx: ${result.txHash}`);
+        toast.success(`Transaction successful! ${
+          activeTab === 'buy' 
+            ? `Bought ${estimatedTokens?.toFixed(2)} ${tokenSymbol}`
+            : `Sold ${amount} ${tokenSymbol}`
+        }`);
+        setAmount('');
+        setEstimatedPrice(null);
+        setEstimatedTokens(null);
       } else {
-        toast.error(`Trade failed: ${result.error || result.errorMessage || 'Unknown error'}`);
+        toast.error(`Transaction failed: ${result.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error("Error executing trade:", error);
+      console.error("Trade execution error:", error);
       toast.error("Failed to execute trade");
     } finally {
-      setIsTrading(false);
+      setIsLoading(false);
     }
+  };
+  
+  const calculateFee = () => {
+    if (!amount || isNaN(parseFloat(amount))) return 0;
+    const baseAmount = parseFloat(amount);
+    return activeTab === 'buy' 
+      ? baseAmount * 0.025 
+      : (estimatedTokens || 0) * 0.025;
+  };
+  
+  const calculateTotal = () => {
+    if (!amount || isNaN(parseFloat(amount))) return 0;
+    const baseAmount = parseFloat(amount);
+    const fee = calculateFee();
+    
+    return activeTab === 'buy'
+      ? baseAmount - fee
+      : (estimatedTokens || 0) - fee;
   };
 
   return (
-    <Card className="glass-card">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">{tokenName || tokenSymbol} Trading</h2>
-          {tokenIcon && <img src={tokenIcon} alt="Token Icon" className="w-8 h-8" />}
-        </div>
-        
-        <Tabs defaultValue="buy" className="mb-4">
-          <TabsList>
-            <TabsTrigger value="buy" onClick={() => setTradeType('buy')}>
-              <TrendingUp className="mr-2 h-4 w-4 text-green-500" />
-              Buy
-            </TabsTrigger>
-            <TabsTrigger value="sell" onClick={() => setTradeType('sell')}>
-              <TrendingDown className="mr-2 h-4 w-4 text-red-500" />
-              Sell
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="buy">
-            <p className="text-sm text-gray-400">Buy {tokenName || tokenSymbol} with SOL</p>
-          </TabsContent>
-          <TabsContent value="sell">
-            <p className="text-sm text-gray-400">Sell {tokenName || tokenSymbol} for SOL</p>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">
-            {tradeType === 'buy' ? 'SOL Amount' : `${tokenName || tokenSymbol} Amount`}
+    <div className="space-y-4">
+      {/* Trading tabs */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button 
+          variant={activeTab === 'buy' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('buy')}
+          className={activeTab === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}
+          disabled={isLoading}
+        >
+          Buy
+        </Button>
+        <Button 
+          variant={activeTab === 'sell' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('sell')}
+          className={activeTab === 'sell' ? 'bg-red-600 hover:bg-red-700' : ''}
+          disabled={isLoading}
+        >
+          Sell
+        </Button>
+      </div>
+      
+      {/* Input fields */}
+      <div className="space-y-6 mt-2">
+        <div className="space-y-2">
+          <label className="text-sm text-gray-400">
+            {activeTab === 'buy' ? 'Amount (SOL)' : `Amount (${tokenSymbol})`}
           </label>
-          <Input
-            type="number"
-            placeholder={`Enter amount to ${tradeType}`}
-            value={inputAmount}
-            onChange={(e) => setInputAmount(e.target.value)}
-            className="bg-black/30"
-          />
-        </div>
-        
-        <div className="mb-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium mb-2">
-              Estimated Amount
-            </label>
-            {isCalculating && <span className="text-gray-400 text-sm">Calculating...</span>}
+          <div className="flex items-center space-x-2">
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              disabled={isLoading}
+              className="flex-1"
+              step="0.01"
+              min="0"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleAmountChange(activeTab === 'buy' ? '0.1' : '100')}
+              disabled={isLoading}
+            >
+              Min
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleAmountChange(activeTab === 'buy' ? '1' : '1000')}
+              disabled={isLoading}
+            >
+              Max
+            </Button>
           </div>
-          <Input
-            type="text"
-            placeholder="Estimated amount"
-            value={estimatedAmount}
-            readOnly
-            className="bg-black/30"
-          />
         </div>
         
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">Gas Priority</label>
-          <div className="flex space-x-2">
-            <Button
-              variant={gasPriority === 1 ? 'default' : 'outline'}
-              onClick={() => setGasPriority(1)}
-              className={gasPriority === 1 ? 'bg-blue-500' : ''}
-            >
-              Low
-            </Button>
-            <Button
-              variant={gasPriority === 2 ? 'default' : 'outline'}
-              onClick={() => setGasPriority(2)}
-              className={gasPriority === 2 ? 'bg-blue-500' : ''}
-            >
-              Medium
-            </Button>
-            <Button
-              variant={gasPriority === 3 ? 'default' : 'outline'}
-              onClick={() => setGasPriority(3)}
-              className={gasPriority === 3 ? 'bg-blue-500' : ''}
-            >
-              High
-            </Button>
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ArrowDown className="h-6 w-6 p-1 bg-black border border-gray-700 rounded-full" />
+          </div>
+          <div className="border-t border-gray-800"></div>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm text-gray-400">
+            {activeTab === 'buy' ? `Estimated ${tokenSymbol}` : 'Estimated SOL'}
+          </label>
+          <div className="p-3 bg-black/20 rounded border border-gray-800">
+            {isLoading ? (
+              <Skeleton className="h-6 w-full bg-gray-800" />
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="font-mono">
+                  {estimatedTokens 
+                    ? activeTab === 'buy' 
+                      ? estimatedTokens.toFixed(2)
+                      : estimatedTokens.toFixed(4)
+                    : '0.00'
+                  }
+                </div>
+                <div className="text-sm text-gray-400">
+                  {activeTab === 'buy' ? tokenSymbol : 'SOL'}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between text-sm text-gray-400">
+            <span>Price per token:</span>
+            <span>{estimatedPrice ? `${estimatedPrice.toFixed(6)} SOL` : 'N/A'}</span>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm text-gray-400">Gas Priority</label>
+          <Select
+            defaultValue={gasPriority}
+            onValueChange={setGasPriority}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Gas Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low (Slower)</SelectItem>
+              <SelectItem value="medium">Medium (Recommended)</SelectItem>
+              <SelectItem value="high">High (Faster)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between text-sm">
+            <span>Fee (2.5%):</span>
+            <span>
+              {activeTab === 'buy' 
+                ? `${calculateFee().toFixed(4)} SOL`
+                : `${calculateFee().toFixed(2)} ${activeTab === 'buy' ? tokenSymbol : 'SOL'}`
+              }
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between text-sm font-bold">
+            <span>You will receive:</span>
+            <span>
+              {activeTab === 'buy' 
+                ? `${estimatedTokens?.toFixed(2) || '0.00'} ${tokenSymbol}`
+                : `${calculateTotal().toFixed(4)} SOL`
+              }
+            </span>
           </div>
         </div>
         
         <Button
-          className="w-full"
+          className={`w-full ${activeTab === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+          disabled={!connected || isLoading || !amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
           onClick={executeTrade}
-          disabled={isTrading || isConnecting || !connected}
         >
-          {isConnecting ? 'Connecting Wallet...' : isTrading ? 'Executing Trade...' : connected ? `Execute ${tradeType}` : 'Connect Wallet'}
+          {isLoading ? (
+            "Processing..."
+          ) : !connected ? (
+            "Connect Wallet"
+          ) : (
+            `${activeTab === 'buy' ? 'Buy' : 'Sell'} ${tokenSymbol}`
+          )}
         </Button>
         
-        {tradeResult && (
-          <div className="mt-4 p-4 border rounded-md">
-            <h3 className="text-lg font-semibold mb-2">Trade Result:</h3>
-            <p>Success: {tradeResult.success ? 'Yes' : 'No'}</p>
-            {tradeResult.success ? (
-              <>
-                <p>Tx Hash: {tradeResult.txHash}</p>
-                <p>Amount SOL: {tradeResult.amountSol}</p>
-                <p>Amount Tokens: {tradeResult.amountTokens}</p>
-              </>
-            ) : (
-              <p>Error: {tradeResult.error || tradeResult.errorMessage}</p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="flex items-center justify-center text-xs text-gray-400 gap-1">
+          <Info className="h-3 w-3" />
+          <span>All transactions are processed on Solana devnet</span>
+        </div>
+      </div>
+    </div>
   );
 };
 
