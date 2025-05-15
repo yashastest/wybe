@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useTokenTrading, TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface TransactionHistoryProps {
   tokenSymbol?: string;
-  fullSize?: boolean; // Add fullSize prop to align with TokenTrade.tsx usage
+  fullSize?: boolean;
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, fullSize = false }) => {
@@ -172,7 +173,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, fu
               </td>
               <td className="py-3 px-4">
                 <Badge variant={
-                  tx.status === 'completed' || tx.status === 'confirmed' ? 'success' : 
+                  tx.status === 'completed' || tx.status === 'confirmed' ? 'green' : 
                   tx.status === 'pending' ? 'outline' : 'destructive'
                 }>
                   {tx.status === 'confirmed' ? 'Completed' : 
