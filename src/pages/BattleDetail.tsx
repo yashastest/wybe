@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CountdownTimer from '@/components/meme-battle/CountdownTimer';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TradingInterface } from '@/components/TradingInterface';
+import TradingInterface from '@/components/TradingInterface';
 import { formatCurrency } from '@/utils/tradeUtils';
 
 type BattleRoom = {
@@ -110,7 +110,8 @@ const BattleDetail = () => {
         .single();
 
       if (error) throw error;
-      setBattleRoom(data);
+      // Cast data to ensure it matches the BattleRoom type
+      setBattleRoom(data as BattleRoom);
     } catch (error) {
       console.error('Error fetching battle room:', error);
       toast.error('Failed to load battle room details');
