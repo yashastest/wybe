@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useWallet } from '@/hooks/useWallet';
@@ -197,6 +196,9 @@ const BattleDetail = () => {
   }
 
   const battleStatus = getBattleStatus();
+  
+  // Get the selected token's details
+  const selectedToken = getSelectedToken();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -398,23 +400,27 @@ const BattleDetail = () => {
         </TabsContent>
         
         <TabsContent value="trade">
-          {selectedTokenId && getSelectedToken() ? (
+          {selectedTokenId && selectedToken ? (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>{getSelectedToken()?.token_symbol}</CardTitle>
-                      <CardDescription>{getSelectedToken()?.token_name}</CardDescription>
+                      <CardTitle>{selectedToken.token_symbol}</CardTitle>
+                      <CardDescription>{selectedToken.token_name}</CardDescription>
                     </div>
-                    <Badge className={getSelectedToken()?.is_winner ? 'bg-amber-500 text-amber-950' : ''}>
-                      {getSelectedToken()?.is_winner ? 'Winner 🏆' : 'Market Cap: ' + formatCurrency(getSelectedToken()?.current_market_cap || 0, 2, '◎ ')}
+                    <Badge className={selectedToken.is_winner ? 'bg-amber-500 text-amber-950' : ''}>
+                      {selectedToken.is_winner ? 'Winner 🏆' : 'Market Cap: ' + formatCurrency(selectedToken.current_market_cap || 0, 2, '◎ ')}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   {connected ? (
-                    <TradingInterface tokenSymbol={getSelectedToken()?.token_symbol || ''} />
+                    <TradingInterface 
+                      tokenSymbol={selectedToken.token_symbol} 
+                      tokenName={selectedToken.token_name} 
+                      tokenPrice={0.000001} // Default value, ideally should be calculated or fetched
+                    />
                   ) : (
                     <div className="text-center py-8">
                       <p className="text-gray-500 dark:text-gray-400 mb-4">
