@@ -39,13 +39,13 @@ export default defineConfig(({ mode }) => ({
       "rpc-websockets/dist/lib/client/websocket.browser": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/index": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/index.browser": path.resolve(__dirname, "src/empty-module.js"),
+      "jayson/lib/client/browser": path.resolve(__dirname, "src/empty-module.js"),
       "ws": path.resolve(__dirname, "src/empty-module.js"),
       "net": path.resolve(__dirname, "src/empty-module.js"),
       "tls": path.resolve(__dirname, "src/empty-module.js"),
       "dgram": path.resolve(__dirname, "src/empty-module.js"), // Additional Node-specific module
       "fs": path.resolve(__dirname, "src/empty-module.js"),    // Additional Node-specific module
       "crypto": path.resolve(__dirname, "src/empty-module.js"), // Additional Node-specific module that might be used
-      "jayson/lib/client/browser": path.resolve(__dirname, "src/empty-module.js"),
     },
   },
   build: {
@@ -57,6 +57,7 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     exclude: ["@project-serum/anchor", "@solana/web3.js"], // Don't optimize these packages
+    include: ["buffer", "events", "assert", "stream"],     // Include these to be pre-bundled
     esbuildOptions: {
       // Node.js global to browser globalThis
       define: {

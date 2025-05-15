@@ -70,3 +70,20 @@ if (typeof XMLHttpRequest === 'undefined') {
     send() {}
   };
 }
+
+// Explicitly expose the module.exports and require functions 
+// which might be used by some CommonJS modules
+(window as any).module = (window as any).module || {};
+(window as any).module.exports = (window as any).module.exports || {};
+(window as any).require = (window as any).require || function(module: string) {
+  if (module === 'rpc-websockets/dist/lib/client') {
+    return { Client: class {} };
+  }
+  if (module === 'rpc-websockets/dist/lib/client/websocket.browser') {
+    return () => ({ Client: class {} });
+  }
+  if (module === 'ws') {
+    return class {};
+  }
+  return {};
+};

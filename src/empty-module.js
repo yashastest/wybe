@@ -1,6 +1,5 @@
 
 // Empty module to handle imports of unsupported browser modules
-export default {};
 
 /**
  * Mock implementation for rpc-websockets/dist/lib/client
@@ -95,3 +94,15 @@ export class WebSocketImpl extends w3cwebsocket {
 
 // Make sure the implementation is available as both default and named export
 export { Client as default };
+
+// Mock implementation for jayson/lib/client/browser
+export const jaysonClient = {
+  Client: class {
+    constructor() {}
+    request() {
+      return Promise.resolve({ result: null, error: null });
+    }
+  }
+};
+
+export default Client;
