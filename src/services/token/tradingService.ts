@@ -34,9 +34,26 @@ const estimateSolAmount = (tokenSymbol: string, tokenAmount: number, action: 'bu
   }
 };
 
-// Execute trade function
+// Execute trade function with enhanced error handling
 const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
   try {
+    // Validate inputs before proceeding
+    if (!tradeParams.walletAddress) {
+      return {
+        success: false,
+        error: 'Wallet address is required',
+        errorMessage: 'Please connect your wallet to continue'
+      };
+    }
+
+    if (!tradeParams.tokenSymbol) {
+      return {
+        success: false,
+        error: 'Token symbol is required',
+        errorMessage: 'Invalid token selection'
+      };
+    }
+
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
@@ -56,6 +73,9 @@ const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
       const solAmountAfterFee = amountSol * 0.98; // 2% fee
       const tokensReceived = solAmountAfterFee / tokenPrice;
       
+      // Enhanced tracking and logging
+      console.log(`Buy trade executed: ${amountSol} SOL for ${tokensReceived} ${tokenSymbol}`);
+      
       return {
         success: true,
         amountSol,
@@ -70,6 +90,9 @@ const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
       }
       const solAmountBeforeFee = amountTokens * tokenPrice;
       const solReceived = solAmountBeforeFee * 0.98; // 2% fee
+      
+      // Enhanced tracking and logging
+      console.log(`Sell trade executed: ${amountTokens} ${tokenSymbol} for ${solReceived} SOL`);
       
       return {
         success: true,
@@ -89,7 +112,7 @@ const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
   }
 };
 
-// Log trade to database via Edge Function
+// Enhanced log trade to database via Edge Function with retry mechanism
 const logTradeInDatabase = async (tradeData: {
   wallet_address: string;
   token_symbol: string;
@@ -97,24 +120,48 @@ const logTradeInDatabase = async (tradeData: {
   amount: number;
   tx_hash?: string;
 }) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('log-trade', {
-      body: tradeData
-    });
-    
-    if (error) {
-      console.error("Error logging trade:", error);
-      return { success: false, error };
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const { data, error } = await supabase.functions.invoke('log-trade', {
+        body: tradeData
+      });
+      
+      if (error) {
+        console.error(`Error logging trade (attempt ${retryCount + 1}):`, error);
+        retryCount++;
+        
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+          continue;
+        }
+        
+        return { success: false, error };
+      }
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error(`Error calling log-trade function (attempt ${retryCount + 1}):`, error);
+      retryCount++;
+      
+      if (retryCount < maxRetries) {
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+        continue;
+      }
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
-    
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error calling log-trade function:", error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
   }
+  
+  // This should never be reached due to the returns in the loop
+  return { success: false, error: 'Maximum retries exceeded' };
 };
 
 export const tradingService = {

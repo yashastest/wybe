@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TokenTransaction, TradeHistoryFilters } from './types';
 
-// Function to get user transactions
+// Enhanced function to get user transactions with better error handling and filtering
 const getUserTransactions = async (
   walletAddress: string, 
   filters?: TradeHistoryFilters
@@ -29,7 +29,7 @@ const getUserTransactions = async (
         const tokenSymbolFilter = filters.toLowerCase();
         filteredData = filteredData.filter(tx => {
           const txTokenSymbol = tx.token_symbol;
-          // Fix for the TypeScript error - ensure token_symbol is a string before calling toLowerCase
+          // Ensure token_symbol is a string before calling toLowerCase
           return typeof txTokenSymbol === 'string' && txTokenSymbol.toLowerCase() === tokenSymbolFilter;
         });
       } else if (filters && typeof filters === 'object') {
@@ -38,7 +38,7 @@ const getUserTransactions = async (
           const tokenSymbolFilter = filters.tokenSymbol.toLowerCase();
           filteredData = filteredData.filter(tx => {
             const txTokenSymbol = tx.token_symbol;
-            // Fix for the TypeScript error - ensure token_symbol is a string before calling toLowerCase
+            // Ensure token_symbol is a string before calling toLowerCase
             return typeof txTokenSymbol === 'string' && txTokenSymbol.toLowerCase() === tokenSymbolFilter;
           });
         }
@@ -67,15 +67,15 @@ const getUserTransactions = async (
     const transactions: TokenTransaction[] = filteredData.map(record => ({
       id: record.id,
       tokenSymbol: record.token_symbol,
-      side: record.side as 'buy' | 'sell', // Type assertion to ensure it's 'buy' or 'sell'
+      side: record.side as 'buy' | 'sell',
       amount: record.amount,
-      price: 0.0001, // Should be retrieved from the database or calculated
+      price: record.price || 0.0001, // Get price from record if available, otherwise use default
       timestamp: record.created_at,
       walletAddress: record.wallet_address,
-      status: 'confirmed',
+      status: record.status || 'confirmed',
       txHash: record.tx_hash,
-      amountTokens: record.amount,
-      amountSol: Number(record.amount) * 0.0001 // Calculate based on price
+      amountTokens: record.amount_tokens || record.amount, // Use amount_tokens if available
+      amountSol: record.amount_sol || Number(record.amount) * 0.0001 // Use amount_sol if available
     }));
     
     return transactions;
@@ -85,6 +85,72 @@ const getUserTransactions = async (
   }
 };
 
+// Enhanced function to get transaction statistics
+const getTransactionStats = async (tokenSymbol?: string): Promise<{
+  totalVolume: number;
+  count24h: number;
+  volumeChange: number;
+}> => {
+  try {
+    // Create a date object for 24 hours ago
+    const date24hAgo = new Date();
+    date24hAgo.setHours(date24hAgo.getHours() - 24);
+    
+    // Create a date object for 48 hours ago
+    const date48hAgo = new Date();
+    date48hAgo.setHours(date48hAgo.getHours() - 48);
+    
+    let query = supabase
+      .from('trades')
+      .select('*');
+    
+    // Filter by token if specified
+    if (tokenSymbol) {
+      query = query.eq('token_symbol', tokenSymbol);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error("Error fetching transaction stats:", error);
+      return { totalVolume: 0, count24h: 0, volumeChange: 0 };
+    }
+    
+    // Calculate total volume
+    const totalVolume = data.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    
+    // Calculate 24h volume
+    const transactions24h = data.filter(tx => 
+      new Date(tx.created_at) >= date24hAgo
+    );
+    const count24h = transactions24h.length;
+    
+    // Calculate volume change (24h vs previous 24h)
+    const transactions48hTo24h = data.filter(tx => 
+      new Date(tx.created_at) >= date48hAgo && 
+      new Date(tx.created_at) < date24hAgo
+    );
+    
+    const volume24h = transactions24h.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    const volumePrevious24h = transactions48hTo24h.reduce((sum, tx) => sum + Number(tx.amount), 0);
+    
+    // Calculate percentage change
+    const volumeChange = volumePrevious24h === 0 
+      ? 100 // If previous volume was 0, consider it 100% increase
+      : ((volume24h - volumePrevious24h) / volumePrevious24h) * 100;
+    
+    return {
+      totalVolume,
+      count24h,
+      volumeChange
+    };
+  } catch (error) {
+    console.error("Error calculating transaction stats:", error);
+    return { totalVolume: 0, count24h: 0, volumeChange: 0 };
+  }
+};
+
 export const transactionService = {
-  getUserTransactions
+  getUserTransactions,
+  getTransactionStats
 };

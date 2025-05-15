@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -15,11 +16,15 @@ import {
   ListChecks,
   CheckCircle2,
   ExternalLink,
-  Settings2
+  Settings2,
+  AlertTriangle,
+  LucideMonitorDown
 } from "lucide-react";
 import { tradingService, DeploymentEnvironment as TradingDeploymentEnvironment } from "@/services/tradingService";
 import { integrationService, DeploymentResult } from "@/services/integrationService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import DeploymentConfigChecker from './DeploymentConfigChecker';
+import DeploymentProgressTracker from '@/components/DeploymentProgressTracker';
 
 interface DeploymentChecklistItem {
   id: string;
@@ -37,11 +42,67 @@ const INITIAL_CHECKLIST: DeploymentChecklistItem[] = [
   { id: 'final_tests', title: 'Final Testnet Run Through', description: 'Full user flow tested on testnet environment.', checked: false },
 ];
 
+// Deployment steps
+const DEPLOYMENT_STEPS = [
+  {
+    id: 'build_contract',
+    title: 'Build Smart Contract',
+    description: 'Compile and optimize smart contract code',
+    status: 'completed' as const
+  },
+  {
+    id: 'test_contract',
+    title: 'Run Contract Tests',
+    description: 'Execute test suite for smart contract',
+    status: 'completed' as const,
+    dependsOn: ['build_contract']
+  },
+  {
+    id: 'deploy_contract',
+    title: 'Deploy to Selected Network',
+    description: 'Deploy contract to the selected Solana network',
+    status: 'in-progress' as const,
+    dependsOn: ['test_contract']
+  },
+  {
+    id: 'verify_deployment',
+    title: 'Verify Deployment',
+    description: 'Verify contract is correctly deployed',
+    status: 'pending' as const,
+    dependsOn: ['deploy_contract']
+  },
+  {
+    id: 'generate_client',
+    title: 'Generate Client SDK',
+    description: 'Generate TypeScript client SDK from IDL',
+    status: 'pending' as const,
+    dependsOn: ['verify_deployment']
+  },
+  {
+    id: 'deploy_frontend',
+    title: 'Deploy Frontend',
+    description: 'Deploy frontend application with contract integration',
+    status: 'pending' as const,
+    dependsOn: ['generate_client']
+  }
+];
+
 const DeploymentEnvironment = () => {
   const [environment, setEnvironment] = useState<TradingDeploymentEnvironment | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [deploymentResult, setDeploymentResult] = useState<DeploymentResult | null>(null);
   const [checklist, setChecklist] = useState<DeploymentChecklistItem[]>(INITIAL_CHECKLIST);
+  const [deploymentProgress, setDeploymentProgress] = useState<number>(65);
+  const [currentDeployStep, setCurrentDeployStep] = useState<string>('deploy_contract');
+  const [healthStatus, setHealthStatus] = useState<{
+    api: 'healthy' | 'degraded' | 'down';
+    rpc: 'healthy' | 'degraded' | 'down';
+    database: 'healthy' | 'degraded' | 'down';
+  }>({
+    api: 'healthy',
+    rpc: 'healthy',
+    database: 'healthy',
+  });
 
   useEffect(() => {
     setEnvironment(tradingService.getDeploymentEnvironment());
@@ -68,6 +129,17 @@ const DeploymentEnvironment = () => {
     } else {
        localStorage.setItem('deploymentChecklist', JSON.stringify(INITIAL_CHECKLIST));
     }
+    
+    // Simulate periodic health checks
+    const healthCheckInterval = setInterval(() => {
+      setHealthStatus({
+        api: Math.random() > 0.1 ? 'healthy' : Math.random() > 0.5 ? 'degraded' : 'down',
+        rpc: Math.random() > 0.1 ? 'healthy' : Math.random() > 0.5 ? 'degraded' : 'down',
+        database: Math.random() > 0.05 ? 'healthy' : Math.random() > 0.5 ? 'degraded' : 'down',
+      });
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(healthCheckInterval);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,9 +177,30 @@ const DeploymentEnvironment = () => {
     setChecklist(updatedChecklist);
     localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
   };
+  
+  const handleFixIssue = (checkId: string) => {
+    toast.info(`Attempting to fix issue: ${checkId}`);
+    
+    // Simulate fixing the issue
+    setTimeout(() => {
+      toast.success(`Issue resolved: ${checkId}`);
+    }, 2000);
+  };
 
   const allChecked = checklist.every(item => item.checked);
-
+  
+  const getHealthIcon = (status: 'healthy' | 'degraded' | 'down') => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'degraded':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'down':
+        return <LucideMonitorDown className="h-4 w-4 text-red-500" />;
+    }
+  };
+  
+  // If environment isn't loaded yet, show a loading state
   if (!environment) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -180,6 +273,53 @@ const DeploymentEnvironment = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Health status indicators */}
+            <div className="p-3 bg-black/30 rounded-lg border border-white/5 space-y-2">
+              <h3 className="text-sm font-medium mb-2">System Health</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">API Status</span>
+                  <div className="flex items-center">
+                    {getHealthIcon(healthStatus.api)}
+                    <span className={`ml-1.5 capitalize ${
+                      healthStatus.api === 'healthy' ? 'text-green-400' : 
+                      healthStatus.api === 'degraded' ? 'text-yellow-400' : 
+                      'text-red-400'
+                    }`}>
+                      {healthStatus.api}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">RPC Connection</span>
+                  <div className="flex items-center">
+                    {getHealthIcon(healthStatus.rpc)}
+                    <span className={`ml-1.5 capitalize ${
+                      healthStatus.rpc === 'healthy' ? 'text-green-400' : 
+                      healthStatus.rpc === 'degraded' ? 'text-yellow-400' : 
+                      'text-red-400'
+                    }`}>
+                      {healthStatus.rpc}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Database</span>
+                  <div className="flex items-center">
+                    {getHealthIcon(healthStatus.database)}
+                    <span className={`ml-1.5 capitalize ${
+                      healthStatus.database === 'healthy' ? 'text-green-400' : 
+                      healthStatus.database === 'degraded' ? 'text-yellow-400' : 
+                      'text-red-400'
+                    }`}>
+                      {healthStatus.database}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <Button onClick={handleSaveChanges} disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700">
               {isLoading ? <RefreshCcw className="animate-spin mr-2" /> : <Save className="mr-2" />}
               Save Changes
@@ -218,6 +358,39 @@ const DeploymentEnvironment = () => {
                 </AlertDescription>
               </Alert>
             )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="glass-card md:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <Server className="mr-2 text-purple-500" />
+              Deployment Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DeploymentProgressTracker 
+              steps={DEPLOYMENT_STEPS} 
+              currentStepId={currentDeployStep}
+              overallProgress={deploymentProgress} 
+            />
+          </CardContent>
+        </Card>
+        
+        <Card className="glass-card md:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <CloudCog className="mr-2 text-cyan-500" />
+              Configuration Check
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DeploymentConfigChecker 
+              environment={environment.networkType} 
+              onFixIssue={handleFixIssue}
+            />
           </CardContent>
         </Card>
       </div>

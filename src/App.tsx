@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
@@ -16,6 +15,7 @@ import SecurityReport from './pages/SecurityReport';
 import TokenDeployment from './pages/TokenDeployment';
 import { WalletProvider } from '@/hooks/useWallet.tsx';
 import BondingCurves from './pages/BondingCurves';
+import DeploymentSummary from './pages/DeploymentSummary';
 
 function App() {
   return (
@@ -36,6 +36,8 @@ function App() {
           <Route path="/token-deployment" element={<TokenDeployment />} />
           <Route path="/token-deployment/:tokenId" element={<TokenDeployment />} />
           <Route path="/bonding-curves" element={<BondingCurves />} />
+          {/* Add the DeploymentSummary route */}
+          <Route path="/deployment-summary" element={<DeploymentSummary />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster position="top-center" />
