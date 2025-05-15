@@ -1,64 +1,24 @@
 
-// Service types
-
-export interface TradeParams {
-  tokenSymbol: string;
-  walletAddress: string;
-  action: 'buy' | 'sell';
-  amountSol?: number;
-  amountTokens?: number;
-  gasPriority?: number;
-}
-
-export interface TradeResult {
-  success: boolean;
-  txHash?: string;
-  price?: number;
-  amountSol?: number;
-  amountTokens?: number;
-  error?: string;
-  errorMessage?: string;
-}
-
-export type TradeHistoryFilters = string | {
-  tokenSymbol?: string;
-  side?: 'buy' | 'sell';
-  startDate?: Date;
-  endDate?: Date;
-};
-
-export interface TokenTransaction {
-  id: string;
-  tokenSymbol: string;
-  side: 'buy' | 'sell';
-  amount: number;
-  price: number;
-  timestamp: string;
-  status: 'confirmed' | 'pending' | 'failed';
-  txHash?: string;
-  walletAddress: string;
-  amountSol?: number;
-  amountTokens?: number;
+export interface TokenHolderStats {
+  whales: number;
+  retail: number;
+  devs: number;
 }
 
 export interface ListedToken {
   id: string;
-  symbol: string;
   name: string;
-  logo: string | null;
+  symbol: string;
   price: number;
-  marketCap: number;
-  creatorWallet: string;
   change24h: number;
   volume24h: number;
-  totalSupply: number;
+  marketCap: number;
+  logo?: string | null;
+  creatorWallet: string;
+  totalSupply?: number;
   category?: string[];
   devWallet?: string;
-  holderStats?: {
-    whales: number;
-    retail: number;
-    devs: number;
-  };
+  holderStats?: TokenHolderStats;
   holders?: number;
 }
 
@@ -66,29 +26,80 @@ export interface TokenLaunchParams {
   name: string;
   symbol: string;
   initialSupply: number;
-  creatorWallet?: string; // Make optional to allow either creatorWallet or creator.wallet
-  logo?: File;
   totalSupply?: number;
+  creatorWallet?: string;
   creator?: {
     wallet: string;
-    email?: string;
   };
+  logo?: File;
 }
 
 export interface TokenLaunchResponse {
   success: boolean;
-  message: string; // Required field for all responses
-  tokenId?: string;
-  symbol?: string;
-  name?: string;
-  contractAddress?: string;
+  message?: string;
   error?: string;
+  tokenId?: string;
 }
 
-// Interface for InitialSupplyPurchaseResponse
 export interface InitialSupplyPurchaseResponse {
   success: boolean;
+  message?: string;
+  error?: string;
   amountSol?: number;
   amountTokens?: number;
+  tx?: string;
+}
+
+export interface TradeParams {
+  tokenSymbol: string;
+  action: 'buy' | 'sell';
+  walletAddress: string;
+  amountSol?: number;
+  amountTokens?: number;
+  gasPriority?: 'low' | 'medium' | 'high';
+}
+
+export interface TradeResult {
+  success: boolean;
+  message?: string;
   error?: string;
+  errorMessage?: string;
+  txHash?: string;
+  amountSol?: number;
+  amountTokens?: number;
+  price?: number;
+  fee?: number;
+}
+
+export interface TokenTransaction {
+  id: string;
+  txHash: string;
+  tokenSymbol: string;
+  tokenName?: string;
+  type: 'buy' | 'sell' | 'transfer' | 'mint';
+  amount: number;
+  amountUsd?: number;
+  price?: number;
+  fee?: number;
+  timestamp: string;
+  walletAddress: string;
+  status: 'pending' | 'confirmed' | 'failed';
+}
+
+export interface DeploymentOptions {
+  network: 'devnet' | 'testnet' | 'mainnet';
+  bondingCurveType: 'linear' | 'exponential' | 'logarithmic';
+  initialPrice: number;
+  platformFee: number;
+  creatorFee: number;
+  mintAuthority: string;
+}
+
+export interface SmartContractStatus {
+  deployed: boolean;
+  verified: boolean;
+  programId?: string;
+  deploymentDate?: string;
+  lastAuditDate?: string;
+  auditScore?: number;
 }

@@ -6,8 +6,10 @@ import Trade from './pages/Trade';
 import AdminLogin from './pages/AdminLogin';
 import TradingHistory from './pages/TradingHistory';
 import NotFoundPage from './pages/NotFound';
-import AdminDashboard from '@/components/admin/AdminDashboard';
+import Admin from './pages/Admin';
+import AdminTokens from './pages/AdminTokens';
 import TokenDeployment from './pages/TokenDeployment';
+import SecurityReport from './pages/SecurityReport';
 import { WalletProvider } from '@/hooks/useWallet.tsx';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
@@ -15,8 +17,6 @@ import Launch from './pages/Launch';
 import BondingCurves from './pages/BondingCurves';
 
 const App = () => {
-  // You can add any global context providers or initial setup here
-
   return (
     <WalletProvider>
       <BrowserRouter>
@@ -30,12 +30,18 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/launch" element={<Launch />} />
           <Route path="/bonding-curves" element={<BondingCurves />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/tokens" element={<AdminDashboard />} />
+          <Route path="/security-report" element={<SecurityReport />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/tokens" element={<AdminTokens />} />
           <Route path="/admin/token-deployment" element={<TokenDeployment />} />
           <Route path="/admin/token-deployment/:tokenId" element={<TokenDeployment />} />
-          <Route path="/admin/reset-password" element={<Discover />} />
+          <Route path="/admin/security-report" element={<SecurityReport />} />
+          <Route path="/admin/smart-contract-deployment" element={<Admin />} />
+          <Route path="/admin/deployment" element={<Admin />} />
+          
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
