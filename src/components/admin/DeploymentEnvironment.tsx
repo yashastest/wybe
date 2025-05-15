@@ -1,314 +1,255 @@
-
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { Check, AlertCircle, Settings, RefreshCcw, Server } from "lucide-react";
 import { motion } from "framer-motion";
-import { integrationService } from "@/services/integrationService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { 
+  CloudCog, 
+  Globe, 
+  Server, 
+  LinkIcon, 
+  Save, 
+  RefreshCcw, 
+  ListChecks,
+  CheckCircle2,
+  ExternalLink,
+  Settings2
+} from "lucide-react";
+import { tradingService, DeploymentEnvironment as TradingDeploymentEnvironment } from "@/services/tradingService";
+import { integrationService, DeploymentResult } from "@/services/integrationService"; // Assuming DeploymentResult is exported
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Define the DeploymentEnvironment type to match the actual structure
-interface DeploymentEnvironment {
+interface DeploymentChecklistItem {
   id: string;
-  label: string;
+  title: string;
+  description: string;
   checked: boolean;
 }
 
-// Define the expected structure of the deployment result
-interface DeploymentResult {
-  success: boolean;
-  message: string;
-  timestamp?: string;
-}
+const INITIAL_CHECKLIST: DeploymentChecklistItem[] = [
+  { id: 'contract', title: 'Smart Contract Built & Deployed', description: 'Anchor contract compiled and deployed to testnet.', checked: false },
+  { id: 'idl', title: 'IDL Generated & Verified', description: 'Interface Definition Language file is correct and matches contract.', checked: false },
+  { id: 'env_vars', title: 'Environment Variables Set', description: 'Supabase & Solana RPC URLs, Program ID configured.', checked: false },
+  { id: 'treasury', title: 'Treasury Wallet Configured', description: 'Platform treasury wallet address is set.', checked: false },
+  { id: 'domain', title: 'Frontend Domain Pointing', description: '(Optional) Custom domain for frontend app is ready.', checked: false },
+  { id: 'final_tests', title: 'Final Testnet Run Through', description: 'Full user flow tested on testnet environment.', checked: false },
+];
 
-const DeploymentEnvironmentPage = () => {
-  const [activeTab, setActiveTab] = useState<string>("environments");
+const DeploymentEnvironment = () => {
+  const [environment, setEnvironment] = useState<TradingDeploymentEnvironment | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isDeploying, setIsDeploying] = useState<boolean>(false);
-  const [environments, setEnvironments] = useState<DeploymentEnvironment[]>([]);
-  const [networkType, setNetworkType] = useState<"testnet" | "devnet" | "mainnet">("testnet");
-  const [projectName, setProjectName] = useState<string>("Wybe Token Platform");
-  const [deploymentStatus, setDeploymentStatus] = useState<{
-    success: boolean;
-    message: string;
-    timestamp?: string;
-  } | null>(null);
+  const [deploymentResult, setDeploymentResult] = useState<DeploymentResult | null>(null);
+  const [checklist, setChecklist] = useState<DeploymentChecklistItem[]>(INITIAL_CHECKLIST);
 
-  // Load environments
   useEffect(() => {
-    setIsLoading(true);
-    const envs = integrationService.getDeploymentChecklist();
+    setEnvironment(tradingService.getDeploymentEnvironment());
+    const savedResult = integrationService.getDeploymentEnvironment(); // This is getDeploymentResult essentially
+    if (savedResult) {
+      setDeploymentResult(savedResult); // No cast needed if types match
+    }
     
-    // Convert from the deployment checklist format to our environment format
-    setEnvironments(envs.map(env => ({
-      id: env.id,
-      label: env.name,
-      checked: env.checked
-    })));
-    setIsLoading(false);
+    // Load checklist from localStorage
+    const savedChecklist = localStorage.getItem('deploymentChecklist');
+    if (savedChecklist) {
+      try {
+        const parsedChecklist: DeploymentChecklistItem[] = JSON.parse(savedChecklist);
+        // Ensure all initial items are present, and update checked status
+        const updatedChecklist = INITIAL_CHECKLIST.map(initialItem => {
+          const savedItem = parsedChecklist.find(item => item.id === initialItem.id);
+          return savedItem ? { ...initialItem, checked: savedItem.checked } : initialItem;
+        });
+        setChecklist(updatedChecklist);
+      } catch (e) {
+        console.error("Error parsing checklist from localStorage", e);
+        localStorage.setItem('deploymentChecklist', JSON.stringify(INITIAL_CHECKLIST)); // Reset if malformed
+      }
+    } else {
+       localStorage.setItem('deploymentChecklist', JSON.stringify(INITIAL_CHECKLIST));
+    }
   }, []);
 
-  // Handle environment selection
-  const handleEnvironmentSelect = (id: string) => {
-    setEnvironments(prev => 
-      prev.map(env => ({
-        ...env,
-        checked: env.id === id ? !env.checked : env.checked
-      }))
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!environment) return;
+    const { name, value } = e.target;
+    setEnvironment({
+      ...environment,
+      [name]: value,
+    });
+  };
+
+  const handleSelectChange = (value: 'mainnet' | 'testnet' | 'devnet') => {
+    if (!environment) return;
+    setEnvironment({
+      ...environment,
+      networkType: value,
+    });
+  };
+
+  const handleSaveChanges = () => {
+    if (!environment) return;
+    setIsLoading(true);
+    tradingService.updateDeploymentEnvironment(environment);
+    // Simulate saving to a backend
+    setTimeout(() => {
+      setIsLoading(false);
+      toast.success("Deployment environment saved successfully!");
+    }, 1000);
+  };
+  
+  const handleChecklistItemToggle = (id: string) => {
+    const updatedChecklist = checklist.map(item => 
+      item.id === id ? { ...item, checked: !item.checked } : item
     );
+    setChecklist(updatedChecklist);
+    localStorage.setItem('deploymentChecklist', JSON.stringify(updatedChecklist));
   };
 
-  // Handle deployment
-  const handleDeploy = async () => {
-    if (!projectName.trim()) {
-      toast.error("Please enter a project name");
-      return;
-    }
-    
-    setIsDeploying(true);
-    
-    try {
-      const result = await integrationService.deployFullEnvironment(projectName, networkType);
-      
-      // Fixed: Cast the result to ensure TypeScript knows it has the expected properties
-      const typedResult = result as DeploymentResult;
-      
-      setDeploymentStatus({
-        success: typedResult.success,
-        message: typedResult.message,
-        timestamp: typedResult.timestamp
-      });
-      
-      toast.success("Deployment successful!");
-    } catch (error) {
-      console.error("Deployment error:", error);
-      
-      setDeploymentStatus({
-        success: false,
-        message: error instanceof Error ? error.message : "Unknown error occurred"
-      });
-      
-      toast.error("Deployment failed!");
-    } finally {
-      setIsDeploying(false);
-    }
-  };
+  const allChecked = checklist.every(item => item.checked);
 
-  // Reset deployment status
-  const handleReset = () => {
-    setDeploymentStatus(null);
-    setNetworkType("testnet");
-    setProjectName("Wybe Token Platform");
-  };
+  if (!environment) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <RefreshCcw className="animate-spin text-orange-500" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Server className="text-orange-500" size={22} />
-            Deployment Environment
-          </h2>
-          <p className="text-gray-400 text-sm">Configure and manage your deployment environments</p>
-        </div>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full bg-black/40 border border-wybe-primary/20 rounded-md p-1">
-          <TabsTrigger value="environments" className="w-full">
-            Environments
-          </TabsTrigger>
-          <TabsTrigger value="deploy" className="w-full">
-            Deploy
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="w-full">
-            Logs
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="environments" className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isLoading ? (
-              <div className="col-span-2 flex justify-center py-10">
-                <RefreshCcw className="animate-spin text-wybe-primary" size={24} />
-              </div>
-            ) : (
-              <>
-                {environments.map((env) => (
-                  <Card key={env.id} className="glass-card">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Checkbox 
-                            checked={env.checked} 
-                            onCheckedChange={() => handleEnvironmentSelect(env.id)}
-                            className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
-                          />
-                          <CardTitle className="text-base">{env.label}</CardTitle>
-                        </div>
-                        <div>
-                          <Settings className="w-4 h-4 text-gray-400 cursor-pointer hover:text-white" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="text-sm text-gray-400">
-                      <p>Configure this environment for deployment.</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="deploy" className="pt-4">
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Deploy Your Project</CardTitle>
-              <CardDescription>
-                Select the target network and deploy your project
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name</Label>
-                <Input 
-                  id="project-name" 
-                  placeholder="Enter project name" 
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  className="bg-black/30"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Target Network</Label>
-                <div className="flex border border-white/20 rounded-md overflow-hidden w-full">
-                  <button 
-                    onClick={() => setNetworkType("testnet")} 
-                    className={`flex-1 px-3 py-2 text-sm ${networkType === 'testnet' ? 'bg-wybe-primary text-white' : 'bg-transparent text-gray-400'}`}
-                  >
-                    Testnet
-                  </button>
-                  <button 
-                    onClick={() => setNetworkType("devnet")} 
-                    className={`flex-1 px-3 py-2 text-sm ${networkType === 'devnet' ? 'bg-wybe-primary text-white' : 'bg-transparent text-gray-400'}`}
-                  >
-                    Devnet
-                  </button>
-                  <button 
-                    onClick={() => setNetworkType("mainnet")} 
-                    className={`flex-1 px-3 py-2 text-sm ${networkType === 'mainnet' ? 'bg-orange-600 text-white' : 'bg-transparent text-gray-400'}`}
-                  >
-                    Mainnet
-                  </button>
-                </div>
-              </div>
-              
-              {deploymentStatus && (
-                <div className={`p-4 rounded-md ${deploymentStatus.success ? 'bg-green-500/20 border border-green-500/40' : 'bg-red-500/20 border border-red-500/40'}`}>
-                  <div className="flex items-start gap-3">
-                    {deploymentStatus.success ? (
-                      <Check className="text-green-400 mt-0.5" size={18} />
-                    ) : (
-                      <AlertCircle className="text-red-400 mt-0.5" size={18} />
-                    )}
-                    <div>
-                      <p className="font-medium">{deploymentStatus.success ? 'Deployment Successful' : 'Deployment Failed'}</p>
-                      <p className="text-sm mt-1">{deploymentStatus.message}</p>
-                      {deploymentStatus.timestamp && (
-                        <p className="text-xs mt-2 text-gray-400">
-                          {new Date(deploymentStatus.timestamp).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            
-            <div className="px-6 pb-6 flex gap-3">
-              {!deploymentStatus ? (
-                <Button 
-                  onClick={handleDeploy}
-                  disabled={isDeploying || !projectName.trim()}
-                  className="bg-orange-500 hover:bg-orange-600 w-full"
-                >
-                  {isDeploying ? (
-                    <>
-                      <RefreshCcw size={16} className="mr-2 animate-spin" />
-                      Deploying...
-                    </>
-                  ) : (
-                    'Deploy Project'
-                  )}
-                </Button>
-              ) : (
-                <>
-                  <Button 
-                    onClick={handleReset}
-                    variant="outline"
-                    className="border-white/20 w-full"
-                  >
-                    Reset
-                  </Button>
-                  
-                  {deploymentStatus.success && (
-                    <Button className="bg-green-600 hover:bg-green-700 w-full">
-                      View Deployment
-                    </Button>
-                  )}
-                </>
-              )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <Settings2 className="mr-2 text-orange-500" />
+              Environment Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label htmlFor="frontendUrl" className="block text-sm font-medium mb-1">Frontend URL</label>
+              <Input
+                id="frontendUrl"
+                name="frontendUrl"
+                value={environment.frontendUrl}
+                onChange={handleInputChange}
+                className="bg-black/30"
+                placeholder="https://app.yourdomain.com"
+              />
             </div>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="logs" className="pt-4">
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle>Deployment Logs</CardTitle>
-              <CardDescription>
-                View recent deployment logs
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="bg-black/50 rounded-md p-4 font-mono text-sm text-gray-300 h-80 overflow-y-auto">
-                <div className="text-green-400">[INFO] 2023-11-15 15:42:18 - Starting deployment process...</div>
-                <div className="text-gray-400">[DEBUG] 2023-11-15 15:42:19 - Loading configuration from anchor.toml</div>
-                <div className="text-gray-400">[DEBUG] 2023-11-15 15:42:20 - Verifying wallet connection</div>
-                <div className="text-blue-400">[COMMAND] 2023-11-15 15:42:21 - anchor build</div>
-                <div className="text-green-400">[SUCCESS] 2023-11-15 15:43:15 - Build completed successfully</div>
-                <div className="text-blue-400">[COMMAND] 2023-11-15 15:43:16 - anchor deploy --provider.cluster devnet</div>
-                <div className="text-yellow-400">[WARN] 2023-11-15 15:43:20 - Low balance in deployment wallet</div>
-                <div className="text-green-400">[SUCCESS] 2023-11-15 15:44:30 - Deployment to devnet successful</div>
-                <div className="text-gray-400">[INFO] 2023-11-15 15:44:31 - Program ID: DevFbH3T2sjrJoH5zL8WPpkGBWc3sRJYPvAf4GwAqsGY</div>
-                <div className="text-blue-400">[COMMAND] 2023-11-15 15:44:35 - anchor test</div>
-                <div className="text-green-400">[SUCCESS] 2023-11-15 15:46:12 - All tests passed successfully</div>
-                <div className="text-green-400">[INFO] 2023-11-15 15:46:15 - Deployment process completed</div>
+            <div>
+              <label htmlFor="backendUrl" className="block text-sm font-medium mb-1">Backend URL (API)</label>
+              <Input
+                id="backendUrl"
+                name="backendUrl"
+                value={environment.backendUrl}
+                onChange={handleInputChange}
+                className="bg-black/30"
+                placeholder="https://api.yourdomain.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="explorerUrl" className="block text-sm font-medium mb-1">Explorer URL Base</label>
+              <Input
+                id="explorerUrl"
+                name="explorerUrl"
+                value={environment.explorerUrl}
+                onChange={handleInputChange}
+                className="bg-black/30"
+                placeholder="https://explorer.solana.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="networkType" className="block text-sm font-medium mb-1">Network Type</label>
+              <Select 
+                value={environment.networkType} 
+                onValueChange={handleSelectChange}
+              >
+                <SelectTrigger className="bg-black/30">
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent className="bg-wybe-background-light">
+                  <SelectItem value="mainnet">Mainnet</SelectItem>
+                  <SelectItem value="testnet">Testnet</SelectItem>
+                  <SelectItem value="devnet">Devnet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSaveChanges} disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700">
+              {isLoading ? <RefreshCcw className="animate-spin mr-2" /> : <Save className="mr-2" />}
+              Save Changes
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <ListChecks className="mr-2 text-blue-500" />
+              Pre-Deployment Checklist
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {checklist.map(item => (
+              <div key={item.id} className="flex items-start space-x-3 p-3 bg-black/20 rounded-md">
+                <input
+                  type="checkbox"
+                  id={item.id}
+                  checked={item.checked}
+                  onChange={() => handleChecklistItemToggle(item.id)}
+                  className="mt-1 h-4 w-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <label htmlFor={item.id} className="block text-sm font-medium cursor-pointer">{item.title}</label>
+                  <p className="text-xs text-gray-400">{item.description}</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+            {allChecked && (
+              <Alert variant="success" className="mt-4">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>
+                  All checks passed! You are ready for mainnet deployment.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {deploymentResult && deploymentResult.success && (
+        <Card className="glass-card border-green-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl text-green-400">
+              <CheckCircle2 className="mr-2" />
+              Last Deployment Successful
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm">{deploymentResult.message}</p>
+            {deploymentResult.transactionId && (
+              <p className="text-sm">
+                Transaction ID: 
+                <a 
+                  href={`${environment.explorerUrl}/tx/${deploymentResult.transactionId}?cluster=${environment.networkType}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="ml-1 text-orange-400 hover:text-orange-300 underline"
+                >
+                  {deploymentResult.transactionId.substring(0,15)}... <ExternalLink size={12} className="inline-block" />
+                </a>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </motion.div>
   );
 };
 
-export default DeploymentEnvironmentPage;
+export default DeploymentEnvironment;
