@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useTokenListing } from '@/hooks/useTokenListing';
@@ -115,7 +114,7 @@ const LaunchTokenForm: React.FC = () => {
       navigate(`/trade/${symbol.toLowerCase()}`);
     }
   };
-  
+
   if (!connected) {
     return (
       <div className="bg-gradient-to-br from-indigo-950 to-purple-900 p-8 rounded-xl shadow-xl max-w-md mx-auto border border-indigo-500/30 text-center">

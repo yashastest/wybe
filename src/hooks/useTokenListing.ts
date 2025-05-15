@@ -2,33 +2,12 @@
 import { useState } from 'react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
+import { ListedToken, TokenLaunchParams, TokenLaunchResponse } from '@/services/token/types';
 
-export interface TokenLaunchParams {
-  name: string;
-  symbol: string;
-  creatorWallet: string;
-  initialPrice: number;
-  totalSupply: number;
-}
-
-export interface LaunchedToken {
-  id: string;
-  name: string;
-  symbol: string;
-  logo?: string;
+export interface LaunchedToken extends ListedToken {
   banner?: string;
-  price: number;
-  change24h: number;
-  marketCap: number;
-  volume24h: number;
   category: string[];
-  holders: number;
   devWallet: string;
-  holderStats: {
-    whales: number;
-    retail: number;
-    devs: number;
-  };
 }
 
 export const useTokenListing = () => {
@@ -38,7 +17,7 @@ export const useTokenListing = () => {
   const launchToken = async (params: TokenLaunchParams) => {
     setIsLaunching(true);
     try {
-      // Convert TokenLaunchParams to format expected by the service
+      // Convert from UI params to service params
       const serviceParams = {
         name: params.name,
         symbol: params.symbol,
@@ -46,12 +25,12 @@ export const useTokenListing = () => {
         creator: { wallet: params.creatorWallet }
       };
       
-      const tokenId = await tokenTradingService.launchToken(serviceParams);
+      const result = await tokenTradingService.launchToken(serviceParams);
       
-      if (tokenId) {
+      if (result.success) {
         return {
           success: true,
-          tokenId: tokenId
+          tokenId: result.tokenId
         };
       } else {
         toast.error('Failed to launch token', { 
@@ -59,7 +38,7 @@ export const useTokenListing = () => {
         });
         return {
           success: false,
-          error: 'Failed to launch token'
+          error: result.error || 'Failed to launch token'
         };
       }
     } catch (error) {
@@ -102,8 +81,17 @@ export const useTokenListing = () => {
   const getListedTokens = async () => {
     try {
       const tokens = await tokenTradingService.getListedTokens();
-      setLaunchedTokens(tokens);
-      return tokens;
+      
+      // Convert ListedToken[] to LaunchedToken[]
+      const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
+        ...token,
+        banner: undefined,
+        category: token.category || [],
+        devWallet: token.devWallet || ''
+      }));
+      
+      setLaunchedTokens(launchedTokensData);
+      return launchedTokensData;
     } catch (error) {
       console.error('Error fetching listed tokens:', error);
       return [];

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Rocket, Users, AlertCircle } from "lucide-react";
@@ -7,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokenTradingService } from "@/services/tokenTradingService";
 import { toast } from "sonner";
+import { ListedToken } from "@/services/token/types";
 
 const TrendingCoins = () => {
-  const [trendingCoins, setTrendingCoins] = useState([]);
+  const [trendingCoins, setTrendingCoins] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {

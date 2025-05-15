@@ -9,7 +9,9 @@ export type {
   TradeParams,
   TradeResult,
   TokenTransaction,
-  ListedToken
+  ListedToken,
+  TokenLaunchParams,
+  TokenLaunchResponse
 } from './token/types';
 
 // Re-export all services as a single service

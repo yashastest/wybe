@@ -67,4 +67,32 @@ export interface ListedToken {
   category?: string[];
   holders?: number;
   devWallet?: string;
+  holderStats: {
+    whales: number;
+    retail: number;
+    devs: number;
+  };
+}
+
+export interface TokenLaunchParams {
+  name: string;
+  symbol: string;
+  initialSupply: number;
+  creator: {
+    wallet: string;
+    email?: string;
+  };
+}
+
+export interface TokenLaunchResponse {
+  success: boolean;
+  tokenId?: string;
+  error?: string;
+}
+
+export interface InitialSupplyPurchaseResponse {
+  success: boolean;
+  amountSol?: number;
+  amountTokens?: number;
+  error?: string;
 }

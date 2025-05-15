@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ListedToken } from './types';
+import { ListedToken, TokenLaunchParams, TokenLaunchResponse, InitialSupplyPurchaseResponse } from './types';
 
 export interface TokenLaunchOptions {
   name: string;
@@ -63,7 +64,7 @@ const getTokenById = async (id: string): Promise<TokenDetails | null> => {
       creatorWallet: data.creator_wallet,
       tokenAddress: data.token_address,
       launched: data.launched,
-      bondingCurve: data.bonding_curve as TokenDetails['bondingCurve'],
+      bondingCurve: data.bonding_curve ? data.bonding_curve as TokenDetails['bondingCurve'] : undefined,
     };
     
     return tokenDetails;
@@ -151,18 +152,23 @@ const getTokenPrice = (token: TokenDetails): number => {
 };
 
 // Launch token
-const launchToken = async (tokenId: string): Promise<boolean> => {
+const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchResponse> => {
   try {
-    const token = await getTokenById(tokenId);
-    
-    if (!token) {
-      throw new Error('Token not found');
+    // Create token first
+    const tokenId = await createToken({
+      name: params.name,
+      symbol: params.symbol,
+      initialSupply: params.initialSupply,
+      creator: params.creator
+    });
+
+    if (!tokenId) {
+      return { 
+        success: false,
+        error: 'Failed to create token'
+      };
     }
-    
-    if (token.launched) {
-      throw new Error('Token is already launched');
-    }
-    
+
     // Update token as launched
     const { error } = await supabase
       .from('tokens')
@@ -177,21 +183,22 @@ const launchToken = async (tokenId: string): Promise<boolean> => {
       throw error;
     }
     
-    return true;
+    return { 
+      success: true,
+      tokenId
+    };
   } catch (error) {
     console.error('Error launching token:', error);
     toast.error('Failed to launch token');
-    return false;
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to launch token'
+    };
   }
 };
 
 // Buy initial supply
-const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number): Promise<{
-  success: boolean;
-  amountSol?: number;
-  amountTokens?: number;
-  error?: string;
-}> => {
+const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number): Promise<InitialSupplyPurchaseResponse> => {
   try {
     const token = await getTokenById(tokenId);
     
@@ -307,6 +314,13 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
     }
     
     return data.map(token => {
+      // Create mock holder stats for demonstration
+      const mockHolderStats = {
+        whales: Math.floor(Math.random() * 10) + 1,
+        retail: Math.floor(Math.random() * 90) + 10,
+        devs: Math.floor(Math.random() * 5) + 1
+      };
+
       const tokenDetails = {
         id: token.id,
         name: token.name,
@@ -316,7 +330,8 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
         marketCap: token.market_cap || 0,
         volume24h: Math.random() * 1000, // Mock data
         logo: null,
-        holders: Math.floor(Math.random() * 100) + 10 // Mock data
+        holders: Math.floor(Math.random() * 100) + 10, // Mock data
+        holderStats: mockHolderStats
       };
       
       // Calculate price if we have a bonding curve
