@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -50,6 +49,7 @@ const Trade = () => {
   const [showEnhanced, setShowEnhanced] = useState(false);
   const [traderActivities, setTraderActivities] = useState<any[]>([]);
   const [dexscreenerProgress, setDexscreenerProgress] = useState(0);
+  const [chartType, setChartType] = useState<'price' | 'marketCap'>('price');
 
   const normalizedSymbol = symbol?.toLowerCase() || '';
 
@@ -386,6 +386,12 @@ const Trade = () => {
                 >
                   <Zap size={16} className="inline mr-1" /> Quick Sell
                 </button>
+                <Link
+                  to="/trading-history"
+                  className="flex-1 md:flex-none bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:shadow-indigo-600/30 transition-all"
+                >
+                  <History size={16} className="inline mr-1" /> History
+                </Link>
               </div>
             </div>
           </motion.div>
@@ -477,255 +483,172 @@ const Trade = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            {/* Chart Section */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={fadeUpVariants}
-              custom={0.1}
-              className="lg:col-span-2 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 bg-gradient-to-br from-indigo-950/50 to-purple-900/20"
-            >
-              <div className="border-b border-white/10 p-2 md:p-4">
-                <Tabs defaultValue="chart" value={tab} onValueChange={setTab}>
-                  <TabsList className="bg-black/40 backdrop-blur-md w-full overflow-x-auto flex-nowrap">
-                    <TabsTrigger 
-                      value="chart" 
-                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
-                    >
-                      <LineChart size={14} className="mr-1 md:mr-2" />
-                      Price Chart
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="depth" 
-                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
-                    >
-                      <Layers size={14} className="mr-1 md:mr-2" />
-                      Market Depth
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="activity" 
-                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
-                    >
-                      <TrendingUp size={14} className="mr-1 md:mr-2" />
-                      Activity
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="history" 
-                      className="font-poppins font-bold whitespace-nowrap data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-indigo-600/50"
-                    >
-                      <Clock size={14} className="mr-1 md:mr-2" />
-                      Your History
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="chart" className="mt-4">
-                    <div className="h-[300px] md:h-[400px]">
-                      <TradingViewChart symbol={token.symbol} />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="depth" className="mt-4">
-                    <div className="h-[300px] md:h-[400px] flex items-center justify-center">
-                      <div className="text-center">
-                        <motion.div
-                          animate={{
-                            opacity: [0.7, 1, 0.7],
-                            scale: [1, 1.05, 1]
-                          }}
-                          transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        >
-                          <BarChart3 size={48} className="mx-auto text-indigo-400 mb-2" />
-                        </motion.div>
-                        <h3 className="text-lg font-poppins font-bold mb-1 text-gradient">Market Depth</h3>
-                        <p className="text-gray-400">Market depth data will appear here</p>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="activity" className="mt-4">
-                    <div className="h-[300px] md:h-[400px] overflow-y-auto">
-                      <div className="space-y-2">
-                        {traderActivities.map((activity, index) => (
-                          <motion.div
-                            key={activity.id}
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className={`p-3 rounded-lg flex items-center gap-3 border ${
-                              activity.traderType === 'whale' 
-                                ? 'bg-blue-900/30 border-blue-500/30' 
-                                : activity.traderType === 'developer'
-                                ? 'bg-purple-900/30 border-purple-500/30'
-                                : 'bg-gray-800/60 border-gray-700/30'
-                            }`}
-                          >
-                            <div className={`p-2 rounded-full ${
-                              activity.type === 'buy' 
-                                ? 'bg-green-500/20 text-green-400' 
-                                : activity.type === 'sell'
-                                ? 'bg-red-500/20 text-red-400'
-                                : activity.type === 'mint'
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {activity.type === 'buy' && <ArrowUp size={16} />}
-                              {activity.type === 'sell' && <ArrowDown size={16} />}
-                              {activity.type === 'mint' && <CircleDollarSign size={16} />}
-                              {activity.type === 'claim' && <Wallet size={16} />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between">
-                                <div className="text-sm font-medium">
-                                  {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} {token.symbol}
-                                </div>
-                                <div className="text-xs text-gray-400">
-                                  {new Date(activity.timestamp).toLocaleTimeString()}
-                                </div>
-                              </div>
-                              <div className="flex justify-between mt-1">
-                                <div className="text-xs text-gray-400 flex items-center">
-                                  <span className="truncate max-w-[120px]">{activity.wallet}</span>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger>
-                                        <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                                          activity.traderType === 'whale'
-                                            ? 'bg-blue-500/30 text-blue-300'
-                                            : activity.traderType === 'developer'
-                                            ? 'bg-purple-500/30 text-purple-300'
-                                            : 'bg-gray-700/50 text-gray-300'
-                                        }`}>
-                                          {activity.traderType === 'whale' && '🐋'}
-                                          {activity.traderType === 'developer' && '👨‍💻'}
-                                          {activity.traderType === 'retail' && '👤'}
-                                          {activity.traderType}
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p className="text-xs">
-                                          {activity.traderType === 'whale' && 'Large holder - Trades >$50k'}
-                                          {activity.traderType === 'developer' && 'Project developer or insider'}
-                                          {activity.traderType === 'retail' && 'Regular trader - Trades <$5k'}
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                                <div className="font-mono text-sm">
-                                  {activity.amount.toLocaleString()} {token.symbol}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="history" className="mt-4">
-                    <div className="h-[300px] md:h-[400px] overflow-y-auto">
-                      <TransactionHistory tokenSymbol={token.symbol} />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-              
-              <div className="p-3 md:p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
-                    <span className="text-xs text-indigo-300 flex items-center gap-1">
-                      <TrendingUp size={12} className="text-indigo-400" />
-                      Market Cap
-                    </span>
-                    <p className="font-bold font-mono text-sm md:text-lg text-white">${token.marketCap.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
-                    <span className="text-xs text-indigo-300 flex items-center gap-1">
-                      <ArrowUpDown size={12} className="text-indigo-400" />
-                      24h Volume
-                    </span>
-                    <p className="font-bold font-mono text-sm md:text-lg text-white">${token.volume24h.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
-                    <span className="text-xs text-indigo-300 flex items-center gap-1">
-                      <Layers size={12} className="text-indigo-400" />
-                      Total Supply
-                    </span>
-                    <p className="font-bold font-mono text-sm md:text-lg text-white">{token.supply.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
-                    <span className="text-xs text-indigo-300 flex items-center gap-1">
-                      <Clock size={12} className="text-indigo-400" />
-                      Last Updated
-                    </span>
-                    <p className="font-bold font-mono text-sm md:text-lg text-white">Just now</p>
+          {showEnhanced ? (
+            // Enhanced Trading Interface
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+              {/* Chart Section - Takes 8/12 columns on large screens */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeUpVariants}
+                custom={0.1}
+                className="lg:col-span-8 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 bg-gradient-to-br from-indigo-950/50 to-purple-900/20"
+              >
+                <div className="border-b border-white/10 p-2 md:p-4">
+                  <div className="h-[400px] md:h-[500px]">
+                    <TradingViewChart 
+                      symbol={token.symbol} 
+                      chartType={chartType} 
+                      onChartTypeChange={setChartType}
+                    />
                   </div>
                 </div>
-              </div>
-              
-              {/* Creator Actions Panel */}
-              {isCreator && (
-                <div className="mt-2 p-4 bg-gradient-to-r from-amber-900/30 to-yellow-900/20 rounded-lg mx-4 mb-4 border border-yellow-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-yellow-300 flex items-center gap-2">
-                        <Star size={16} className="text-yellow-300" />
-                        Creator Panel
-                      </h3>
-                      <p className="text-xs text-gray-400 mt-1">
-                        You are the creator of this token
-                      </p>
+                
+                <div className="p-3 md:p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <TrendingUp size={12} className="text-indigo-400" />
+                        Market Cap
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">${token.marketCap.toLocaleString()}</p>
                     </div>
-                    <button 
-                      onClick={handleClaimRewards}
-                      disabled={!canClaimRewards}
-                      className={`px-4 py-2 rounded-lg text-sm font-bold ${
-                        canClaimRewards 
-                          ? 'bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-500 hover:to-orange-600 text-white'
-                          : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      Claim Rewards
-                    </button>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <ArrowUpDown size={12} className="text-indigo-400" />
+                        24h Volume
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">${token.volume24h.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <Layers size={12} className="text-indigo-400" />
+                        Total Supply
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">{token.supply.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <Clock size={12} className="text-indigo-400" />
+                        Last Updated
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">Just now</p>
+                    </div>
                   </div>
-                  {!canClaimRewards && nextClaimDate && (
-                    <div className="mt-2 text-xs text-gray-400">
-                      Next claim available in: {getTimeUntilNextClaim()}
-                    </div>
-                  )}
                 </div>
-              )}
-            </motion.div>
+                
+                {/* Enhanced Live Activity Feed */}
+                <div className="mt-2 mx-4 mb-4">
+                  <h3 className="text-base font-semibold flex items-center gap-2 mb-3">
+                    <TrendingUp size={16} className="text-indigo-400" />
+                    Market Activity
+                  </h3>
+                  <TraderActivity 
+                    tokenSymbol={token.symbol}
+                    maxHeight="300px"
+                    showTitle={false}
+                    limit={12}
+                  />
+                </div>
+              </motion.div>
 
-            {/* Trading Interface */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={fadeUpVariants}
-              custom={0.2}
-            >
-              {showEnhanced ? (
+              {/* Enhanced Trading Interface - Takes 4/12 columns on large screens */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeUpVariants}
+                custom={0.2}
+                className="lg:col-span-4"
+              >
                 <EnhancedTradingInterface 
                   tokenSymbol={token.symbol}
                   tokenName={token.name}
                   tokenPrice={token.price}
                   tokenLogo={token.logo}
                 />
-              ) : (
+              </motion.div>
+            </div>
+          ) : (
+            // Standard Trading Interface
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+              {/* Chart Section - Takes 8/12 columns on large screens */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeUpVariants}
+                custom={0.1}
+                className="lg:col-span-8 rounded-xl overflow-hidden backdrop-blur-lg border border-white/10 bg-gradient-to-br from-indigo-950/50 to-purple-900/20"
+              >
+                <div className="p-2 md:p-4">
+                  <div className="h-[400px] md:h-[450px]">
+                    <TradingViewChart 
+                      symbol={token.symbol} 
+                      chartType={chartType} 
+                      onChartTypeChange={setChartType}
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-3 md:p-4 border-t border-white/10">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <TrendingUp size={12} className="text-indigo-400" />
+                        Market Cap
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">${token.marketCap.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <ArrowUpDown size={12} className="text-indigo-400" />
+                        24h Volume
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">${token.volume24h.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <Layers size={12} className="text-indigo-400" />
+                        Total Supply
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">{token.supply.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 backdrop-blur-sm p-2 md:p-3 rounded-xl border border-white/5 shadow-glow-sm hover:shadow-glow-md transition-all duration-300">
+                      <span className="text-xs text-indigo-300 flex items-center gap-1">
+                        <Clock size={12} className="text-indigo-400" />
+                        Last Updated
+                      </span>
+                      <p className="font-bold font-mono text-sm md:text-lg text-white">Just now</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Activity Feed */}
+                <div className="mt-2 mx-4 mb-4">
+                  <TraderActivity 
+                    tokenSymbol={token.symbol}
+                    maxHeight="300px"
+                    limit={8}
+                  />
+                </div>
+              </motion.div>
+
+              {/* Standard Trading Interface - Takes 4/12 columns */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeUpVariants}
+                custom={0.2}
+                className="lg:col-span-4"
+              >
                 <TradingInterface 
                   tokenSymbol={token.symbol}
                   tokenName={token.name}
                   tokenPrice={token.price}
                   tokenLogo={token.logo}
                 />
-              )}
-            </motion.div>
-          </div>
+              </motion.div>
+            </div>
+          )}
         </div>
       </main>
       

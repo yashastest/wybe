@@ -1,49 +1,35 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Index from './pages/Index';
-import Dashboard from './pages/Dashboard';
-import Admin from './pages/Admin';
-import AdminLogin from './pages/AdminLogin';
-import Launch from './pages/Launch';
-import LaunchPackage from './pages/LaunchPackage';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
 import Discover from './pages/Discover';
+import CreateToken from './pages/CreateToken';
 import Trade from './pages/Trade';
-import TokenTrade from './pages/TokenTrade';
-import NotFound from './pages/NotFound';
-import { Toaster } from "sonner";
-import SecurityReport from './pages/SecurityReport';
-import TokenDeployment from './pages/TokenDeployment';
-import { WalletProvider } from '@/hooks/useWallet.tsx';
-import BondingCurves from './pages/BondingCurves';
-import DeploymentSummary from './pages/DeploymentSummary';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminPasswordReset from './pages/AdminPasswordReset';
+import NotFoundPage from './pages/NotFoundPage';
+import TradingHistory from './pages/TradingHistory';
 
-function App() {
+const App = () => {
+  // You can add any global context providers or initial setup here
+
   return (
-    <div className="min-h-screen bg-black text-white">
-      <WalletProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin/*" element={<Admin />} />
-          <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/launch" element={<Launch />} />
-          <Route path="/package" element={<LaunchPackage />} />
-          <Route path="/launch/:packageId" element={<LaunchPackage />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/trade" element={<Trade />} />
-          <Route path="/trade/:tokenId" element={<TokenTrade />} />
-          <Route path="/security-report" element={<SecurityReport />} />
-          <Route path="/token-deployment" element={<TokenDeployment />} />
-          <Route path="/token-deployment/:tokenId" element={<TokenDeployment />} />
-          <Route path="/bonding-curves" element={<BondingCurves />} />
-          {/* Add the DeploymentSummary route */}
-          <Route path="/deployment-summary" element={<DeploymentSummary />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster position="top-center" />
-      </WalletProvider>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="/create" element={<CreateToken />} />
+        <Route path="/trade/:tokenId?" element={<Trade />} />
+        <Route path="/trading-history" element={<TradingHistory />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/reset-password" element={<AdminPasswordReset />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

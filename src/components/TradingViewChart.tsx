@@ -2,15 +2,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
-import { Loader } from 'lucide-react';
+import { Loader, BarChart3, LineChart } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface TradingViewChartProps {
   symbol: string;
   timeframe?: string;
   chartType?: 'price' | 'marketCap';
   containerClassName?: string;
+  onChartTypeChange?: (type: 'price' | 'marketCap') => void;
 }
 
 declare global {
@@ -24,11 +26,21 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   timeframe = "1D",
   chartType = "price",
   containerClassName = "",
+  onChartTypeChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [isChartReady, setIsChartReady] = useState(false);
+  const [localChartType, setLocalChartType] = useState<'price' | 'marketCap'>(chartType);
+  
+  // Handle chart type change internally and notify parent if callback provided
+  const handleChartTypeChange = (type: 'price' | 'marketCap') => {
+    setLocalChartType(type);
+    setIsLoading(true);
+    setIsChartReady(false);
+    if (onChartTypeChange) onChartTypeChange(type);
+  };
   
   useEffect(() => {
     setIsLoading(true);
@@ -58,16 +70,16 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         containerRef.current.innerHTML = '';
       }
     };
-  }, [symbol, timeframe, chartType]);
+  }, [symbol, timeframe, localChartType]);
 
   const createWidget = () => {
     if (containerRef.current && containerRef.current.innerHTML === '' && window.TradingView) {
-      const symbolFormatted = chartType === 'price' 
+      const symbolFormatted = localChartType === 'price' 
         ? `SOLUSDT` // For price charts we can use standard pairs
         : `TOTAL:${symbol}USD`; // For market cap charts
         
       // Different widgets for different chart types
-      if (chartType === 'price') {
+      if (localChartType === 'price') {
         new window.TradingView.widget({
           autosize: true,
           symbol: symbolFormatted,
@@ -163,65 +175,83 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   };
 
   return (
-    <AspectRatio ratio={isMobile ? 4/3 : 16/9} className={`relative ${containerClassName}`}>
-      {isLoading && (
-        <motion.div 
-          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/90 to-indigo-950/90 z-10 rounded-xl backdrop-blur-sm"
-          animate={{ opacity: isLoading ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
+    <div className="flex flex-col">
+      <div className="mb-2 flex justify-end">
+        <Tabs 
+          value={localChartType} 
+          onValueChange={(value) => handleChartTypeChange(value as 'price' | 'marketCap')}
+          className="bg-black/30 rounded-lg p-1 w-auto"
         >
-          <div className="flex flex-col items-center gap-4">
-            <motion.div
-              animate={{ 
-                rotate: 360,
-                boxShadow: ["0 0 10px rgba(139, 92, 246, 0.5)", "0 0 30px rgba(139, 92, 246, 0.8)", "0 0 10px rgba(139, 92, 246, 0.5)"]
-              }}
-              transition={{ 
-                rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                boxShadow: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-              }}
-              className="p-4 rounded-full"
-            >
-              <Loader size={isMobile ? 24 : 32} className="text-wybe-primary" />
-            </motion.div>
-            <p className="gradient-text text-base md:text-lg font-bold">Loading Chart Data</p>
-            <div className="w-36 md:w-48 h-2 bg-wybe-background-light rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500"
+          <TabsList className="grid grid-cols-2 h-8">
+            <TabsTrigger value="price" className="text-xs flex items-center gap-1">
+              <LineChart size={14} /> Price
+            </TabsTrigger>
+            <TabsTrigger value="marketCap" className="text-xs flex items-center gap-1">
+              <BarChart3 size={14} /> Market Cap
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+      <AspectRatio ratio={isMobile ? 4/3 : 16/9} className={`relative ${containerClassName}`}>
+        {isLoading && (
+          <motion.div 
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/90 to-indigo-950/90 z-10 rounded-xl backdrop-blur-sm"
+            animate={{ opacity: isLoading ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex flex-col items-center gap-4">
+              <motion.div
                 animate={{ 
-                  width: ["0%", "100%", "0%"],
-                  x: ["-100%", "0%", "100%"]
+                  rotate: 360,
+                  boxShadow: ["0 0 10px rgba(139, 92, 246, 0.5)", "0 0 30px rgba(139, 92, 246, 0.8)", "0 0 10px rgba(139, 92, 246, 0.5)"]
                 }}
                 transition={{ 
-                  repeat: Infinity, 
-                  duration: 2,
-                  ease: "easeInOut" 
+                  rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                  boxShadow: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
                 }}
-              />
+                className="p-4 rounded-full"
+              >
+                <Loader size={isMobile ? 24 : 32} className="text-wybe-primary" />
+              </motion.div>
+              <p className="gradient-text text-base md:text-lg font-bold">Loading Chart Data</p>
+              <div className="w-36 md:w-48 h-2 bg-wybe-background-light rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500"
+                  animate={{ 
+                    width: ["0%", "100%", "0%"],
+                    x: ["-100%", "0%", "100%"]
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 2,
+                    ease: "easeInOut" 
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
-      
-      <motion.div 
-        className="w-full h-full rounded-xl overflow-hidden"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ 
-          opacity: isChartReady ? 1 : 0,
-          scale: isChartReady ? 1 : 0.98,
-        }}
-        transition={{ duration: 0.4 }}
-      >
-        {!isChartReady && (
-          <Skeleton className="w-full h-full rounded-xl" />
+          </motion.div>
         )}
-        <div 
-          id={`tradingview-widget-${symbol}-${timeframe}-${chartType}`} 
-          ref={containerRef} 
-          className="w-full h-full"
-        />
-      </motion.div>
-    </AspectRatio>
+        
+        <motion.div 
+          className="w-full h-full rounded-xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ 
+            opacity: isChartReady ? 1 : 0,
+            scale: isChartReady ? 1 : 0.98,
+          }}
+          transition={{ duration: 0.4 }}
+        >
+          {!isChartReady && (
+            <Skeleton className="w-full h-full rounded-xl" />
+          )}
+          <div 
+            id={`tradingview-widget-${symbol}-${timeframe}-${localChartType}`} 
+            ref={containerRef} 
+            className="w-full h-full"
+          />
+        </motion.div>
+      </AspectRatio>
+    </div>
   );
 };
 
