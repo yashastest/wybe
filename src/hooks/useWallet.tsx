@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { toast } from "sonner";
 
-// Wallet context type
-interface WalletContextType {
+// Wallet context type - Now exported
+export interface WalletContextType {
   wallet: string | null;
   isConnecting: boolean;
   connected: boolean;

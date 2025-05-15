@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 interface Admin {
   id: string;
   email: string;
+  permissions?: string[]; // Added permissions as an optional property
 }
 
 interface Session {

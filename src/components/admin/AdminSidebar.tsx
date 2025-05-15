@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -34,7 +35,7 @@ const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get admin permissions from admin object
+  // Get admin permissions from admin object with a safe fallback
   const adminPermissions = admin?.permissions || [];
 
   const sidebarItems: SidebarItem[] = [
