@@ -51,30 +51,44 @@ if (typeof WebSocket === 'undefined') {
     onclose: any = null;
     onmessage: any = null;
     onerror: any = null;
+    readyState = 0;
     
     constructor(url: string, protocols?: string | string[]) {
-      console.log('Mock WebSocket initialized');
+      console.log('Mock WebSocket initialized', url);
       setTimeout(() => {
+        this.readyState = 1;
         if (this.onopen) this.onopen({ target: this });
       }, 100);
     }
     
-    send() {}
-    close() {}
+    send(data: any) {
+      console.log('Mock WebSocket sending data:', data);
+    }
+    
+    close(code?: number, reason?: string) {
+      this.readyState = 3;
+      if (this.onclose) {
+        this.onclose({
+          code: code || 1000,
+          reason: reason || 'Normal closure',
+          wasClean: true,
+        });
+      }
+    }
   }
   
   (window as any).WebSocket = MockWebSocket;
 }
 
-// Patch fetch API for potential issues with Solana Web3.js
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-  return originalFetch.apply(this, args)
-    .catch(err => {
-      console.log('[Fetch Error]', err);
-      throw err;
-    });
-};
+// Make sure the RPC websockets client is correctly exposed
+try {
+  const mockModule = require('rpc-websockets/dist/lib/client');
+  if (mockModule) {
+    console.log('RPC WebSockets client module loaded successfully');
+  }
+} catch (err) {
+  console.warn('Could not preload RPC WebSockets mock:', err);
+}
 
 // Add console.log to track polyfill initialization
 console.log('Polyfills initialized for Solana Web3.js compatibility');

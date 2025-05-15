@@ -1,15 +1,84 @@
 
 // Mock implementation for node-specific libraries in browser environments
 
+// Base WebSocket client class
+class BaseWebSocketClient {
+  constructor(address, options) {
+    this._address = address;
+    this._options = options || {};
+    this._listeners = new Map();
+    this.connected = false;
+    
+    // Simulate successful connection after a short delay
+    setTimeout(() => {
+      if (this.listenerCount('open') > 0) {
+        this.emit('open');
+      }
+    }, 10);
+  }
+
+  // Event emitter methods
+  on(event, cb) {
+    if (!this._listeners.has(event)) {
+      this._listeners.set(event, []);
+    }
+    this._listeners.get(event).push(cb);
+    return this;
+  }
+
+  once(event, cb) {
+    const onceWrapper = (...args) => {
+      this.removeListener(event, onceWrapper);
+      cb.apply(this, args);
+    };
+    return this.on(event, onceWrapper);
+  }
+
+  removeListener(event, cb) {
+    if (this._listeners.has(event)) {
+      const callbacks = this._listeners.get(event);
+      const index = callbacks.indexOf(cb);
+      if (index !== -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+    return this;
+  }
+
+  removeAllListeners(event) {
+    if (event) {
+      this._listeners.delete(event);
+    } else {
+      this._listeners.clear();
+    }
+    return this;
+  }
+
+  listenerCount(event) {
+    if (!this._listeners.has(event)) {
+      return 0;
+    }
+    return this._listeners.get(event).length;
+  }
+
+  emit(event, ...args) {
+    if (this._listeners.has(event)) {
+      const callbacks = this._listeners.get(event);
+      callbacks.forEach(cb => cb.apply(this, args));
+    }
+    return this;
+  }
+}
+
 /**
  * Client class implementation for RPC WebSocket
  */
-export class Client {
-  constructor(options = {}) {
-    this.options = options;
-    this.connected = false;
+export class Client extends BaseWebSocketClient {
+  constructor(address, options) {
+    super(address, options);
     this.subscriptions = new Map();
     this._id = 0;
+    console.log("[WebSocket Mock] Created new client instance");
   }
 
   connect() {
@@ -46,14 +115,6 @@ export class Client {
     console.log(`[WebSocket Mock] Unsubscribed from id ${id}, success: ${removed}`);
     return Promise.resolve(removed);
   }
-
-  on(event, callback) {
-    console.log(`[WebSocket Mock] Registered event listener for: ${event}`);
-  }
-
-  once(event, callback) {
-    console.log(`[WebSocket Mock] Registered one-time event listener for: ${event}`);
-  }
 }
 
 /**
@@ -76,6 +137,8 @@ export class w3cwebsocket {
       this.readyState = 1; // OPEN
       if (this.onopen) this.onopen({ target: this });
     }, 50);
+
+    console.log("[WebSocket Mock] Created w3cwebsocket:", url);
   }
 
   send(data) {
@@ -98,7 +161,7 @@ export class w3cwebsocket {
   }
 }
 
-// Specific exports needed for Solana Web3.js
+// Export specific named exports needed by @solana/web3.js
 export const WebSocketClient = Client;
 export const NodeWebSocketClient = Client;
 export const RpcWebSocketCommonClient = Client;

@@ -32,13 +32,14 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      
       // Comprehensive aliases for problematic packages
-      "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket.browser": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/nodejs": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist": path.resolve(__dirname, "src/empty-module.js"),
+      "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "ws": path.resolve(__dirname, "src/empty-module.js"),
       "net": path.resolve(__dirname, "src/empty-module.js"),
       "tls": path.resolve(__dirname, "src/empty-module.js"),
@@ -62,6 +63,8 @@ export default defineConfig(({ mode }) => ({
       define: {
         global: 'globalThis',
       },
+      // Add injected Node.js polyfills
+      plugins: []
     },
   }
 }));
