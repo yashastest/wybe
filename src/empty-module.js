@@ -78,11 +78,16 @@ export class w3cwebsocket {
 export const WebSocketClient = Client;
 export const NodeWebSocketClient = Client;
 
+// Export default for modules that import the whole client
+export default Client;
+
 // Export RpcWebSocketCommonClient which is specifically imported by @solana/web3.js
 export const RpcWebSocketCommonClient = Client;
 
 // Export createRpc for the websocket.browser import
-export const createRpc = () => new Client();
+export function createRpc() {
+  return new Client();
+}
 
 // Mock WS module used by Solana's web socket connection
 export class WebSocketImpl extends w3cwebsocket {
@@ -101,5 +106,3 @@ export const jaysonClient = {
     }
   }
 };
-
-export default Client;

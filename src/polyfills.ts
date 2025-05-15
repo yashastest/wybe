@@ -71,10 +71,7 @@ if (typeof XMLHttpRequest === 'undefined') {
   };
 }
 
-// Explicitly expose the module.exports and require functions 
-// which might be used by some CommonJS modules
-(window as any).module = (window as any).module || {};
-(window as any).module.exports = (window as any).module.exports || {};
+// Make sure require is available (sometimes used by Solana's dependencies)
 (window as any).require = (window as any).require || function(module: string) {
   if (module === 'rpc-websockets/dist/lib/client') {
     return { Client: class {} };

@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Add detailed aliases for all possible import paths to handle all variations
+      // Add comprehensive aliases for all possible import paths
       "rpc-websockets": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client": path.resolve(__dirname, "src/empty-module.js"),
       "rpc-websockets/dist/lib/client/websocket": path.resolve(__dirname, "src/empty-module.js"),
