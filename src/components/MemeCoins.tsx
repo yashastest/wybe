@@ -20,6 +20,22 @@ interface CoinData {
   category: string[];
 }
 
+// Custom type for token data from Supabase
+interface TokenData {
+  id: string;
+  name: string;
+  symbol: string;
+  market_cap: number;
+  creator_wallet: string;
+  bonding_curve?: {
+    change_24h?: number;
+    volume_24h?: number;
+    tags?: string[];
+    price?: number;
+  };
+  price?: number;  // We'll add a fallback price if not in bonding_curve
+}
+
 const formatPrice = (price: number): string => {
   if (price < 0.00001) {
     return price.toFixed(8);
@@ -68,24 +84,41 @@ const MemeCoins: React.FC = () => {
         }
         
         // Map database tokens to CoinData format
-        const coinData: CoinData[] = tokensData.map(token => {
+        const coinData: CoinData[] = tokensData.map((token: TokenData) => {
           // Handle calculation of change24h from bonding curve data if available
           const bondingCurve = token.bonding_curve || {};
-          const change24h = bondingCurve.change_24h || Math.random() * 20 - 10; // Fallback for demo
+          const change24h = bondingCurve.change_24h !== undefined 
+            ? bondingCurve.change_24h 
+            : Math.random() * 20 - 10; // Fallback for demo
           
           // Extract categories from tags if available
-          const categories = bondingCurve.tags || ['Meme'];
+          const categoryTags = bondingCurve.tags || ['Meme'];
+          const categories = Array.isArray(categoryTags) 
+            ? categoryTags 
+            : [categoryTags];
           
+          // Get price from bonding_curve or fallback
+          const price = bondingCurve.price !== undefined 
+            ? bondingCurve.price 
+            : token.price !== undefined
+              ? token.price
+              : 0.01; // Default fallback
+          
+          // Get volume from bonding_curve or estimate from market cap
+          const volume24h = bondingCurve.volume_24h !== undefined
+            ? bondingCurve.volume_24h
+            : token.market_cap * 0.1 || 1000; // Default fallback
+            
           return {
             id: token.id,
             name: token.name,
             symbol: token.symbol,
             logo: null, // Will be updated with storage URL when available
-            price: token.price || 0.01,
+            price: price,
             change24h: change24h,
             marketCap: token.market_cap || 10000,
-            volume24h: bondingCurve.volume_24h || token.market_cap * 0.1 || 1000,
-            category: Array.isArray(categories) ? categories : [categories],
+            volume24h: volume24h,
+            category: categories,
           };
         });
         

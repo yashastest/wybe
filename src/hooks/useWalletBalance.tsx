@@ -19,6 +19,18 @@ export interface WalletBalanceState {
   refreshBalances: () => Promise<void>;
 }
 
+// Custom type for token data from Supabase
+interface TokenData {
+  id: string;
+  name: string;
+  symbol: string;
+  market_cap: number;
+  bonding_curve?: {
+    price?: number;
+  };
+  price?: number;  // Fallback price field
+}
+
 export const useWalletBalance = (tokenSymbol?: string): WalletBalanceState => {
   const { wallet, connected, address } = useWallet();
   const [solBalance, setSolBalance] = useState<number>(0);
@@ -93,7 +105,11 @@ export const useWalletBalance = (tokenSymbol?: string): WalletBalanceState => {
       }
       
       // Get current token price (would come from oracle in production)
-      const tokenPrice = token.price || 0.01;
+      const tokenData = token as TokenData;
+      const tokenPrice = 
+        (tokenData.bonding_curve?.price !== undefined) ? tokenData.bonding_curve.price :
+        (tokenData.price !== undefined) ? tokenData.price : 
+        0.01;  // Default fallback price
       
       return {
         symbol,

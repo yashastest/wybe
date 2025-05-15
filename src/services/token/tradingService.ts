@@ -1,194 +1,134 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TradeParams, TradeResult } from './types';
+import { TokenData } from '@/types/supabase';
 
-// Real implementation of trading service
-const estimateTokenAmount = async (tokenSymbol: string, solAmount: number): Promise<number> => {
-  try {
-    // Get token price from database
-    const { data: token, error } = await supabase
-      .from('tokens')
-      .select('*')
-      .eq('symbol', tokenSymbol)
-      .single();
-    
-    if (error || !token) {
-      console.error('Error fetching token price:', error);
-      throw new Error('Failed to fetch token price');
-    }
-    
-    // Calculate token amount based on token price and SOL amount
-    const tokenPrice = token.price || 0.01; // Default to 0.01 if price not available
-    return solAmount / tokenPrice;
-  } catch (error) {
-    console.error('Error estimating token amount:', error);
-    // Fallback calculation if DB lookup fails
-    const tokenPrice = 0.01;
-    return solAmount / tokenPrice;
-  }
-};
+class TradingService {
+  // Get token information by symbol
+  async getTokenBySymbol(symbol: string) {
+    try {
+      const { data, error } = await supabase
+        .from('tokens')
+        .select('*')
+        .eq('symbol', symbol.toUpperCase())
+        .single();
 
-const estimateSolAmount = async (tokenSymbol: string, tokenAmount: number): Promise<number> => {
-  try {
-    // Get token price from database
-    const { data: token, error } = await supabase
-      .from('tokens')
-      .select('*')
-      .eq('symbol', tokenSymbol)
-      .single();
-    
-    if (error || !token) {
-      console.error('Error fetching token price:', error);
-      throw new Error('Failed to fetch token price');
-    }
-    
-    // Calculate SOL amount based on token price and token amount
-    const tokenPrice = token.price || 0.01; // Default to 0.01 if price not available
-    return tokenAmount * tokenPrice;
-  } catch (error) {
-    console.error('Error estimating SOL amount:', error);
-    // Fallback calculation if DB lookup fails
-    const tokenPrice = 0.01;
-    return tokenAmount * tokenPrice;
-  }
-};
-
-const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
-  try {
-    const { tokenSymbol, action, walletAddress, amountSol, amountTokens, gasPriority = 1 } = params;
-    
-    // Check required parameters based on action type
-    if (action === 'buy' && !amountSol) {
-      return {
-        success: false,
-        error: 'SOL amount is required for buy orders'
-      };
-    }
-    
-    if (action === 'sell' && !amountTokens) {
-      return {
-        success: false,
-        error: 'Token amount is required for sell orders'
-      };
-    }
-    
-    // Get token price from database
-    const { data: token, error: tokenError } = await supabase
-      .from('tokens')
-      .select('*')
-      .eq('symbol', tokenSymbol)
-      .single();
-    
-    if (tokenError || !token) {
-      console.error('Error fetching token:', tokenError);
-      return {
-        success: false,
-        error: 'Token not found'
-      };
-    }
-    
-    // In a real implementation, this would call the blockchain using web3.js
-    // Here we'll simulate the blockchain transaction with database operations
-    
-    const tokenPrice = token.price || 0.01;
-    let solAmount = amountSol || 0;
-    let tokenAmount = amountTokens || 0;
-    
-    if (action === 'buy') {
-      tokenAmount = solAmount / tokenPrice;
-    } else {
-      solAmount = tokenAmount * tokenPrice;
-    }
-    
-    // Apply gas priority multiplier for fees
-    const fee = 0.001 * gasPriority; // Example fee calculation
-    
-    // Create a transaction record
-    const { data: transaction, error: txError } = await supabase
-      .from('transactions')
-      .insert([{
-        wallet: walletAddress,
-        token_id: token.id,
-        type: action,
-        price: tokenPrice,
-        amount: action === 'buy' ? tokenAmount : amountTokens,
-        fee: fee
-      }])
-      .select()
-      .single();
-    
-    if (txError) {
-      console.error('Error creating transaction:', txError);
-      return {
-        success: false,
-        error: 'Failed to create transaction record'
-      };
-    }
-    
-    // Log the trade in the trades table
-    await logTradeInDatabase({
-      tokenSymbol,
-      side: action,
-      amount: action === 'buy' ? solAmount : tokenAmount,
-      price: tokenPrice,
-      walletAddress,
-      amountTokens: tokenAmount
-    });
-    
-    // In a real implementation, we'd generate a real transaction hash from blockchain
-    const txHash = transaction?.id || `TX${Math.random().toString(36).substring(2, 15)}`;
-    
-    return {
-      success: true,
-      txHash,
-      price: tokenPrice,
-      amountSol: solAmount,
-      amountTokens: tokenAmount
-    };
-  } catch (error) {
-    console.error('Error executing trade:', error);
-    return {
-      success: false,
-      error: 'Failed to execute trade',
-      errorMessage: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-};
-
-const logTradeInDatabase = async (tradeData: {
-  tokenSymbol: string;
-  side: 'buy' | 'sell';
-  amount: number;
-  price: number;
-  walletAddress: string;
-  amountTokens: number;
-}): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
-      .from('trades')
-      .insert([{
-        token_symbol: tradeData.tokenSymbol,
-        side: tradeData.side,
-        amount: tradeData.amount,
-        wallet_address: tradeData.walletAddress,
-        created_at: new Date().toISOString()
-      }]);
+      if (error) throw error;
       
-    if (error) {
-      console.error('Error logging trade:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error logging trade:', error);
-    return false;
-  }
-};
+      // Cast to our TokenData type and add price if missing
+      const token = data as TokenData;
+      
+      // Get price from bonding curve or fallback to direct price
+      const price = token.bonding_curve?.price !== undefined
+        ? token.bonding_curve.price
+        : token.price !== undefined
+          ? token.price
+          : 0.01; // Default fallback price
 
-export const tradingService = {
-  estimateTokenAmount,
-  estimateSolAmount,
-  executeTrade,
-  logTradeInDatabase
-};
+      return {
+        ...token,
+        price: price
+      };
+    } catch (error) {
+      console.error('Error fetching token:', error);
+      throw new Error(`Failed to get token with symbol ${symbol}`);
+    }
+  }
+
+  // Execute a trade
+  async executeTrade(wallet: string, tokenId: string, type: 'buy' | 'sell', amount: number) {
+    try {
+      // Get token for price information
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('tokens')
+        .select('*')
+        .eq('id', tokenId)
+        .single();
+
+      if (tokenError) throw tokenError;
+      
+      const token = tokenData as TokenData;
+      
+      // Get price from bonding curve or fallback
+      const price = token.bonding_curve?.price !== undefined
+        ? token.bonding_curve.price
+        : token.price !== undefined
+          ? token.price
+          : 0.01; // Default fallback price
+      
+      // Calculate fee (1% of transaction value)
+      const fee = amount * price * 0.01;
+
+      // Record the transaction
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([
+          {
+            token_id: tokenId,
+            wallet,
+            type,
+            amount,
+            price,
+            fee
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error executing trade:', error);
+      throw new Error(`Failed to execute ${type} trade`);
+    }
+  }
+
+  // Get trade history for a token
+  async getTradeHistory(tokenId: string, limit = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('token_id', tokenId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching trade history:', error);
+      throw new Error('Failed to get trade history');
+    }
+  }
+
+  // Get list of traded tokens with their latest price
+  async getListedTokens() {
+    try {
+      const { data, error } = await supabase
+        .from('tokens')
+        .select('*')
+        .order('market_cap', { ascending: false });
+
+      if (error) throw error;
+      
+      // Process tokens to ensure they have price information
+      return data.map((token: TokenData) => {
+        const price = token.bonding_curve?.price !== undefined
+          ? token.bonding_curve.price
+          : token.price !== undefined
+            ? token.price
+            : 0.01; // Default fallback price
+            
+        return {
+          ...token,
+          price
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching listed tokens:', error);
+      throw new Error('Failed to get listed tokens');
+    }
+  }
+}
+
+export const tradingService = new TradingService();
