@@ -9,14 +9,27 @@ import TradingViewChart from '@/components/TradingViewChart';
 import BondingCurveChart from '@/components/BondingCurveChart';
 import TraderActivityMarkers from '@/components/TraderActivityMarkers';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, LineChart, Layers, Star, ArrowUpDown } from 'lucide-react';
+import { 
+  ArrowDown, ArrowUp, TrendingUp, Clock, BarChart3, 
+  LineChart, Layers, Star, ArrowUpDown, Wallet, 
+  Zap, Users, PieChart, CircleDollarSign, ShieldAlert,
+  Info
+} from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import EnhancedTradingInterface from '@/components/EnhancedTradingInterface';
 import TradingInterface from '@/components/TradingInterface';
 import TransactionHistory from '@/components/TransactionHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
+import { tradingService } from '@/services/tradingService';
 
 const Trade = () => {
   // Extract token symbol from URL params or use a default
@@ -28,13 +41,15 @@ const Trade = () => {
   const { refreshBalances } = useWalletBalance(symbol);
   
   const [tab, setTab] = useState('chart');
-  const [isBondingOpen, setIsBondingOpen] = useState(false);
+  const [isBondingOpen, setIsBondingOpen] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   const [canClaimRewards, setCanClaimRewards] = useState(false);
   const [nextClaimDate, setNextClaimDate] = useState<Date | null>(null);
   const [tokenData, setTokenData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showEnhanced, setShowEnhanced] = useState(false);
+  const [traderActivities, setTraderActivities] = useState<any[]>([]);
+  const [dexscreenerProgress, setDexscreenerProgress] = useState(0);
 
   const normalizedSymbol = symbol?.toLowerCase() || '';
 
@@ -46,19 +61,36 @@ const Trade = () => {
       setIsLoading(true);
       try {
         // For demo purposes, always use sample data
-        setTokenData({
+        const tokenDetails = {
           name: symbol.charAt(0).toUpperCase() + symbol.slice(1).toLowerCase(),
           symbol: symbol.toUpperCase(),
-          market_cap: 250000,
+          market_cap: Math.floor(Math.random() * 40000) + 10000, // Random between 10k and 50k
           creator_wallet: '',
           price: 0.00023,
-          change24h: 15.4
-        });
+          change24h: 15.4,
+          bondingCurveActive: true,
+          bondingCurveLimit: 50000
+        };
+        
+        setTokenData(tokenDetails);
+        
+        // Calculate DEXScreener progress
+        setDexscreenerProgress((tokenDetails.market_cap / 50000) * 100);
         
         // Check if current user is creator (demo)
         if (connected && address) {
           setIsCreator(Math.random() > 0.8); // Random chance of being creator for demo
+          setCanClaimRewards(Math.random() > 0.5); // Random chance of having rewards
+          
+          // Set next claim date
+          const nextClaimDays = Math.floor(Math.random() * 5) + 1;
+          const claimDate = new Date();
+          claimDate.setDate(claimDate.getDate() + nextClaimDays);
+          setNextClaimDate(claimDate);
         }
+        
+        // Generate sample trader activities
+        generateTraderActivities();
         
         setTimeout(() => {
           setIsLoading(false);
@@ -72,7 +104,9 @@ const Trade = () => {
           market_cap: 50000,
           creator_wallet: '',
           price: 0.00023,
-          change24h: 15.4
+          change24h: 15.4,
+          bondingCurveActive: true,
+          bondingCurveLimit: 50000
         });
         setIsLoading(false);
       }
@@ -81,18 +115,52 @@ const Trade = () => {
     fetchTokenData();
   }, [normalizedSymbol, connected, address]);
 
-  // Demo data
-  const token = {
-    id: normalizedSymbol,
-    name: tokenData?.name || (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`),
-    symbol: tokenData?.symbol || symbol?.toUpperCase(),
-    logo: `/coins/${normalizedSymbol}.png`,
-    price: 0.00023,
-    change24h: 15.4,
-    marketCap: tokenData?.market_cap || 50000,
-    volume24h: 52000,
-    supply: 1000000000,
-    isDexscreenerListed: tokenData?.market_cap >= 50000
+  // Generate sample trader activities for demo
+  const generateTraderActivities = () => {
+    const activityTypes = ['buy', 'sell', 'mint', 'claim'];
+    const traderTypes = ['whale', 'retail', 'developer'];
+    const walletPrefixes = ['Wybe', 'Sol', 'Trade', 'Degen'];
+    
+    const activities = [];
+    
+    for (let i = 0; i < 20; i++) {
+      const type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+      const traderType = traderTypes[Math.floor(Math.random() * traderTypes.length)];
+      const walletPrefix = walletPrefixes[Math.floor(Math.random() * walletPrefixes.length)];
+      const wallet = `${walletPrefix}${Math.random().toString(16).substring(2, 8)}`;
+      
+      // Generate an amount based on trader type
+      let amount;
+      switch(traderType) {
+        case 'whale':
+          amount = Math.floor(Math.random() * 100000) + 50000; // 50k-150k
+          break;
+        case 'developer':
+          amount = Math.floor(Math.random() * 10000) + 5000; // 5k-15k
+          break;
+        default: // retail
+          amount = Math.floor(Math.random() * 5000) + 100; // 100-5100
+      }
+      
+      // Calculate time in the past (from 1 minute to 24 hours ago)
+      const minutesAgo = Math.floor(Math.random() * 1440) + 1;
+      const timestamp = new Date(Date.now() - (minutesAgo * 60 * 1000));
+      
+      activities.push({
+        id: `tx-${i}`,
+        type,
+        traderType,
+        wallet,
+        amount,
+        timestamp,
+        price: 0.00023 * (1 + (Math.random() * 0.1 - 0.05)) // Price with ±5% variation
+      });
+    }
+    
+    // Sort by timestamp, most recent first
+    activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    setTraderActivities(activities);
   };
 
   // Reset wallet balance
@@ -101,6 +169,70 @@ const Trade = () => {
       refreshBalances();
     }
   }, [connected, normalizedSymbol]);
+
+  // Handle bonding curve explanation toggle
+  const toggleBondingCurve = () => {
+    setIsBondingOpen(!isBondingOpen);
+  };
+  
+  // Quick trade functions
+  const handleQuickBuy = () => {
+    if (!connected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
+    toast.success(`Quick buy order for ${symbol} initiated!`);
+  };
+  
+  const handleQuickSell = () => {
+    if (!connected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
+    toast.success(`Quick sell order for ${symbol} initiated!`);
+  };
+
+  // Claim creator rewards
+  const handleClaimRewards = () => {
+    if (!connected || !isCreator) {
+      toast.error("You must be the creator to claim rewards");
+      return;
+    }
+    
+    if (!canClaimRewards) {
+      toast.error(`Next claim available in ${getTimeUntilNextClaim()}`);
+      return;
+    }
+    
+    toast.success("Creator rewards claimed successfully!");
+    setCanClaimRewards(false);
+    
+    // Set next claim date to 5 days from now
+    const claimDate = new Date();
+    claimDate.setDate(claimDate.getDate() + 5);
+    setNextClaimDate(claimDate);
+  };
+
+  // Helper to get time until next claim
+  const getTimeUntilNextClaim = () => {
+    if (!nextClaimDate) return "now";
+    
+    const now = new Date();
+    const timeDiff = nextClaimDate.getTime() - now.getTime();
+    
+    if (timeDiff <= 0) return "now";
+    
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} and ${hours} hour${hours > 1 ? 's' : ''}`;
+    } else {
+      return `${hours} hour${hours > 1 ? 's' : ''}`;
+    }
+  };
 
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -140,6 +272,25 @@ const Trade = () => {
       </div>
     );
   }
+
+  // Prepare token data for display
+  const token = {
+    id: normalizedSymbol,
+    name: tokenData?.name || (symbol && `${symbol.charAt(0).toUpperCase()}${symbol.slice(1).toLowerCase()}`),
+    symbol: tokenData?.symbol || symbol?.toUpperCase(),
+    logo: `/coins/${normalizedSymbol}.png`,
+    price: tokenData?.price || 0.00023,
+    change24h: tokenData?.change24h || 15.4,
+    marketCap: tokenData?.market_cap || 50000,
+    volume24h: 52000,
+    supply: 1000000000,
+    isDexscreenerListed: (tokenData?.market_cap || 0) >= 50000,
+    bondingCurveActive: tokenData?.bondingCurveActive || false,
+    bondingCurveLimit: tokenData?.bondingCurveLimit || 50000
+  };
+
+  // Calculate DEXScreener progress
+  const dexScreenerProgress = Math.min(100, (token.marketCap / 50000) * 100);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-black via-indigo-950/40 to-black bg-fixed">
@@ -221,26 +372,100 @@ const Trade = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 md:gap-3 font-mono mt-2 md:mt-0 w-full md:w-auto">
-                <motion.div 
-                  variants={pulseVariants}
-                  animate="pulse"
-                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-2 md:px-4 py-2 rounded-xl text-xs md:text-sm border border-white/10 flex-1 md:flex-none text-center md:text-left"
+              {/* Quick Action Buttons */}
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <button 
+                  onClick={handleQuickBuy}
+                  className="flex-1 md:flex-none bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:shadow-green-600/30 transition-all"
                 >
-                  <span className="text-gray-400">Price:</span>{" "}
-                  <span className="font-bold text-white">{token.price} SOL</span>
-                </motion.div>
-                <motion.div 
-                  variants={pulseVariants}
-                  animate="pulse"
-                  className="bg-gradient-to-r from-indigo-900/80 to-purple-900/80 backdrop-blur-lg px-2 md:px-4 py-2 rounded-xl text-xs md:text-sm border border-white/10 flex-1 md:flex-none text-center md:text-left"
+                  <Zap size={16} className="inline mr-1" /> Quick Buy
+                </button>
+                <button 
+                  onClick={handleQuickSell}
+                  className="flex-1 md:flex-none bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:shadow-red-600/30 transition-all"
                 >
-                  <span className="text-gray-400">24h Vol:</span>{" "}
-                  <span className="font-bold text-white">${token.volume24h.toLocaleString()}</span>
-                </motion.div>
+                  <Zap size={16} className="inline mr-1" /> Quick Sell
+                </button>
               </div>
             </div>
           </motion.div>
+          
+          {/* DEXScreener Listing Progress */}
+          {!token.isDexscreenerListed && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl backdrop-blur-sm border border-indigo-500/20"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <Star className="text-yellow-400" size={18} />
+                  <h3 className="font-bold text-sm">DEXScreener Listing Progress</h3>
+                </div>
+                <span className="text-xs text-indigo-300">{Math.round(dexScreenerProgress)}%</span>
+              </div>
+              <Progress value={dexScreenerProgress} className="h-3 bg-gray-800/70">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                  style={{ width: `${dexScreenerProgress}%` }}
+                />
+              </Progress>
+              <p className="mt-2 text-xs text-gray-400">
+                ${token.marketCap.toLocaleString()} / $50,000 Market Cap needed for DEXScreener listing
+              </p>
+            </motion.div>
+          )}
+          
+          {/* Bonding Curve Info */}
+          {token.bondingCurveActive && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6"
+            >
+              <Collapsible 
+                open={isBondingOpen} 
+                onOpenChange={toggleBondingCurve}
+                className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl backdrop-blur-sm border border-blue-500/20"
+              >
+                <CollapsibleTrigger className="w-full p-4 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <LineChart className="text-blue-400" size={18} />
+                    <h3 className="font-bold text-sm">Bonding Curve Active</h3>
+                    <div className="ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full">
+                      Until $50k Market Cap
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isBondingOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ArrowDown size={16} />
+                  </motion.div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="p-4 pt-0 text-sm text-gray-300">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <p className="mb-2">
+                          This token uses a bonding curve pricing mechanism until it reaches $50,000 market cap.
+                          Price increases as more tokens are bought and decreases as tokens are sold.
+                        </p>
+                        <div className="flex items-center gap-2 text-xs mt-3 bg-indigo-900/30 p-2 rounded-lg">
+                          <Info size={14} className="text-blue-300" />
+                          <span>Trading affects price more significantly during the bonding curve phase</span>
+                        </div>
+                      </div>
+                      <div className="md:w-1/3 h-[120px] bg-indigo-900/20 rounded-lg border border-indigo-500/20 flex items-center justify-center">
+                        <BondingCurveChart />
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </motion.div>
+          )}
 
           {/* Toggle between normal and enhanced interfaces for demo */}
           <div className="mb-6 flex justify-center">
@@ -323,8 +548,82 @@ const Trade = () => {
                   </TabsContent>
                   
                   <TabsContent value="activity" className="mt-4">
-                    <div className="h-[300px] md:h-[400px]">
-                      <TraderActivityMarkers activities={[]} />
+                    <div className="h-[300px] md:h-[400px] overflow-y-auto">
+                      <div className="space-y-2">
+                        {traderActivities.map((activity, index) => (
+                          <motion.div
+                            key={activity.id}
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={`p-3 rounded-lg flex items-center gap-3 border ${
+                              activity.traderType === 'whale' 
+                                ? 'bg-blue-900/30 border-blue-500/30' 
+                                : activity.traderType === 'developer'
+                                ? 'bg-purple-900/30 border-purple-500/30'
+                                : 'bg-gray-800/60 border-gray-700/30'
+                            }`}
+                          >
+                            <div className={`p-2 rounded-full ${
+                              activity.type === 'buy' 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : activity.type === 'sell'
+                                ? 'bg-red-500/20 text-red-400'
+                                : activity.type === 'mint'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : 'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {activity.type === 'buy' && <ArrowUp size={16} />}
+                              {activity.type === 'sell' && <ArrowDown size={16} />}
+                              {activity.type === 'mint' && <CircleDollarSign size={16} />}
+                              {activity.type === 'claim' && <Wallet size={16} />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <div className="text-sm font-medium">
+                                  {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} {token.symbol}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {new Date(activity.timestamp).toLocaleTimeString()}
+                                </div>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <div className="text-xs text-gray-400 flex items-center">
+                                  <span className="truncate max-w-[120px]">{activity.wallet}</span>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
+                                          activity.traderType === 'whale'
+                                            ? 'bg-blue-500/30 text-blue-300'
+                                            : activity.traderType === 'developer'
+                                            ? 'bg-purple-500/30 text-purple-300'
+                                            : 'bg-gray-700/50 text-gray-300'
+                                        }`}>
+                                          {activity.traderType === 'whale' && '🐋'}
+                                          {activity.traderType === 'developer' && '👨‍💻'}
+                                          {activity.traderType === 'retail' && '👤'}
+                                          {activity.traderType}
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs">
+                                          {activity.traderType === 'whale' && 'Large holder - Trades >$50k'}
+                                          {activity.traderType === 'developer' && 'Project developer or insider'}
+                                          {activity.traderType === 'retail' && 'Regular trader - Trades <$5k'}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                                <div className="font-mono text-sm">
+                                  {activity.amount.toLocaleString()} {token.symbol}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
                   </TabsContent>
                   
@@ -368,6 +667,39 @@ const Trade = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Creator Actions Panel */}
+              {isCreator && (
+                <div className="mt-2 p-4 bg-gradient-to-r from-amber-900/30 to-yellow-900/20 rounded-lg mx-4 mb-4 border border-yellow-500/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-yellow-300 flex items-center gap-2">
+                        <Star size={16} className="text-yellow-300" />
+                        Creator Panel
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-1">
+                        You are the creator of this token
+                      </p>
+                    </div>
+                    <button 
+                      onClick={handleClaimRewards}
+                      disabled={!canClaimRewards}
+                      className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                        canClaimRewards 
+                          ? 'bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-500 hover:to-orange-600 text-white'
+                          : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Claim Rewards
+                    </button>
+                  </div>
+                  {!canClaimRewards && nextClaimDate && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      Next claim available in: {getTimeUntilNextClaim()}
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
 
             {/* Trading Interface */}
