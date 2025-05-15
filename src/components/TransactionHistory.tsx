@@ -5,12 +5,14 @@ import { ArrowUpRight, RefreshCw, Wallet, X, Check, Loader } from 'lucide-react'
 import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingService';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { toast } from 'sonner';
+import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
 
 interface TransactionHistoryProps {
   tokenSymbol?: string;
+  fullSize?: boolean;  // Add the fullSize prop
 }
 
-const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) => {
+const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol, fullSize }) => {
   const { connected, address } = useWallet();
   const [transactions, setTransactions] = useState<TokenTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +25,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
     
     setIsLoading(true);
     try {
-      const txs = await tokenTradingService.getUserTransactions(address, tokenSymbol);
+      // Create a proper filter object
+      const filters: TradeHistoryFilters = tokenSymbol ? { tokenSymbol } : {};
+      const txs = await tokenTradingService.getUserTransactions(address, filters);
       setTransactions(txs);
     } catch (error) {
       console.error('Failed to load transactions:', error);
@@ -50,7 +54,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
   }
   
   return (
-    <div className="bg-indigo-950/50 rounded-xl overflow-hidden border border-indigo-500/20">
+    <div className={`bg-indigo-950/50 rounded-xl overflow-hidden border border-indigo-500/20 ${fullSize ? 'h-full' : ''}`}>
       <div className="flex items-center justify-between p-4 border-b border-indigo-500/20">
         <h3 className="font-bold text-lg text-indigo-200">
           {tokenSymbol ? `${tokenSymbol} Transactions` : 'Your Transactions'}
@@ -113,15 +117,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ tokenSymbol }) 
               {transactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-indigo-900/20 transition-colors">
                   <td className="py-3 px-4 text-sm text-gray-300 font-mono">
-                    {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    {new Date(tx.timestamp).toLocaleDateString()} {new Date(tx.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </td>
                   <td className="py-3 px-4">
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      tx.action === 'buy' 
+                      tx.side === 'buy' 
                         ? 'bg-green-900/30 text-green-400 border border-green-500/30' 
                         : 'bg-red-900/30 text-red-400 border border-red-500/30'
                     }`}>
-                      {tx.action}
+                      {tx.side}
                     </span>
                   </td>
                   {!tokenSymbol && (

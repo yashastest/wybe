@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tokenTradingService, TradeParams } from '@/services/tokenTradingService';
+import { useWalletBalance } from './useWalletBalance';
+import { useWallet } from './useWallet.tsx';
 
 interface TokenTrade {
   tokenSymbol: string;
@@ -21,10 +22,20 @@ export interface TradeHistoryFilters {
   endDate?: Date;
 }
 
-export const useTokenTrading = () => {
+export const useTokenTrading = (tokenSymbol?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [trades, setTrades] = useState<TokenTrade[]>([]);
   const [tradeHistory, setTradeHistory] = useState<TokenTrade[]>([]);
+  const { address } = useWallet();
+  const { solBalance: walletSolBalance, tokenBalances } = useWalletBalance(tokenSymbol);
+  
+  // Calculate token balance from wallet
+  const tokenBalance = tokenSymbol && tokenBalances[tokenSymbol] 
+    ? tokenBalances[tokenSymbol].balance 
+    : 0;
+  
+  // Use the wallet sol balance from useWalletBalance
+  const solBalance = walletSolBalance || 0;
 
   const executeTrade = async (tradeParams: TradeParams) => {
     setIsLoading(true);
@@ -63,7 +74,7 @@ export const useTokenTrading = () => {
       toast.error("Failed to execute trade");
       result = {
         success: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     } finally {
       setIsLoading(false);
@@ -75,7 +86,6 @@ export const useTokenTrading = () => {
   const fetchTradeHistory = async (walletAddress: string, filters?: TradeHistoryFilters) => {
     setIsLoading(true);
     try {
-      // This will now be implemented in tokenTradingService
       const history = await tokenTradingService.getUserTransactions(walletAddress, filters);
       setTradeHistory(history);
       return history;
@@ -87,12 +97,66 @@ export const useTokenTrading = () => {
       setIsLoading(false);
     }
   };
+  
+  // Add missing methods required by EnhancedTradingInterface
+  const buyTokens = async (amountSol: number, gasPriority: number = 1) => {
+    if (!address) {
+      toast.error("Wallet not connected");
+      return { success: false, error: "Wallet not connected" };
+    }
+    
+    return executeTrade({
+      walletAddress: address,
+      tokenSymbol: tokenSymbol || '',
+      action: 'buy',
+      amountSol: amountSol,
+      gasPriority
+    });
+  };
+  
+  const sellTokens = async (amountTokens: number, gasPriority: number = 1) => {
+    if (!address) {
+      toast.error("Wallet not connected");
+      return { success: false, error: "Wallet not connected" };
+    }
+    
+    return executeTrade({
+      walletAddress: address,
+      tokenSymbol: tokenSymbol || '',
+      action: 'sell',
+      amountTokens: amountTokens,
+      gasPriority
+    });
+  };
+  
+  const sellAllTokens = async (gasPriority: number = 1) => {
+    if (!address || !tokenSymbol) {
+      toast.error("Wallet not connected or token not specified");
+      return { success: false, error: "Wallet not connected or token not specified" };
+    }
+    
+    // Get current token balance
+    const currentBalance = tokenBalance;
+    
+    if (currentBalance <= 0) {
+      toast.error("No tokens to sell");
+      return { success: false, error: "No tokens to sell" };
+    }
+    
+    return sellTokens(currentBalance, gasPriority);
+  };
 
   return {
     isLoading,
     trades,
     tradeHistory,
     executeTrade,
-    fetchTradeHistory
+    fetchTradeHistory,
+    // Add these properties needed by EnhancedTradingInterface
+    buyTokens,
+    sellTokens,
+    sellAllTokens,
+    solBalance,
+    tokenBalance
   };
 };

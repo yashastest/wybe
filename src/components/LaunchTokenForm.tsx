@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { Button } from '@/components/ui/button';
@@ -89,6 +88,7 @@ const LaunchTokenForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Updated to match the tokenTradingService method signature
       const result = await tokenTradingService.buyInitialSupply(
         tokenId,
         address,
@@ -100,7 +100,7 @@ const LaunchTokenForm: React.FC = () => {
         toast.success('Initial supply purchased!');
       } else {
         toast.error('Failed to purchase initial supply', {
-          description: result.errorMessage || 'Please try again'
+          description: result.error || 'Please try again'
         });
       }
     } catch (error) {

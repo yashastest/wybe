@@ -1,4 +1,3 @@
-
 import { Connection, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { TradeHistoryFilters } from '@/hooks/useTokenTrading';
@@ -32,19 +31,22 @@ export interface TradeResult {
   amountTokens?: number;
   txHash?: string;
   price?: number;
-  errorMessage?: string;
+  error?: string;
 }
 
 export interface TokenTransaction {
   id: string;
   tokenSymbol: string;
-  side: 'buy' | 'sell';
+  side: 'buy' | 'sell';  // Changed from 'action' to 'side' to match component usage
   amount: number;
   price: number;
-  timestamp: string;
+  timestamp: string;     // Changed from 'createdAt' to 'timestamp'
   walletAddress: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'confirmed' | 'pending' | 'failed';  // Changed 'completed' to 'confirmed' to match component
   txHash?: string;
+  // Add these properties to match usage in TransactionHistory component
+  amountTokens: number;
+  amountSol: number;
 }
 
 // Function to estimate token amount from SOL amount
@@ -68,7 +70,7 @@ const estimateSolAmount = (tokenSymbol: string, tokenAmount: number, action: 'bu
   if (action === 'sell') {
     // Apply a 2% fee when selling
     const solAmountBeforeFee = tokenAmount * tokenPrice;
-    return solAmountBeforeFee * 0.98;
+    return solAmountBeforeFee * 0.98; // 2% fee
   } else {
     // When buying, return direct conversion (fee applied elsewhere)
     return tokenAmount * tokenPrice;
@@ -122,7 +124,7 @@ const executeTrade = async (tradeParams: TradeParams): Promise<TradeResult> => {
     console.error("Trade execution error:", error);
     return {
       success: false,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 };
@@ -133,6 +135,7 @@ const logTradeInDatabase = async (tradeData: {
   token_symbol: string;
   side: 'buy' | 'sell';
   amount: number;
+  tx_hash?: string;
 }) => {
   try {
     const { data, error } = await supabase.functions.invoke('log-trade', {
@@ -157,12 +160,15 @@ const logTradeInDatabase = async (tradeData: {
 // Function to get user transactions
 const getUserTransactions = async (
   walletAddress: string, 
-  filters?: TradeHistoryFilters
+  filters?: TradeHistoryFilters | string  // Allow string for backward compatibility
 ): Promise<TokenTransaction[]> => {
   try {
     // Simulate API call to fetch transactions
     // In a real implementation, this would be a call to your API or database
     await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Convert string filter to TradeHistoryFilters object if needed
+    const tokenSymbolFilter = typeof filters === 'string' ? filters : filters?.tokenSymbol;
     
     // Mock data for demonstration
     const mockTransactions: TokenTransaction[] = [
@@ -174,8 +180,10 @@ const getUserTransactions = async (
         price: 0.00001234,
         timestamp: new Date(Date.now() - 3600000).toISOString(),
         walletAddress,
-        status: 'completed',
-        txHash: 'tx_mock_hash_1'
+        status: 'confirmed',
+        txHash: 'tx_mock_hash_1',
+        amountTokens: 1000000,
+        amountSol: 12.34
       },
       {
         id: '2',
@@ -185,8 +193,10 @@ const getUserTransactions = async (
         price: 0.12345,
         timestamp: new Date(Date.now() - 7200000).toISOString(),
         walletAddress,
-        status: 'completed',
-        txHash: 'tx_mock_hash_2'
+        status: 'confirmed',
+        txHash: 'tx_mock_hash_2',
+        amountTokens: 500,
+        amountSol: 61.73
       },
       {
         id: '3',
@@ -196,21 +206,21 @@ const getUserTransactions = async (
         price: 0.00002345,
         timestamp: new Date(Date.now() - 86400000).toISOString(),
         walletAddress,
-        status: 'completed',
-        txHash: 'tx_mock_hash_3'
+        status: 'confirmed',
+        txHash: 'tx_mock_hash_3',
+        amountTokens: 2000000,
+        amountSol: 46.90
       }
     ];
     
     // Apply filters if provided
     let filteredTransactions = [...mockTransactions];
     
-    if (filters) {
-      if (filters.tokenSymbol) {
-        filteredTransactions = filteredTransactions.filter(tx => 
-          tx.tokenSymbol.toLowerCase() === filters.tokenSymbol?.toLowerCase()
-        );
-      }
-      
+    if (tokenSymbolFilter) {
+      filteredTransactions = filteredTransactions.filter(tx => 
+        tx.tokenSymbol.toLowerCase() === tokenSymbolFilter.toLowerCase()
+      );
+    } else if (filters && typeof filters !== 'string') {
       if (filters.side) {
         filteredTransactions = filteredTransactions.filter(tx => 
           tx.side === filters.side
@@ -238,21 +248,29 @@ const getUserTransactions = async (
 };
 
 // Adding functions for token launching
-const launchToken = async (tokenData: {
+const launchToken = async ({
+  name,
+  symbol,
+  creatorWallet,
+  initialPrice,
+}: {
   name: string;
   symbol: string;
   creatorWallet: string;
   initialPrice: number;
-  totalSupply: number;
 }) => {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   try {
+    // Generate token ID for reference in later steps
+    const tokenId = `token_${Math.random().toString(36).substring(2, 15)}`;
+    
     // This would connect to blockchain and deploy the token
     return {
       success: true,
-      tokenAddress: `token_${Math.random().toString(36).substring(2, 15)}`,
+      tokenId, // Add tokenId to match what LaunchTokenForm expects
+      tokenAddress: `addr_${Math.random().toString(36).substring(2, 15)}`,
       txHash: `tx_${Math.random().toString(36).substring(2, 15)}`,
     };
   } catch (error) {
@@ -263,23 +281,24 @@ const launchToken = async (tokenData: {
   }
 };
 
-const buyInitialSupply = async (params: {
-  tokenSymbol: string;
-  amountSol: number;
-  walletAddress: string;
-}) => {
+const buyInitialSupply = async (
+  tokenId: string,
+  walletAddress: string,
+  amountSol: number
+) => {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1500));
   
   try {
     const tokenPrice = 0.0001; // Initial token price
-    const tokensReceived = params.amountSol / tokenPrice;
+    const tokensReceived = amountSol / tokenPrice;
     
     return {
       success: true,
-      amountSol: params.amountSol,
+      amountSol: amountSol,
       amountTokens: tokensReceived,
-      txHash: `tx_${Math.random().toString(36).substring(2, 15)}`
+      txHash: `tx_${Math.random().toString(36).substring(2, 15)}`,
+      error: undefined // Adding error property with undefined value for type safety
     };
   } catch (error) {
     return {
