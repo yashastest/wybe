@@ -1,69 +1,37 @@
 
-export interface TradeParams {
-  walletAddress: string;
-  tokenSymbol: string;
-  action: 'buy' | 'sell';
-  amountSol?: number;
-  amountTokens?: number;
-  gasPriority?: number;
-}
-
-export interface TradeResult {
-  success: boolean;
-  amountSol?: number;
-  amountTokens?: number;
-  txHash?: string;
-  price?: number;
-  error?: string;
-  errorMessage?: string;
-}
-
 export interface TokenTransaction {
   id: string;
   tokenSymbol: string;
-  side: 'buy' | 'sell';  
+  side: 'buy' | 'sell';
   amount: number;
   price: number;
   timestamp: string;
   walletAddress: string;
-  status: 'confirmed' | 'pending' | 'failed';
-  txHash?: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  txHash: string;
   amountTokens: number;
   amountSol: number;
 }
 
-export interface ListedToken {
-  id: string;
-  name: string;
-  symbol: string;
-  logo: string | null;
-  banner: string | null;
-  price: number;
-  change24h: number;
-  marketCap: number;
-  volume24h: number;
-  category: string[];
-  holders: number;
-  devWallet: string;
-  holderStats: {
-    whales: number;
-    retail: number;
-    devs: number;
-  };
-  launchDate: string;
-}
-
-export interface TokenLaunchParams {
-  name: string;
-  symbol: string;
-  creatorWallet: string;
-  initialPrice: number;
-  totalSupply: number;
-}
-
-export type TradeHistoryFilters = {
+export type TradeHistoryFilters = string | {
   tokenSymbol?: string;
   side?: 'buy' | 'sell';
   startDate?: Date;
   endDate?: Date;
-} | string;
+};
+
+export interface TokenPriceHistory {
+  timestamp: string;
+  price: number;
+  volume?: number;
+}
+
+export interface TokenMetrics {
+  price: number;
+  priceChange24h: number;
+  priceChangePercentage24h: number;
+  volume24h: number;
+  marketCap: number;
+  totalSupply: number;
+  holders: number;
+}

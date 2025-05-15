@@ -1,322 +1,248 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ListedToken, TokenLaunchParams } from './types';
+import { toast } from 'sonner';
 
-// Function to launch a new token
-const launchToken = async (params: TokenLaunchParams) => {
+export interface TokenLaunchOptions {
+  name: string;
+  symbol: string;
+  initialSupply: number;
+  bondingCurve?: {
+    type: 'linear' | 'exponential' | 'logarithmic';
+    initialPrice?: number;
+    params?: Record<string, number>;
+  };
+  creator: {
+    wallet: string;
+    email?: string;
+  };
+}
+
+export interface TokenDetails {
+  id: string;
+  name: string;
+  symbol: string;
+  initialSupply?: number;
+  currentSupply?: number;
+  marketCap?: number;
+  launchDate?: string;
+  creatorWallet: string;
+  tokenAddress?: string;
+  bondingCurve?: {
+    type: 'linear' | 'exponential' | 'logarithmic';
+    initialPrice?: number;
+    params?: Record<string, number>;
+  };
+  launched?: boolean;
+}
+
+// Get token by ID
+const getTokenById = async (id: string): Promise<TokenDetails | null> => {
   try {
-    const { name, symbol, creatorWallet, initialPrice, totalSupply } = params;
-    
-    // Validate inputs
-    if (!name || !symbol || !creatorWallet) {
-      return {
-        success: false,
-        error: 'Missing required parameters'
-      };
-    }
-    
-    // Check if token symbol already exists
-    const { data: existingTokens, error: checkError } = await supabase
-      .from('tokens')
-      .select('symbol')
-      .eq('symbol', symbol);
-    
-    if (checkError) {
-      console.error("Error checking existing tokens:", checkError);
-      return {
-        success: false,
-        error: 'Failed to validate token symbol'
-      };
-    }
-    
-    if (existingTokens && existingTokens.length > 0) {
-      return {
-        success: false,
-        error: `Token symbol '${symbol}' is already in use`
-      };
-    }
-    
-    // Create bonding curve configuration
-    const bondingCurve = {
-      type: 'linear',
-      initialPrice,
-      totalSupply,
-      currentSupply: 0,
-      params: {
-        slope: 0.0001
-      }
-    };
-    
-    // Insert new token into database
     const { data, error } = await supabase
       .from('tokens')
-      .insert([
-        { 
-          name, 
-          symbol, 
-          creator_wallet: creatorWallet, 
-          bonding_curve: bondingCurve,
-          launched: false,
-          market_cap: 0
-        }
-      ])
-      .select()
+      .select('*')
+      .eq('id', id)
       .single();
-    
+      
     if (error) {
-      console.error("Error launching token:", error);
-      return {
-        success: false,
-        error: 'Failed to launch token'
-      };
+      throw error;
     }
     
-    return {
-      success: true,
-      tokenId: data.id,
-      message: `Token ${symbol} has been created and is ready for initial funding`
+    if (!data) {
+      return null;
+    }
+    
+    const tokenDetails: TokenDetails = {
+      id: data.id,
+      name: data.name,
+      symbol: data.symbol,
+      initialSupply: data.initial_supply,
+      currentSupply: data.current_supply,
+      marketCap: data.market_cap,
+      launchDate: data.launch_date,
+      creatorWallet: data.creator_wallet,
+      tokenAddress: data.token_address,
+      launched: data.launched,
+      bondingCurve: data.bonding_curve as TokenDetails['bondingCurve'],
     };
+    
+    return tokenDetails;
   } catch (error) {
-    console.error("Token launch error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    console.error('Error fetching token:', error);
+    return null;
   }
 };
 
-// Function to buy initial supply of tokens
-const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
+// Create a new token
+const createToken = async (options: TokenLaunchOptions): Promise<string | null> => {
   try {
-    // Get token details
-    const { data: tokenData, error: tokenError } = await supabase
-      .from('tokens')
-      .select('*')
-      .eq('id', tokenId)
-      .single();
+    // Create bonding curve data
+    const bondingCurveData = options.bondingCurve || {
+      type: 'linear',
+      initialPrice: 0.001,
+      params: { slope: 0.0001 }
+    };
     
-    if (tokenError || !tokenData) {
-      console.error("Error fetching token details:", tokenError);
-      return {
-        success: false,
-        error: 'Token not found'
-      };
+    // Construct token data
+    const tokenData = {
+      name: options.name,
+      symbol: options.symbol.toUpperCase(),
+      creator_wallet: options.creator.wallet,
+      initial_supply: options.initialSupply,
+      current_supply: options.initialSupply,
+      market_cap: 0,
+      launched: false,
+      bonding_curve: bondingCurveData
+    };
+    
+    // Insert into database
+    const { data, error } = await supabase
+      .from('tokens')
+      .insert([tokenData])
+      .select();
+      
+    if (error) {
+      throw error;
     }
     
-    // Calculate token amount based on bonding curve
-    const bondingCurve = tokenData.bonding_curve;
-    const initialPrice = bondingCurve.initialPrice || 0.0001;
-    const amountTokens = amount / initialPrice;
+    return data[0].id;
+  } catch (error) {
+    console.error('Error creating token:', error);
+    toast.error('Failed to create token');
+    return null;
+  }
+};
+
+// Get token price
+const getTokenPrice = (token: TokenDetails): number => {
+  if (!token.bondingCurve) {
+    return 0.001; // Default price
+  }
+  
+  const bondingCurve = token.bondingCurve;
+  let initialPrice = 0.001; // Default initial price
+  
+  // Check if bondingCurve is an object and has initialPrice property
+  if (typeof bondingCurve === 'object' && bondingCurve !== null && 'initialPrice' in bondingCurve) {
+    initialPrice = Number(bondingCurve.initialPrice) || initialPrice;
+  }
+  
+  // Calculate price based on bonding curve type
+  if (!token.currentSupply) {
+    return initialPrice;
+  }
+  
+  const currentSupply = token.currentSupply;
+  
+  if (typeof bondingCurve === 'object' && bondingCurve !== null && bondingCurve.type) {
+    switch (bondingCurve.type) {
+      case 'linear':
+        return initialPrice + (currentSupply * 0.0001);
+      case 'exponential':
+        return initialPrice * Math.pow(1.0001, currentSupply);
+      case 'logarithmic':
+        return initialPrice + (Math.log(currentSupply + 1) * 0.01);
+      default:
+        return initialPrice;
+    }
+  }
+  
+  return initialPrice;
+};
+
+// Launch token
+const launchToken = async (tokenId: string): Promise<boolean> => {
+  try {
+    const token = await getTokenById(tokenId);
     
-    // Update token with launch info
-    const { error: updateError } = await supabase
+    if (!token) {
+      throw new Error('Token not found');
+    }
+    
+    if (token.launched) {
+      throw new Error('Token is already launched');
+    }
+    
+    // Update token as launched
+    const { error } = await supabase
       .from('tokens')
-      .update({ 
+      .update({
         launched: true,
         launch_date: new Date().toISOString(),
-        market_cap: amount
+        token_address: `TOKEN${Math.floor(Math.random() * 1000000000)}` // Mock token address
       })
       .eq('id', tokenId);
-    
-    if (updateError) {
-      console.error("Error updating token launch status:", updateError);
-      return {
-        success: false,
-        error: 'Failed to update token launch status'
-      };
+      
+    if (error) {
+      throw error;
     }
     
-    // Record the initial purchase transaction
-    const { error: txError } = await supabase
-      .from('transactions')
-      .insert([{
-        wallet: walletAddress,
-        token_id: tokenId,
-        type: 'initial_purchase',
-        amount: amountTokens,
-        price: initialPrice,
-        fee: 0 // No fee on initial purchase
-      }]);
-    
-    if (txError) {
-      console.error("Error recording initial purchase:", txError);
-      // Continue despite the error - the token is launched
-    }
-    
-    return {
-      success: true,
-      amountSol: amount,
-      amountTokens,
-      tokenSymbol: tokenData.symbol,
-      message: `Successfully purchased ${amountTokens.toFixed(2)} ${tokenData.symbol} tokens`
-    };
+    return true;
   } catch (error) {
-    console.error("Initial supply purchase error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    console.error('Error launching token:', error);
+    toast.error('Failed to launch token');
+    return false;
   }
 };
 
-// Enhanced function to get listed tokens with improved error handling and sorting
-const getListedTokens = async (): Promise<ListedToken[]> => {
+// Get token listing
+const getTokenListing = async (limit: number = 10): Promise<TokenDetails[]> => {
   try {
-    // Fetch tokens from database
     const { data, error } = await supabase
       .from('tokens')
       .select('*')
-      .eq('launched', true)
-      .order('launch_date', { ascending: false });
-    
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
     if (error) {
-      console.error("Error fetching tokens:", error);
-      return [];
+      throw error;
     }
     
-    if (!data || data.length === 0) {
-      // Return demo data if no tokens found
-      return getDemoTokens();
-    }
-    
-    // Fetch transaction data for volume calculation
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    // Map tokens to the ListedToken interface
-    const listedTokens: ListedToken[] = await Promise.all(data.map(async (token) => {
-      // Get transaction volume for this token in the last 24 hours
-      const { data: txData, error: txError } = await supabase
-        .from('trades')
-        .select('amount')
-        .eq('token_symbol', token.symbol)
-        .gte('created_at', yesterday.toISOString());
-      
-      let volume24h = 0;
-      if (!txError && txData) {
-        volume24h = txData.reduce((sum, tx) => sum + Number(tx.amount), 0);
-      }
-      
-      // Calculate price based on bonding curve if available
-      let price = 0.0001;
-      let change24h = Math.random() * 20 - 10; // Random change between -10% and +10%
+    return data.map(token => {
+      // Handle bondingCurve conversion
+      let bondingCurveData = null;
       
       if (token.bonding_curve) {
-        price = token.bonding_curve.initialPrice || price;
-        // In a real system, this would be calculated based on supply changes
-      }
-      
-      // Count holders (distinct wallets in transactions)
-      const { data: holdersData, error: holdersError } = await supabase
-        .from('trades')
-        .select('wallet_address')
-        .eq('token_symbol', token.symbol)
-        .eq('side', 'buy');
-      
-      let holders = 10; // Default
-      if (!holdersError && holdersData) {
-        const uniqueWallets = new Set(holdersData.map(tx => tx.wallet_address));
-        holders = uniqueWallets.size;
+        // Convert from various possible formats to our expected format
+        if (typeof token.bonding_curve === 'string') {
+          try {
+            bondingCurveData = JSON.parse(token.bonding_curve);
+          } catch (e) {
+            bondingCurveData = { type: 'linear', initialPrice: 0.001 };
+          }
+        } else if (typeof token.bonding_curve === 'object') {
+          bondingCurveData = token.bonding_curve;
+        }
+      } else {
+        bondingCurveData = { type: 'linear', initialPrice: 0.001 };
       }
       
       return {
         id: token.id,
         name: token.name,
         symbol: token.symbol,
-        logo: null, // Would be fetched from storage
-        banner: null,
-        price,
-        change24h,
-        marketCap: token.market_cap || price * 1000000, // Estimate market cap
-        volume24h,
-        category: ['meme', 'social'],
-        holders,
-        devWallet: token.creator_wallet,
-        holderStats: {
-          whales: Math.floor(holders * 0.1), // 10% are whales
-          retail: Math.floor(holders * 0.8), // 80% are retail
-          devs: Math.floor(holders * 0.1) // 10% are devs
-        },
-        launchDate: token.launch_date || new Date().toISOString()
+        initialSupply: token.initial_supply,
+        currentSupply: token.current_supply,
+        marketCap: token.market_cap,
+        launchDate: token.launch_date,
+        creatorWallet: token.creator_wallet,
+        tokenAddress: token.token_address,
+        launched: token.launched,
+        bondingCurve: bondingCurveData
       };
-    }));
-    
-    return listedTokens;
+    });
   } catch (error) {
-    console.error("Error getting listed tokens:", error);
-    return getDemoTokens();
+    console.error('Error fetching token listing:', error);
+    return [];
   }
 };
 
-// Function to get demo tokens
-const getDemoTokens = (): ListedToken[] => {
-  return [
-    {
-      id: '1',
-      name: 'Pepe Sol',
-      symbol: 'PEPES',
-      logo: '/lovable-uploads/11c9cd9c-16fc-462c-912b-bd90bbd2bd17.png',
-      banner: null,
-      price: 0.000134,
-      change24h: 12.5,
-      marketCap: 1450000,
-      volume24h: 320000,
-      category: ['meme', 'frog'],
-      holders: 3500,
-      devWallet: '0x1234...5678',
-      holderStats: {
-        whales: 35,
-        retail: 3430,
-        devs: 35
-      },
-      launchDate: '2025-05-01T12:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Moon Boys',
-      symbol: 'MBOY',
-      logo: '/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png',
-      banner: null,
-      price: 0.000089,
-      change24h: -3.2,
-      marketCap: 890000,
-      volume24h: 150000,
-      category: ['meme', 'astronaut'],
-      holders: 2100,
-      devWallet: '0x2345...6789',
-      holderStats: {
-        whales: 21,
-        retail: 2058,
-        devs: 21
-      },
-      launchDate: '2025-05-05T12:00:00Z'
-    },
-    {
-      id: '3',
-      name: 'Degen Warriors',
-      symbol: 'DWAR',
-      logo: '/lovable-uploads/a8831646-bbf0-4510-9f62-5999db7cca5d.png',
-      banner: null,
-      price: 0.000254,
-      change24h: 8.7,
-      marketCap: 2540000,
-      volume24h: 420000,
-      category: ['meme', 'gaming'],
-      holders: 4200,
-      devWallet: '0x3456...7890',
-      holderStats: {
-        whales: 42,
-        retail: 4116,
-        devs: 42
-      },
-      launchDate: '2025-04-28T12:00:00Z'
-    }
-  ];
+export const tokenLaunchService = {
+  getTokenById,
+  createToken,
+  getTokenPrice,
+  launchToken,
+  getTokenListing
 };
 
-export const tokenLaunchService = {
-  launchToken,
-  buyInitialSupply,
-  getListedTokens
-};
+export default tokenLaunchService;

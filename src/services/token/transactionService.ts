@@ -69,13 +69,13 @@ const getUserTransactions = async (
       tokenSymbol: record.token_symbol,
       side: record.side as 'buy' | 'sell',
       amount: record.amount,
-      price: record.price || 0.0001, // Get price from record if available, otherwise use default
+      price: 0.0001, // Default price since it's not in the database
       timestamp: record.created_at,
       walletAddress: record.wallet_address,
-      status: record.status || 'confirmed',
-      txHash: record.tx_hash,
-      amountTokens: record.amount_tokens || record.amount, // Use amount_tokens if available
-      amountSol: record.amount_sol || Number(record.amount) * 0.0001 // Use amount_sol if available
+      status: 'confirmed', // Default status since it's not in the database
+      txHash: record.tx_hash || '',
+      amountTokens: record.amount, // Use amount as default for amountTokens
+      amountSol: Number(record.amount) * 0.0001 // Calculate default amountSol
     }));
     
     return transactions;
