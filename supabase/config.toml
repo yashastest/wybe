@@ -1,11 +1,1 @@
-
 project_id = "hiisslyuwioisprllxvq"
-
-[functions.process-fee-distribution]
-verify_jwt = false
-
-[functions.token-transactions]
-verify_jwt = false
-
-[functions.auth-admin]
-verify_jwt = true
