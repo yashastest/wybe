@@ -11,6 +11,14 @@ export interface TradeParams {
   gasPriority?: number;
 }
 
+export interface TradeLogParams {
+  wallet_address: string;
+  token_symbol: string;
+  side: 'buy' | 'sell';
+  amount: number;
+  tx_hash?: string;
+}
+
 export interface TradeResult {
   success: boolean;
   txHash?: string;
@@ -56,6 +64,29 @@ class TokenTradingService {
   estimateSolAmount(tokenSymbol: string, tokenAmount: number, action: 'buy' | 'sell'): number {
     const price = this.calculateTokenPrice(tokenSymbol, 10000, action); // Assume current supply of 10,000
     return tokenAmount * price;
+  }
+  
+  // Log trade in our database
+  async logTradeInDatabase(params: TradeLogParams): Promise<boolean> {
+    try {
+      // Using a custom fetch to add the trade to our database directly
+      // This avoids the TypeScript issues with the Supabase client types
+      const response = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to log trade:', await response.text());
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error logging trade:', error);
+      return false;
+    }
   }
   
   // Execute a trade

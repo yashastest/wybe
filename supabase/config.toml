@@ -3,3 +3,7 @@ project_id = "hiisslyuwioisprllxvq"
 
 [functions.token-transactions]
 verify_jwt = false
+
+[functions.log-trade]
+verify_jwt = false
+

@@ -4,7 +4,6 @@ import { useWallet } from './useWallet.tsx';
 import { useWalletBalance } from './useWalletBalance';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface TradeParams {
   tokenSymbol: string;
@@ -54,8 +53,8 @@ export const useTokenTrading = (tokenSymbol: string) => {
       });
 
       if (result.success) {
-        // Log transaction to Supabase
-        await supabase.from('trades').insert({
+        // Log transaction to our service
+        await tokenTradingService.logTradeInDatabase({
           wallet_address: address,
           token_symbol: tokenSymbol,
           side: 'buy',
@@ -127,8 +126,8 @@ export const useTokenTrading = (tokenSymbol: string) => {
       });
 
       if (result.success) {
-        // Log transaction to Supabase
-        await supabase.from('trades').insert({
+        // Log transaction to our service
+        await tokenTradingService.logTradeInDatabase({
           wallet_address: address,
           token_symbol: tokenSymbol,
           side: 'sell',

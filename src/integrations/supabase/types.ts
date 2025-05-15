@@ -140,6 +140,36 @@ export type Database = {
         }
         Relationships: []
       }
+      trades: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          side: string
+          token_symbol: string
+          tx_hash: string | null
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          side: string
+          token_symbol: string
+          tx_hash?: string | null
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          side?: string
+          token_symbol?: string
+          tx_hash?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
