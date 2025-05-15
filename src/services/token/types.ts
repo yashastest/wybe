@@ -52,7 +52,6 @@ export interface ListedToken {
   change24h: number;
   volume24h: number;
   totalSupply: number;
-  // Add the missing properties that are being used in the code
   category?: string[];
   devWallet?: string;
   holderStats?: {
@@ -67,9 +66,8 @@ export interface TokenLaunchParams {
   name: string;
   symbol: string;
   initialSupply: number;
-  creatorWallet: string;
+  creatorWallet?: string; // Make optional to allow either creatorWallet or creator.wallet
   logo?: File;
-  // Add missing properties that are being used in the code
   totalSupply?: number;
   creator?: {
     wallet: string;
@@ -79,16 +77,15 @@ export interface TokenLaunchParams {
 
 export interface TokenLaunchResponse {
   success: boolean;
-  message: string;
+  message: string; // Required field for all responses
   tokenId?: string;
   symbol?: string;
   name?: string;
   contractAddress?: string;
-  // Add the missing property that is being used in the code
   error?: string;
 }
 
-// Add missing interface for InitialSupplyPurchaseResponse
+// Interface for InitialSupplyPurchaseResponse
 export interface InitialSupplyPurchaseResponse {
   success: boolean;
   amountSol?: number;

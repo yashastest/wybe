@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ListedToken, TokenLaunchParams, TokenLaunchResponse, InitialSupplyPurchaseResponse } from './types';
@@ -157,17 +156,24 @@ const getTokenPrice = (token: TokenDetails): number => {
 // Launch token
 const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchResponse> => {
   try {
-    // Create token first
-    const tokenId = await createToken({
+    // Create token options from params
+    const tokenOptions: TokenLaunchOptions = {
       name: params.name,
       symbol: params.symbol,
       initialSupply: params.initialSupply,
-      creator: params.creator
-    });
+      creator: {
+        wallet: params.creatorWallet || (params.creator ? params.creator.wallet : ''),
+        email: params.creator?.email
+      }
+    };
+
+    // Create token first
+    const tokenId = await createToken(tokenOptions);
 
     if (!tokenId) {
       return { 
         success: false,
+        message: 'Failed to create token',
         error: 'Failed to create token'
       };
     }
@@ -188,6 +194,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     
     return { 
       success: true,
+      message: 'Token launched successfully',
       tokenId
     };
   } catch (error) {
@@ -195,6 +202,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     toast.error('Failed to launch token');
     return {
       success: false,
+      message: 'Failed to launch token',
       error: error instanceof Error ? error.message : 'Failed to launch token'
     };
   }
@@ -324,7 +332,8 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
         devs: Math.floor(Math.random() * 5) + 1
       };
 
-      const tokenDetails = {
+      // Convert to a ListedToken with all required properties
+      const tokenDetails: ListedToken = {
         id: token.id,
         name: token.name,
         symbol: token.symbol,
@@ -333,8 +342,12 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
         marketCap: token.market_cap || 0,
         volume24h: Math.random() * 1000, // Mock data
         logo: null,
+        creatorWallet: token.creator_wallet,
+        totalSupply: token.initial_supply || 1000000, // Default value if not provided
         holders: Math.floor(Math.random() * 100) + 10, // Mock data
-        holderStats: mockHolderStats
+        holderStats: mockHolderStats,
+        category: ['memecoin', 'trending'], // Default categories
+        devWallet: token.creator_wallet // Use creator_wallet as devWallet as a fallback
       };
       
       // Calculate price if we have a bonding curve

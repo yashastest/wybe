@@ -55,9 +55,7 @@ const LaunchTokenForm: React.FC = () => {
         symbol: normalizedSymbol,
         initialSupply: parseFloat(totalSupply),
         totalSupply: parseFloat(totalSupply),
-        creator: { 
-          wallet: address 
-        }
+        creatorWallet: address // Use creatorWallet directly
       });
       
       if (result.success && result.tokenId) {
