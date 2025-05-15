@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -13,6 +14,12 @@ import { useWallet } from "@/hooks/useWallet.tsx";
 
 interface HeaderProps {
   adminOnly?: boolean;
+}
+
+interface NavLink {
+  to: string;
+  label: string;
+  icon?: React.ReactNode;
 }
 
 const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
@@ -48,8 +55,8 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     }
   };
 
-  // Regular navigation links - Added Trade Demo in the main navigation
-  const navLinks = [
+  // Regular navigation links
+  const navLinks: NavLink[] = [
     { to: "/", label: "Home" },
     { to: "/discover", label: "Discover" },
     { to: "/trade-demo", label: "Trade Demo", icon: <TrendingUp className="h-4 w-4 mr-1" /> },
@@ -59,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   ];
   
   // Admin navigation links
-  const adminNavLinks = [
+  const adminNavLinks: NavLink[] = [
     { to: "/admin", label: "Dashboard" },
     { to: "/admin-login", label: "Logout" },
   ];
@@ -96,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
             </motion.div>
           </Link>
           
-          {/* Desktop Navigation - Now with Trade Demo link highlighted */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {linksToDisplay.map((link, index) => (
               <motion.div

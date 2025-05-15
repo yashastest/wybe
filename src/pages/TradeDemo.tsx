@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Mock tokens data
+// Mock tokens data with more complete information
 const mockTokens = [
   { 
     id: "wybe-1", 
@@ -20,7 +20,13 @@ const mockTokens = [
     name: "Wybe Token", 
     price: 0.0015, 
     priceChange24h: 12.5,
-    description: "The native token of the Wybe platform"
+    description: "The native token of the Wybe platform",
+    contractAddress: "wybeHg9sbUYEFSj6SXZ5yzERF8WjT6zyXJDj1YCnx",
+    marketCap: 1500000,
+    volume24h: 125000,
+    totalSupply: 1000000000,
+    isAssisted: false,
+    creatorAddress: "8zjX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1BhR"
   },
   { 
     id: "pepe-2", 
@@ -28,7 +34,13 @@ const mockTokens = [
     name: "Pepe Token", 
     price: 0.000032, 
     priceChange24h: 5.7,
-    description: "A popular meme token in the crypto space"
+    description: "A popular meme token in the crypto space",
+    contractAddress: "pepeHg9sbHJYEFSj6SXZ5yzERF8WjT6zyXJDj1YC5x",
+    marketCap: 2500000,
+    volume24h: 350000,
+    totalSupply: 100000000000,
+    isAssisted: false,
+    creatorAddress: "9ajX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1CyZ"
   },
   { 
     id: "doge-3", 
@@ -36,7 +48,13 @@ const mockTokens = [
     name: "Dogecoin", 
     price: 0.23, 
     priceChange24h: -3.2,
-    description: "The original meme token that started it all"
+    description: "The original meme token that started it all",
+    contractAddress: null, // Assisted launch, no contract yet
+    marketCap: 30000000,
+    volume24h: 1250000,
+    totalSupply: 132500000000,
+    isAssisted: true,
+    creatorAddress: "7wpX6U4CnCo8W2Nqf5TzjNADVhKBTwXCVVMEmM3e1AiJ"
   }
 ];
 
@@ -104,6 +122,26 @@ const TradeDemo = () => {
                           </div>
                         </div>
                         <p className="text-gray-400 mb-4">{token.description}</p>
+                        
+                        {/* Add Launch Status Banner */}
+                        {token.isAssisted && (
+                          <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 p-3 rounded-md mb-4">
+                            <p className="text-sm flex items-center">
+                              <span className="bg-purple-500 h-2 w-2 rounded-full mr-2"></span>
+                              This token is being launched through Wybe's Assisted Launch program. Contract address will be available soon.
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Contract Address (if available) */}
+                        {token.contractAddress && (
+                          <div className="text-sm mt-2">
+                            <p className="text-gray-400 mb-1">Contract Address:</p>
+                            <div className="bg-black/30 p-2 rounded font-mono text-xs break-all">
+                              {token.contractAddress}
+                            </div>
+                          </div>
+                        )}
                       </TabsContent>
                     ))}
                   </Tabs>
@@ -114,6 +152,8 @@ const TradeDemo = () => {
                 tokenSymbol={selectedToken.symbol} 
                 tokenName={selectedToken.name} 
                 tokenId={selectedToken.id}
+                contractAddress={selectedToken.contractAddress || undefined}
+                isAssisted={selectedToken.isAssisted}
               />
             </div>
           )}
