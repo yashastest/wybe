@@ -118,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                     location.pathname === link.to 
                       ? 'active-nav-link' 
                       : 'text-white hover:text-wybe-primary/90'
-                  } ${link.to === '/trade-demo' ? 'bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1 rounded-md' : ''}`}
+                  } ${link.to === '/trade-demo' ? 'bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1 rounded-md text-black' : ''}`}
                 >
                   {link.icon && link.icon}
                   {link.label}
@@ -174,7 +174,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                       to={link.to}
                       className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
                         location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
-                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30' : ''}`}
+                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30 text-black' : ''}`}
                     >
                       {link.icon && link.icon}
                       {link.label}
