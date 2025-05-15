@@ -39,6 +39,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   const [receiveAmount, setReceiveAmount] = useState('0.00');
   const [gasPriority, setGasPriority] = useState(3); // Default to high gas priority
   const [solAmount, setSolAmount] = useState('');
+  const [tokenAmount, setTokenAmount] = useState(''); // Added missing state variable
   const [estimatedTokens, setEstimatedTokens] = useState('0.0000');
   const [estimatedSol, setEstimatedSol] = useState('0.0000');
   const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);

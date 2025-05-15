@@ -46,3 +46,39 @@ export const estimateSolFromTokens = async (
     async () => await tokenTradingService.estimateSolAmount(tokenSymbol, tokenAmount)
   );
 };
+
+/**
+ * Format currency value with specified decimal places
+ */
+export const formatCurrency = (
+  value: number | string,
+  decimalPlaces: number = 2,
+  prefix: string = ''
+): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue)) return `${prefix}0.${'0'.repeat(decimalPlaces)}`;
+  return `${prefix}${numValue.toFixed(decimalPlaces)}`;
+};
+
+/**
+ * Calculate percentage change between two values
+ */
+export const calculatePercentageChange = (
+  currentValue: number,
+  previousValue: number
+): number => {
+  if (previousValue === 0) return 0;
+  return ((currentValue - previousValue) / Math.abs(previousValue)) * 100;
+};
+
+/**
+ * Format percentage value for display
+ */
+export const formatPercentage = (
+  value: number,
+  decimalPlaces: number = 2,
+  includeSymbol: boolean = true
+): string => {
+  const formattedValue = value.toFixed(decimalPlaces);
+  return includeSymbol ? `${value >= 0 ? '+' : ''}${formattedValue}%` : formattedValue;
+};

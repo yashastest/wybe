@@ -34,6 +34,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastTradeResult, setLastTradeResult] = useState<TradeResult | null>(null);
   const [solAmount, setSolAmount] = useState('');
+  const [tokenAmount, setTokenAmount] = useState(''); // Added missing state variable
   const [estimatedTokens, setEstimatedTokens] = useState('0.0000');
   const [estimatedSol, setEstimatedSol] = useState('0.0000');
   const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
