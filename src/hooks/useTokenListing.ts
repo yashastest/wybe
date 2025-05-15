@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
-import { ListedToken, TokenLaunchParams, TokenLaunchResponse } from '@/services/token/types';
+import { ListedToken, TokenLaunchParams } from '@/services/token/types';
 
 export interface LaunchedToken extends ListedToken {
   banner?: string;
@@ -84,7 +84,7 @@ export const useTokenListing = () => {
       // Convert ListedToken[] to LaunchedToken[]
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
-        banner: undefined
+        banner: undefined // Add banner property to match LaunchedToken interface
       }));
       
       setLaunchedTokens(launchedTokensData);

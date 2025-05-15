@@ -26,6 +26,7 @@ export const tokenTradingService = {
   
   // Transaction functionality
   getUserTransactions: transactionService.getUserTransactions,
+  getTransactionStats: transactionService.getTransactionStats,
   
   // Token launch functionality
   launchToken: tokenLaunchService.launchToken,
