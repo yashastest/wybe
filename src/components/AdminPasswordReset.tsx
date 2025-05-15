@@ -12,9 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminPasswordReset: React.FC = () => {
-  const [email, setEmail] = useState('wybefun@gmail.com');
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   
@@ -29,8 +30,21 @@ const AdminPasswordReset: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // This would typically be an API call to your backend
-      // For demo purposes, we'll just simulate a successful request
+      // Check if the email exists in the admins table
+      const { data, error } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', email)
+        .single();
+      
+      if (error || !data) {
+        toast.error('Email not found in our records');
+        setIsLoading(false);
+        return;
+      }
+      
+      // In a real application, this would trigger a password reset email
+      // For now, we'll just simulate a successful request
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       toast.success('Password reset link sent to your email');

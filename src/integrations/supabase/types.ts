@@ -9,13 +9,188 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          password_hash: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          password_hash: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          password_hash?: string
+        }
+        Relationships: []
+      }
+      creators: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string | null
+          telegram: string | null
+          wallet: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          telegram?: string | null
+          wallet: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          telegram?: string | null
+          wallet?: string
+        }
+        Relationships: []
+      }
+      fee_distributions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          creator_wallet: string
+          distributed: boolean | null
+          distribution_timestamp: string | null
+          eligible_timestamp: string | null
+          id: string
+          token_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          creator_wallet: string
+          distributed?: boolean | null
+          distribution_timestamp?: string | null
+          eligible_timestamp?: string | null
+          id?: string
+          token_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          creator_wallet?: string
+          distributed?: boolean | null
+          distribution_timestamp?: string | null
+          eligible_timestamp?: string | null
+          id?: string
+          token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_distributions_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tokens: {
+        Row: {
+          bonding_curve: Json | null
+          created_at: string | null
+          creator_wallet: string
+          id: string
+          launch_date: string | null
+          launched: boolean | null
+          market_cap: number | null
+          name: string
+          symbol: string
+          token_address: string | null
+        }
+        Insert: {
+          bonding_curve?: Json | null
+          created_at?: string | null
+          creator_wallet: string
+          id?: string
+          launch_date?: string | null
+          launched?: boolean | null
+          market_cap?: number | null
+          name: string
+          symbol: string
+          token_address?: string | null
+        }
+        Update: {
+          bonding_curve?: Json | null
+          created_at?: string | null
+          creator_wallet?: string
+          id?: string
+          launch_date?: string | null
+          launched?: boolean | null
+          market_cap?: number | null
+          name?: string
+          symbol?: string
+          token_address?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          fee: number
+          id: string
+          price: number
+          token_id: string | null
+          type: string
+          wallet: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          fee: number
+          id?: string
+          price: number
+          token_id?: string | null
+          type: string
+          wallet: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          fee?: number
+          id?: string
+          price?: number
+          token_id?: string | null
+          type?: string
+          wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      authenticate_admin: {
+        Args: { input_email: string; input_password: string }
+        Returns: {
+          id: string
+          email: string
+        }[]
+      }
+      calculate_token_price: {
+        Args: { total_supply: number; amount: number; curve_type?: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
