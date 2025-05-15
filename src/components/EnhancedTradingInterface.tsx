@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -138,6 +139,9 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   
   // Quick settings
   const [quickBuyAmount, setQuickBuyAmount] = useState(0.1); // Default quick buy amount in SOL
+  
+  // Chart type settings
+  const [chartType, setChartType] = useState<'price' | 'marketCap'>('price');
   
   // Trending data
   const [boomingCoins, setBoomingCoins] = useState<any[]>([]);
