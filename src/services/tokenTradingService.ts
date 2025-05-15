@@ -201,7 +201,8 @@ const getUserTransactions = async (
           return typeof txTokenSymbol === 'string' && txTokenSymbol.toLowerCase() === tokenSymbolFilter;
         });
       } else {
-        if (filters.tokenSymbol && typeof filters.tokenSymbol === 'string') {
+        // Explicitly check if tokenSymbol exists and is a string before using toLowerCase
+        if (filters.tokenSymbol !== undefined && filters.tokenSymbol !== null && typeof filters.tokenSymbol === 'string') {
           const tokenSymbolFilter = filters.tokenSymbol.toLowerCase();
           filteredData = filteredData.filter(tx => {
             const txTokenSymbol = tx.token_symbol;
