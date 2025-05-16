@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,30 +29,48 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
 
   // Helper function to generate random activity
   const generateRandomActivity = (): ActivityItem => {
-    const types: ('buy' | 'sell')[] = ['buy', 'sell'];
-    const type = types[Math.floor(Math.random() * types.length)];
-    const now = new Date();
-    
-    return {
-      id: Math.random().toString(36).substring(2, 9),
-      type,
-      amount: Math.floor(Math.random() * 5000) + 100,
-      timestamp: new Date(now.getTime() - Math.floor(Math.random() * 900000)), // Random time within last 15 minutes
-      price: parseFloat((Math.random() * 0.002 + 0.001).toFixed(6)),
-      walletAddress: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`
-    };
+    try {
+      const types: ('buy' | 'sell')[] = ['buy', 'sell'];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const now = new Date();
+      
+      return {
+        id: Math.random().toString(36).substring(2, 9),
+        type,
+        amount: Math.floor(Math.random() * 5000) + 100,
+        timestamp: new Date(now.getTime() - Math.floor(Math.random() * 900000)), // Random time within last 15 minutes
+        price: parseFloat((Math.random() * 0.002 + 0.001).toFixed(6)),
+        walletAddress: `${Math.random().toString(36).substring(2, 6)}...${Math.random().toString(36).substring(2, 6)}`
+      };
+    } catch (error) {
+      console.error("Error generating random activity:", error);
+      
+      // Return a fallback activity if something goes wrong
+      return {
+        id: Date.now().toString(),
+        type: 'buy',
+        amount: 1000,
+        timestamp: new Date(),
+        price: 0.001,
+        walletAddress: "error...addr"
+      };
+    }
   };
 
   // Initialize with some activities
   useEffect(() => {
-    const initialActivities: ActivityItem[] = [];
-    for (let i = 0; i < 7; i++) {
-      initialActivities.push(generateRandomActivity());
+    try {
+      const initialActivities: ActivityItem[] = [];
+      for (let i = 0; i < 7; i++) {
+        initialActivities.push(generateRandomActivity());
+      }
+      
+      // Sort by most recent
+      initialActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setActivities(initialActivities);
+    } catch (error) {
+      console.error("Error initializing activities:", error);
     }
-    
-    // Sort by most recent
-    initialActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    setActivities(initialActivities);
   }, [symbol, tokenSymbol]);
 
   // Update activities periodically
@@ -78,6 +97,7 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
 
   // Format time as "X minutes ago" with safety check
   const formatTime = (timestamp: Date) => {
+    if (!timestamp) return "recently";
     try {
       return formatDistanceToNow(timestamp, { addSuffix: true });
     } catch (error) {
@@ -123,20 +143,28 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
                     <span className={activity.type === 'buy' ? "text-green-500" : "text-red-500"}>
                       {activity.type === 'buy' ? "Buy" : "Sell"}
                     </span>
-                    <span className="text-gray-400 mx-2">•</span>
-                    <span className="text-gray-400 text-xs">
+                    <span className="text-gray-400 mx-2 hidden sm:inline">•</span>
+                    <span className="text-gray-400 text-xs hidden sm:inline">
                       {activity.timestamp ? formatTime(activity.timestamp) : 'recently'}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500">{activity.walletAddress || 'Unknown'}</div>
+                  <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-full">
+                    {activity.walletAddress || 'Unknown'}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-medium">{formatAmount(activity.amount)} <span className="text-sm">{tokenSymbol || symbol || "WYBE"}</span></div>
+                <div className="font-medium text-sm sm:text-base">{formatAmount(activity.amount)} <span className="text-xs sm:text-sm">{tokenSymbol || symbol || "WYBE"}</span></div>
                 <div className="text-xs text-gray-400">@ {activity.price?.toFixed(6) || '0.000000'} SOL</div>
               </div>
             </div>
           ))}
+
+          {activities.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No recent trading activity
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

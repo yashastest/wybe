@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { tokenTradingService } from '@/services/tokenTradingService';
-import { toast } from 'sonner';
-import { ListedToken, TokenLaunchParams } from '@/services/token/types';
 
-export interface LaunchedToken extends ListedToken {
+import { useState } from 'react';
+import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
+import { toast } from 'sonner';
+import { TokenLaunchParams } from '@/services/token/types';
+
+export interface LaunchedToken extends Omit<ListedToken, 'id'> {
+  id: string;
   banner?: string;
 }
 
@@ -91,10 +93,11 @@ export const useTokenListing = () => {
     try {
       const tokens = await tokenTradingService.getListedTokens();
       
-      // Convert ListedToken[] to LaunchedToken[]
+      // Make sure all tokens have required id property and convert to LaunchedToken
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
-        banner: undefined // Add banner property to match LaunchedToken interface
+        id: token.id || `token-${Math.random().toString(36).substring(2, 9)}`,
+        banner: token.banner || undefined
       }));
       
       setLaunchedTokens(launchedTokensData);
