@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -16,8 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import TradingViewChart from '@/components/TradingViewChart';
 import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const TradeDemo = () => {
+  // Add scroll to top hook
+  useScrollToTop();
+
   const [tokens, setTokens] = useState<ListedToken[]>([]);
   const [selectedToken, setSelectedToken] = useState<ListedToken | null>(null);
   const [isLoading, setIsLoading] = useState(true);

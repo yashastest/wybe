@@ -10,13 +10,16 @@ export function useScrollToTop(options = { smooth: false }) {
   const { pathname } = useLocation();
   
   useEffect(() => {
-    if (options.smooth) {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    } else {
-      window.scrollTo(0, 0);
+    // Ensure window exists (for SSR compatibility)
+    if (typeof window !== 'undefined') {
+      if (options.smooth) {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      } else {
+        window.scrollTo(0, 0);
+      }
     }
   }, [pathname, options.smooth]);
 }

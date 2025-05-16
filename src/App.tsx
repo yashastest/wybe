@@ -11,10 +11,12 @@ import Dashboard from "./pages/Dashboard";
 // Corrected imports for pages that were causing errors
 import LaunchPackage from "./pages/LaunchPackage"; // Changed from Package to LaunchPackage
 import Index from "./pages/Index"; // Changed from Home to Index
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/dashboard" element={<Dashboard />} />
