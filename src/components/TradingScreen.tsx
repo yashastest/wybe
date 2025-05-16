@@ -16,6 +16,7 @@ import TradeEntryPanel from './TradeEntryPanel';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { formatCurrency } from '@/utils/tradeUtils';
+import TradingViewChart from './TradingViewChart';
 
 interface TradingScreenProps {
   selectedToken: ListedToken | null;
@@ -129,49 +130,13 @@ const TradingScreen: React.FC<TradingScreenProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
       {/* Trading Chart Panel */}
       <div className="lg:col-span-2 space-y-1">
-        <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-xs uppercase font-medium text-gray-400">Price Chart</div>
-            <div className="flex items-center gap-1">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className={`h-7 py-0 px-2 ${chartType === 'price' ? 'bg-purple-600/30 border-purple-500' : 'bg-[#1A1F2C]/40'}`}
-                onClick={() => setChartType('price')}
-              >
-                <ChartCandlestick className="h-3 w-3 mr-1" />
-                Price
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className={`h-7 py-0 px-2 ${chartType === 'marketCap' ? 'bg-purple-600/30 border-purple-500' : 'bg-[#1A1F2C]/40'}`}
-                onClick={() => setChartType('marketCap')}
-              >
-                <ChartLine className="h-3 w-3 mr-1" />
-                Market Cap
-              </Button>
-              <div className="ml-2 border-l border-gray-700 pl-2 flex items-center gap-1">
-                {['24h', '7d', '30d'].map((tf) => (
-                  <Button 
-                    key={tf}
-                    size="sm" 
-                    variant="outline" 
-                    className={`h-7 py-0 px-2 ${timeframe === tf ? 'bg-purple-600/30 border-purple-500' : 'bg-[#1A1F2C]/40'}`}
-                    onClick={() => setTimeframe(tf as any)}
-                  >
-                    {tf}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <TokenPriceChart 
-            symbol={selectedToken.symbol} 
-            timeframe={timeframe} 
-            height={350} 
-          />
-        </div>
+        {/* TradingView Chart */}
+        <TradingViewChart
+          symbol={selectedToken.symbol}
+          timeframe="1D"
+          chartType={chartType}
+          onChartTypeChange={setChartType}
+        />
 
         {/* DEXScreener Listing Progress */}
         <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
