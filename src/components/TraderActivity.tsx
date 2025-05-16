@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
@@ -72,14 +73,25 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
     return () => clearInterval(interval);
   }, [updateInterval, symbol, tokenSymbol]);
 
-  // Format time as "X minutes ago"
+  // Format time as "X minutes ago" with safety check
   const formatTime = (timestamp: Date) => {
-    return formatDistanceToNow(timestamp, { addSuffix: true });
+    try {
+      return formatDistanceToNow(timestamp, { addSuffix: true });
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return "recently";
+    }
   };
 
-  // Format amount with proper separators
+  // Format amount with proper separators and safety check
   const formatAmount = (amount: number) => {
-    return amount.toLocaleString();
+    if (amount === undefined || amount === null) return "0";
+    try {
+      return amount.toLocaleString();
+    } catch (error) {
+      console.error("Error formatting amount:", error);
+      return amount.toString();
+    }
   };
 
   return (
@@ -88,7 +100,7 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
         <div className="flex justify-between items-center">
           <h3 className="text-base font-medium">Recent Trading Activity</h3>
           <span className="text-xs text-gray-400">
-            Updated {formatDistanceToNow(lastUpdate, { addSuffix: true, includeSeconds: true })}
+            Updated {lastUpdate ? formatTime(lastUpdate) : 'just now'}
           </span>
         </div>
         
@@ -110,15 +122,15 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
                     </span>
                     <span className="text-gray-400 mx-2">•</span>
                     <span className="text-gray-400 text-xs">
-                      {formatTime(activity.timestamp)}
+                      {activity.timestamp ? formatTime(activity.timestamp) : 'recently'}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500">{activity.walletAddress}</div>
+                  <div className="text-xs text-gray-500">{activity.walletAddress || 'Unknown'}</div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="font-medium">{formatAmount(activity.amount)} <span className="text-sm">{tokenSymbol || symbol || "WYBE"}</span></div>
-                <div className="text-xs text-gray-400">@ {activity.price} SOL</div>
+                <div className="text-xs text-gray-400">@ {activity.price?.toFixed(6) || '0.000000'} SOL</div>
               </div>
             </div>
           ))}

@@ -51,7 +51,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     if (connected) {
       disconnect();
     } else {
-      await connect();
+      try {
+        await connect();
+      } catch (error) {
+        console.error("Wallet connection error:", error);
+      }
     }
   };
 
@@ -74,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   // Choose which links to display
   const linksToDisplay = adminOnly ? adminNavLinks : navLinks;
 
-  // Truncate address for display
+  // Truncate address for display - with safety check
   const truncatedAddress = address ? 
     `${address.substring(0, 4)}...${address.substring(address.length - 4)}` : 
     '';

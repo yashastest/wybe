@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -19,24 +20,40 @@ interface CoinData {
 }
 
 const formatPrice = (price: number): string => {
-  if (price < 0.00001) {
-    return price.toFixed(8);
-  } else if (price < 0.01) {
-    return price.toFixed(6);
-  } else if (price < 1) {
-    return price.toFixed(4);
-  } else {
-    return price.toFixed(2);
+  if (price === undefined || price === null) return "0.00";
+  if (isNaN(price)) return "0.00";
+  
+  try {
+    if (price < 0.00001) {
+      return price.toFixed(8);
+    } else if (price < 0.01) {
+      return price.toFixed(6);
+    } else if (price < 1) {
+      return price.toFixed(4);
+    } else {
+      return price.toFixed(2);
+    }
+  } catch (error) {
+    console.error("Error formatting price:", error);
+    return "0.00";
   }
 };
 
 const formatMarketCap = (marketCap: number): string => {
-  if (marketCap >= 1000000000) {
-    return `$${(marketCap / 1000000000).toFixed(2)}B`;
-  } else if (marketCap >= 1000000) {
-    return `$${(marketCap / 1000000).toFixed(2)}M`;
-  } else {
-    return `$${(marketCap / 1000).toFixed(2)}K`;
+  if (marketCap === undefined || marketCap === null) return "$0";
+  if (isNaN(marketCap)) return "$0";
+  
+  try {
+    if (marketCap >= 1000000000) {
+      return `$${(marketCap / 1000000000).toFixed(2)}B`;
+    } else if (marketCap >= 1000000) {
+      return `$${(marketCap / 1000000).toFixed(2)}M`;
+    } else {
+      return `$${(marketCap / 1000).toFixed(2)}K`;
+    }
+  } catch (error) {
+    console.error("Error formatting marketCap:", error);
+    return "$0";
   }
 };
 
@@ -50,17 +67,17 @@ const MemeCoins: React.FC = () => {
       try {
         const tokens = await tokenTradingService.getListedTokens();
         
-        // Map tokens to CoinData format
+        // Map tokens to CoinData format with safety checks
         const coinData: CoinData[] = tokens.map(token => ({
-          id: token.id,
-          name: token.name,
-          symbol: token.symbol,
+          id: token.id || `token-${Math.random().toString(36).substring(2, 9)}`,
+          name: token.name || 'Unknown Token',
+          symbol: token.symbol || 'UNKNOWN',
           logo: token.logo,
-          price: token.price,
+          price: token.price || 0,
           change24h: token.change24h || token.priceChange24h || 0,
           marketCap: token.marketCap || 0,
           volume24h: token.volume24h || 0,
-          category: token.category || ['meme'],
+          category: Array.isArray(token.category) ? token.category : ['meme'],
         }));
         
         // Sort by market cap and take top 6
@@ -77,9 +94,17 @@ const MemeCoins: React.FC = () => {
     fetchTokens();
   }, []);
 
-  // Function to navigate to trade page
-  const handleTradeClick = (symbol: string) => {
-    console.log(`Navigating to trade page for ${symbol}`);
+  // Function to safely format percentage changes
+  const formatPercentage = (value: number) => {
+    if (value === undefined || value === null) return "0.00%";
+    if (isNaN(value)) return "0.00%";
+    
+    try {
+      return Math.abs(value).toFixed(2) + "%";
+    } catch (error) {
+      console.error("Error formatting percentage:", error);
+      return "0.00%";
+    }
   };
 
   return (
@@ -122,7 +147,8 @@ const MemeCoins: React.FC = () => {
                         alt={coin.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
                         }}
                       />
                     </AspectRatio>
@@ -143,17 +169,17 @@ const MemeCoins: React.FC = () => {
                       </span>
                       <div
                         className={`flex items-center gap-1 text-sm ${
-                          coin.change24h >= 0
+                          (coin.change24h || 0) >= 0
                             ? "text-green-500"
                             : "text-red-500"
                         }`}
                       >
-                        {coin.change24h >= 0 ? (
+                        {(coin.change24h || 0) >= 0 ? (
                           <ArrowUp className="w-3 h-3" />
                         ) : (
                           <ArrowDown className="w-3 h-3" />
                         )}
-                        <span>{Math.abs(coin.change24h).toFixed(2)}%</span>
+                        <span>{formatPercentage(coin.change24h)}</span>
                       </div>
                     </div>
                   </div>
@@ -173,7 +199,7 @@ const MemeCoins: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {coin.category.map((cat) => (
+                    {Array.isArray(coin.category) && coin.category.map((cat) => (
                       <span
                         key={cat}
                         className="px-2 py-1 bg-wybe-primary/10 rounded-full text-xs text-wybe-primary"

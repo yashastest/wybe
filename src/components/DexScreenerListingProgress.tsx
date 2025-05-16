@@ -35,6 +35,10 @@ const DexScreenerListingProgress: React.FC<DexScreenerListingProgressProps> = ({
       default: return 'Pending';
     }
   };
+
+  // Safety check for progress value
+  const safeProgress = typeof progress === 'number' && !isNaN(progress) ? 
+    Math.min(Math.max(0, progress), 100) : 0;
   
   return (
     <Card className="bg-black/30 border-gray-800">
@@ -62,11 +66,11 @@ const DexScreenerListingProgress: React.FC<DexScreenerListingProgressProps> = ({
               <span className={getStatusColor()}>•</span> {getStatusText()}
             </div>
             <div className="text-xs text-gray-400">
-              Est. time: {estimated_time}
+              Est. time: {estimated_time || '24-48 hours'}
             </div>
           </div>
           
-          <Progress value={progress} className="h-2" />
+          <Progress value={safeProgress} className="h-2" />
           
           <div className="flex items-center justify-between text-xs text-gray-400">
             <span>Submitted</span>
@@ -75,7 +79,7 @@ const DexScreenerListingProgress: React.FC<DexScreenerListingProgressProps> = ({
           </div>
           
           <div className="bg-black/30 p-2 rounded-md text-xs">
-            <div className="font-medium mb-1">Requirements for {tokenSymbol}:</div>
+            <div className="font-medium mb-1">Requirements for {tokenSymbol || 'Token'}:</div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-300">
               <div>• Min. 24h Volume: $10,000</div>
               <div className="text-yellow-500">In Progress (47%)</div>

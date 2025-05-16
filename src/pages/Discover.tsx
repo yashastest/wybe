@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, ArrowUp, ArrowDown, ChevronDown, Filter, Users, DollarSign, User, Code, Rocket, Flame } from "lucide-react";
@@ -17,32 +18,56 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const formatPrice = (price) => {
-  if (price < 0.00001) {
-    return price.toFixed(8);
-  } else if (price < 0.01) {
-    return price.toFixed(6);
-  } else if (price < 1) {
-    return price.toFixed(4);
-  } else {
-    return price.toFixed(2);
+  if (price === undefined || price === null) return "0.00";
+  if (isNaN(price)) return "0.00";
+  
+  try {
+    if (price < 0.00001) {
+      return price.toFixed(8);
+    } else if (price < 0.01) {
+      return price.toFixed(6);
+    } else if (price < 1) {
+      return price.toFixed(4);
+    } else {
+      return price.toFixed(2);
+    }
+  } catch (error) {
+    console.error("Error formatting price:", error);
+    return "0.00";
   }
 };
 
 const formatMarketCap = (marketCap) => {
-  if (marketCap >= 1000000000) {
-    return `$${(marketCap / 1000000000).toFixed(2)}B`;
-  } else if (marketCap >= 1000000) {
-    return `$${(marketCap / 1000000).toFixed(2)}M`;
-  } else {
-    return `$${(marketCap / 1000).toFixed(2)}K`;
+  if (marketCap === undefined || marketCap === null) return "$0";
+  if (isNaN(marketCap)) return "$0";
+  
+  try {
+    if (marketCap >= 1000000000) {
+      return `$${(marketCap / 1000000000).toFixed(2)}B`;
+    } else if (marketCap >= 1000000) {
+      return `$${(marketCap / 1000000).toFixed(2)}M`;
+    } else {
+      return `$${(marketCap / 1000).toFixed(2)}K`;
+    }
+  } catch (error) {
+    console.error("Error formatting marketCap:", error);
+    return "$0";
   }
 };
 
 const formatNumber = (num) => {
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
+  if (num === undefined || num === null) return "0";
+  if (isNaN(num)) return "0";
+  
+  try {
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  } catch (error) {
+    console.error("Error formatting number:", error);
+    return "0";
   }
-  return num.toString();
 };
 
 const Discover = () => {
@@ -60,16 +85,18 @@ const Discover = () => {
         const listedTokens = await tokenTradingService.getListedTokens();
         setCoins(listedTokens);
         
-        // Extract all unique categories
+        // Extract all unique categories with safety checks
         const categories = ["All"];
         const uniqueCategories = new Set<string>();
         
         listedTokens.forEach(coin => {
-          coin.category.forEach(category => {
-            if (typeof category === 'string') {
-              uniqueCategories.add(category);
-            }
-          });
+          if (Array.isArray(coin.category)) {
+            coin.category.forEach(category => {
+              if (typeof category === 'string') {
+                uniqueCategories.add(category);
+              }
+            });
+          }
         });
         
         uniqueCategories.forEach(category => categories.push(category));
@@ -88,20 +115,52 @@ const Discover = () => {
     fetchTokens();
   }, []);
   
-  // Filter and sort coins
+  // Filter and sort coins with safety checks
   const filteredCoins = coins
     .filter(coin => {
-      const matchesSearch = coin.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          coin.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = filterCategory === "All" || coin.category.includes(filterCategory);
+      const name = (coin.name || '').toLowerCase();
+      const symbol = (coin.symbol || '').toLowerCase();
+      const searchTermLower = searchTerm.toLowerCase();
+      
+      const matchesSearch = name.includes(searchTermLower) || symbol.includes(searchTermLower);
+      
+      const categories = Array.isArray(coin.category) ? coin.category : [];
+      const matchesCategory = filterCategory === "All" || categories.includes(filterCategory);
+      
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      if (sortOption === "marketCap") return b.marketCap - a.marketCap;
-      if (sortOption === "volume") return b.volume24h - a.volume24h;
-      if (sortOption === "priceAsc") return a.price - b.price;
-      if (sortOption === "priceDesc") return b.price - a.price;
-      if (sortOption === "change") return b.change24h - a.change24h;
+      // Adding null checks for all sort options
+      if (sortOption === "marketCap") {
+        const aValue = a.marketCap || 0;
+        const bValue = b.marketCap || 0;
+        return bValue - aValue;
+      }
+      
+      if (sortOption === "volume") {
+        const aValue = a.volume24h || 0;
+        const bValue = b.volume24h || 0;
+        return bValue - aValue;
+      }
+      
+      if (sortOption === "priceAsc") {
+        const aValue = a.price || 0;
+        const bValue = b.price || 0;
+        return aValue - bValue;
+      }
+      
+      if (sortOption === "priceDesc") {
+        const aValue = a.price || 0;
+        const bValue = b.price || 0;
+        return bValue - aValue;
+      }
+      
+      if (sortOption === "change") {
+        const aValue = a.change24h || 0;
+        const bValue = b.change24h || 0;
+        return bValue - aValue;
+      }
+      
       return 0;
     });
   
@@ -233,7 +292,7 @@ const Discover = () => {
             ))
           ) : filteredCoins.length > 0 ? (
             filteredCoins.map((coin, index) => (
-              <CoinCard key={coin.id} coin={coin} index={index} />
+              <CoinCard key={coin.id || `coin-${index}`} coin={coin} index={index} />
             ))
           ) : (
             <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16">
@@ -269,11 +328,34 @@ const Discover = () => {
   );
 };
 
-// Coin card component with banner
+// Coin card component with banner and safety checks
 const CoinCard = ({ coin, index }) => {
   // Default placeholder images
   const defaultBanner = "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png";
   const defaultLogo = "/placeholder.svg";
+  
+  // Safety check for categories
+  const categories = Array.isArray(coin.category) ? coin.category : [];
+  
+  // Safety check for holderStats
+  const holderStats = coin.holderStats || { 
+    whales: 0,
+    devs: 0,
+    retail: 0
+  };
+
+  // Safety check for change24h
+  const change24h = coin.change24h || 0;
+
+  // Safety function for percentage formatting
+  const formatPercentage = (value) => {
+    try {
+      return Math.abs(value).toFixed(2);
+    } catch (error) {
+      console.error("Error formatting percentage:", error);
+      return "0.00";
+    }
+  };
   
   return (
     <motion.div
@@ -287,10 +369,11 @@ const CoinCard = ({ coin, index }) => {
         <AspectRatio ratio={16 / 9}>
           <img
             src={coin.banner || defaultBanner}
-            alt={`${coin.name} banner`}
+            alt={`${coin.name || 'Token'} banner`}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.src = defaultBanner;
+              const target = e.target as HTMLImageElement;
+              target.src = defaultBanner;
             }}
           />
         </AspectRatio>
@@ -301,25 +384,26 @@ const CoinCard = ({ coin, index }) => {
         <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm p-1 border-2 border-white/10">
           <img
             src={coin.logo || defaultLogo}
-            alt={coin.name}
+            alt={coin.name || 'Token'}
             className="w-full h-full object-cover rounded-full"
             onError={(e) => {
-              e.currentTarget.src = defaultLogo;
+              const target = e.target as HTMLImageElement;
+              target.src = defaultLogo;
             }}
           />
         </div>
         <div>
-          <h3 className="font-poppins font-bold text-white text-xl">{coin.name}</h3>
-          <p className="text-gray-300 text-sm font-mono">{coin.symbol}</p>
+          <h3 className="font-poppins font-bold text-white text-xl">{coin.name || 'Unnamed Token'}</h3>
+          <p className="text-gray-300 text-sm font-mono">{coin.symbol || 'TOKEN'}</p>
         </div>
         
         {/* Price change indicator */}
         <div className="ml-auto">
           <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-            coin.change24h >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+            change24h >= 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
           }`}>
-            {coin.change24h >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-            <span className="font-mono font-bold">{Math.abs(coin.change24h).toFixed(2)}%</span>
+            {change24h >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+            <span className="font-mono font-bold">{formatPercentage(change24h)}%</span>
           </div>
         </div>
       </div>
@@ -346,9 +430,9 @@ const CoinCard = ({ coin, index }) => {
         
         {/* Category tags */}
         <div className="flex flex-wrap gap-1 mb-4">
-          {coin.category.map((cat) => (
+          {categories.map((cat, idx) => (
             <span
-              key={cat}
+              key={`${coin.id}-cat-${idx}`}
               className="text-[10px] px-2 py-0.5 bg-wybe-primary/10 text-wybe-primary rounded-full font-mono"
             >
               {cat}
@@ -362,26 +446,26 @@ const CoinCard = ({ coin, index }) => {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-black/30 rounded-lg p-2">
               <p className="text-[10px] text-gray-400 font-mono">🐋 Whales</p>
-              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.whales)}</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(holderStats.whales)}</p>
             </div>
             <div className="bg-black/30 rounded-lg p-2">
               <p className="text-[10px] text-gray-400 font-mono">👨‍💻 Devs</p>
-              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.devs)}</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(holderStats.devs)}</p>
             </div>
             <div className="bg-black/30 rounded-lg p-2">
               <p className="text-[10px] text-gray-400 font-mono">👤 Retail</p>
-              <p className="font-medium font-mono text-sm">{formatNumber(coin.holderStats.retail)}</p>
+              <p className="font-medium font-mono text-sm">{formatNumber(holderStats.retail)}</p>
             </div>
           </div>
         </div>
         
         <div className="flex gap-2">
-          <Link to={`/trade/${coin.symbol.toLowerCase()}`} className="flex-1">
+          <Link to={`/trade/${(coin.symbol || '').toLowerCase()}`} className="flex-1">
             <Button className="w-full bg-wybe-primary hover:bg-wybe-primary/90 active:bg-wybe-primary/80 text-white font-poppins font-bold rounded-full">
               Trade 💱
             </Button>
           </Link>
-          <Link to={`/trade/${coin.symbol.toLowerCase()}?tab=info`}>
+          <Link to={`/trade/${(coin.symbol || '').toLowerCase()}?tab=info`}>
             <Button variant="outline" className="bg-transparent border-white/10 hover:bg-wybe-background-light/50 active:bg-wybe-background-light/70 font-poppins rounded-full">
               Details 📊
             </Button>
