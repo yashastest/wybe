@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -363,7 +364,7 @@ const TradeDemo: React.FC = () => {
                     </div>
                     <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
                       <div className="text-xs text-gray-400">Liquidity</div>
-                      <div className="font-medium text-sm">${(selectedToken.liquidity || 6400).toLocaleString()}</div>
+                      <div className="font-medium text-sm">${(selectedToken.liquidity ?? 6400).toLocaleString()}</div>
                     </div>
                     <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
                       <div className="text-xs text-gray-400">24h Change</div>
