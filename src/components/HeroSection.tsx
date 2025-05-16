@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import MemeMultiverseMachine from "./MemeMultiverseMachine";
+import MemeCoinParty from "./MemeCoinParty";
+import MemeRocketAnimation from "./MemeRocketAnimation";
 import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
 
 const HeroSection = () => {
@@ -112,9 +112,9 @@ const HeroSection = () => {
             </motion.div>
           </motion.div>
           
-          {/* Right Column - Animation - Now MemeMultiverseMachine */}
-          <div className="flex justify-center h-96">
-            <MemeMultiverseMachine />
+          {/* Right Column - Animation */}
+          <div className="flex justify-center">
+            <MemeRocketAnimation />
           </div>
         </div>
       </div>
