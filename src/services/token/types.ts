@@ -37,7 +37,7 @@ export interface ListedToken {
   contractAddress?: string;
   marketCap?: number;
   volume24h?: number;
-  liquidity?: number; // Added this field
+  liquidity?: number;
   totalSupply?: number;
   description?: string;
   isAssisted?: boolean;

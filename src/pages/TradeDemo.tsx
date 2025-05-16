@@ -1,54 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import TradingTerminal from '@/components/TradingTerminal';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
-import EnhancedModeToggle from '@/components/EnhancedModeToggle';
-import WhaleSniperPanel from '@/components/WhaleSniperPanel';
-import SentimentHeatmap from '@/components/SentimentHeatmap';
-import AlertsPanel from '@/components/AlertsPanel';
-import SessionPortfolio from '@/components/SessionPortfolio';
-import BondingCurveVisualizer from '@/components/BondingCurveVisualizer';
 import { Badge } from '@/components/ui/badge';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useTokenTrading } from '@/hooks/useTokenTrading';
-import { Loader2, Wallet as WalletIcon, CircleDollarSign, Sparkles, TrendingUp, BarChart2 } from 'lucide-react';
+import { Loader2, Wallet as WalletIcon, CircleDollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import TokenPriceChart from '@/components/TokenPriceChart';
-import DexScreenerListingProgress from '@/components/DexScreenerListingProgress';
-import TradingActivityFeed from '@/components/TradingActivityFeed';
-import { Card, CardContent } from '@/components/ui/card';
-import TradingInterface from '@/components/TradingInterface';
-
-// Utility function to define features available in each mode
-const FEATURES = {
-  standard: {
-    tradingChart: true,
-    dexScreener: true,
-    tradingActivity: true,
-    bondingCurve: true,
-    sessionPortfolio: true,
-    basicTrading: true,
-  },
-  pro: {
-    tradingChart: true,
-    dexScreener: true,
-    tradingActivity: true,
-    bondingCurve: true,
-    sessionPortfolio: true,
-    basicTrading: true,
-    // Pro-only features
-    whaleSniper: true,
-    sentimentHeatmap: true,
-    alertsPanel: true,
-    marketSummary: true,
-    advancedTrading: true,
-  }
-};
+import TradingScreen from '@/components/TradingScreen';
 
 const TradeDemo: React.FC = () => {
   useScrollToTop();
@@ -58,11 +21,9 @@ const TradeDemo: React.FC = () => {
   const [tokens, setTokens] = useState<ListedToken[]>([]);
   const [selectedToken, setSelectedToken] = useState<ListedToken | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEnhancedMode, setIsEnhancedMode] = useState(true);
   
-  // Use hooks for wallet balance and trading functionality
-  const { solBalance, tokenBalances, refreshBalances } = useWalletBalance(selectedToken?.symbol);
-  const { trades, executeTrade, isLoading: tradeLoading } = useTokenTrading(selectedToken?.symbol);
+  // Use hooks for wallet balance
+  const { solBalance } = useWalletBalance(selectedToken?.symbol);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -83,19 +44,6 @@ const TradeDemo: React.FC = () => {
 
     fetchTokens();
   }, []);
-
-  // Refresh balances when selected token changes
-  useEffect(() => {
-    if (connected && address && selectedToken) {
-      refreshBalances();
-    }
-  }, [connected, address, selectedToken, refreshBalances]);
-  
-  // Toggle enhanced mode with visual feedback
-  const handleToggleMode = () => {
-    setIsEnhancedMode(prev => !prev);
-    toast.success(`Switched to ${!isEnhancedMode ? 'Standard' : 'Pro'} Mode`);
-  };
 
   // Display a connect wallet button if not connected
   const renderWalletButton = () => {
@@ -129,11 +77,6 @@ const TradeDemo: React.FC = () => {
     );
   };
 
-  // Calculate mock progress for DexScreener listing
-  const calculateListingProgress = () => {
-    return Math.round(Math.random() * 100);
-  };
-
   return (
     <div className="min-h-screen bg-[#0A0C12] text-white flex flex-col">
       <Header />
@@ -145,7 +88,7 @@ const TradeDemo: React.FC = () => {
           transition={{ duration: 0.3 }}
           className="max-w-[1920px] mx-auto"
         >
-          {/* Top Trading Bar with Prominent Toggle */}
+          {/* Top Trading Bar */}
           <div className="relative flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-r from-[#0F1118]/95 via-[#131726]/95 to-[#0F1118]/95 border-b border-gray-800/50 shadow-md mb-1">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent hidden md:block">
@@ -161,19 +104,6 @@ const TradeDemo: React.FC = () => {
               )}
             </div>
             
-            {/* Prominent Mode Toggle in center */}
-            <motion.div
-              className="absolute left-1/2 transform -translate-x-1/2 top-2"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-            >
-              <EnhancedModeToggle 
-                isEnhanced={isEnhancedMode} 
-                onToggle={handleToggleMode}
-              />
-            </motion.div>
-            
             <div className="flex items-center gap-2">
               {renderWalletButton()}
             </div>
@@ -184,220 +114,13 @@ const TradeDemo: React.FC = () => {
               <Loader2 className="h-10 w-10 text-[#8B5CF6] animate-spin mb-4" />
               <div className="text-xl font-medium">Loading trading terminal...</div>
             </div>
-          ) : selectedToken && !isEnhancedMode ? (
-            // STANDARD MODE - More compact layout with essential features
-            <div className="grid grid-cols-1 gap-1">
-              {/* DexScreener Listing Progress (Compact) */}
-              <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                <DexScreenerListingProgress 
-                  tokenSymbol={selectedToken.symbol}
-                  progress={calculateListingProgress()}
-                  status={Math.random() > 0.5 ? 'in_progress' : 'pending'}
-                />
-              </div>
-              
-              {/* Main Trading Area */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-1">
-                {/* Left Column - Chart */}
-                <div className="md:col-span-8 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Price Chart</div>
-                  <div className="h-[250px]">
-                    <TokenPriceChart symbol={selectedToken.symbol} height="100%" />
-                  </div>
-                </div>
-                
-                {/* Right Column - Trading Interface */}
-                <div className="md:col-span-4 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <TradingInterface 
-                    tokens={tokens.map(t => ({ symbol: t.symbol, name: t.name, price: t.price }))}
-                    selectedToken={{ symbol: selectedToken.symbol, name: selectedToken.name, price: selectedToken.price }}
-                    onSelectToken={(token) => {
-                      const selected = tokens.find(t => t.symbol === token.symbol);
-                      if (selected) setSelectedToken(selected);
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* Trading Activity + Bonding Curve */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                {/* Trading Activity */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Trading Activity</div>
-                  <div className="h-[150px]">
-                    <TradingActivityFeed tokenSymbol={selectedToken.symbol} />
-                  </div>
-                </div>
-                
-                {/* Bonding Curve */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Bonding Curve</div>
-                  <div className="h-[150px]">
-                    <BondingCurveVisualizer
-                      initialPrice={selectedToken.price}
-                      currentSupply={selectedToken.totalSupply || 100000000}
-                      curveType="quadratic"
-                      estimatedImpact={2.5}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Session Portfolio */}
-              <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                <div className="text-xs uppercase font-medium text-gray-400 mb-1">Session Portfolio</div>
-                <div className="h-[100px]">
-                  <SessionPortfolio tokens={[]} />
-                </div>
-              </div>
-            </div>
           ) : selectedToken ? (
-            // ENHANCED PRO MODE 
-            <div className="space-y-1">
-              {/* DexScreener Listing Progress */}
-              <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                <DexScreenerListingProgress 
-                  tokenSymbol={selectedToken.symbol}
-                  progress={calculateListingProgress()}
-                  status={Math.random() > 0.5 ? 'in_progress' : 'pending'}
-                />
-              </div>
-              
-              {/* Main Trading Area - 3 column layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-16 gap-1">
-                {/* Left Column - Chart */}
-                <div className="lg:col-span-8 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Advanced Price Chart</div>
-                  <div className="h-[280px]">
-                    <TokenPriceChart symbol={selectedToken.symbol} height="100%" />
-                  </div>
-                </div>
-                
-                {/* Middle Column - Trading Activity + Bonding Curve */}
-                <div className="lg:col-span-4 space-y-1">
-                  <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                    <div className="text-xs uppercase font-medium text-gray-400 mb-1">Trading Activity</div>
-                    <div className="h-[136px]">
-                      <TradingActivityFeed tokenSymbol={selectedToken.symbol} />
-                    </div>
-                  </div>
-                  <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                    <div className="text-xs uppercase font-medium text-gray-400 mb-1">Bonding Curve</div>
-                    <div className="h-[136px]">
-                      <BondingCurveVisualizer
-                        initialPrice={selectedToken.price}
-                        currentSupply={selectedToken.totalSupply || 100000000}
-                        curveType="quadratic"
-                        estimatedImpact={2.5}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Right Column - Trading Interface */}
-                <div className="lg:col-span-4 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <TradingInterface 
-                    tokens={tokens.map(t => ({ symbol: t.symbol, name: t.name, price: t.price }))}
-                    selectedToken={{ symbol: selectedToken.symbol, name: selectedToken.name, price: selectedToken.price }}
-                    onSelectToken={(token) => {
-                      const selected = tokens.find(t => t.symbol === token.symbol);
-                      if (selected) setSelectedToken(selected);
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* PRO features - Bottom panels */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-                {/* Whale Sniper Panel - PRO FEATURE */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs uppercase font-medium text-gray-400">Whale Sniper</div>
-                    <Badge variant="outline" className="bg-purple-600/40 border-purple-500 text-[10px] flex items-center gap-0.5">
-                      <Sparkles className="h-3 w-3" />
-                      PRO
-                    </Badge>
-                  </div>
-                  <div className="h-[120px]">
-                    <WhaleSniperPanel />
-                  </div>
-                </div>
-                
-                {/* Sentiment Heatmap - PRO FEATURE */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs uppercase font-medium text-gray-400">Sentiment Analysis</div>
-                    <Badge variant="outline" className="bg-purple-600/40 border-purple-500 text-[10px] flex items-center gap-0.5">
-                      <Sparkles className="h-3 w-3" />
-                      PRO
-                    </Badge>
-                  </div>
-                  <div className="h-[120px]">
-                    <SentimentHeatmap
-                      tokens={[]}
-                      onSelect={(symbol) => {
-                        const token = tokens.find(t => t.symbol === symbol);
-                        if (token) setSelectedToken(token);
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Market Summary - PRO FEATURE */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs uppercase font-medium text-gray-400">Market Summary</div>
-                    <Badge variant="outline" className="bg-purple-600/40 border-purple-500 text-[10px] flex items-center gap-0.5">
-                      <Sparkles className="h-3 w-3" />
-                      PRO
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-                      <div className="text-xs text-gray-400">Market Cap</div>
-                      <div className="font-medium text-sm">${(selectedToken.marketCap || 48000).toLocaleString()}</div>
-                    </div>
-                    <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-                      <div className="text-xs text-gray-400">24h Volume</div>
-                      <div className="font-medium text-sm">${(selectedToken.volume24h || 12000).toLocaleString()}</div>
-                    </div>
-                    <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-                      <div className="text-xs text-gray-400">Liquidity</div>
-                      <div className="font-medium text-sm">${(selectedToken.liquidity ?? 6400).toLocaleString()}</div>
-                    </div>
-                    <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-                      <div className="text-xs text-gray-400">24h Change</div>
-                      <div className="font-medium text-sm text-green-500">+{(selectedToken.priceChange24h || 5.2).toFixed(2)}%</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Session Portfolio + Alerts (Side by side) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                {/* Session Portfolio */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Session Portfolio</div>
-                  <div className="h-[100px]">
-                    <SessionPortfolio tokens={[]} />
-                  </div>
-                </div>
-                
-                {/* Alerts Panel - PRO FEATURE */}
-                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="text-xs uppercase font-medium text-gray-400">Price Alerts</div>
-                    <Badge variant="outline" className="bg-purple-600/40 border-purple-500 text-[10px] flex items-center gap-0.5">
-                      <Sparkles className="h-3 w-3" />
-                      PRO
-                    </Badge>
-                  </div>
-                  <div className="h-[100px]">
-                    <AlertsPanel />
-                  </div>
-                </div>
-              </div>
-            </div>
+            // Streamlined Trading Screen
+            <TradingScreen
+              selectedToken={selectedToken}
+              tokens={tokens}
+              onSelectToken={setSelectedToken}
+            />
           ) : null}
         </motion.div>
       </main>
