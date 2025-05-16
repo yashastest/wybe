@@ -36,11 +36,11 @@ export const useTokenListing = () => {
         };
       } else {
         toast.error('Failed to launch token', { 
-          description: response.error || 'Please try again later'
+          description: response.error || response.message || 'Please try again later'
         });
         return {
           success: false,
-          error: response.error || 'Failed to launch token'
+          error: response.error || response.message || 'Failed to launch token'
         };
       }
     } catch (error) {
@@ -71,12 +71,12 @@ export const useTokenListing = () => {
         };
       } else {
         toast.error('Failed to purchase initial supply', {
-          description: result.error || 'Please try again later'
+          description: result.error || result.errorMessage || 'Please try again later'
         });
         
         return {
           success: false,
-          error: result.error || 'Failed to purchase initial supply'
+          error: result.error || result.errorMessage || 'Failed to purchase initial supply'
         };
       }
     } catch (error) {
@@ -93,10 +93,10 @@ export const useTokenListing = () => {
     try {
       const tokens = await tokenTradingService.getListedTokens();
       
-      // Make sure all tokens have required id property and convert to LaunchedToken
+      // Convert ListedToken[] to LaunchedToken[]
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
-        id: token.id || `token-${Math.random().toString(36).substring(2, 9)}`,
+        id: token.id,  // id is now required in both types
         banner: token.banner || undefined
       }));
       

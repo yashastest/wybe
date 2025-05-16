@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { TokenTransaction as ImportedTokenTransaction, TradeHistoryFilters as ImportedTradeHistoryFilters } from '@/services/token/types';
+import { TokenTransaction as ImportedTokenTransaction, TradeHistoryFilters as ImportedTradeHistoryFilters, ListedToken as ImportedListedToken } from '@/services/token/types';
 
 // Types
 export interface HolderStats {
@@ -9,13 +8,14 @@ export interface HolderStats {
   retail: number;
 }
 
+// Modified ListedToken interface to be compatible with the token/types version
 export interface ListedToken {
   id: string;
-  name?: string;
-  symbol?: string;
+  name: string;
+  symbol: string;
   logo?: string;
   banner?: string;
-  price?: number;
+  price: number;
   marketCap?: number;
   volume24h?: number;
   change24h?: number;
@@ -28,6 +28,8 @@ export interface ListedToken {
   description?: string;
   totalSupply?: number;
   creatorAddress?: string;
+  status?: string;
+  createdAt?: string;
 }
 
 export interface TradeParams {
@@ -74,7 +76,9 @@ const sampleTokens: ListedToken[] = [
     description: "Wybe is a community-driven token with utility features.",
     contractAddress: "wybeX123456789abcdef",
     isAssisted: true,
-    totalSupply: 1000000000
+    totalSupply: 1000000000,
+    status: "active",
+    createdAt: new Date().toISOString()
   },
   {
     id: "solana-doge",
@@ -193,7 +197,7 @@ const getTokenDetails = async (symbol: string): Promise<ListedToken | null> => {
   return token || null;
 };
 
-// Add the missing functions
+// Modified to include error property in the return type
 const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1200));
@@ -248,6 +252,7 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
   return sampleTransactions.filter(tx => tx.walletAddress === walletAddress);
 };
 
+// Modified to include error property in the return type
 const launchToken = async (params: any) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 2000));
@@ -255,10 +260,12 @@ const launchToken = async (params: any) => {
   return {
     success: true,
     tokenId: `token_${Math.random().toString(36).substring(2, 10)}`,
-    message: `Token ${params.name} (${params.symbol}) launched successfully`
+    message: `Token ${params.name} (${params.symbol}) launched successfully`,
+    error: null // Adding error property that will be null on success
   };
 };
 
+// Modified to include error property in the return type
 const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1500));
@@ -267,7 +274,8 @@ const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: 
     success: true,
     amountSol: amount,
     amountTokens: amount * 10000,
-    txHash: `tx_${Math.random().toString(36).substring(2, 15)}`
+    txHash: `tx_${Math.random().toString(36).substring(2, 15)}`,
+    error: null // Adding error property that will be null on success
   };
 };
 
