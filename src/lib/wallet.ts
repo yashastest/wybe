@@ -1,9 +1,9 @@
 
 // This file centralizes wallet imports to ensure consistency across the project
-export { useWallet, WalletProvider } from '@/hooks/useWallet.tsx';
+export { useWallet, WalletProvider } from '@/hooks/useWallet';
 
 // Re-export wallet types for convenience
-export type { WalletContextType } from '@/hooks/useWallet.tsx';
+export type { WalletContextType } from '@/hooks/useWallet';
 
 // Export a Wallet type alias for convenience
 export type Wallet = {

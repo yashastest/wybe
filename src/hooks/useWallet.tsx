@@ -19,6 +19,7 @@ export interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Move React hooks directly inside the component function body
   const [wallet, setWallet] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSolanaAvailable, setIsSolanaAvailable] = useState(false);
