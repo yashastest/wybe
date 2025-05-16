@@ -30,8 +30,12 @@ const EnhancedModeToggle: React.FC<EnhancedModeToggleProps> = ({
           ? 'from-purple-800/80 via-purple-700/60 to-purple-800/50'
           : 'from-gray-800 via-gray-800 to-gray-800'}
           backdrop-blur-md shadow-lg border border-white/10 hover:border-white/20 transition-all
+          hover:shadow-purple-500/20
         `}
         onClick={onToggle}
+        role="button"
+        aria-pressed={isEnhanced}
+        aria-label="Toggle Enhanced Mode"
       >
         <motion.div 
           className={`
