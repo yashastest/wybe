@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, CheckCircle2, AlertTriangle, XCircle, FileCheck, Code, GitBranch, Terminal, ArrowLeft, Clock, AlertCircle } from "lucide-react";
+import { Shield, CheckCircle2, AlertTriangle, XCircle, FileCheck, Code, GitBranch, Terminal, ArrowLeft, Clock, AlertCircle, Star, Award } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from 'react-router-dom';
@@ -194,34 +194,70 @@ const SecurityReport = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 pt-20">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900/40 to-black pt-20 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={controls}
         className="container mx-auto py-10 px-4 md:px-6 max-w-6xl"
       >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        {/* Back to home button with animation */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="fixed top-24 left-6 z-30 md:left-12"
+        >
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full border-orange-500/50 bg-black/80 backdrop-blur-sm hover:bg-orange-500/20 hover:border-orange-500 shadow-lg"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="h-5 w-5 text-orange-500" />
+          </Button>
+        </motion.div>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative">
+          {/* Decorative elements */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="absolute top-0 right-0 -mt-10 -mr-10 text-orange-500/10 transform rotate-12"
+          >
+            <Shield size={200} strokeWidth={1} />
+          </motion.div>
+          
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="rounded-full border-white/30 hover:bg-white/10" 
-                onClick={() => navigate('/')}
-                aria-label="Back to home"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
+                className="p-3 rounded-full bg-orange-500/20 border border-orange-500/30"
               >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600">
+                <Shield className="h-6 w-6 text-orange-500" />
+              </motion.div>
+              <motion.h1 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600"
+              >
                 Smart Contract Security Report
-              </h1>
+              </motion.h1>
             </div>
-            <p className="text-muted-foreground mt-2">
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="text-muted-foreground mt-2 ml-12 text-lg"
+            >
               Comprehensive security analysis and testing results for the Wybe Token Program
-            </p>
+            </motion.p>
           </div>
           
-          <div className="mt-4 md:mt-0 flex items-center gap-3">
+          <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-3">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -287,7 +323,24 @@ const SecurityReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-green-400 to-green-600 bg-clip-text text-transparent">92<span className="text-lg text-muted-foreground">/100</span></div>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.3, type: "spring" }}
+                  className="relative"
+                >
+                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-green-400 to-green-600 bg-clip-text text-transparent">
+                    92<span className="text-lg text-muted-foreground">/100</span>
+                  </div>
+                  <motion.div 
+                    className="absolute -top-2 -right-2"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
+                    transition={{ delay: 1.2, duration: 0.4 }}
+                  >
+                    <Award className="h-8 w-8 text-green-500/70" />
+                  </motion.div>
+                </motion.div>
                 <p className="text-center text-muted-foreground">Excellent security posture</p>
               </CardContent>
             </Card>
@@ -307,7 +360,24 @@ const SecurityReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent">100<span className="text-lg text-muted-foreground">/100</span></div>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7, duration: 0.3, type: "spring" }}
+                  className="relative"
+                >
+                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                    100<span className="text-lg text-muted-foreground">/100</span>
+                  </div>
+                  <motion.div 
+                    className="absolute -top-2 -right-2"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
+                    transition={{ delay: 1.3, duration: 0.4 }}
+                  >
+                    <Star className="h-8 w-8 text-blue-500/70" />
+                  </motion.div>
+                </motion.div>
                 <p className="text-center text-muted-foreground">Flawless implementation</p>
               </CardContent>
             </Card>
@@ -327,7 +397,24 @@ const SecurityReport = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-purple-400 to-purple-600 bg-clip-text text-transparent">100<span className="text-lg text-muted-foreground">%</span></div>
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.8, duration: 0.3, type: "spring" }}
+                  className="relative"
+                >
+                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-purple-400 to-purple-600 bg-clip-text text-transparent">
+                    100<span className="text-lg text-muted-foreground">%</span>
+                  </div>
+                  <motion.div 
+                    className="absolute -top-2 -right-2"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
+                    transition={{ delay: 1.4, duration: 0.4 }}
+                  >
+                    <Badge className="h-8 w-8 text-purple-500/70" />
+                  </motion.div>
+                </motion.div>
                 <p className="text-center text-muted-foreground">All functions fully tested</p>
               </CardContent>
             </Card>
@@ -371,7 +458,7 @@ const SecurityReport = () => {
                           <Badge variant={
                             finding.severity === 'critical' ? 'destructive' :
                             finding.severity === 'high' ? 'red' :
-                            finding.severity === 'medium' ? 'yellow' :
+                            finding.severity === 'medium' ? 'outline' :
                             'outline'
                           }>
                             {finding.severity.toUpperCase()}
