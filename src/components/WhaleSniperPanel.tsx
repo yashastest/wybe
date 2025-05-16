@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/tradeUtils';
-import { ArrowUpRight, ArrowDownRight, Eye, Plus, Bell, Whale } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Eye, Plus, Bell, DollarSign } from 'lucide-react';
 import { useWallet } from '@/lib/wallet';
 import { toast } from 'sonner';
 
@@ -111,7 +111,7 @@ const WhaleSniperPanel: React.FC = () => {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center">
-            <Whale className="text-[#8B5CF6] w-5 h-5 mr-2" /> 
+            <DollarSign className="text-[#8B5CF6] w-5 h-5 mr-2" /> 
             <span>Whale Sniper</span>
           </div>
           <Button

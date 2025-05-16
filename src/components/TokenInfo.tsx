@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ListedToken } from '@/services/tokenTradingService';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, TrendingUp, TrendingDown, Info } from 'lucide-react';
-import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface TokenInfoProps {
   token: ListedToken;
@@ -31,12 +31,19 @@ const TokenInfo: React.FC<TokenInfoProps> = ({ token, tradingStats }) => {
             <Badge variant="outline" className="text-xs font-normal bg-[#1A1F2C] border-0">
               {token.symbol}
             </Badge>
-            <Tooltip content="Launched on Solana blockchain">
-              <Badge className="text-xs bg-green-600/80 hover:bg-green-700 border-0">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Live
-              </Badge>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className="text-xs bg-green-600/80 hover:bg-green-700 border-0 cursor-pointer">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Live
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Launched on Solana blockchain</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-medium bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">

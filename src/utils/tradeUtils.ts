@@ -1,4 +1,3 @@
-
 // Utility functions for trading-related operations
 
 export const formatCurrency = (value: number): string => {
@@ -164,4 +163,44 @@ export const generateChartData = (
   }
   
   return data;
+};
+
+// Add missing function for generating bonding curve points
+export const generateBondingCurvePoints = (
+  initialPrice: number, 
+  currentSupply: number, 
+  pointCount: number = 20,
+  curveType: 'linear' | 'quadratic' | 'exponential' = 'linear'
+): Array<{supply: number, price: number}> => {
+  const points = [];
+  const maxSupply = currentSupply * 2; // Go up to double the current supply
+  const step = maxSupply / pointCount;
+  
+  for (let i = 0; i <= pointCount; i++) {
+    const supply = i * step;
+    let price;
+    
+    switch (curveType) {
+      case 'quadratic':
+        price = initialPrice * Math.pow(supply / currentSupply, 2);
+        break;
+      case 'exponential':
+        price = initialPrice * Math.exp(supply / currentSupply - 1);
+        break;
+      case 'linear':
+      default:
+        price = initialPrice * (supply / currentSupply);
+        break;
+    }
+    
+    // Ensure price is never below a small positive value
+    price = Math.max(0.000001, price);
+    
+    points.push({
+      supply,
+      price
+    });
+  }
+  
+  return points;
 };

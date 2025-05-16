@@ -11,11 +11,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
 
 interface BondingCurveVisualizerProps {
   initialPrice: number;
@@ -72,81 +67,79 @@ const BondingCurveVisualizer: React.FC<BondingCurveVisualizerProps> = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <ChartContainer config={{ price: {}, current: { color: "#8B5CF6" }, impact: { color: "#EF4444" } }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <XAxis 
-                  dataKey="supply" 
-                  tick={{ fontSize: 10 }} 
-                  tickFormatter={(value) => Math.round(value).toLocaleString()}
-                  stroke="#4B5563"
-                  axisLine={{ stroke: '#4B5563' }}
-                  tickLine={{ stroke: '#4B5563' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10 }} 
-                  tickFormatter={(value) => `$${value.toFixed(4)}`}
-                  width={60}
-                  stroke="#4B5563"
-                  axisLine={{ stroke: '#4B5563' }}
-                  tickLine={{ stroke: '#4B5563' }}
-                />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-[#1A1F2C] border border-gray-700 rounded p-2 text-xs">
-                          <p>Supply: {Number(payload[0].payload.supply).toLocaleString()}</p>
-                          <p>Price: ${Number(payload[0].payload.price).toFixed(6)}</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <XAxis 
+                dataKey="supply" 
+                tick={{ fontSize: 10 }} 
+                tickFormatter={(value) => Math.round(value).toLocaleString()}
+                stroke="#4B5563"
+                axisLine={{ stroke: '#4B5563' }}
+                tickLine={{ stroke: '#4B5563' }}
+              />
+              <YAxis 
+                tick={{ fontSize: 10 }} 
+                tickFormatter={(value) => `$${value.toFixed(4)}`}
+                width={60}
+                stroke="#4B5563"
+                axisLine={{ stroke: '#4B5563' }}
+                tickLine={{ stroke: '#4B5563' }}
+              />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-[#1A1F2C] border border-gray-700 rounded p-2 text-xs">
+                        <p>Supply: {Number(payload[0].payload.supply).toLocaleString()}</p>
+                        <p>Price: ${Number(payload[0].payload.price).toFixed(6)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="price" 
+                stroke="#8B5CF6" 
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+              
+              {/* Current position dot */}
+              <Line 
+                data={[currentPoint]} 
+                type="monotone" 
+                dataKey="price" 
+                stroke="none"
+                strokeWidth={0}
+                dot={{ 
+                  r: 4, 
+                  fill: '#10B981',
+                  stroke: '#10B981',
+                  strokeWidth: 2
+                }}
+              />
+              
+              {/* Impact point if available */}
+              {impactPoint && (
                 <Line 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke="#8B5CF6" 
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                
-                {/* Current position dot */}
-                <Line 
-                  data={[currentPoint]} 
+                  data={[impactPoint]} 
                   type="monotone" 
                   dataKey="price" 
                   stroke="none"
                   strokeWidth={0}
                   dot={{ 
                     r: 4, 
-                    fill: '#10B981',
-                    stroke: '#10B981',
+                    fill: '#EF4444',
+                    stroke: '#EF4444',
                     strokeWidth: 2
                   }}
                 />
-                
-                {/* Impact point if available */}
-                {impactPoint && (
-                  <Line 
-                    data={[impactPoint]} 
-                    type="monotone" 
-                    dataKey="price" 
-                    stroke="none"
-                    strokeWidth={0}
-                    dot={{ 
-                      r: 4, 
-                      fill: '#EF4444',
-                      stroke: '#EF4444',
-                      strokeWidth: 2
-                    }}
-                  />
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+              )}
+            </LineChart>
+          </ResponsiveContainer>
         </motion.div>
         
         <div className="flex justify-between mt-2 text-xs text-gray-400">

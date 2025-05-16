@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useTokenTrading } from '@/hooks/useTokenTrading';
 import { useWallet } from '@/lib/wallet';
+import { TokenTransaction } from '@/services/token/types';
 
 interface TradingTerminalProps {
   tokens: ListedToken[];
@@ -43,13 +44,12 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
   const [timeframe, setTimeframe] = useState('1D');
   const [chartType, setChartType] = useState('candles');
   const [showTokenSelector, setShowTokenSelector] = useState(false);
-  const [tradeHistory, setTradeHistory] = useState<any[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Use the token trading hook for real functionality
   const { 
     trades, 
-    tradeHistory: tokenTradeHistory, 
+    tradeHistory, 
     fetchTradeHistory, 
     isLoading 
   } = useTokenTrading(selectedToken?.symbol);
@@ -132,6 +132,28 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
       toast.error(`Error during ${action} transaction`);
     }
   };
+
+  // Ensure tradeHistory is compatible with TokenTransaction[] type
+  const convertedTradeHistory: TokenTransaction[] = tradeHistory ? 
+    tradeHistory.map(trade => {
+      return {
+        id: trade.id || String(Date.now()),
+        txHash: trade.txHash || "",
+        tokenSymbol: trade.tokenSymbol || selectedToken.symbol,
+        tokenName: trade.tokenName || selectedToken.name,
+        type: trade.side || 'buy',
+        side: trade.side || 'buy',
+        amount: trade.amount || 0,
+        amountUsd: trade.amountUsd || trade.amount * selectedToken.price || 0,
+        price: trade.price || selectedToken.price,
+        fee: trade.fee || 0.001,
+        timestamp: trade.timestamp || new Date().toISOString(),
+        walletAddress: trade.walletAddress || address || "",
+        status: trade.status || "confirmed",
+        amountTokens: trade.amountTokens,
+        amountSol: trade.amountSol,
+      };
+    }) : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
@@ -314,7 +336,7 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
                 </div>
                 <TradingActivityFeed 
                   tokenSymbol={selectedToken.symbol} 
-                  trades={tokenTradeHistory || []}
+                  trades={convertedTradeHistory}
                   isLoading={isLoading}
                 />
               </div>
@@ -367,7 +389,7 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
           </div>
           <TradingActivityFeed 
             tokenSymbol={selectedToken.symbol} 
-            trades={tokenTradeHistory || []}
+            trades={convertedTradeHistory}
             isLoading={isLoading}
           />
         </motion.div>
