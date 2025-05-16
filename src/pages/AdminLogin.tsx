@@ -1,52 +1,31 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from "framer-motion";
-import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import AdminLoginForm from '@/components/AdminLoginForm';
-import { useScrollToTop } from '@/hooks/useScrollToTop';
+import Header from '@/components/Header';
 
-const AdminLogin = () => {
-  // Ensure the page starts at the top when loaded
-  useScrollToTop();
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    // Check if already logged in, redirect to admin panel
-    const isLoggedIn = localStorage.getItem("wybeAdminLoggedIn") === "true";
-    const sessionExists = !!sessionStorage.getItem("wybeAdminSession");
-    
-    if (isLoggedIn && sessionExists) {
-      // Use replace: true to avoid history issues
-      navigate('/admin', { replace: true });
-      return;
-    }
-    
-    // Clear any stale session data when arriving at login page
-    // but only if we're not already logged in
-    if (!isLoggedIn || !sessionExists) {
-      localStorage.removeItem("wybeAdminLoggedIn");
-      sessionStorage.removeItem("wybeAdminSession");
-    }
-  }, [navigate]);
-  
+const AdminLogin: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white">
-      <Header />
+    <div className="min-h-screen bg-black text-white">
+      <Header adminOnly={true} />
       
-      <div className="flex-grow flex items-center justify-center py-16 px-4 mt-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
-          <AdminLoginForm />
-        </motion.div>
-      </div>
-      
-      <Footer />
+      <motion.main
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="container mx-auto py-20 px-4"
+      >
+        <div className="flex flex-col items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="w-full max-w-md"
+          >
+            <AdminLoginForm />
+          </motion.div>
+        </div>
+      </motion.main>
     </div>
   );
 };

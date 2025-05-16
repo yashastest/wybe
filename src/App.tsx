@@ -8,10 +8,14 @@ import NotFound from "./pages/NotFound";
 import SecurityReport from "./pages/SecurityReport";
 import BondingCurves from "./pages/BondingCurves";
 import Dashboard from "./pages/Dashboard";
-// Corrected imports for pages that were causing errors
-import LaunchPackage from "./pages/LaunchPackage"; // Changed from Package to LaunchPackage
-import Index from "./pages/Index"; // Changed from Home to Index
+import LaunchPackage from "./pages/LaunchPackage";
+import Index from "./pages/Index";
 import ScrollToTop from "./components/ScrollToTop";
+import Admin from "./pages/Admin";
+import AdminTokens from "./pages/AdminTokens";
+import TokenDeployment from "./pages/TokenDeployment";
+import AdminLogin from "./pages/AdminLogin";
+import AuthenticatedRoute from "./components/AuthenticatedRoute";
 
 function App() {
   return (
@@ -26,6 +30,66 @@ function App() {
         <Route path="/package" element={<LaunchPackage />} />
         <Route path="/security-report" element={<SecurityReport />} />
         <Route path="/bonding-curves" element={<BondingCurves />} />
+        
+        {/* Admin routes */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route 
+          path="/admin" 
+          element={
+            <AuthenticatedRoute>
+              <Admin />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/tokens" 
+          element={
+            <AuthenticatedRoute>
+              <AdminTokens />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/token-deployment" 
+          element={
+            <AuthenticatedRoute>
+              <TokenDeployment />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/token-deployment/:tokenId" 
+          element={
+            <AuthenticatedRoute>
+              <TokenDeployment />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/security-report" 
+          element={
+            <AuthenticatedRoute>
+              <SecurityReport />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/smart-contract-deployment" 
+          element={
+            <AuthenticatedRoute>
+              <Admin />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/deployment" 
+          element={
+            <AuthenticatedRoute>
+              <Admin />
+            </AuthenticatedRoute>
+          } 
+        />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

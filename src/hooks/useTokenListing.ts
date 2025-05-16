@@ -54,7 +54,7 @@ export const useTokenListing = () => {
   
   const buyInitialSupply = async (tokenId: string, walletAddress: string, amountSol: number): Promise<Partial<TradeResult> & { success: boolean; error?: string }> => {
     try {
-      // Fix: tokenTradingService.buyInitialSupply expects tokenSymbol, not an object
+      // Fix: Pass tokenId as the tokenSymbol and amountSol
       const result = await tokenTradingService.buyInitialSupply(tokenId, amountSol);
       
       if (result.success) {

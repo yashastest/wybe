@@ -1,8 +1,12 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { TradeParams, TradeResult, TokenLaunchParams, TokenLaunchResult, ListedToken, TokenTransaction } from '@/services/token/types';
 import { apiClient } from '@/services/api/apiClient';
 import { API_CONFIG } from '@/config/api';
 import { transactionService } from '@/services/token/transactionService';
+
+// Re-export types that we need from the token types file
+export type { TokenTransaction };
 
 const getListedTokens = async (): Promise<ListedToken[]> => {
   try {
@@ -274,8 +278,8 @@ const tokenTradingService = {
   executeTrade,
   getUserTransactions: transactionService.getUserTransactions,
   getTransactionStats: transactionService.getTransactionStats,
-  getCreatorMilestones, // Added for useCreatorFees
-  claimCreatorFees, // Added for useCreatorFees
+  getCreatorMilestones,
+  claimCreatorFees,
   
   // For backward compatibility
   buyInitialSupply: async (tokenSymbol: string, amountSol: number): Promise<TradeResult> => {

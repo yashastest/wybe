@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
+import { useWallet } from './useWallet.tsx';
 import { tokenTradingService } from '@/services/tokenTradingService';
+import { toast } from 'sonner';
 
-interface FeeMilestone {
+export interface CreatorMilestone {
   id: string;
   tokenId: string;
   amount: number;
@@ -12,173 +12,90 @@ interface FeeMilestone {
   createdAt: string;
 }
 
-interface ClaimResult {
-  success: boolean;
-  message: string;
-  amount?: number;
-}
-
-export const useCreatorFees = (creatorWallet?: string) => {
+export const useCreatorFees = () => {
+  const { address, connected } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const [milestones, setMilestones] = useState<FeeMilestone[]>([]);
-  const [totalUnclaimed, setTotalUnclaimed] = useState(0);
+  const [milestones, setMilestones] = useState<CreatorMilestone[]>([]);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [availableToClaim, setAvailableToClaim] = useState(0);
   
-  // Fetch all available milestones for the creator
-  const fetchMilestones = async (wallet?: string) => {
-    if (!wallet && !creatorWallet) {
-      console.error('No wallet address provided for fetching milestones');
-      return [];
-    }
-    
-    const walletToUse = wallet || creatorWallet;
+  // Load creator fees data
+  const loadCreatorFees = async (walletAddress: string) => {
     setIsLoading(true);
-    
     try {
-      // Get all milestones
-      const milestonesData = await tokenTradingService.getCreatorMilestones(walletToUse!);
+      // Make sure the getCreatorMilestones method exists on tokenTradingService
+      const milestonesData = await tokenTradingService.getCreatorMilestones(walletAddress);
       
-      // Format and update state
-      const formattedMilestones = milestonesData.map(milestone => ({
-        id: milestone.id,
-        tokenId: milestone.tokenId,
-        amount: milestone.amount,
-        eligibleTimestamp: milestone.eligibleTimestamp,
-        createdAt: milestone.createdAt
-      }));
+      // Process milestones data
+      setMilestones(milestonesData || []);
       
-      setMilestones(formattedMilestones);
-      
-      // Calculate total unclaimed amount
-      const total = formattedMilestones.reduce((sum, milestone) => sum + milestone.amount, 0);
-      setTotalUnclaimed(total);
-      
-      return formattedMilestones;
+      // Calculate totals
+      if (milestonesData && milestonesData.length > 0) {
+        let total = 0;
+        let available = 0;
+        
+        milestonesData.forEach(milestone => {
+          total += milestone.amount;
+          
+          // Check if milestone is eligible for claiming
+          const eligibleDate = new Date(milestone.eligibleTimestamp);
+          if (eligibleDate <= new Date()) {
+            available += milestone.amount;
+          }
+        });
+        
+        setTotalEarned(total);
+        setAvailableToClaim(available);
+      }
     } catch (error) {
-      console.error('Error fetching milestones:', error);
-      toast.error('Failed to load creator fee milestones');
-      return [];
+      console.error("Error loading creator fees:", error);
+      toast.error("Failed to load creator fees data");
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Claim a specific milestone
-  const claimMilestone = async (milestoneId: string, wallet?: string) => {
-    if (!wallet && !creatorWallet) {
-      toast.error('No wallet address provided for claiming');
-      return { success: false, message: 'No wallet address provided' };
+  // Load when wallet is connected
+  useEffect(() => {
+    if (connected && address) {
+      loadCreatorFees(address);
+    }
+  }, [connected, address]);
+  
+  // Claim fees function
+  const claimFees = async (milestoneId: string) => {
+    if (!connected || !address) {
+      toast.error("Please connect your wallet to claim fees");
+      return { success: false };
     }
     
-    const walletToUse = wallet || creatorWallet;
-    setIsLoading(true);
-    
     try {
-      // Process claim
-      const result = await tokenTradingService.claimCreatorFees(milestoneId, walletToUse!);
+      // Make sure the claimCreatorFees method exists on tokenTradingService
+      const result = await tokenTradingService.claimCreatorFees(milestoneId, address);
       
       if (result.success) {
-        // Refresh milestones after successful claim
-        await fetchMilestones(walletToUse);
-        toast.success(result.message);
+        toast.success("Fees claimed successfully!");
+        
+        // Refresh milestones after claiming
+        await loadCreatorFees(address);
+        return { success: true };
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Failed to claim fees");
+        return { success: false };
       }
-      
-      return result;
     } catch (error) {
-      console.error('Error claiming milestone:', error);
-      toast.error('Failed to claim creator fees');
-      return { success: false, message: 'An unexpected error occurred' };
-    } finally {
-      setIsLoading(false);
+      console.error("Error claiming fees:", error);
+      toast.error("Error processing your claim");
+      return { success: false };
     }
-  };
-  
-  // Claim all available milestones
-  const claimAllMilestones = async (wallet?: string) => {
-    if (!wallet && !creatorWallet) {
-      toast.error('No wallet address provided for claiming');
-      return { success: false, message: 'No wallet address provided' };
-    }
-    
-    const walletToUse = wallet || creatorWallet;
-    setIsLoading(true);
-    
-    try {
-      // Process claim for all eligible distributions
-      const { data, error } = await supabase.functions.invoke('process-fee-distribution', {
-        body: JSON.stringify({
-          creator_wallet: walletToUse
-        })
-      });
-      
-      if (error || !data.success) {
-        toast.error(data?.message || 'Failed to claim creator fees');
-        return {
-          success: false,
-          message: data?.message || 'Failed to claim creator fees'
-        };
-      }
-      
-      // Refresh milestones after successful claim
-      await fetchMilestones(walletToUse);
-      
-      toast.success(data.message);
-      return {
-        success: true,
-        message: data.message,
-        amount: data.totalAmount
-      };
-    } catch (error) {
-      console.error('Error claiming all milestones:', error);
-      toast.error('Failed to claim creator fees');
-      return { success: false, message: 'An unexpected error occurred' };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Check milestone eligibility
-  const checkMilestoneEligibility = (timestamp: string): boolean => {
-    const eligibleDate = new Date(timestamp);
-    const now = new Date();
-    return now >= eligibleDate;
-  };
-  
-  // Get time until next milestone
-  const getTimeUntilNextMilestone = (): { days: number; hours: number } | null => {
-    if (milestones.length === 0) return null;
-    
-    // Find the earliest non-eligible milestone
-    const sortedMilestones = [...milestones].sort((a, b) => 
-      new Date(a.eligibleTimestamp).getTime() - new Date(b.eligibleTimestamp).getTime()
-    );
-    
-    const nextMilestone = sortedMilestones.find(
-      milestone => !checkMilestoneEligibility(milestone.eligibleTimestamp)
-    );
-    
-    if (!nextMilestone) return null;
-    
-    const now = new Date();
-    const eligibleDate = new Date(nextMilestone.eligibleTimestamp);
-    const diffTime = eligibleDate.getTime() - now.getTime();
-    
-    // Convert to days and hours
-    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    return { days, hours };
   };
   
   return {
-    isLoading,
     milestones,
-    totalUnclaimed,
-    fetchMilestones,
-    claimMilestone,
-    claimAllMilestones,
-    checkMilestoneEligibility,
-    getTimeUntilNextMilestone
+    totalEarned,
+    availableToClaim,
+    isLoading,
+    loadCreatorFees,
+    claimFees
   };
 };
