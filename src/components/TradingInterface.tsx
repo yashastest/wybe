@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,12 +42,12 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
     setAmount(e.target.value);
   };
   
-  const handleActionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setAction(e.target.value as 'buy' | 'sell');
+  const handleActionChange = (value: string) => {
+    setAction(value as 'buy' | 'sell');
   };
   
-  const handleSlippageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSlippage(e.target.value);
+  const handleSlippageChange = (value: string) => {
+    setSlippage(value);
   };
   
   const executeTrade = async () => {

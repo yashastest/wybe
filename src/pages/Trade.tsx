@@ -122,6 +122,12 @@ const Trade: React.FC = () => {
     toast.success("Link copied to clipboard");
   };
   
+  // Handle token selection
+  const handleSelectToken = (token: any) => {
+    // Navigate to the selected token
+    navigate(`/trade/${token.symbol}`);
+  };
+  
   // Loading state
   if (isLoading) {
     return (
@@ -149,6 +155,20 @@ const Trade: React.FC = () => {
       </div>
     );
   }
+
+  // Format tokens for trading interface
+  const formattedTokens = tokens.map(token => ({
+    symbol: token.symbol,
+    name: token.name,
+    price: token.price
+  }));
+
+  // Format selected token for trading interface
+  const selectedToken = {
+    symbol: currentToken.symbol,
+    name: currentToken.name,
+    price: currentToken.price
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -347,16 +367,15 @@ const Trade: React.FC = () => {
                     </div>
                   ) : showAdvancedTrading ? (
                     <EnhancedTradingInterface
-                      tokenSymbol={currentToken?.symbol}
-                      tokenName={currentToken?.name}
-                      tokenPrice={currentToken?.price || 0}
-                      tokenLogo={currentToken?.logo}
+                      tokens={formattedTokens}
+                      selectedToken={selectedToken}
+                      onSelectToken={handleSelectToken}
                     />
                   ) : (
                     <TradingInterface 
-                      tokenSymbol={currentToken?.symbol} 
-                      tokenName={currentToken?.name}
-                      tokenImage={currentToken?.logo}
+                      tokens={formattedTokens}
+                      selectedToken={selectedToken}
+                      onSelectToken={handleSelectToken}
                     />
                   )}
                 </CardContent>

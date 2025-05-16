@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import EnhancedTradingInterface from '@/components/EnhancedTradingInterface';
 import TradingInterface from '@/components/TradingInterface';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,6 +36,7 @@ const TokenTrade: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
   const [loading, setLoading] = useState(true);
   const [tokenDetails, setTokenDetails] = useState<TokenDetails | null>(null);
+  const [allTokens, setAllTokens] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchTokenDetails = async () => {
@@ -46,6 +46,8 @@ const TokenTrade: React.FC = () => {
       try {
         // Get all tokens and find the matching one
         const tokens = await tokenTradingService.getListedTokens();
+        setAllTokens(tokens);
+        
         const token = tokens.find(t => t.symbol.toLowerCase() === tokenId.toLowerCase());
         
         if (token) {
@@ -83,6 +85,12 @@ const TokenTrade: React.FC = () => {
     ? `Check out ${tokenDetails.name} (${tokenDetails.symbol}) on Wybe.fun! ${tokenDetails.contractAddress ? `\nContract: ${tokenDetails.contractAddress}` : ''}`
     : `Check out this token on Wybe.fun!`;
   const shareableUrl = getShareableUrl();
+
+  // Handle token selection
+  const handleSelectToken = (token: any) => {
+    // We'll just redirect to the new token page instead of updating state
+    window.location.href = `/token/${token.symbol}`;
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
@@ -249,12 +257,11 @@ const TokenTrade: React.FC = () => {
               </div>
             )}
             
+            {/* Use correct props for TradingInterface */}
             <TradingInterface 
-              tokenSymbol={tokenDetails.symbol}
-              tokenName={tokenDetails.name}
-              tokenImage={tokenDetails.logo || undefined}
-              contractAddress={tokenDetails.contractAddress}
-              isAssisted={tokenDetails.isAssisted}
+              tokens={allTokens.map(t => ({ name: t.name, symbol: t.symbol, price: t.price }))}
+              selectedToken={{ name: tokenDetails.name, symbol: tokenDetails.symbol, price: tokenDetails.price }}
+              onSelectToken={handleSelectToken}
             />
           </div>
         ) : (
