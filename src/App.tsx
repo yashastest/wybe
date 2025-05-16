@@ -19,7 +19,8 @@ import AuthenticatedRoute from "./components/AuthenticatedRoute";
 
 function App() {
   return (
-    <Router>
+    // NOTE: Router is moved to main.tsx to ensure all components have proper context
+    <>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Index />} />
@@ -92,7 +93,7 @@ function App() {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 

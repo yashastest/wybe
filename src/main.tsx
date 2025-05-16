@@ -6,7 +6,8 @@ import './index.css';
 import { Toaster } from './components/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { smartContractService } from './services/smartContractService.ts';
-import { WalletProvider } from '@/lib/wallet';
+import { WalletProvider } from './lib/wallet';
+import { BrowserRouter as Router } from 'react-router-dom';
 
 // Initialize query client with default options
 const queryClient = new QueryClient({
@@ -29,14 +30,18 @@ try {
   console.error("Failed to initialize contract configuration:", error);
 }
 
-// Create root and render app
+// Create root and render app with all providers
+// IMPORTANT: Router needs to be outside of StrictMode but inside QueryClientProvider
+// This ensures hooks like useLocation, useParams etc. work properly
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <App />
-        <Toaster position="top-right" />
-      </WalletProvider>
+      <Router>
+        <WalletProvider>
+          <App />
+          <Toaster position="top-right" />
+        </WalletProvider>
+      </Router>
     </QueryClientProvider>
   </React.StrictMode>,
 );

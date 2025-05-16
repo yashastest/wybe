@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useWallet } from "@/hooks/useWallet.tsx";
+import { useWallet } from "@/hooks/useWallet";
 
 interface HeaderProps {
   adminOnly?: boolean;
