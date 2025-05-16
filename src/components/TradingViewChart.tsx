@@ -22,7 +22,7 @@ declare global {
 
 const TradingViewChart: React.FC<TradingViewChartProps> = ({
   symbol = "PEPES",
-  timeframe = "1D",
+  timeframe = "1m",
   chartType = "price",
   onChartTypeChange
 }) => {
@@ -30,12 +30,19 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [localChartType, setLocalChartType] = useState<'price' | 'marketCap'>(chartType);
+  const [selectedTimeframe, setSelectedTimeframe] = useState(timeframe);
   
   // Handle chart type change internally and notify parent if callback provided
   const handleChartTypeChange = (type: 'price' | 'marketCap') => {
     setLocalChartType(type);
     setIsLoading(true);
     if (onChartTypeChange) onChartTypeChange(type);
+  };
+  
+  // Handle timeframe change
+  const handleTimeframeChange = (tf: string) => {
+    setSelectedTimeframe(tf);
+    setIsLoading(true);
   };
   
   useEffect(() => {
@@ -66,7 +73,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         containerRef.current.innerHTML = '';
       }
     };
-  }, [symbol, timeframe, localChartType]);
+  }, [symbol, selectedTimeframe, localChartType]);
 
   const createWidget = () => {
     if (containerRef.current && containerRef.current.innerHTML === '' && window.TradingView) {
@@ -78,7 +85,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       new window.TradingView.widget({
         autosize: true,
         symbol: symbolFormatted,
-        interval: getTimeframeValue(timeframe),
+        interval: getTimeframeValue(selectedTimeframe),
         container_id: containerRef.current.id,
         library_path: 'https://s3.tradingview.com/charting_library/',
         locale: 'en',
@@ -90,7 +97,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         allow_symbol_change: true,
         hide_side_toolbar: true,
         hide_top_toolbar: isMobile,
-        studies: isMobile ? [] : ['Volume@tv-basicstudies'],
+        studies: [], // Remove all studies/indicators
         overrides: {
           "paneProperties.background": "#151720",
           "paneProperties.vertGridProperties.color": "rgba(139, 92, 246, 0.05)",
@@ -110,7 +117,14 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           "header_screenshot",
           "header_compare",
           "volume_force_overlay",
-          ...(isMobile ? ["left_toolbar", "header_indicators", "header_chart_type"] : []),
+          "study_templates",
+          "header_indicators", // Disable indicators button
+          "header_settings", // Disable settings button
+          "header_undo_redo", // Disable undo/redo
+          "header_fullscreen_button", // Disable fullscreen button
+          "control_bar", // Disable bottom control bar with indicators
+          "timeframes_toolbar", // Disable built-in timeframes toolbar
+          ...(isMobile ? ["left_toolbar", "header_chart_type"] : []),
         ],
         enabled_features: ["save_chart_properties_to_local_storage"],
         loading_screen: { backgroundColor: "#151720", foregroundColor: "#8B5CF6" },
@@ -121,19 +135,53 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   // Convert timeframe string to TradingView interval value
   const getTimeframeValue = (tf: string): string => {
     switch (tf) {
+      case '1s': return '1S';
+      case '5s': return '5S';
+      case '10s': return '10S';
+      case '15s': return '15S';
+      case '30s': return '30S';
+      case '1m': return '1';
+      case '3m': return '3';
+      case '5m': return '5';
       case '15m': return '15';
+      case '30m': return '30';
       case '1H': return '60';
       case '4H': return '240';
       case '1D': return 'D';
       case '1W': return 'W';
-      default: return 'D';
+      default: return '1';
     }
   };
+  
+  // Available timeframes for the selector
+  const timeframes = [
+    { label: "1s", value: "1s" },
+    { label: "5s", value: "5s" },
+    { label: "10s", value: "10s" },
+    { label: "30s", value: "30s" },
+    { label: "1m", value: "1m" },
+    { label: "3m", value: "3m" },
+    { label: "5m", value: "5m" },
+    { label: "15m", value: "15m" },
+    { label: "30m", value: "30m" },
+  ];
 
   return (
     <Card className="bg-[#0F1118]/90 border border-gray-800/50 p-2 rounded-lg overflow-hidden">
       <div className="flex justify-between items-center mb-2">
-        <div className="text-xs uppercase font-medium text-gray-400">Price Chart</div>
+        <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
+          {timeframes.map((tf) => (
+            <Button
+              key={tf.value}
+              size="sm" 
+              variant="outline" 
+              className={`h-6 py-0 px-2 text-xs ${selectedTimeframe === tf.value ? 'bg-purple-600/30 border-purple-500' : 'bg-[#1A1F2C]/40'}`}
+              onClick={() => handleTimeframeChange(tf.value)}
+            >
+              {tf.label}
+            </Button>
+          ))}
+        </div>
         <div className="flex">
           <Button 
             size="sm" 
@@ -166,7 +214,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           </div>
         )}
         <div 
-          id={`tradingview-widget-${symbol}-${timeframe}-${localChartType}`} 
+          id={`tradingview-widget-${symbol}-${selectedTimeframe}-${localChartType}`} 
           ref={containerRef} 
           className="w-full h-full"
         />
