@@ -1,114 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
+import MemeRocketAnimation from "./MemeRocketAnimation";
 import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
-
-// Placeholder for the 2D Wybe Meme Mint factory animation
-const WybeMemeFactoryPlaceholder = () => {
-  const [showPreview, setShowPreview] = useState(false);
-
-  return (
-    <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
-      {showPreview ? (
-        // Animation preview placeholder - to be replaced with actual animation
-        <WybeMemeFactory2D />
-      ) : (
-        // Description of the animation concept
-        <div className="bg-gradient-to-br from-black/40 to-purple-900/20 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 text-center">
-          <h3 className="text-xl font-bold text-orange-400 mb-3">Wybe Meme Mint Animation</h3>
-          <p className="text-gray-300 mb-4">2D factory animation where meme characters (Doge, Pepe, Wojak) create Wybe coins on a conveyor belt.</p>
-          <Button 
-            variant="outline" 
-            className="border-orange-500/50 text-orange-400 hover:bg-orange-500/20"
-            onClick={() => setShowPreview(true)}
-          >
-            Show Preview
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Interactive preview of the 2D animation concept
-const WybeMemeFactory2D = () => {
-  return (
-    <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      {/* Factory Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-black/60 rounded-xl border border-purple-500/20"></div>
-      
-      {/* Conveyor Belt */}
-      <div className="absolute bottom-10 left-0 right-0 h-12 bg-gray-800/50 border-t border-b border-gray-600/50"></div>
-      
-      {/* Input Tube - Left Side */}
-      <div className="absolute left-4 top-1/4 bottom-10 w-12 bg-gray-700/50 rounded-t-full border border-gray-600/30">
-        <div className="absolute top-0 left-0 right-0 h-8 flex justify-center items-start">
-          <div className="animate-bounce h-4 w-4 bg-orange-500 rounded-full"></div>
-        </div>
-      </div>
-      
-      {/* Meme Characters - Will be animated */}
-      <div className="absolute left-1/4 bottom-16 animate-pulse">
-        <div className="h-12 w-12 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-          D
-        </div>
-        <div className="mt-1 text-xs text-center text-gray-300">Doge</div>
-      </div>
-      
-      <div className="absolute left-1/2 bottom-16 transform -translate-x-1/2 animate-pulse">
-        <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-          P
-        </div>
-        <div className="mt-1 text-xs text-center text-gray-300">Pepe</div>
-      </div>
-      
-      <div className="absolute right-1/4 bottom-16 animate-pulse">
-        <div className="h-12 w-12 rounded-full bg-blue-400 flex items-center justify-center text-white font-bold">
-          W
-        </div>
-        <div className="mt-1 text-xs text-center text-gray-300">Wojak</div>
-      </div>
-      
-      {/* Stamping Machine */}
-      <div className="absolute left-1/2 top-12 transform -translate-x-1/2 w-20 h-32 bg-gray-700/70 rounded-t-lg border border-gray-600/50">
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gray-800/70 flex items-center justify-center text-xs text-orange-300">
-          WYBE STAMP
-        </div>
-        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 h-16 w-4 bg-gray-600 animate-pulse"></div>
-      </div>
-      
-      {/* Coins on Conveyor */}
-      <div className="absolute bottom-6 left-1/4 h-8 w-8 rounded-full bg-gradient-to-br from-orange-400 to-yellow-600 border-2 border-orange-300 animate-pulse"></div>
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 h-8 w-8 rounded-full bg-gradient-to-br from-orange-400 to-yellow-600 border-2 border-orange-300"></div>
-      
-      {/* Coin Launcher - Right Side */}
-      <div className="absolute right-4 bottom-10 w-16 h-24 bg-gray-700/50 rounded-t-lg border border-gray-600/30"></div>
-      
-      {/* Hero Coin - Center */}
-      <div className="absolute left-1/2 top-1/3 transform -translate-x-1/2 -translate-y-1/2 animate-pulse">
-        <div className="h-24 w-24 rounded-full bg-gradient-to-br from-orange-400 to-yellow-600 border-4 border-orange-300 shadow-lg shadow-orange-500/30 flex items-center justify-center">
-          <span className="font-bold text-white text-2xl">W</span>
-        </div>
-      </div>
-      
-      {/* Animation Control */}
-      <div className="absolute bottom-2 right-2">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="text-xs text-gray-400"
-          onClick={(e) => e.currentTarget.closest('.w-full')?.classList.toggle('animate-pulse')}
-        >
-          Toggle Animation
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const HeroSection = () => {
   const [showFullTagline, setShowFullTagline] = useState(false);
@@ -217,7 +114,7 @@ const HeroSection = () => {
           
           {/* Right Column - Animation */}
           <div className="flex justify-center">
-            <WybeMemeFactoryPlaceholder />
+            <MemeRocketAnimation />
           </div>
         </div>
       </div>
