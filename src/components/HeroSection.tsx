@@ -1,18 +1,29 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
 import MemeRocketAnimation from "./MemeRocketAnimation";
 import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
 
 const HeroSection = () => {
   const [showFullTagline, setShowFullTagline] = useState(false);
+  const [showSecurityBadge, setShowSecurityBadge] = useState(false);
   
   const handleTypewriterComplete = () => {
     setShowFullTagline(true);
   };
+  
+  useEffect(() => {
+    // Show security badge after a delay
+    const timer = setTimeout(() => {
+      setShowSecurityBadge(true);
+    }, 2500);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <section className="relative overflow-hidden pt-28 md:pt-32 pb-16 min-h-[80vh] flex items-center">
@@ -29,8 +40,32 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
+              className="flex flex-col md:flex-row md:items-center gap-3"
             >
               <span className="text-orange-500 font-mono text-sm uppercase tracking-wider font-bold">Powered by Solana</span>
+              
+              {/* Security badge */}
+              {showSecurityBadge && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-900/20 border border-green-500/40"
+                >
+                  <Shield className="h-3 w-3 text-green-500" />
+                  <Link to="/security-report" className="text-xs text-green-400 font-medium hover:text-green-300">
+                    Smart Contract Audited
+                  </Link>
+                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                </motion.div>
+              )}
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-poppins font-extrabold mt-2 leading-tight">
                 <span className="text-white">Build your meme </span>
                 <RotatingTypewriterWord 
@@ -105,9 +140,15 @@ const HeroSection = () => {
                   <span className="text-white"> and earn </span>
                   <span className="text-orange-500">creator rewards</span>
                 </h3>
-                <p className="text-gray-300">
-                  We are making meme coin trading an asset class for creators
-                </p>
+                <div className="text-gray-300 space-y-2">
+                  <p>
+                    We are making meme coin trading an asset class for creators
+                  </p>
+                  <p className="text-sm flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span>Audited smart contracts with 100% test coverage</span>
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>

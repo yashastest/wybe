@@ -1,4 +1,3 @@
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke;
 use anchor_lang::solana_program::system_instruction;
@@ -44,6 +43,10 @@ pub mod wybe_token_program {
         token_account.is_bonding_curve_active = true;
         token_account.bonding_curve_cap = 50000; // $50k cap for bonding curve
         token_account.market_cap = 0;
+        token_account.metadata_uri = String::new();
+        token_account.last_updated_at = 0;
+        token_account.creation_time = Clock::get()?.unix_timestamp;
+        token_account.verified = false;
 
         // Emit event for indexing
         emit!(TokenInitialized {
@@ -390,6 +393,97 @@ pub mod wybe_token_program {
         
         Ok(())
     }
+    
+    // Verify token statistics and authenticity
+    pub fn verify_token_statistics(ctx: Context<VerifyTokenStats>) -> Result<()> {
+        let token_account = &ctx.accounts.token_account;
+        let oracle = &ctx.accounts.oracle;
+        
+        // Only authorized oracles can verify statistics
+        require!(
+            oracle.key() == ctx.accounts.authority.key() || 
+            oracle.is_signer,
+            ErrorCode::Unauthorized
+        );
+        
+        // Record the verification in events
+        emit!(TokenStatisticsVerified {
+            token_account: token_account.key(),
+            oracle: oracle.key(),
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+        
+        Ok(())
+    }
+    
+    // Update token metadata URI
+    pub fn update_token_metadata(
+        ctx: Context<UpdateTokenMetadata>,
+        new_uri: String
+    ) -> Result<()> {
+        let token_account = &mut ctx.accounts.token_account;
+        let authority = &ctx.accounts.authority;
+        
+        // Security check: verify account is not frozen
+        require!(!token_account.is_frozen, ErrorCode::AccountFrozen);
+        
+        // Validate authority
+        require!(
+            token_account.authority == authority.key(),
+            ErrorCode::Unauthorized
+        );
+        
+        // Validate URI
+        require!(!new_uri.is_empty(), ErrorCode::InvalidMetadataUri);
+        require!(new_uri.len() <= 200, ErrorCode::MetadataUriTooLong);
+        
+        // Update metadata URI
+        token_account.metadata_uri = new_uri;
+        token_account.last_updated_at = Clock::get()?.unix_timestamp;
+        
+        emit!(TokenMetadataUpdated {
+            token_account: token_account.key(),
+            new_uri,
+            authority: authority.key(),
+            timestamp: token_account.last_updated_at,
+        });
+        
+        Ok(())
+    }
+    
+    // Transfer ownership of the token
+    pub fn transfer_token_ownership(
+        ctx: Context<TransferOwnership>,
+        new_authority: Pubkey
+    ) -> Result<()> {
+        let token_account = &mut ctx.accounts.token_account;
+        let authority = &ctx.accounts.authority;
+        
+        // Security check: verify account is not frozen
+        require!(!token_account.is_frozen, ErrorCode::AccountFrozen);
+        
+        // Validate authority
+        require!(
+            token_account.authority == authority.key(),
+            ErrorCode::Unauthorized
+        );
+        
+        // Store old authority for the event
+        let old_authority = token_account.authority;
+        
+        // Update authority
+        token_account.authority = new_authority;
+        token_account.last_updated_at = Clock::get()?.unix_timestamp;
+        
+        emit!(OwnershipTransferred {
+            token_account: token_account.key(),
+            old_authority,
+            new_authority,
+            timestamp: token_account.last_updated_at,
+        });
+        
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -473,6 +567,31 @@ pub struct RecordTokenLaunch<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// New account validation struct for token verification
+#[derive(Accounts)]
+pub struct VerifyTokenStats<'info> {
+    pub token_account: Account<'info, TokenAccount>,
+    /// CHECK: This is the oracle that verifies the token stats
+    pub oracle: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+}
+
+// New account validation struct for updating metadata
+#[derive(Accounts)]
+pub struct UpdateTokenMetadata<'info> {
+    #[account(mut)]
+    pub token_account: Account<'info, TokenAccount>,
+    pub authority: Signer<'info>,
+}
+
+// New account validation struct for transferring ownership
+#[derive(Accounts)]
+pub struct TransferOwnership<'info> {
+    #[account(mut)]
+    pub token_account: Account<'info, TokenAccount>,
+    pub authority: Signer<'info>,
+}
+
 #[account]
 pub struct TokenAccount {
     pub name: String,                // 32 bytes max
@@ -486,20 +605,27 @@ pub struct TokenAccount {
     pub is_bonding_curve_active: bool, // Whether bonding curve is active or not
     pub bonding_curve_cap: u64,      // Bonding curve cap (in USD)
     pub market_cap: u64,             // Current market cap (in lamports)
+    pub metadata_uri: String,        // Token metadata URI (200 bytes max)
+    pub last_updated_at: i64,        // Last time the token was updated
+    pub creation_time: i64,          // Time when token was created
+    pub verified: bool,              // Whether token is verified
 }
 
 impl TokenAccount {
-    pub const LEN: usize = 32 + 8 + 8 + 8 + 32 + 32 + 8 + 1 + 1 + 8 + 8;
+    pub const LEN: usize = 32 + 8 + 8 + 8 + 32 + 32 + 8 + 1 + 1 + 8 + 8 + 200 + 8 + 8 + 1;
 }
 
 #[account]
 pub struct TokenHolder {
     pub owner: Pubkey,       // 32 bytes
     pub balance: u64,        // 8 bytes
+    pub last_trade: i64,     // 8 bytes - timestamp of last trade
+    pub initial_entry: i64,  // 8 bytes - timestamp of first token acquisition
+    pub is_verified: bool,   // 1 byte - if holder is KYC verified
 }
 
 impl TokenHolder {
-    pub const LEN: usize = 32 + 8;
+    pub const LEN: usize = 32 + 8 + 8 + 8 + 1;
 }
 
 #[account]
@@ -508,10 +634,27 @@ pub struct LaunchRecord {
     pub launch_date: i64,           // 8 bytes
     pub launch_data: String,        // Variable, up to 200 bytes
     pub is_verified: bool,          // 1 byte
+    pub initial_market_cap: u64,    // 8 bytes
+    pub initial_holder_count: u16,  // 2 bytes
+    pub creator_wallet: Pubkey,     // 32 bytes
 }
 
 impl LaunchRecord {
-    pub const LEN: usize = 32 + 8 + 200 + 1;
+    pub const LEN: usize = 32 + 8 + 200 + 1 + 8 + 2 + 32;
+}
+
+// New struct for managing token trading parameters
+#[account]
+pub struct TradingConfig {
+    pub token_account: Pubkey,      // 32 bytes
+    pub min_trade_amount: u64,      // 8 bytes
+    pub max_slippage: u16,          // 2 bytes - in basis points (100 = 1%)
+    pub trading_enabled: bool,      // 1 byte
+    pub authority: Pubkey,          // 32 bytes
+}
+
+impl TradingConfig {
+    pub const LEN: usize = 32 + 8 + 2 + 1 + 32;
 }
 
 #[event]
@@ -601,6 +744,29 @@ pub struct TokenLaunchRecorded {
     pub authority: Pubkey,
 }
 
+#[event]
+pub struct TokenStatisticsVerified {
+    pub token_account: Pubkey,
+    pub oracle: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct TokenMetadataUpdated {
+    pub token_account: Pubkey,
+    pub new_uri: String,
+    pub authority: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct OwnershipTransferred {
+    pub token_account: Pubkey,
+    pub old_authority: Pubkey,
+    pub new_authority: Pubkey,
+    pub timestamp: i64,
+}
+
 #[error_code]
 pub enum ErrorCode {
     #[msg("You are not authorized to perform this action")]
@@ -627,4 +793,16 @@ pub enum ErrorCode {
     CalculationError,
     #[msg("Required milestone has not been reached")]
     MilestoneNotReached,
+    #[msg("Invalid metadata URI")]
+    InvalidMetadataUri,
+    #[msg("Metadata URI exceeds maximum length")]
+    MetadataUriTooLong,
+    #[msg("Operation exceeded time lock period")]
+    TimeLockActive,
+    #[msg("Trading is currently disabled for this token")]
+    TradingDisabled,
+    #[msg("Slippage tolerance exceeded")]
+    SlippageExceeded,
+    #[msg("Trade amount below minimum threshold")]
+    TradeBelowMinimum,
 }
