@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@/hooks/useWallet.tsx';
+import { useWallet } from '@/lib/wallet';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,7 +172,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
   return (
     <div>
       {/* Token Search Card */}
-      <Card className="mb-6 bg-black/30 border-gray-800">
+      <Card className="mb-6 bg-gradient-to-br from-black/40 to-black/20 border-gray-800 shadow-lg">
         <CardContent className="pt-4">
           <div className="flex items-center space-x-2">
             <Input 
@@ -185,6 +186,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
               onClick={handleSearch}
               disabled={searchLoading}
               variant="secondary"
+              className="bg-gradient-to-r from-blue-700/40 to-blue-500/30 hover:from-blue-700/50 hover:to-blue-500/40"
             >
               {searchLoading ? "Searching..." : <Search className="h-4 w-4" />}
             </Button>
@@ -195,16 +197,16 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section - Now Prominently Displayed */}
         <div className="lg:col-span-2">
-          <Card className="mb-6 bg-black/30 border-gray-800">
+          <Card className="mb-6 bg-gradient-to-br from-black/50 to-black/30 border-gray-800 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg">{tokenSymbol} Price Chart</CardTitle>
+              <CardTitle className="text-lg bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{tokenSymbol} Price Chart</CardTitle>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" className="bg-gradient-to-r from-blue-800/20 to-indigo-800/10 hover:from-blue-800/30 hover:to-indigo-800/20">
                     <Share className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md mx-auto">
+                <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-black/90 to-gray-900/90 backdrop-blur-xl border-gray-700">
                   <DialogHeader>
                     <DialogTitle>Share {tokenName} ({tokenSymbol})</DialogTitle>
                   </DialogHeader>
@@ -213,19 +215,19 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                       {/* Social Media Share Buttons */}
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full sm:w-auto">
+                          <Button variant="outline" className="w-full sm:w-auto bg-blue-900/20 hover:bg-blue-900/30 border-blue-700/30">
                             <Facebook className="h-4 w-4 mr-2" />
                             Share on Facebook
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent>
+                        <PopoverContent className="bg-black/90 backdrop-blur-xl border-gray-700">
                           <p className="text-sm">Copy link to share on Facebook:</p>
                           <div className="mt-2">
                             <Input readOnly value={shareableUrl} />
                             <Button 
                               variant="secondary" 
                               size="sm" 
-                              className="mt-2 w-full"
+                              className="mt-2 w-full bg-gradient-to-r from-blue-700/40 to-blue-500/30 hover:from-blue-700/50 hover:to-blue-500/40"
                               onClick={() => {
                                 navigator.clipboard.writeText(shareableUrl);
                                 toast.success("Link copied to clipboard");
@@ -239,19 +241,19 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
 
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full sm:w-auto">
+                          <Button variant="outline" className="w-full sm:w-auto bg-blue-900/20 hover:bg-blue-900/30 border-blue-700/30">
                             <Twitter className="h-4 w-4 mr-2" />
                             Share on Twitter
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent>
+                        <PopoverContent className="bg-black/90 backdrop-blur-xl border-gray-700">
                           <p className="text-sm">Copy text to share on Twitter:</p>
                           <div className="mt-2">
                             <Input readOnly value={shareableText} />
                             <Button 
                               variant="secondary" 
                               size="sm" 
-                              className="mt-2 w-full"
+                              className="mt-2 w-full bg-gradient-to-r from-blue-700/40 to-blue-500/30 hover:from-blue-700/50 hover:to-blue-500/40"
                               onClick={() => {
                                 navigator.clipboard.writeText(`${shareableText} ${shareableUrl}`);
                                 toast.success("Text copied to clipboard");
@@ -343,7 +345,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
 
         {/* Trading Interface */}
         <div>
-          <Card className="bg-black/30 border-gray-800">
+          <Card className="bg-gradient-to-br from-black/50 to-black/30 border-gray-800 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {tokenImage ? (
@@ -353,7 +355,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                     {tokenSymbol.charAt(0)}
                   </div>
                 )}
-                <span>Trade {tokenSymbol}</span>
+                <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Trade {tokenSymbol}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -364,7 +366,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                     <Button
                       variant={tradeType === 'buy' ? 'default' : 'outline'}
                       onClick={() => handleTradeTypeChange('buy')}
-                      className={`flex-1 ${tradeType === 'buy' ? "bg-green-600 hover:bg-green-700" : ""}`}
+                      className={`flex-1 ${tradeType === 'buy' ? "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600" : ""}`}
                     >
                       Buy <ArrowUp className="ml-2 h-4 w-4" />
                     </Button>
@@ -372,7 +374,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                       variant={tradeType === 'sell' ? 'default' : 'outline'}
                       onClick={() => handleTradeTypeChange('sell')}
                       disabled={!connected}
-                      className={`flex-1 ${tradeType === 'sell' ? "bg-red-600 hover:bg-red-700" : ""}`}
+                      className={`flex-1 ${tradeType === 'sell' ? "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600" : ""}`}
                     >
                       Sell <ArrowDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -385,20 +387,26 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                     placeholder="Enter amount"
                     value={tradeAmount || ''}
                     onChange={handleTradeAmountChange}
+                    className="bg-black/30 border-gray-700"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Estimated Price</label>
-                  <Input type="text" value={tokenPrice > 0 ? `${tokenPrice} SOL` : '0 SOL'} readOnly />
+                  <Input 
+                    type="text" 
+                    value={tokenPrice > 0 ? `${tokenPrice} SOL` : '0 SOL'} 
+                    readOnly 
+                    className="bg-black/30 border-gray-700"
+                  />
                 </div>
                 
                 {/* Quick Amount Buttons */}
                 {tradeType === 'buy' && (
                   <div className="grid grid-cols-4 gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(100)}>100</Button>
-                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(500)}>500</Button>
-                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(1000)}>1000</Button>
-                    <Button size="sm" variant="outline" onClick={() => setTradeAmount(5000)}>5000</Button>
+                    <Button size="sm" variant="outline" className="hover:bg-white/10" onClick={() => setTradeAmount(100)}>100</Button>
+                    <Button size="sm" variant="outline" className="hover:bg-white/10" onClick={() => setTradeAmount(500)}>500</Button>
+                    <Button size="sm" variant="outline" className="hover:bg-white/10" onClick={() => setTradeAmount(1000)}>1000</Button>
+                    <Button size="sm" variant="outline" className="hover:bg-white/10" onClick={() => setTradeAmount(5000)}>5000</Button>
                   </div>
                 )}
                 
@@ -419,7 +427,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                 
                 <div className="pt-4">
                   <Link to="/trade-demo">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button variant="outline" size="sm" className="w-full bg-gradient-to-r from-indigo-800/20 to-indigo-600/10 hover:from-indigo-800/30 hover:to-indigo-600/20">
                       Switch to Enhanced Trading Interface
                     </Button>
                   </Link>
@@ -428,9 +436,9 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
             </CardContent>
           </Card>
 
-          <Card className="mt-6 bg-black/30 border-gray-800">
+          <Card className="mt-6 bg-gradient-to-br from-black/50 to-black/30 border-gray-800 shadow-lg">
             <CardHeader>
-              <CardTitle>Recent Trades</CardTitle>
+              <CardTitle className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Recent Trades</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -443,7 +451,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                 </TableHeader>
                 <TableBody>
                   {tradeHistory.slice(0, 5).map((trade) => (
-                    <TableRow key={trade.id}>
+                    <TableRow key={trade.id} className="hover:bg-white/5">
                       <TableCell className={trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}>
                         {trade.type.toUpperCase()}
                       </TableCell>

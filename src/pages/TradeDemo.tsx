@@ -49,20 +49,20 @@ const TradeDemo = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <h1 className="text-3xl font-bold mb-6">Trading Demo</h1>
+          <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Trading Demo</h1>
           
           <Tabs defaultValue={interfaceType} onValueChange={(v) => setInterfaceType(v as 'standard' | 'enhanced')} className="mb-6">
-            <TabsList>
+            <TabsList className="bg-gradient-to-r from-black/50 to-black/30 border border-gray-800">
               <TabsTrigger value="standard">Standard Trading Interface</TabsTrigger>
               <TabsTrigger value="enhanced">Enhanced Trading Interface</TabsTrigger>
             </TabsList>
             
             <TabsContent value="standard" className="mt-4">
-              <Card className="bg-black/30 border-gray-800">
+              <Card className="bg-gradient-to-r from-black/40 to-black/20 border-gray-800 shadow-xl">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Standard Trading Interface</CardTitle>
+                      <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Standard Trading Interface</CardTitle>
                       <CardDescription>Basic trading interface with chart and trade history</CardDescription>
                     </div>
                     <Badge variant="secondary" className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20">For Beginners</Badge>
@@ -75,16 +75,16 @@ const TradeDemo = () => {
                     </div>
                   ) : selectedToken && (
                     <div>
-                      <Card className="bg-black/30 border-gray-800">
+                      <Card className="bg-gradient-to-br from-black/40 to-black/20 border-gray-800 shadow-lg mb-6">
                         <CardHeader>
-                          <CardTitle>Select Token to Trade</CardTitle>
+                          <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Select Token to Trade</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Tabs defaultValue={selectedToken.id} onValueChange={(value) => {
                             const token = tokens.find(t => t.id === value);
                             if (token) setSelectedToken(token);
                           }}>
-                            <TabsList className="mb-4">
+                            <TabsList className="mb-4 bg-gradient-to-r from-black/50 to-black/30 border border-gray-800">
                               {tokens.map(token => (
                                 <TabsTrigger key={token.id} value={token.id}>
                                   {token.symbol}
@@ -99,7 +99,7 @@ const TradeDemo = () => {
                                     {token.symbol.charAt(0)}
                                   </div>
                                   <div>
-                                    <h2 className="text-xl font-bold">{token.name}</h2>
+                                    <h2 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">{token.name}</h2>
                                     <div className="flex items-center">
                                       <span className="text-lg font-medium">${token.price.toFixed(6)}</span>
                                       <span className={`ml-2 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -151,11 +151,11 @@ const TradeDemo = () => {
             </TabsContent>
             
             <TabsContent value="enhanced" className="mt-4">
-              <Card className="bg-black/30 border-gray-800">
+              <Card className="bg-gradient-to-r from-black/40 to-black/20 border-gray-800 shadow-xl">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Enhanced Trading Interface</CardTitle>
+                      <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Enhanced Trading Interface</CardTitle>
                       <CardDescription>Advanced trading features for experienced traders</CardDescription>
                     </div>
                     <Badge variant="outline" className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20">Pro Features</Badge>
@@ -168,16 +168,16 @@ const TradeDemo = () => {
                     </div>
                   ) : selectedToken && (
                     <div>
-                      <Card className="bg-black/30 border-gray-800">
+                      <Card className="bg-gradient-to-br from-black/40 to-black/20 border-gray-800 shadow-lg mb-6">
                         <CardHeader>
-                          <CardTitle>Select Token to Trade</CardTitle>
+                          <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Select Token to Trade</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Tabs defaultValue={selectedToken.id} onValueChange={(value) => {
                             const token = tokens.find(t => t.id === value);
                             if (token) setSelectedToken(token);
                           }}>
-                            <TabsList className="mb-4">
+                            <TabsList className="mb-4 bg-gradient-to-r from-black/50 to-black/30 border border-gray-800">
                               {tokens.map(token => (
                                 <TabsTrigger key={token.id} value={token.id}>
                                   {token.symbol}
@@ -192,7 +192,7 @@ const TradeDemo = () => {
                                     {token.symbol.charAt(0)}
                                   </div>
                                   <div>
-                                    <h2 className="text-xl font-bold">{token.name}</h2>
+                                    <h2 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">{token.name}</h2>
                                     <div className="flex items-center">
                                       <span className="text-lg font-medium">${token.price.toFixed(6)}</span>
                                       <span className={`ml-2 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -228,26 +228,68 @@ const TradeDemo = () => {
                         </CardContent>
                       </Card>
                       
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                        <div className="lg:col-span-2">
-                          <Card className="bg-black/30 border-gray-800">
-                            <CardHeader className="pb-2">
-                              <CardTitle>Advanced Chart</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <TradingViewChart 
-                                symbol={selectedToken.symbol} 
-                              />
-                            </CardContent>
-                          </Card>
-                        </div>
+                      <div>
+                        {/* Chart first - full width */}
+                        <Card className="bg-gradient-to-br from-black/40 to-black/20 border-gray-800 shadow-lg mb-6">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Advanced Chart</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <TradingViewChart 
+                              symbol={selectedToken.symbol} 
+                            />
+                          </CardContent>
+                        </Card>
                         
-                        <div>
-                          <EnhancedTradingInterface 
-                            tokenSymbol={selectedToken.symbol} 
-                            tokenName={selectedToken.name} 
-                            tokenPrice={selectedToken.price}
-                          />
+                        {/* Trading interface below chart */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          <div className="lg:col-span-1">
+                            <EnhancedTradingInterface 
+                              tokenSymbol={selectedToken.symbol} 
+                              tokenName={selectedToken.name} 
+                              tokenPrice={selectedToken.price}
+                            />
+                          </div>
+                          
+                          <div className="lg:col-span-2">
+                            <div className="grid grid-cols-1 gap-6">
+                              {/* Trending, Whales, and Analytics are now moved into tabs inside EnhancedTradingInterface */}
+                              {/* Additional data visualization area */}
+                              <Card className="bg-gradient-to-br from-black/40 to-black/20 border-gray-800 shadow-lg">
+                                <CardHeader>
+                                  <CardTitle className="bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent">Market Summary</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-gradient-to-br from-black/30 to-indigo-950/10 p-4 rounded-lg shadow-inner">
+                                      <p className="text-xs text-gray-400 mb-1">Market Cap</p>
+                                      <p className="text-xl font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">$1.45M</p>
+                                      <div className="mt-1 flex items-center">
+                                        <span className="text-green-500 text-xs">+2.4%</span>
+                                        <span className="text-xs text-gray-400 ml-1">24h</span>
+                                      </div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-black/30 to-indigo-950/10 p-4 rounded-lg shadow-inner">
+                                      <p className="text-xs text-gray-400 mb-1">24h Volume</p>
+                                      <p className="text-xl font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">$124.5K</p>
+                                      <div className="mt-1 flex items-center">
+                                        <span className="text-red-500 text-xs">-1.2%</span>
+                                        <span className="text-xs text-gray-400 ml-1">24h</span>
+                                      </div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-black/30 to-indigo-950/10 p-4 rounded-lg shadow-inner">
+                                      <p className="text-xs text-gray-400 mb-1">Token Holders</p>
+                                      <p className="text-xl font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">843</p>
+                                      <div className="mt-1 flex items-center">
+                                        <span className="text-green-500 text-xs">+12</span>
+                                        <span className="text-xs text-gray-400 ml-1">24h</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

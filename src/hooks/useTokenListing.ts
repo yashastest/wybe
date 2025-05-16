@@ -36,11 +36,11 @@ export const useTokenListing = () => {
         };
       } else {
         toast.error('Failed to launch token', { 
-          description: response.error || response.message || 'Please try again later'
+          description: response.error || 'Please try again later'
         });
         return {
           success: false,
-          error: response.error || response.message || 'Failed to launch token'
+          error: response.error || 'Failed to launch token'
         };
       }
     } catch (error) {

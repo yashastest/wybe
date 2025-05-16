@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { useWallet } from '@/hooks/useWallet.tsx';
+import { useWallet } from '@/lib/wallet';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,9 +24,14 @@ import {
   X,
   Search,
   Activity,
-  ChartBar
+  ChartBar,
+  Settings,
+  CircleDollarSign,
+  CircleMinus,
+  CirclePlus
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { formatCurrency } from '@/utils/tradeUtils';
@@ -46,6 +52,7 @@ interface WhaleActivity {
   time: string;
   price?: number;
   wallet?: string;
+  dollarValue?: number;
 }
 
 interface TrendingToken {
@@ -55,6 +62,15 @@ interface TrendingToken {
   change24h: number;
   logo?: string;
   volume?: number;
+}
+
+interface TradeSettings {
+  autoSlippage: boolean;
+  slippageTolerance: number;
+  gasPriority: 'low' | 'medium' | 'high';
+  confirmTrades: boolean;
+  quickBuyAmount: number;
+  quickSellPercentage: number;
 }
 
 const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
@@ -75,6 +91,14 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
   const [isSelling, setIsSelling] = useState<boolean>(false);
   const [tradeResult, setTradeResult] = useState<any | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [tradeSettings, setTradeSettings] = useState<TradeSettings>({
+    autoSlippage: true,
+    slippageTolerance: 0.5,
+    gasPriority: 'medium',
+    confirmTrades: true,
+    quickBuyAmount: 1,
+    quickSellPercentage: 50
+  });
   
   // Mock trending tokens data with more realistic data and logos
   const [trendingTokens, setTrendingTokens] = useState<TrendingToken[]>([
@@ -84,11 +108,11 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
     { symbol: 'FLOKI', name: 'Floki Inu', price: 0.00015, change24h: 8.2, logo: null, volume: 890000 },
   ]);
   
-  // Mock whale activity data
+  // Mock whale activity data (now with dollar values)
   const [whaleActivity, setWhaleActivity] = useState<WhaleActivity[]>([
-    { symbol: 'WYBE', action: 'buy', amount: 25000, time: '10 mins ago', price: 0.0015, wallet: '8zjX...BhR' },
-    { symbol: 'PEPE', action: 'sell', amount: 15000, time: '25 mins ago', price: 0.000023, wallet: '9ajX...CyZ' },
-    { symbol: 'DOGE', action: 'buy', amount: 100000, time: '1 hour ago', price: 0.12, wallet: '7wpX...AiJ' },
+    { symbol: 'WYBE', action: 'buy', amount: 25000, time: '10 mins ago', price: 0.0015, wallet: '8zjX...BhR', dollarValue: 14500 },
+    { symbol: 'PEPE', action: 'sell', amount: 650000, time: '25 mins ago', price: 0.000023, wallet: '9ajX...CyZ', dollarValue: 12950 },
+    { symbol: 'DOGE', action: 'buy', amount: 100000, time: '1 hour ago', price: 0.12, wallet: '7wpX...AiJ', dollarValue: 11200 },
   ]);
   
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -107,8 +131,14 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
       // Generate action
       const action: 'buy' | 'sell' = Math.random() > 0.5 ? 'buy' : 'sell';
       
-      // Generate amount (larger for whale transactions)
-      const amount = Math.floor(Math.random() * 90000) + 10000;
+      // Generate amount for whale transactions (large enough to exceed $10k)
+      const amount = Math.floor(Math.random() * 500000) + 100000;
+      const dollarValue = price * amount;
+      
+      // Only add if it's a true "whale" activity (> $10,000)
+      if (dollarValue < 10000) {
+        return; // Skip this iteration
+      }
       
       // Generate time (just now)
       const time = 'just now';
@@ -123,7 +153,8 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
         amount,
         time,
         price,
-        wallet
+        wallet,
+        dollarValue: Math.round(dollarValue)
       };
       
       // Update state
@@ -293,30 +324,59 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
     }
   };
   
-  // Quick buy function
-  const quickBuy = (amount: number) => {
+  // Quick buy function with settings
+  const quickBuy = () => {
     setTradeType('buy');
-    setInputAmount(amount.toString());
+    setInputAmount(tradeSettings.quickBuyAmount.toString());
     executeTrade();
   };
 
+  // Quick sell function with settings
+  const quickSell = () => {
+    // Simulate selling a percentage of holdings
+    const mockHoldings = 12500; // Mock token holdings
+    const sellAmount = (mockHoldings * tradeSettings.quickSellPercentage / 100).toFixed(0);
+    
+    setTradeType('sell');
+    setInputAmount(sellAmount);
+    executeTrade();
+  };
+  
+  // Sell all function
+  const sellAll = () => {
+    // Simulate selling all holdings
+    const mockHoldings = 12500; // Mock token holdings
+    
+    setTradeType('sell');
+    setInputAmount(mockHoldings.toString());
+    executeTrade();
+  };
+  
+  const updateTradeSetting = (setting: keyof TradeSettings, value: any) => {
+    setTradeSettings({
+      ...tradeSettings,
+      [setting]: value
+    });
+  };
+
   return (
-    <Card className="glass-card bg-black/30 border-gray-800">
+    <Card className="glass-card bg-gradient-to-br from-black/60 to-black/30 border-gray-800 shadow-lg">
       <Tabs defaultValue="trade" className="w-full">
         <TabsList className="grid grid-cols-4 gap-0">
-          <TabsTrigger value="trade" className="flex items-center">
+          <TabsTrigger value="trade" className="flex items-center bg-gradient-to-r from-purple-500/10 to-blue-500/10">
             <ArrowRightLeft className="h-3 w-3 mr-2" /> Trade
           </TabsTrigger>
           <TabsTrigger value="trending" className="flex items-center">
             <TrendingUp className="h-3 w-3 mr-2" /> Trending
           </TabsTrigger>
           <TabsTrigger value="whales" className="flex items-center">
-            <Activity className="h-3 w-3 mr-2" /> Whales
+            <CircleDollarSign className="h-3 w-3 mr-2" /> Whales
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center">
             <ChartBar className="h-3 w-3 mr-2" /> Analytics
           </TabsTrigger>
         </TabsList>
+        
         <TabsContent value="trade">
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -330,9 +390,130 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                 )}
                 {tradeType === 'buy' ? 'Buy' : 'Sell'} {tokenSymbol}
               </h2>
-              <div className="text-sm text-gray-400 flex items-center">
-                <span className="mr-1">$</span>
-                <span>{tokenPrice.toFixed(6)}</span>
+              <div className="text-sm flex items-center gap-2">
+                <span className="bg-gradient-to-r from-green-500 to-green-300 bg-clip-text text-transparent font-medium">${tokenPrice.toFixed(6)}</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 bg-black/80 backdrop-blur-xl border-gray-700">
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-base">Trade Settings</h4>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Auto Slippage</span>
+                          <Switch 
+                            checked={tradeSettings.autoSlippage} 
+                            onCheckedChange={(checked) => updateTradeSetting('autoSlippage', checked)} 
+                          />
+                        </div>
+                        
+                        {!tradeSettings.autoSlippage && (
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.slippageTolerance === 0.1 ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('slippageTolerance', 0.1)}
+                            >
+                              0.1%
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.slippageTolerance === 0.5 ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('slippageTolerance', 0.5)}
+                            >
+                              0.5%
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.slippageTolerance === 1.0 ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('slippageTolerance', 1.0)}
+                            >
+                              1.0%
+                            </Button>
+                          </div>
+                        )}
+                        
+                        <div className="pt-2">
+                          <span className="text-sm">Gas Priority</span>
+                          <div className="grid grid-cols-3 gap-2 mt-1">
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.gasPriority === 'low' ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('gasPriority', 'low')}
+                            >
+                              Low
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.gasPriority === 'medium' ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('gasPriority', 'medium')}
+                            >
+                              Medium
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant={tradeSettings.gasPriority === 'high' ? "default" : "outline"}
+                              onClick={() => updateTradeSetting('gasPriority', 'high')}
+                            >
+                              High
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2 pt-2">
+                          <span className="text-sm">Quick Trade Settings</span>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs text-gray-400">Quick Buy Amount (SOL)</label>
+                            <Select 
+                              value={tradeSettings.quickBuyAmount.toString()}
+                              onValueChange={(value) => updateTradeSetting('quickBuyAmount', parseFloat(value))}
+                            >
+                              <SelectTrigger className="w-24 h-7">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0.1">0.1</SelectItem>
+                                <SelectItem value="0.5">0.5</SelectItem>
+                                <SelectItem value="1">1.0</SelectItem>
+                                <SelectItem value="5">5.0</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs text-gray-400">Quick Sell (% of holdings)</label>
+                            <Select 
+                              value={tradeSettings.quickSellPercentage.toString()}
+                              onValueChange={(value) => updateTradeSetting('quickSellPercentage', parseInt(value))}
+                            >
+                              <SelectTrigger className="w-24 h-7">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="10">10%</SelectItem>
+                                <SelectItem value="25">25%</SelectItem>
+                                <SelectItem value="50">50%</SelectItem>
+                                <SelectItem value="75">75%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-sm">Confirm Trades</span>
+                          <Switch 
+                            checked={tradeSettings.confirmTrades} 
+                            onCheckedChange={(checked) => updateTradeSetting('confirmTrades', checked)} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             
@@ -340,21 +521,21 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
               <Button 
                 variant={tradeType === 'buy' ? 'default' : 'outline'}
                 onClick={() => setTradeType('buy')}
-                className={`flex-1 ${tradeType === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                className={`flex-1 ${tradeType === 'buy' ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600' : ''}`}
               >
                 Buy
               </Button>
               <Button 
                 variant={tradeType === 'sell' ? 'default' : 'outline'}
                 onClick={() => setTradeType('sell')}
-                className={`flex-1 ${tradeType === 'sell' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                className={`flex-1 ${tradeType === 'sell' ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600' : ''}`}
               >
                 Sell
               </Button>
             </div>
             
             <div className="grid gap-2">
-              <div className="bg-black/40 p-3 rounded-md">
+              <div className="bg-black/40 backdrop-blur-md p-3 rounded-md">
                 <div className="flex justify-between mb-1">
                   <label className="text-xs text-gray-400">
                     {tradeType === 'buy' ? 'SOL Amount' : `${tokenSymbol} Amount`}
@@ -369,7 +550,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                   value={inputAmount}
                   onChange={(e) => handleInputChange(e.target.value)}
                   ref={inputRef}
-                  className="bg-black/20 border-gray-700"
+                  className="bg-black/30 border-gray-700"
                 />
               </div>
               
@@ -379,13 +560,13 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                 </div>
               </div>
               
-              <div className="bg-black/40 p-3 rounded-md">
+              <div className="bg-black/40 backdrop-blur-md p-3 rounded-md">
                 <div className="flex justify-between mb-1">
                   <label className="text-xs text-gray-400">
                     {tradeType === 'buy' ? `${tokenSymbol} Amount` : 'SOL Amount'}
                   </label>
                 </div>
-                <div className="bg-black/20 border border-gray-700 px-3 py-2 rounded-md flex justify-between">
+                <div className="bg-black/30 border border-gray-700 px-3 py-2 rounded-md flex justify-between">
                   <span>
                     {isEstimating ? 
                       <RefreshCw className="inline-block h-4 w-4 animate-spin" /> : 
@@ -399,36 +580,47 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
               </div>
             </div>
             
-            {/* Quick Buy/Sell Options */}
-            <div className="grid grid-cols-4 gap-2">
-              {tradeType === 'buy' ? (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('0.1')}>0.1 SOL</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('0.5')}>0.5 SOL</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('1')}>1 SOL</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('5')}>5 SOL</Button>
-                </>
-              ) : (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('100')}>100</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('500')}>500</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('1000')}>1K</Button>
-                  <Button size="sm" variant="outline" onClick={() => setInputAmount('5000')}>5K</Button>
-                </>
-              )}
+            {/* Quick Trade Buttons */}
+            <div className="grid grid-cols-3 gap-2">
+              <Button 
+                size="sm" 
+                variant="secondary"
+                className="bg-gradient-to-r from-green-600/30 to-green-400/20 hover:from-green-600/40 hover:to-green-400/30"
+                onClick={quickBuy}
+              >
+                <CirclePlus className="h-4 w-4 mr-2" />
+                Quick Buy
+              </Button>
+              <Button 
+                size="sm" 
+                variant="secondary"
+                className="bg-gradient-to-r from-red-600/30 to-red-400/20 hover:from-red-600/40 hover:to-red-400/30"
+                onClick={quickSell}
+              >
+                <CircleMinus className="h-4 w-4 mr-2" />
+                Quick Sell
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="border-red-500/30 hover:bg-red-500/10 text-red-400"
+                onClick={sellAll}
+              >
+                Sell All
+              </Button>
             </div>
             
             {/* Gas Settings Summary */}
-            <div className="flex items-center justify-between text-xs bg-black/40 p-2 rounded">
+            <div className="flex items-center justify-between text-xs bg-black/40 p-2 rounded backdrop-blur-md">
               <div className="flex items-center space-x-1">
                 <Fuel className="h-3 w-3" />
-                <span>Gas: {getGasPriorityValue(gasPriority)}</span>
+                <span>Gas: {tradeSettings.gasPriority}</span>
               </div>
-              <span>Slippage: {isAutoSlippage ? 'Auto' : `${slippageTolerance}%`}</span>
+              <span>Slippage: {tradeSettings.autoSlippage ? 'Auto' : `${tradeSettings.slippageTolerance}%`}</span>
             </div>
             
             <Button 
-              className="w-full"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all"
               onClick={executeTrade}
               disabled={!connected || isBuying || isSelling}
               variant={tradeType === 'buy' ? "default" : "destructive"}
@@ -455,7 +647,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
             </Button>
             
             {tradeResult && (
-              <div className={`p-3 rounded-md ${tradeResult.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}`}>
+              <div className={`p-3 rounded-md backdrop-blur-md ${tradeResult.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'}`}>
                 <div className="flex items-start">
                   <div className={`p-1 rounded-full mr-2 ${tradeResult.success ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                     {tradeResult.success ? (
@@ -491,7 +683,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
             
             <div className="space-y-3">
               {trendingTokens.map((token, index) => (
-                <div key={index} className="flex items-center justify-between bg-black/30 hover:bg-black/40 transition-colors p-3 rounded-lg">
+                <div key={index} className="flex items-center justify-between bg-gradient-to-r from-black/40 to-black/20 hover:from-black/50 hover:to-black/30 transition-colors p-3 rounded-lg backdrop-blur-md">
                   <div className="flex items-center space-x-3">
                     {token.logo ? (
                       <img src={token.logo} alt={token.name} className="h-8 w-8 rounded-full" />
@@ -506,7 +698,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${token.price.toFixed(6)}</p>
+                    <p className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">${token.price.toFixed(6)}</p>
                     <p className={`text-xs ${token.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
                     </p>
@@ -517,7 +709,7 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
 
             <div className="pt-2">
               <div className="text-sm font-medium mb-2">Market Sentiment</div>
-              <div className="bg-black/30 p-3 rounded-md">
+              <div className="bg-black/30 p-3 rounded-md backdrop-blur-md">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm">Bullish</span>
                   <span className="text-green-500 text-sm">64%</span>
@@ -534,14 +726,14 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-medium">Whale Activity</h3>
-              <div className="text-xs text-gray-400">
-                Live updates
+              <div className="text-xs text-gray-400 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" /> $10k+ trades
               </div>
             </div>
             
             <div className="space-y-3">
               {whaleActivity.map((activity, index) => (
-                <div key={index} className="bg-black/30 hover:bg-black/40 transition-colors p-3 rounded-lg">
+                <div key={index} className="bg-gradient-to-r from-black/40 to-black/20 hover:from-black/50 hover:to-black/30 p-3 rounded-lg backdrop-blur-md">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <div className={`p-1 rounded-full ${activity.action === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
@@ -563,9 +755,14 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
                     {activity.price && (
                       <span className="text-gray-400 ml-1">@ ${activity.price.toFixed(6)}</span>
                     )}
+                    {activity.dollarValue && (
+                      <span className="ml-1 text-xs bg-gradient-to-r from-amber-500 to-yellow-300 bg-clip-text text-transparent font-semibold">
+                        (≈${activity.dollarValue.toLocaleString()})
+                      </span>
+                    )}
                   </p>
                   <div className="mt-2 flex gap-2">
-                    <Button variant="secondary" size="sm" className="flex-1">
+                    <Button variant="secondary" size="sm" className="flex-1 bg-gradient-to-r from-blue-700/30 to-blue-500/20 hover:from-blue-700/40 hover:to-blue-500/30">
                       View Token
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1">
@@ -576,13 +773,13 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
               ))}
             </div>
             
-            <div className="bg-black/30 p-3 rounded-md">
+            <div className="bg-black/30 p-3 rounded-md backdrop-blur-md">
               <p className="text-sm mb-2 flex justify-between">
                 <span>Whale Alert Settings</span>
                 <Switch checked={true} />
               </p>
               <p className="text-xs text-gray-400">
-                Get notified when whale activity is detected on tokens you follow.
+                Get notified when whale activity (trades over $10,000) is detected on tokens you follow.
               </p>
             </div>
           </CardContent>
@@ -590,43 +787,43 @@ const EnhancedTradingInterface: React.FC<EnhancedTradingInterfaceProps> = ({
         
         <TabsContent value="analytics">
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TokenBondingCurve tokenSymbol={tokenSymbol} currentPrice={tokenPrice} />
-              <DexScreenerListingProgress tokenSymbol={tokenSymbol} progress={65} />
-            </div>
-            
-            <Card className="bg-black/30 border-gray-800">
+            <Card className="bg-black/30 border-gray-800 shadow-inner">
               <CardContent className="p-4">
                 <div className="text-sm font-medium mb-2">Token Analytics</div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-black/40 p-2 rounded">
+                    <div className="bg-gradient-to-br from-black/40 to-indigo-950/10 p-2 rounded backdrop-blur-md">
                       <div className="text-xs text-gray-400">24h Volume</div>
-                      <div className="font-medium">$124,560</div>
+                      <div className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">$124,560</div>
                     </div>
-                    <div className="bg-black/40 p-2 rounded">
+                    <div className="bg-gradient-to-br from-black/40 to-indigo-950/10 p-2 rounded backdrop-blur-md">
                       <div className="text-xs text-gray-400">Market Cap</div>
-                      <div className="font-medium">$1.5M</div>
+                      <div className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">$1.5M</div>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-black/40 p-2 rounded">
+                    <div className="bg-gradient-to-br from-black/40 to-indigo-950/10 p-2 rounded backdrop-blur-md">
                       <div className="text-xs text-gray-400">Holders</div>
-                      <div className="font-medium">843</div>
+                      <div className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">843</div>
                     </div>
-                    <div className="bg-black/40 p-2 rounded">
+                    <div className="bg-gradient-to-br from-black/40 to-indigo-950/10 p-2 rounded backdrop-blur-md">
                       <div className="text-xs text-gray-400">Trades (24h)</div>
-                      <div className="font-medium">324</div>
+                      <div className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">324</div>
                     </div>
-                    <div className="bg-black/40 p-2 rounded">
+                    <div className="bg-gradient-to-br from-black/40 to-indigo-950/10 p-2 rounded backdrop-blur-md">
                       <div className="text-xs text-gray-400">Buys / Sells</div>
-                      <div className="font-medium">65% / 35%</div>
+                      <div className="font-medium bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">65% / 35%</div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <TokenBondingCurve tokenSymbol={tokenSymbol} currentPrice={tokenPrice} />
+              <DexScreenerListingProgress tokenSymbol={tokenSymbol} progress={65} />
+            </div>
           </CardContent>
         </TabsContent>
       </Tabs>
