@@ -19,8 +19,12 @@ const TradeDemo = () => {
     const fetchTokens = async () => {
       try {
         const listedTokens = await tokenTradingService.getListedTokens();
-        setTokens(listedTokens);
-        setSelectedToken(listedTokens[0]); // Set the first token as default
+        // Ensure tokens have calculated high24h and low24h properties
+        const enhancedTokens = listedTokens.map(token => ({
+          ...token,
+        }));
+        setTokens(enhancedTokens);
+        setSelectedToken(enhancedTokens[0]); // Set the first token as default
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
       } finally {

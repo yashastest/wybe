@@ -9,7 +9,7 @@ interface TradingActivityFeedProps {
 
 interface TradeActivity {
   id: string;
-  type: 'buy' | 'sell';
+  type: 'buy' | 'sell';  // Explicitly typed as union of 'buy' or 'sell'
   amount: number;
   price: number;
   timestamp: string;
@@ -27,8 +27,8 @@ const TradingActivityFeed: React.FC<TradingActivityFeedProps> = ({ tokenSymbol }
   // Simulate new trades coming in
   useEffect(() => {
     const interval = setInterval(() => {
-      // Generate random trade
-      const newTrade = {
+      // Generate random trade with explicit type
+      const newTrade: TradeActivity = {
         id: Date.now().toString(),
         type: Math.random() > 0.5 ? 'buy' : 'sell',
         amount: Math.floor(Math.random() * 1000) + 100,
