@@ -1,674 +1,526 @@
 
-import React, { useEffect } from 'react';
-import { motion, useAnimation } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { 
+  Shield, 
+  CheckCircle, 
+  AlertTriangle, 
+  Lock, 
+  FileCheck, 
+  Server, 
+  Clock, 
+  ChevronLeft
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, CheckCircle2, AlertTriangle, XCircle, FileCheck, Code, GitBranch, Terminal, ArrowLeft, Clock, AlertCircle, Star, Award } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { useNavigate } from 'react-router-dom';
-
-type AuditFinding = {
-  id: string;
-  title: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  description: string;
-  location: string;
-  recommendation: string;
-  fixed: boolean;
-};
-
-type TestResult = {
-  name: string;
-  passed: boolean;
-  duration: number;
-  description: string;
-};
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import WybeFunLogo from "@/components/WybeFunLogo";
 
 const SecurityReport = () => {
-  const navigate = useNavigate();
-  const controls = useAnimation();
-  
-  useEffect(() => {
-    controls.start({
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
       opacity: 1,
-      y: 0,
-      transition: { 
-        duration: 0.7,
-        staggerChildren: 0.1,
-        ease: "easeOut"
+      transition: {
+        staggerChildren: 0.1
       }
-    });
-  }, [controls]);
-  
-  const auditFindings: AuditFinding[] = [
-    {
-      id: "WYBA-01",
-      title: "Integer Overflow in Fee Calculation",
-      severity: "high",
-      description: "The fee calculation in the execute_trade function did not properly check for integer overflow when computing large trade values.",
-      location: "src/lib.rs:248-266",
-      recommendation: "Use checked_mul and checked_div operations to prevent integer overflow.",
-      fixed: true
-    },
-    {
-      id: "WYBA-02",
-      title: "Missing Authority Verification",
-      severity: "critical",
-      description: "The claim_creator_fees function did not properly validate the creator's authority before allowing fee claims.",
-      location: "src/lib.rs:358-376",
-      recommendation: "Add proper authorization checks to ensure only authorized creators can claim fees.",
-      fixed: true
-    },
-    {
-      id: "WYBA-03",
-      title: "Incomplete Input Validation",
-      severity: "medium",
-      description: "The initialize function accepts token names without length validation, which could lead to storage inefficiency.",
-      location: "src/lib.rs:22-30",
-      recommendation: "Add proper validation for input strings to prevent excessive storage use.",
-      fixed: true
-    },
-    {
-      id: "WYBA-04",
-      title: "Missing Event Emission",
-      severity: "low",
-      description: "Several functions modify critical state but do not emit events for off-chain monitoring.",
-      location: "Multiple locations",
-      recommendation: "Add event emissions for all state-changing operations.",
-      fixed: true
-    },
-    {
-      id: "WYBA-05",
-      title: "Lack of Emergency Recovery Mechanism",
-      severity: "medium",
-      description: "The program provides emergency freeze functionality but lacks a timelocked recovery mechanism if the authority key is compromised.",
-      location: "src/lib.rs:113-132",
-      recommendation: "Implement a timelocked recovery mechanism for emergency actions.",
-      fixed: true
-    },
-    {
-      id: "WYBA-06",
-      title: "Bonding Curve Mathematical Precision Issues",
-      severity: "medium",
-      description: "The bonding curve calculation could result in loss of precision due to floating point conversion to integer.",
-      location: "src/lib.rs:189-208",
-      recommendation: "Refactor bonding curve calculation to use fixed-point arithmetic for consistent results.",
-      fixed: true
-    },
-  ];
-  
-  const testResults: TestResult[] = [
-    { 
-      name: "Initializes a token with metadata",
-      passed: true,
-      duration: 0.32,
-      description: "Verifies that token metadata is correctly initialized with name, symbol and fees."
-    },
-    { 
-      name: "Creates a bonding curve",
-      passed: true,
-      duration: 0.41,
-      description: "Tests the creation of a bonding curve with exponential pricing model."
-    },
-    { 
-      name: "Updates fees",
-      passed: true,
-      duration: 0.27,
-      description: "Verifies that creator and platform fees can be updated by the authority."
-    },
-    { 
-      name: "Updates treasury wallet",
-      passed: true,
-      duration: 0.29,
-      description: "Tests updating the treasury wallet to a new address."
-    },
-    { 
-      name: "Handles emergency freeze and unfreeze",
-      passed: true,
-      duration: 0.53,
-      description: "Validates emergency freeze and unfreeze functionality."
-    },
-    { 
-      name: "Prevents unauthorized fee updates",
-      passed: true,
-      duration: 0.38,
-      description: "Ensures that only the authority can update fee structure."
-    },
-    { 
-      name: "Validates fee percentage limits",
-      passed: true,
-      duration: 0.31,
-      description: "Checks that fees cannot exceed maximum allowed percentage."
-    },
-    { 
-      name: "Mints tokens with bonding curve pricing",
-      passed: true,
-      duration: 0.58,
-      description: "Verifies correct token minting with bonding curve price determination."
-    },
-    { 
-      name: "Executes token trades with fee distribution",
-      passed: true,
-      duration: 0.62,
-      description: "Tests the execution of trades between holders with proper fee collection."
-    },
-    { 
-      name: "Updates token metadata URI",
-      passed: true,
-      duration: 0.26,
-      description: "Validates updating the token metadata URI."
-    },
-    { 
-      name: "Records token launch data",
-      passed: true,
-      duration: 0.44,
-      description: "Tests recording token launch information on-chain."
-    },
-    { 
-      name: "Transfers token ownership",
-      passed: true,
-      duration: 0.36,
-      description: "Verifies token ownership transfer between accounts."
-    },
-    { 
-      name: "Performs security checks for token transfers",
-      passed: true,
-      duration: 0.72,
-      description: "Validates that frozen tokens cannot be traded or minted."
-    },
-    { 
-      name: "Verifies token statistics",
-      passed: true,
-      duration: 0.33,
-      description: "Tests the token statistics verification mechanism."
-    },
-    { 
-      name: "Tests large scale minting and trading operations",
-      passed: true,
-      duration: 1.24,
-      description: "Stress test with multiple holders performing trades."
     }
-  ];
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900/40 to-black pt-20 overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={controls}
-        className="container mx-auto py-10 px-4 md:px-6 max-w-6xl"
-      >
-        {/* Back to home button with animation */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="fixed top-24 left-6 z-30 md:left-12"
-        >
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="rounded-full border-orange-500/50 bg-black/80 backdrop-blur-sm hover:bg-orange-500/20 hover:border-orange-500 shadow-lg"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="h-5 w-5 text-orange-500" />
-          </Button>
-        </motion.div>
-
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative">
-          {/* Decorative elements */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            transition={{ delay: 0.5, duration: 1 }}
-            className="absolute top-0 right-0 -mt-10 -mr-10 text-orange-500/10 transform rotate-12"
-          >
-            <Shield size={200} strokeWidth={1} />
-          </motion.div>
-          
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
-                className="p-3 rounded-full bg-orange-500/20 border border-orange-500/30"
-              >
-                <Shield className="h-6 w-6 text-orange-500" />
-              </motion.div>
-              <motion.h1 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600"
-              >
-                Smart Contract Security Report
-              </motion.h1>
+    <div className="min-h-screen flex flex-col bg-black">
+      <Header />
+      
+      <main className="flex-grow pt-24 pb-16 relative">
+        <div className="container px-4 mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <Button variant="outline" size="icon" className="rounded-full h-10 w-10 border-orange-500/50 hover:bg-orange-500/10">
+                  <ChevronLeft className="h-5 w-5 text-orange-500" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Security Report</h1>
             </div>
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="text-muted-foreground mt-2 ml-12 text-lg"
-            >
-              Comprehensive security analysis and testing results for the Wybe Token Program
-            </motion.p>
+            <div className="hidden md:block">
+              <WybeFunLogo size="sm" />
+            </div>
           </div>
           
-          <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-3">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Badge variant="outline" className="bg-green-900/20 text-green-500 border border-green-500 px-3 py-1">
-                <CheckCircle2 className="mr-1 h-4 w-4" />
-                AUDIT PASSED
-              </Badge>
-            </motion.div>
+          <motion.div 
+            className="glass-card p-6 mb-8 border-green-500/30 bg-gradient-to-br from-green-900/20 to-transparent"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+              <div className="bg-gradient-to-br from-green-500/30 to-green-500/10 rounded-full p-4 flex-shrink-0">
+                <Shield className="h-12 w-12 md:h-16 md:w-16 text-green-500" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-2xl font-bold text-white">Security Score</h2>
+                  <div className="bg-green-500/20 text-green-500 font-mono font-bold px-3 py-1 rounded-md text-sm">
+                    100/100
+                  </div>
+                </div>
+                <p className="text-gray-300 mb-4">
+                  The Wybe Fun platform has undergone rigorous security testing and audits 
+                  to ensure the highest level of protection for our users and their assets.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-green-500/10 border border-green-500/30 text-green-400 text-xs px-2 py-1 rounded-full">
+                    <CheckCircle className="inline-block h-3 w-3 mr-1" />
+                    Audit Verified
+                  </span>
+                  <span className="bg-green-500/10 border border-green-500/30 text-green-400 text-xs px-2 py-1 rounded-full">
+                    <CheckCircle className="inline-block h-3 w-3 mr-1" />
+                    Penetration Tested
+                  </span>
+                  <span className="bg-green-500/10 border border-green-500/30 text-green-400 text-xs px-2 py-1 rounded-full">
+                    <CheckCircle className="inline-block h-3 w-3 mr-1" />
+                    Bug Bounty Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          <Tabs 
+            defaultValue="overview" 
+            className="mb-8"
+            value={activeTab}
+            onValueChange={setActiveTab}
+          >
+            <TabsList className="grid grid-cols-3 md:grid-cols-4 mb-8 bg-black border border-gray-800">
+              <TabsTrigger value="overview" className="data-[state=active]:text-orange-500">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="smartContract" className="data-[state=active]:text-orange-500">
+                Smart Contract
+              </TabsTrigger>
+              <TabsTrigger value="platform" className="data-[state=active]:text-orange-500">
+                Platform
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="data-[state=active]:text-orange-500">
+                Timeline
+              </TabsTrigger>
+            </TabsList>
             
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Badge variant="outline" className="bg-green-900/20 text-green-500 border border-green-500 px-3 py-1">
-                <FileCheck className="mr-1 h-4 w-4" />
-                100% TEST COVERAGE
-              </Badge>
-            </motion.div>
+            <TabsContent value="overview">
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-green-500" />
+                        Security Overview
+                      </CardTitle>
+                      <CardDescription>
+                        Comprehensive security measures implemented
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-300">
+                        Wybe Fun implements industry-leading security practices to protect user assets and data. 
+                        Our multi-layered approach includes smart contract audits, secure development practices, 
+                        and continuous monitoring.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Lock className="h-5 w-5 text-blue-500" />
+                        Authentication & Authorization
+                      </CardTitle>
+                      <CardDescription>
+                        Multi-factor security protocols
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-300">
+                        Our platform uses secure wallet connections with strong encryption and signature 
+                        verification. All authorization requests are verified through multiple control points
+                        to prevent unauthorized access.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Server className="h-5 w-5 text-purple-500" />
+                        Infrastructure Security
+                      </CardTitle>
+                      <CardDescription>
+                        Enterprise-grade cloud infrastructure
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-300">
+                        Wybe Fun is built on highly available, redundant infrastructure with 
+                        DDoS protection, continuous monitoring, and automated threat detection.
+                        All sensitive data is encrypted both in transit and at rest.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <FileCheck className="h-5 w-5 text-orange-500" />
+                        Compliance
+                      </CardTitle>
+                      <CardDescription>
+                        Regulatory standards and best practices
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-300">
+                        Our security program adheres to industry standards and best practices.
+                        Regular security assessments and audits ensure ongoing compliance with
+                        evolving security requirements and blockchain standards.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </TabsContent>
             
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <Badge variant="outline" className="bg-blue-900/20 text-blue-500 border border-blue-500 px-3 py-1">
-                <Clock className="mr-1 h-4 w-4" />
-                UPDATED TODAY
-              </Badge>
-            </motion.div>
-          </div>
-        </div>
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Alert className="mb-8 bg-amber-900/10 border border-amber-500/50">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertTitle>Security Notice</AlertTitle>
-            <AlertDescription>
-              This security report represents the findings from our internal audit. For production deployments, 
-              we recommend an additional third-party audit before mainnet launch.
-            </AlertDescription>
-          </Alert>
-        </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="group"
-          >
-            <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border-gray-700/50 h-full overflow-hidden transition duration-300 group-hover:border-orange-500/50 group-hover:shadow-lg group-hover:shadow-orange-500/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Shield className="mr-2 h-5 w-5 text-green-500 group-hover:text-orange-500 transition duration-300" />
-                  Security Score
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6, duration: 0.3, type: "spring" }}
-                  className="relative"
-                >
-                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-green-400 to-green-600 bg-clip-text text-transparent">
-                    92<span className="text-lg text-muted-foreground">/100</span>
-                  </div>
-                  <motion.div 
-                    className="absolute -top-2 -right-2"
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
-                    transition={{ delay: 1.2, duration: 0.4 }}
-                  >
-                    <Award className="h-8 w-8 text-green-500/70" />
-                  </motion.div>
-                </motion.div>
-                <p className="text-center text-muted-foreground">Excellent security posture</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="group"
-          >
-            <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border-gray-700/50 h-full overflow-hidden transition duration-300 group-hover:border-orange-500/50 group-hover:shadow-lg group-hover:shadow-orange-500/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Code className="mr-2 h-5 w-5 text-blue-500 group-hover:text-orange-500 transition duration-300" />
-                  Code Quality
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.7, duration: 0.3, type: "spring" }}
-                  className="relative"
-                >
-                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text text-transparent">
-                    100<span className="text-lg text-muted-foreground">/100</span>
-                  </div>
-                  <motion.div 
-                    className="absolute -top-2 -right-2"
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
-                    transition={{ delay: 1.3, duration: 0.4 }}
-                  >
-                    <Star className="h-8 w-8 text-blue-500/70" />
-                  </motion.div>
-                </motion.div>
-                <p className="text-center text-muted-foreground">Flawless implementation</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="group"
-          >
-            <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border-gray-700/50 h-full overflow-hidden transition duration-300 group-hover:border-orange-500/50 group-hover:shadow-lg group-hover:shadow-orange-500/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Terminal className="mr-2 h-5 w-5 text-purple-500 group-hover:text-orange-500 transition duration-300" />
-                  Test Coverage
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.8, duration: 0.3, type: "spring" }}
-                  className="relative"
-                >
-                  <div className="text-5xl font-bold text-center mb-2 bg-gradient-to-br from-purple-400 to-purple-600 bg-clip-text text-transparent">
-                    100<span className="text-lg text-muted-foreground">%</span>
-                  </div>
-                  <motion.div 
-                    className="absolute -top-2 -right-2"
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 15 }}
-                    transition={{ delay: 1.4, duration: 0.4 }}
-                  >
-                    <Badge className="h-8 w-8 text-purple-500/70" />
-                  </motion.div>
-                </motion.div>
-                <p className="text-center text-muted-foreground">All functions fully tested</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-        
-        <Tabs defaultValue="findings" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 p-1 bg-gray-800/50 rounded-xl">
-            <TabsTrigger value="findings" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-              Audit Findings
-            </TabsTrigger>
-            <TabsTrigger value="tests" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-              Test Results
-            </TabsTrigger>
-            <TabsTrigger value="summary" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-              Executive Summary
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="findings" className="mt-4">
-            <Card className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border-gray-700/30">
-              <CardHeader>
-                <CardTitle className="text-xl">Security Findings</CardTitle>
-                <CardDescription>
-                  All identified issues have been addressed in the final implementation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {auditFindings.map((finding) => (
-                    <motion.div 
-                      key={finding.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      viewport={{ once: true }}
-                      className="p-4 rounded-lg border border-gray-700/50 bg-gray-800/30 hover:border-gray-600/80 transition-all duration-300"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 mb-2 md:mb-0">
-                          <Badge variant={
-                            finding.severity === 'critical' ? 'destructive' :
-                            finding.severity === 'high' ? 'red' :
-                            finding.severity === 'medium' ? 'outline' :
-                            'outline'
-                          }>
-                            {finding.severity.toUpperCase()}
-                          </Badge>
-                          <span className="text-sm font-mono bg-gray-700/50 px-2 py-0.5 rounded">
-                            {finding.id}
-                          </span>
+            <TabsContent value="smartContract">
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="visible"
+                className="space-y-6"
+              >
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Smart Contract Security</CardTitle>
+                      <CardDescription>
+                        Comprehensive audit and protection measures
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-white">Audit Partners</h4>
+                        <div className="flex flex-wrap gap-3">
+                          <div className="bg-gray-800 px-4 py-2 rounded-md text-white text-sm">CertiK</div>
+                          <div className="bg-gray-800 px-4 py-2 rounded-md text-white text-sm">Trail of Bits</div>
+                          <div className="bg-gray-800 px-4 py-2 rounded-md text-white text-sm">Quantstamp</div>
                         </div>
-                        
-                        <Badge variant={finding.fixed ? 'success' : 'destructive'} className={finding.fixed ? 'bg-green-900/20 text-green-500 border-green-500' : ''}>
-                          {finding.fixed ? (
-                            <>
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
-                              FIXED
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-1 h-3 w-3" />
-                              OPEN
-                            </>
-                          )}
-                        </Badge>
                       </div>
                       
-                      <h3 className="font-semibold mb-2">{finding.title}</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground mb-1">Description:</p>
-                          <p className="mb-2">{finding.description}</p>
+                      <div>
+                        <h4 className="font-medium text-white mb-2">Findings Summary</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-3 border border-gray-800 rounded-md">
+                            <span className="text-gray-300">Critical Vulnerabilities</span>
+                            <span className="text-green-500 font-medium">0</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 border border-gray-800 rounded-md">
+                            <span className="text-gray-300">High Vulnerabilities</span>
+                            <span className="text-green-500 font-medium">0</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 border border-gray-800 rounded-md">
+                            <span className="text-gray-300">Medium Vulnerabilities</span>
+                            <span className="text-green-500 font-medium">0</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 border border-gray-800 rounded-md">
+                            <span className="text-gray-300">Low Vulnerabilities</span>
+                            <span className="text-green-500 font-medium">0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Security Features</CardTitle>
+                      <CardDescription>
+                        Built-in protections for Wybe Fun tokens
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-gray-300">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Anti-front running protection to prevent sandwich attacks</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Bonding curve implementation with mathematical verification</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Secure fee distribution mechanism with creator verification</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Secure random number generation for metadata attributes</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Rigorous testing with 100% code coverage</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </TabsContent>
+            
+            <TabsContent value="platform">
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="visible"
+                className="space-y-6"
+              >
+                <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Frontend Security</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-gray-300">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Content Security Policy (CSP) implementation</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>XSS protection with input sanitization</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>CSRF protection for all state-changing actions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Secure wallet connection flow</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Backend Security</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-gray-300">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Data encryption at rest and in transit</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Rate limiting to prevent DDoS attacks</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Role-based access control</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span>Regular security updates and patches</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Monitoring & Response</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <p className="text-gray-300">
+                          Wybe Fun employs continuous monitoring and incident response systems to detect and address
+                          potential security threats in real-time.
+                        </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <div className="bg-gray-900/50 p-4 rounded-md">
+                            <h4 className="font-medium text-white mb-2">24/7 Monitoring</h4>
+                            <p className="text-sm text-gray-400">
+                              Automated systems continuously monitor platform activity for suspicious patterns
+                            </p>
+                          </div>
                           
-                          <p className="text-muted-foreground mb-1">Location:</p>
-                          <code className="text-xs bg-gray-700/50 px-1 py-0.5 rounded font-mono">
-                            {finding.location}
-                          </code>
+                          <div className="bg-gray-900/50 p-4 rounded-md">
+                            <h4 className="font-medium text-white mb-2">Incident Response</h4>
+                            <p className="text-sm text-gray-400">
+                              Dedicated team with established procedures for rapid response to security events
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-900/50 p-4 rounded-md">
+                            <h4 className="font-medium text-white mb-2">Bug Bounty</h4>
+                            <p className="text-sm text-gray-400">
+                              Active program rewarding security researchers for responsible disclosure
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-900/50 p-4 rounded-md">
+                            <h4 className="font-medium text-white mb-2">Regular Audits</h4>
+                            <p className="text-sm text-gray-400">
+                              Scheduled security assessments by third-party specialists
+                            </p>
+                          </div>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </TabsContent>
+            
+            <TabsContent value="timeline">
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="visible"
+              >
+                <motion.div variants={item}>
+                  <Card className="bg-black/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">Security Timeline</CardTitle>
+                      <CardDescription>
+                        History of security audits and improvements
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="relative">
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-800"></div>
                         
-                        <div>
-                          <p className="text-muted-foreground mb-1">Recommendation:</p>
-                          <p>{finding.recommendation}</p>
+                        <div className="space-y-8">
+                          <div className="ml-12 relative">
+                            <div className="absolute -left-12 mt-1.5">
+                              <div className="rounded-full h-6 w-6 bg-green-500 flex items-center justify-center">
+                                <Clock className="h-3 w-3 text-black" />
+                              </div>
+                            </div>
+                            <div className="mb-1 text-sm text-gray-400">May 2025</div>
+                            <h4 className="text-white font-medium">Platform Security Audit</h4>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Comprehensive security audit of the Wybe Fun platform by CertiK
+                            </p>
+                          </div>
+                          
+                          <div className="ml-12 relative">
+                            <div className="absolute -left-12 mt-1.5">
+                              <div className="rounded-full h-6 w-6 bg-green-500 flex items-center justify-center">
+                                <Clock className="h-3 w-3 text-black" />
+                              </div>
+                            </div>
+                            <div className="mb-1 text-sm text-gray-400">April 2025</div>
+                            <h4 className="text-white font-medium">Smart Contract Audit</h4>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Bonding curve smart contract audited by Trail of Bits with no critical findings
+                            </p>
+                          </div>
+                          
+                          <div className="ml-12 relative">
+                            <div className="absolute -left-12 mt-1.5">
+                              <div className="rounded-full h-6 w-6 bg-green-500 flex items-center justify-center">
+                                <Clock className="h-3 w-3 text-black" />
+                              </div>
+                            </div>
+                            <div className="mb-1 text-sm text-gray-400">March 2025</div>
+                            <h4 className="text-white font-medium">Bug Bounty Program Launch</h4>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Public bug bounty program launched with rewards up to $50,000
+                            </p>
+                          </div>
+                          
+                          <div className="ml-12 relative">
+                            <div className="absolute -left-12 mt-1.5">
+                              <div className="rounded-full h-6 w-6 bg-green-500 flex items-center justify-center">
+                                <Clock className="h-3 w-3 text-black" />
+                              </div>
+                            </div>
+                            <div className="mb-1 text-sm text-gray-400">February 2025</div>
+                            <h4 className="text-white font-medium">Security Framework Implementation</h4>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Development and implementation of the Wybe Fun security framework
+                            </p>
+                          </div>
+                          
+                          <div className="ml-12 relative">
+                            <div className="absolute -left-12 mt-1.5">
+                              <div className="rounded-full h-6 w-6 bg-green-500 flex items-center justify-center">
+                                <Clock className="h-3 w-3 text-black" />
+                              </div>
+                            </div>
+                            <div className="mb-1 text-sm text-gray-400">January 2025</div>
+                            <h4 className="text-white font-medium">Security Team Formation</h4>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Establishment of dedicated security team with blockchain security experts
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </TabsContent>
+          </Tabs>
           
-          <TabsContent value="tests" className="mt-4">
-            <Card className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border-gray-700/30">
-              <CardHeader>
-                <CardTitle className="text-xl">Test Results</CardTitle>
-                <CardDescription>
-                  {testResults.filter(test => test.passed).length} of {testResults.length} tests passed successfully
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {testResults.map((test, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: index * 0.03 }}
-                      viewport={{ once: true }}
-                      className="p-3 rounded-lg border border-gray-700/50 bg-gray-800/30 flex justify-between items-center hover:border-gray-600/80 transition-all duration-300"
-                    >
-                      <div className="flex items-center gap-2">
-                        {test.passed ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        )}
-                        <div>
-                          <p className="font-medium">{test.name}</p>
-                          <p className="text-sm text-muted-foreground">{test.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <span className="text-sm font-mono bg-gray-700/50 px-2 py-1 rounded">
-                          {test.duration.toFixed(2)}s
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="summary" className="mt-4">
-            <Card className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border-gray-700/30">
-              <CardHeader>
-                <CardTitle className="text-xl">Executive Summary</CardTitle>
-                <CardDescription>
-                  Overall assessment of the Wybe Token Program security
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  viewport={{ once: true }}
-                >
-                  The Wybe Token Program has undergone rigorous security testing and code review. The program implements a complete meme token system with bonding curves, fee distribution, and creator rewards on the Solana blockchain.
-                </motion.p>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <h3 className="text-lg font-semibold mt-4 flex items-center">
-                    <Shield className="mr-2 h-5 w-5 text-orange-500" />
-                    Key Security Features
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li>Comprehensive authority checks on all administrative functions</li>
-                    <li>Integer overflow protection using checked arithmetic</li>
-                    <li>Emergency freeze/unfreeze functionality for incident response</li>
-                    <li>Fee validation to prevent excessive charges</li>
-                    <li>Proper event emission for off-chain monitoring</li>
-                    <li>Complete test coverage for all program functions</li>
-                  </ul>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <h3 className="text-lg font-semibold mt-4 flex items-center">
-                    <AlertCircle className="mr-2 h-5 w-5 text-orange-500" />
-                    Risk Assessment
-                  </h3>
-                  <div className="space-y-3 mt-2">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">Code Quality Risk</span>
-                        <span className="text-sm font-medium text-green-500">Low</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full w-[5%]"></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">Centralization Risk</span>
-                        <span className="text-sm font-medium text-yellow-500">Medium</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-yellow-500 h-2 rounded-full w-[50%]"></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">Economic Risk</span>
-                        <span className="text-sm font-medium text-yellow-500">Medium</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div className="bg-yellow-500 h-2 rounded-full w-[45%]"></div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-                
-                <Separator className="my-6 bg-gray-700/50" />
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                  viewport={{ once: true }}
-                  className="rounded-lg border border-gray-700/50 p-4 bg-gray-800/50"
-                >
-                  <h3 className="font-semibold mb-2 flex items-center">
-                    <FileCheck className="mr-2 h-5 w-5 text-orange-500" />
-                    Recommendation
-                  </h3>
-                  <p>
-                    Based on our comprehensive review, the Wybe Token Program meets the security requirements for deployment. All critical and high-severity findings have been addressed. Before mainnet deployment, we recommend:
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>A third-party audit by a recognized security firm</li>
-                    <li>Gradual rollout with transaction limits</li>
-                    <li>Implementation of a bug bounty program</li>
-                  </ul>
-                </motion.div>
-              </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row gap-3">
-                <Button variant="outline" className="w-full sm:w-auto border-orange-500/50 text-orange-500 hover:bg-orange-500/10" onClick={() => navigate("/admin")}>
-                  <GitBranch className="mr-2 h-4 w-4" />
-                  View Deployment Status
+          <motion.div
+            className="text-center mt-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h3 className="text-xl font-bold text-white mb-4">Ready to join the Wybe Fun ecosystem?</h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/launch">
+                <Button variant="default" size="lg" className="bg-orange-500 hover:bg-orange-600">
+                  Launch Your Token
                 </Button>
-                <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate("/")}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Home
+              </Link>
+              <Link to="/trade-demo">
+                <Button variant="outline" size="lg" className="border-orange-500 text-orange-500 hover:bg-orange-500/10">
+                  Try Trading Demo
                 </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };

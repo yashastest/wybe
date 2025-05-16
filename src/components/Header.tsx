@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X, Wallet, DollarSign, TrendingUp, Sparkles } from "lucide-react";
+import { Menu, Wallet, DollarSign, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useWallet } from "@/hooks/useWallet";
+import WybeFunLogo from "./WybeFunLogo";
 
 interface HeaderProps {
   adminOnly?: boolean;
@@ -26,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const { connected, address, connect, disconnect, isConnecting, isSolanaAvailable } = useWallet();
+  const { connected, address, connect, disconnect, isConnecting } = useWallet();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -83,42 +84,6 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     `${address.substring(0, 4)}...${address.substring(address.length - 4)}` : 
     '';
 
-  // Logo animation variants
-  const logoVariants = {
-    initial: { scale: 0.8, opacity: 0, rotate: -5 },
-    animate: { 
-      scale: 1, 
-      opacity: 1, 
-      rotate: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 260, 
-        damping: 20,
-        duration: 0.6 
-      }
-    },
-    hover: {
-      scale: 1.05,
-      rotate: [0, -2, 2, -2, 0],
-      transition: { duration: 0.5 }
-    }
-  };
-
-  // Sparkle animation for the logo
-  const sparkleVariants = {
-    initial: { opacity: 0, scale: 0 },
-    animate: { 
-      opacity: [0, 1, 0], 
-      scale: [0, 1, 0],
-      transition: { 
-        repeat: Infinity, 
-        duration: 2,
-        repeatType: "reverse",
-        delay: 1
-      }
-    }
-  };
-
   return (
     <header 
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 bg-black ${
@@ -127,71 +92,8 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 relative">
-            <motion.div
-              initial="initial"
-              animate="animate"
-              whileHover="hover"
-              variants={logoVariants}
-              className="flex items-center relative"
-            >
-              <div className="relative">
-                <motion.div
-                  className="absolute -top-1 -right-1"
-                  variants={sparkleVariants}
-                >
-                  <Sparkles size={16} className="text-orange-500" />
-                </motion.div>
-                
-                <motion.div 
-                  className="relative z-10"
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 0 rgba(249, 115, 22, 0)", 
-                      "0 0 15px rgba(249, 115, 22, 0.7)", 
-                      "0 0 0 rgba(249, 115, 22, 0)"
-                    ] 
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                >
-                  <img 
-                    src="/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png" 
-                    alt="Wybe Logo" 
-                    className="h-10 w-10 md:h-12 md:w-12 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" 
-                  />
-                </motion.div>
-              </div>
-              <div className="ml-2">
-                <motion.span 
-                  className="text-xl md:text-2xl lg:text-3xl text-white font-extrabold font-poppins tracking-wide italic"
-                  animate={{ 
-                    textShadow: [
-                      "0 0 7px rgba(255,255,255,0.3)",
-                      "0 0 10px rgba(255,255,255,0.5)",
-                      "0 0 7px rgba(255,255,255,0.3)"
-                    ]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                >
-                  Wybe
-                </motion.span>
-                <motion.div 
-                  className="h-0.5 bg-gradient-to-r from-orange-600 to-orange-400 mt-0.5"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                />
-              </div>
-            </motion.div>
-          </Link>
+          {/* Using our new WybeFunLogo component */}
+          <WybeFunLogo size="lg" />
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
