@@ -19,6 +19,7 @@ import { useTokenTrading } from '@/hooks/useTokenTrading';
 import { Loader2, Wallet as WalletIcon, CircleDollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import TokenPriceChart from '@/components/TokenPriceChart';
 
 const TradeDemo: React.FC = () => {
   useScrollToTop();
@@ -97,7 +98,7 @@ const TradeDemo: React.FC = () => {
     <div className="min-h-screen bg-[#0A0C12] text-white flex flex-col">
       <Header />
       
-      <main className="flex-grow px-0 sm:px-1 pt-16 pb-2">
+      <main className="flex-grow px-0 sm:px-1 pt-14 pb-1">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,7 +106,7 @@ const TradeDemo: React.FC = () => {
           className="max-w-[1920px] mx-auto"
         >
           {/* Top Trading Bar - Minimal and compact */}
-          <div className="flex items-center justify-between gap-1 mb-1 px-2 py-1 bg-[#0F1118]/90 border-b border-gray-800/50">
+          <div className="flex items-center justify-between gap-1 px-2 py-1 bg-[#0F1118]/90 border-b border-gray-800/50">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent hidden md:block">
                 Trading Terminal
@@ -141,25 +142,39 @@ const TradeDemo: React.FC = () => {
           </div>
           
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-[70vh] w-full rounded-lg bg-[#0F1118]/80 border border-gray-800">
+            <div className="flex flex-col items-center justify-center h-[60vh] w-full rounded-lg bg-[#0F1118]/80 border border-gray-800">
               <Loader2 className="h-10 w-10 text-[#8B5CF6] animate-spin mb-4" />
               <div className="text-xl font-medium">Loading trading terminal...</div>
             </div>
           ) : selectedToken && !isEnhancedMode ? (
-            // Standard trading terminal - More compact
-            <div className="w-full bg-[#0F1118]/80 border border-gray-800 backdrop-blur-md rounded-lg overflow-hidden">
-              <TradingTerminal 
-                tokens={tokens}
-                selectedToken={selectedToken}
-                onSelectToken={(token) => setSelectedToken(token)}
-              />
+            // Standard trading terminal - More compact with chart preview
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-1 mt-1">
+              <div className="md:col-span-5 bg-[#0F1118]/90 border border-gray-800/50 overflow-hidden rounded-lg">
+                <TradingTerminal 
+                  tokens={tokens}
+                  selectedToken={selectedToken}
+                  onSelectToken={(token) => setSelectedToken(token)}
+                />
+              </div>
+              <div className="md:col-span-2 grid grid-rows-2 gap-1">
+                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2 min-h-[180px]">
+                  <div className="text-sm font-medium mb-1">Price Chart</div>
+                  <div className="h-[120px]">
+                    <TokenPriceChart symbol={selectedToken.symbol} height="100%" compact={true} />
+                  </div>
+                </div>
+                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <SessionPortfolio tokens={[]} />
+                </div>
+              </div>
             </div>
           ) : selectedToken ? (
             // Enhanced trading terminal - Cockpit style with tighter spacing
-            <div className="space-y-1">
-              {/* Main trading interface */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-1">
-                <div className="lg:col-span-3 bg-[#0F1118]/90 border border-gray-800/50 backdrop-blur-md rounded-lg overflow-hidden">
+            <div className="space-y-1 mt-1">
+              {/* Main trading interface - tighter grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
+                {/* Trading terminal */}
+                <div className="lg:col-span-8 bg-[#0F1118]/90 border border-gray-800/50 backdrop-blur-md rounded-lg overflow-hidden">
                   <TradingTerminal 
                     tokens={tokens}
                     selectedToken={selectedToken}
@@ -168,7 +183,13 @@ const TradeDemo: React.FC = () => {
                 </div>
                 
                 {/* Right side enhanced panels - Stacked and compact */}
-                <div className="space-y-1">
+                <div className="lg:col-span-4 grid grid-cols-1 gap-1">
+                  <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                    <div className="text-xs uppercase font-medium text-gray-400 mb-1">Live Price Chart</div>
+                    <div className="h-[140px]">
+                      <TokenPriceChart symbol={selectedToken.symbol} height="100%" />
+                    </div>
+                  </div>
                   <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
                     <WhaleSniperPanel />
                   </div>
@@ -181,6 +202,7 @@ const TradeDemo: React.FC = () => {
               {/* Bottom enhanced panels - Tighter grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
                 <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Bonding Curve</div>
                   <BondingCurveVisualizer 
                     initialPrice={selectedToken.price}
                     currentSupply={selectedToken.totalSupply || 100000000}
@@ -189,6 +211,7 @@ const TradeDemo: React.FC = () => {
                   />
                 </div>
                 <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Market Sentiment</div>
                   <SentimentHeatmap 
                     tokens={[]}
                     onSelect={(symbol) => {
@@ -198,6 +221,7 @@ const TradeDemo: React.FC = () => {
                   />
                 </div>
                 <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <div className="text-xs uppercase font-medium text-gray-400 mb-1">Alerts</div>
                   <AlertsPanel />
                 </div>
               </div>

@@ -17,11 +17,15 @@ import { Skeleton } from './ui/skeleton';
 interface TokenPriceChartProps {
   symbol: string;
   timeframe?: '24h' | '7d' | '30d' | '90d';
+  height?: number | string;
+  compact?: boolean;
 }
 
 const TokenPriceChart: React.FC<TokenPriceChartProps> = ({ 
   symbol,
-  timeframe = '24h' 
+  timeframe = '24h',
+  height = "100%",
+  compact = false
 }) => {
   // Mock data - In a real app, this would be fetched from an API
   const generateMockData = () => {
@@ -76,22 +80,41 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart 
+        data={chartData} 
+        margin={compact ? { top: 0, right: 0, left: 0, bottom: 0 } : { top: 5, right: 5, left: 5, bottom: 5 }}
+      >
         <defs>
           <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3}/>
             <stop offset="95%" stopColor={strokeColor} stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <Area 
-          type="monotone" 
-          dataKey="price" 
-          stroke={strokeColor} 
-          strokeWidth={2}
-          fillOpacity={1} 
-          fill="url(#colorPrice)" 
-        />
+        {!compact && <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.2} />}
+        {!compact && (
+          <XAxis 
+            dataKey="time" 
+            tick={{fontSize: 10}} 
+            tickFormatter={(value) => {
+              if (timeframe === '24h') return `${value}h`;
+              return value.toString();
+            }} 
+            stroke="#666"
+            opacity={0.6}
+            height={15}
+          />
+        )}
+        {!compact && (
+          <YAxis 
+            domain={domain} 
+            tick={{fontSize: 10}} 
+            tickFormatter={(value) => value.toFixed(5)}
+            width={40}
+            stroke="#666"
+            opacity={0.6}
+          />
+        )}
         <Tooltip 
           formatter={(value: number) => [`$${value.toFixed(6)}`, "Price"]}
           labelFormatter={(label) => {
@@ -112,6 +135,14 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
             borderRadius: '4px',
             fontSize: '12px'
           }}
+        />
+        <Area 
+          type="monotone" 
+          dataKey="price" 
+          stroke={strokeColor} 
+          strokeWidth={compact ? 1 : 2}
+          fillOpacity={1} 
+          fill="url(#colorPrice)" 
         />
       </AreaChart>
     </ResponsiveContainer>

@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ListChecks, Rocket, ShieldCheck, Timer, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
+import { ListChecks, Rocket, ShieldCheck, Timer, HelpCircle, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
 import { useTokenTrading } from '@/hooks/useTokenTrading';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/tradeUtils';
 import DexScreenerListingProgress from '@/components/DexScreenerListingProgress';
+import TokenPriceChart from './TokenPriceChart';
 
 interface TradingInterfaceProps {
   tokens: { symbol: string; name: string; price: number; }[];
@@ -81,137 +82,144 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
   };
   
   return (
-    <Card className="bg-[#0F1118]/80 border-gray-800/50 shadow-none">
-      <CardHeader className="pb-1 px-3 pt-3">
-        <CardTitle className="text-base flex items-center">
-          Trade {selectedToken.name} ({selectedToken.symbol})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 p-3">
-        {/* Token Selector */}
-        <div>
-          <Label htmlFor="token" className="text-xs text-gray-400 mb-1 block">Token</Label>
-          <Select onValueChange={(value) => {
-            const selected = tokens.find(token => token.symbol === value);
-            if (selected) {
-              onSelectToken(selected);
-            }
-          }}>
-            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
-              <SelectValue placeholder="Select a token" defaultValue={selectedToken.symbol} />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1A1F2C] border-gray-700">
-              {tokens.map((token) => (
-                <SelectItem key={token.symbol} value={token.symbol}>
-                  {token.name} ({token.symbol})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Trade Action */}
-        <div>
-          <Label htmlFor="action" className="text-xs text-gray-400 mb-1 block">Action</Label>
-          <Select defaultValue={action} onValueChange={handleActionChange}>
-            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
-              <SelectValue placeholder="Select action" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1A1F2C] border-gray-700">
-              <SelectItem value="buy">Buy</SelectItem>
-              <SelectItem value="sell">Sell</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Amount Input */}
-        <div>
-          <Label htmlFor="amount" className="text-xs text-gray-400 mb-1 block">Amount ({action === 'buy' ? 'SOL' : selectedToken.symbol})</Label>
-          <Input 
-            type="number" 
-            id="amount" 
-            placeholder={`Enter amount to ${action}`} 
-            value={amount}
-            onChange={handleAmountChange}
-            className="h-8 text-sm bg-[#1A1F2C]/60 border-gray-700"
-          />
-        </div>
-        
-        {/* Slippage Tolerance */}
-        <div>
-          <Label htmlFor="slippage" className="text-xs text-gray-400 mb-1 block">Slippage</Label>
-          <Select defaultValue={slippage} onValueChange={handleSlippageChange}>
-            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
-              <SelectValue placeholder="Select slippage" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1A1F2C] border-gray-700">
-              <SelectItem value="0.5">0.5%</SelectItem>
-              <SelectItem value="1">1%</SelectItem>
-              <SelectItem value="2">2%</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Estimated Price Impact */}
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <Label className="text-xs text-gray-400">Price Impact</Label>
-            <span className="text-xs text-orange-500">15%</span>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-1">
+      {/* Chart Section */}
+      <div className="md:col-span-7 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-sm font-medium">
+            {selectedToken.name} ({selectedToken.symbol}) Price
           </div>
-          <Progress value={15} className="h-1.5 bg-gray-700">
-            <div className="h-full bg-orange-500 transition-all" style={{ width: '15%' }} />
-          </Progress>
-        </div>
-        
-        {/* Wallet Balances */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-            <div className="text-xs text-gray-400">SOL Balance</div>
-            <div className="font-medium text-sm">{solBalance.toFixed(4)}</div>
-          </div>
-          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
-            <div className="text-xs text-gray-400">{selectedToken.symbol} Balance</div>
-            <div className="font-medium text-sm">{tokenBalance.toFixed(2)}</div>
+          <div className="flex items-center">
+            <Badge variant="outline" className="text-xs bg-[#1A1F2C]/60 border-gray-700">24H</Badge>
           </div>
         </div>
+        <div className="h-[210px]">
+          <TokenPriceChart symbol={selectedToken.symbol} height="100%" />
+        </div>
         
-        {/* Trade Button */}
-        <Button 
-          className="w-full bg-orange-600 hover:bg-orange-700 h-8 text-sm mt-1"
-          onClick={executeTrade}
-          disabled={isExecuting}
-        >
-          {isExecuting ? 'Executing...' : `Swap ${amount || '0'} ${action === 'buy' ? 'SOL' : selectedToken.symbol} `}
-        </Button>
-        
-        {/* Token Stats */}
-        <div className="border-t border-gray-800/50 pt-2 mt-2">
-          <div className="text-xs font-medium mb-2 text-gray-300">Token Stats</div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="grid grid-cols-4 gap-1 mt-2">
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-1.5 rounded-md">
+            <div className="text-xs text-gray-400">Market Cap</div>
+            <div className="font-medium text-sm">${formatCurrency(tokenStats.marketCap)}</div>
+          </div>
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-1.5 rounded-md">
+            <div className="text-xs text-gray-400">24h Volume</div>
+            <div className="font-medium text-sm">${formatCurrency(tokenStats.volume24h)}</div>
+          </div>
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-1.5 rounded-md">
+            <div className="text-xs text-gray-400">Liquidity</div>
+            <div className="font-medium text-sm">${formatCurrency(tokenStats.liquidity)}</div>
+          </div>
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-1.5 rounded-md">
+            <div className="text-xs text-gray-400">Since Launch</div>
+            <div className="font-medium text-sm">{tokenStats.timeSinceLaunch}</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Trading Form */}
+      <div className="md:col-span-5 bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+        <div className="space-y-2">
+          {/* Token Selector */}
+          <div>
+            <Label htmlFor="token" className="text-xs text-gray-400 mb-1 block">Token</Label>
+            <Select onValueChange={(value) => {
+              const selected = tokens.find(token => token.symbol === value);
+              if (selected) {
+                onSelectToken(selected);
+              }
+            }}>
+              <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
+                <SelectValue placeholder="Select a token" defaultValue={selectedToken.symbol} />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1A1F2C] border-gray-700">
+                {tokens.map((token) => (
+                  <SelectItem key={token.symbol} value={token.symbol}>
+                    {token.name} ({token.symbol})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            {/* Trade Action */}
             <div>
-              <div className="text-gray-400">Market Cap</div>
-              <div className="font-medium">${formatCurrency(tokenStats.marketCap)}</div>
+              <Label htmlFor="action" className="text-xs text-gray-400 mb-1 block">Action</Label>
+              <Select defaultValue={action} onValueChange={handleActionChange}>
+                <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
+                  <SelectValue placeholder="Select action" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1A1F2C] border-gray-700">
+                  <SelectItem value="buy">Buy</SelectItem>
+                  <SelectItem value="sell">Sell</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            
+            {/* Slippage Tolerance */}
             <div>
-              <div className="text-gray-400">24h Volume</div>
-              <div className="font-medium">${formatCurrency(tokenStats.volume24h)}</div>
-            </div>
-            <div>
-              <div className="text-gray-400">Liquidity</div>
-              <div className="font-medium">${formatCurrency(tokenStats.liquidity)}</div>
-            </div>
-            <div>
-              <div className="text-gray-400">Time Since Launch</div>
-              <div className="font-medium">{tokenStats.timeSinceLaunch}</div>
+              <Label htmlFor="slippage" className="text-xs text-gray-400 mb-1 block">Slippage</Label>
+              <Select defaultValue={slippage} onValueChange={handleSlippageChange}>
+                <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
+                  <SelectValue placeholder="Select slippage" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1A1F2C] border-gray-700">
+                  <SelectItem value="0.5">0.5%</SelectItem>
+                  <SelectItem value="1">1%</SelectItem>
+                  <SelectItem value="2">2%</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
-          {/* Token Security & Eligibility */}
-          <div className="mt-2">
-            <div className="text-xs text-gray-400 flex items-center gap-1">
-              <ListChecks className="h-3 w-3" />
-              Eligibility & Security
+          {/* Amount Input */}
+          <div>
+            <Label htmlFor="amount" className="text-xs text-gray-400 mb-1 block">Amount ({action === 'buy' ? 'SOL' : selectedToken.symbol})</Label>
+            <Input 
+              type="number" 
+              id="amount" 
+              placeholder={`Enter amount to ${action}`} 
+              value={amount}
+              onChange={handleAmountChange}
+              className="h-8 text-sm bg-[#1A1F2C]/60 border-gray-700"
+            />
+          </div>
+          
+          {/* Estimated Price Impact */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <Label className="text-xs text-gray-400">Price Impact</Label>
+              <span className="text-xs text-orange-500">15%</span>
             </div>
+            <Progress value={15} className="h-1.5 bg-gray-700">
+              <div className="h-full bg-orange-500 transition-all" style={{ width: '15%' }} />
+            </Progress>
+          </div>
+          
+          {/* Wallet Balances */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
+              <div className="text-xs text-gray-400">SOL Balance</div>
+              <div className="font-medium text-sm">{solBalance.toFixed(4)}</div>
+            </div>
+            <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
+              <div className="text-xs text-gray-400">{selectedToken.symbol} Balance</div>
+              <div className="font-medium text-sm">{tokenBalance.toFixed(2)}</div>
+            </div>
+          </div>
+          
+          {/* Trade Button */}
+          <Button 
+            className="w-full bg-orange-600 hover:bg-orange-700 h-8 text-sm mt-1"
+            onClick={executeTrade}
+            disabled={isExecuting}
+          >
+            {isExecuting ? 'Executing...' : `Swap ${amount || '0'} ${action === 'buy' ? 'SOL' : selectedToken.symbol} `}
+          </Button>
+          
+          {/* Token Security & Eligibility */}
+          <div className="mt-1">
             <div className="flex flex-wrap items-center gap-1 mt-1">
               <Badge variant="secondary" className="bg-green-600/80 text-white text-xs px-1.5 py-0">
                 <ShieldCheck className="h-3 w-3 mr-0.5" />
@@ -221,18 +229,22 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
                 <CheckCircle className="h-3 w-3 mr-0.5" />
                 {tokenStats.isVerified ? 'Verified' : 'Unverified'}
               </Badge>
+              <Badge variant="secondary" className="bg-purple-600/80 text-white text-xs px-1.5 py-0">
+                <TrendingUp className="h-3 w-3 mr-0.5" />
+                Trending
+              </Badge>
             </div>
           </div>
+          
+          {/* DexScreener Listing Progress - Compact version */}
+          <DexScreenerListingProgress
+            tokenSymbol={selectedToken.symbol}
+            progress={65}
+            status="in_progress"
+          />
         </div>
-        
-        {/* DexScreener Listing Progress */}
-        <DexScreenerListingProgress
-          tokenSymbol={selectedToken.symbol}
-          progress={65}
-          status="in_progress"
-        />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
