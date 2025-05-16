@@ -1,94 +1,103 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Check, Clock, AlertCircle, InfoIcon } from 'lucide-react';
 
 interface DexScreenerListingProgressProps {
   tokenSymbol: string;
-  progress: number; // 0-100
-  status?: 'pending' | 'in_progress' | 'listed' | 'rejected';
-  estimated_time?: string;
+  progress: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  marketCap?: number;
 }
 
 const DexScreenerListingProgress: React.FC<DexScreenerListingProgressProps> = ({
   tokenSymbol,
   progress,
-  status = 'in_progress',
-  estimated_time = '24-48 hours'
+  status,
+  marketCap
 }) => {
-  const getStatusColor = () => {
-    switch(status) {
-      case 'listed': return 'text-green-500';
-      case 'rejected': return 'text-red-500';
-      case 'in_progress': return 'text-yellow-500';
-      default: return 'text-gray-500';
+  // Status messages and icons
+  const statusConfig = {
+    pending: {
+      icon: <Clock className="h-4 w-4 text-orange-500" />,
+      message: "Awaiting $50K market cap",
+      tooltip: `${tokenSymbol} needs to reach $50K market cap before it can be listed on DexScreener.`
+    },
+    in_progress: {
+      icon: <Clock className="h-4 w-4 text-green-500 animate-pulse" />,
+      message: `${progress}% complete`,
+      tooltip: "Listing in progress. This process typically takes 24-48 hours once requirements are met."
+    },
+    completed: {
+      icon: <Check className="h-4 w-4 text-green-500" />,
+      message: "Listed on DexScreener",
+      tooltip: `${tokenSymbol} is now visible on DexScreener trading charts and data feeds.`
+    },
+    failed: {
+      icon: <AlertCircle className="h-4 w-4 text-red-500" />,
+      message: "Listing requirements not met",
+      tooltip: "Token needs to maintain sufficient liquidity and market cap for listing."
     }
   };
   
-  const getStatusText = () => {
-    switch(status) {
-      case 'listed': return 'Listed';
-      case 'rejected': return 'Rejected';
-      case 'in_progress': return 'In Progress';
-      default: return 'Pending';
-    }
-  };
-
-  // Safety check for progress value
-  const safeProgress = typeof progress === 'number' && !isNaN(progress) ? 
-    Math.min(Math.max(0, progress), 100) : 0;
+  const { icon, message, tooltip } = statusConfig[status];
+  
+  // Calculate progress percentage
+  const progressValue = status === 'completed' ? 100 : progress;
+  
+  // Calculate market cap progress towards $50K if available
+  const marketCapText = marketCap 
+    ? `$${marketCap.toLocaleString()} / $50,000` 
+    : status === 'completed' 
+      ? 'Requirements met'
+      : '$50K required';
   
   return (
-    <Card className="bg-black/30 border-gray-800">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center justify-between">
-          <span>DEX Screener Listing</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="h-4 w-4 text-gray-400" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs text-xs">
-                  DEX Screener listing typically takes 24-48 hours after reaching minimum requirements of trading volume and liquidity.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs">
-              <span className={getStatusColor()}>•</span> {getStatusText()}
-            </div>
-            <div className="text-xs text-gray-400">
-              Est. time: {estimated_time || '24-48 hours'}
-            </div>
+    <Card className="border-white/10 bg-wybe-background/80 backdrop-blur-sm shadow-md overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center">
+            <span className="text-sm font-medium">DexScreener Listing</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoIcon size={14} className="ml-1.5 text-gray-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-wybe-background-light border-gray-700">
+                  {tooltip}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          
-          <Progress value={safeProgress} className="h-2" />
-          
-          <div className="flex items-center justify-between text-xs text-gray-400">
-            <span>Submitted</span>
-            <span>Requirements Check</span>
-            <span>Listed</span>
+          <div className="flex items-center gap-1.5">
+            {icon}
+            <span className={`text-xs ${
+              status === 'completed' ? 'text-green-500' :
+              status === 'failed' ? 'text-red-500' :
+              status === 'in_progress' ? 'text-green-400' :
+              'text-gray-400'
+            }`}>
+              {message}
+            </span>
           </div>
-          
-          <div className="bg-black/30 p-2 rounded-md text-xs">
-            <div className="font-medium mb-1">Requirements for {tokenSymbol || 'Token'}:</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-300">
-              <div>• Min. 24h Volume: $10,000</div>
-              <div className="text-yellow-500">In Progress (47%)</div>
-              <div>• Min. Liquidity: $5,000</div>
-              <div className="text-green-500">Complete (100%)</div>
-              <div>• Contract Verified</div>
-              <div className="text-green-500">Complete (100%)</div>
-            </div>
-          </div>
+        </div>
+        
+        <Progress value={progressValue} className="h-1.5 mb-2 bg-gray-800">
+          <div 
+            className={`h-full transition-all ${
+              status === 'completed' ? 'bg-green-500' :
+              status === 'in_progress' ? 'bg-green-500' :
+              'bg-orange-500'
+            }`} 
+            style={{ width: `${progressValue}%` }}
+          />
+        </Progress>
+        
+        <div className="text-xs text-gray-400 flex justify-between">
+          <span>{tokenSymbol}</span>
+          <span>{marketCapText}</span>
         </div>
       </CardContent>
     </Card>

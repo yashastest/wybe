@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import TokenPerformanceChart from "@/components/TokenPerformanceChart";
+import CreatorRewardCard from "@/components/CreatorRewardCard";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { TypewriterText } from "@/components/ui/typewriter-text";
@@ -36,7 +37,13 @@ const Dashboard = () => {
         totalFees: 1240,
         treasuryFee: 10000000,
         eligibilityProgress: 96,
-        timeRemaining: "5 hours"
+        timeRemaining: "5 hours",
+        launchTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        first50kTime: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+        milestoneAchievedTime: null,
+        rewardType: null,
+        lastFeeClaim: null,
+        accumulatedFees: 2.5
       },
       {
         name: "Doge Sol",
@@ -47,7 +54,13 @@ const Dashboard = () => {
         totalFees: 3200,
         treasuryFee: 10000000,
         eligibilityProgress: 100,
-        timeRemaining: "Eligible Now!"
+        timeRemaining: "Eligible Now!",
+        launchTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        first50kTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        milestoneAchievedTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        rewardType: "Premium",
+        lastFeeClaim: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        accumulatedFees: 5.8
       }
     ]
   };
@@ -159,51 +172,40 @@ const Dashboard = () => {
                       </Button>
                       <Button 
                         onClick={() => handleClaim(token.symbol)} 
-                        className={token.eligibilityProgress === 100 
+                        className={token.rewardType === 'Premium'
                           ? "bg-orange-600 hover:bg-orange-700" 
                           : "bg-gray-600 hover:bg-gray-700"}
-                        disabled={token.eligibilityProgress < 100}
+                        disabled={token.rewardType !== 'Premium' && !token.accumulatedFees}
                       >
-                        {token.eligibilityProgress === 100 ? "Claim Rewards" : "Not Eligible"}
+                        {token.rewardType === 'Premium' ? "Claim Rewards" : "Not Eligible"}
                       </Button>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <StatsItem label="Market Cap" value={`$${token.marketCap.toLocaleString()}`} />
                         <StatsItem label="24h Volume" value={`$${token.volume24h.toLocaleString()}`} />
                         <StatsItem label="Total Fees" value={`${token.totalFees} SOL`} />
                         <StatsItem label="Treasury Fee" value={`${(token.treasuryFee/1000000).toFixed(1)}M ${token.symbol}`} />
                       </div>
                       
-                      <div className="glass-card bg-wybe-background/40 p-4 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <ShieldCheck size={18} className="text-orange-500" />
-                            <span className="font-medium">Reward Eligibility</span>
-                          </div>
-                          <span className="text-sm bg-orange-500/20 text-orange-500 px-2 py-1 rounded">
-                            {token.eligibilityProgress}%
-                          </span>
-                        </div>
-                        <Progress value={token.eligibilityProgress} className="h-2 mb-2 bg-gray-700">
-                          <div className="h-full bg-orange-500 transition-all" style={{ width: `${token.eligibilityProgress}%` }}></div>
-                        </Progress>
-                        <div className="flex items-center gap-1 text-sm text-gray-400">
-                          <Clock size={14} />
-                          <span>{token.timeRemaining}</span>
-                          {token.eligibilityProgress < 100 && (
-                            <span className="ml-1">
-                              before 48h trading volume threshold is met
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      {/* Replace the old eligibility card with our new Creator Reward Card */}
+                      <CreatorRewardCard
+                        tokenSymbol={token.symbol}
+                        launchTime={token.launchTime}
+                        currentMarketCap={token.marketCap}
+                        first50kTime={token.first50kTime}
+                        milestoneAchievedTime={token.milestoneAchievedTime}
+                        rewardType={token.rewardType}
+                        lastFeeClaim={token.lastFeeClaim}
+                        accumulatedFees={token.accumulatedFees}
+                        onClaim={() => handleClaim(token.symbol)}
+                      />
                     </div>
                     
-                    <div className="h-48">
+                    <div className="h-[280px]">
                       <TokenPerformanceChart symbol={token.symbol} />
                     </div>
                   </div>
@@ -221,18 +223,18 @@ const Dashboard = () => {
                 <h2 className="text-xl font-bold mb-4">Eligibility Requirements</h2>
                 <div className="space-y-4">
                   <RequirementCard 
-                    title="Market Cap Threshold"
-                    description="Your token must reach a market cap of at least $50,000"
+                    title="Market Cap Milestone"
+                    description="Reach $50K market cap within 4 days of launch"
                     icon={<TrendingUp size={20} />}
                   />
                   <RequirementCard 
-                    title="Volume Requirement"
-                    description="Maintain $50K+ trading volume for 48 hours continuously"
+                    title="48h Sustain Period"
+                    description="Maintain $50K+ market cap for 48 hours continuously"
                     icon={<BarChart size={20} />}
                   />
                   <RequirementCard 
-                    title="Reward Distribution"
-                    description="You'll receive 40% of all trading fees once eligible"
+                    title="Premium Reward Distribution"
+                    description="Earn 40% of weekly trading fees as long as your token stays above $50K"
                     icon={<Trophy size={20} />}
                   />
                 </div>

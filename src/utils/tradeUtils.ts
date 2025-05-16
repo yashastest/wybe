@@ -1,200 +1,91 @@
-// Utility functions for trading-related operations
 
+// Format currency with commas
 export const formatCurrency = (value: number): string => {
-  // Format currency values neatly
-  if (value >= 1_000_000) {
-    return (value / 1_000_000).toFixed(2) + 'M';
-  }
-  if (value >= 1_000) {
-    return (value / 1_000).toFixed(2) + 'K';
-  }
+  if (!value) return '0';
   
-  // Format based on value size
-  if (value < 0.01) {
-    return value.toFixed(6);
+  if (value >= 1000000000) {
+    return (value / 1000000000).toFixed(2) + 'B';
+  } else if (value >= 1000000) {
+    return (value / 1000000).toFixed(2) + 'M';
+  } else if (value >= 1000) {
+    return (value / 1000).toFixed(2) + 'K';
+  } else {
+    return value.toFixed(2);
   }
-  
-  if (value < 1) {
-    return value.toFixed(4);
-  }
-  
-  return value.toFixed(2);
 };
 
-export const formatPercentage = (value: number): string => {
-  // Format percentage with sign and proper decimal places
-  return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+// Calculate price impact for a trade
+export const calculatePriceImpact = (
+  tokenPrice: number,
+  tradeAmount: number,
+  action: 'buy' | 'sell',
+  slippage: number = 0.5
+): number => {
+  // Simple price impact calculation
+  const impact = (tradeAmount / 1000) * (action === 'buy' ? 1 : -1);
+  
+  // Add slippage
+  const withSlippage = impact * (1 + slippage / 100);
+  
+  return Math.min(Math.abs(withSlippage), 10); // Cap at 10% for UI
 };
 
-export const formatNumber = (value: number): string => {
-  // Format large numbers with K, M suffixes
-  if (value >= 1_000_000) {
-    return (value / 1_000_000).toFixed(2) + 'M';
-  }
-  if (value >= 1_000) {
-    return (value / 1_000).toFixed(2) + 'K';
-  }
-  return value.toLocaleString();
-};
-
-export const formatWalletAddress = (address: string, chars: number = 4): string => {
-  if (!address || address.length <= chars * 2) return address;
-  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
-};
-
-export const calculateImpact = (orderSize: number, liquidity: number): number => {
-  // Simple price impact calculation as an example
-  // In real applications, this would be based on the bonding curve or orderbook
-  return Math.min(100, (orderSize / liquidity) * 100);
-};
-
-export const getSentimentColor = (score: number): string => {
-  // Return appropriate color based on sentiment score (-100 to +100)
-  if (score >= 75) return 'bg-green-500';
-  if (score >= 50) return 'bg-green-400/80';
-  if (score >= 25) return 'bg-green-300/70';
-  if (score >= 0) return 'bg-blue-400/70';
-  if (score >= -25) return 'bg-orange-300/70';
-  if (score >= -50) return 'bg-orange-400/80';
-  if (score >= -75) return 'bg-red-400/80';
-  return 'bg-red-500';
-};
-
-export const simulateBondingCurve = (
-  supply: number,
-  amount: number,
-  curveType: 'linear' | 'quadratic' | 'exponential' = 'quadratic'
-): { price: number; newSupply: number; newPrice: number } => {
-  let price = 0;
-  
-  // Base price calculation based on curve type
-  switch (curveType) {
-    case 'linear':
-      price = supply / 1000000;
-      break;
-    case 'quadratic':
-      price = Math.pow(supply / 1000000, 2) + 0.0001;
-      break;
-    case 'exponential':
-      price = Math.exp(supply / 10000000) / 100;
-      break;
-    default:
-      price = Math.pow(supply / 1000000, 2) + 0.0001;
-  }
-  
-  // Calculate new supply and resulting price
-  const newSupply = supply + amount;
-  let newPrice = 0;
-  
-  // Calc new price based on curve type
-  switch (curveType) {
-    case 'linear':
-      newPrice = newSupply / 1000000;
-      break;
-    case 'quadratic':
-      newPrice = Math.pow(newSupply / 1000000, 2) + 0.0001;
-      break;
-    case 'exponential':
-      newPrice = Math.exp(newSupply / 10000000) / 100;
-      break;
-    default:
-      newPrice = Math.pow(newSupply / 1000000, 2) + 0.0001;
-  }
-  
-  return {
-    price,
-    newSupply,
-    newPrice
-  };
-};
-
-// Generates realistic trading data for chart visualization
-export const generateChartData = (
-  basePrice: number,
-  volatility: number = 0.05,
-  periods: number = 100,
-  timeframe: string = '1D'
-): { time: string; open: number; high: number; low: number; close: number; volume: number }[] => {
-  const data = [];
-  let lastClose = basePrice;
-  const now = Date.now();
-  
-  // Determine time interval based on timeframe
-  let interval: number;
-  switch (timeframe) {
-    case '15m': interval = 15 * 60 * 1000; break;
-    case '1H': interval = 60 * 60 * 1000; break;
-    case '4H': interval = 4 * 60 * 60 * 1000; break;
-    case '1D': interval = 24 * 60 * 60 * 1000; break; 
-    case '1W': interval = 7 * 24 * 60 * 60 * 1000; break;
-    default: interval = 24 * 60 * 60 * 1000;
-  }
-  
-  for (let i = periods; i >= 0; i--) {
-    // Calculate time for this candle
-    const time = new Date(now - i * interval).toISOString();
-    
-    // Random change with momentum
-    const changePercent = (Math.random() - 0.5) * volatility * 2;
-    const close = Math.max(lastClose * (1 + changePercent), 0.000001);
-    
-    // Calculate high, low, and open with some randomness
-    const range = close * volatility;
-    const randomFactor = Math.random() * 0.8 + 0.2; // between 0.2 and 1
-    const high = close * (1 + volatility * randomFactor);
-    const low = close * (1 - volatility * randomFactor);
-    
-    // Open is previous close with some intraperiod variation
-    const open = lastClose * (1 + (Math.random() - 0.5) * volatility * 0.3);
-    
-    // Generate realistic volume
-    const volume = Math.floor(basePrice * (10000 + Math.random() * 90000));
-    
-    data.push({
-      time,
-      open,
-      high: Math.max(high, open, close),
-      low: Math.min(low, open, close),
-      close,
-      volume
-    });
-    
-    lastClose = close;
-  }
-  
-  return data;
-};
-
-// Add missing function for generating bonding curve points
-export const generateBondingCurvePoints = (
-  initialPrice: number, 
-  currentSupply: number, 
-  pointCount: number = 20,
+// Calculate token price with bonding curve
+export const calculateTokenPrice = (
+  totalSupply: number,
+  amount: number = 1,
   curveType: 'linear' | 'quadratic' | 'exponential' = 'linear'
-): Array<{supply: number, price: number}> => {
+): number => {
+  switch (curveType) {
+    case 'linear':
+      return (totalSupply / 10000) + 0.01;
+    case 'quadratic':
+      return Math.pow(totalSupply / 10000, 2) + 0.01;
+    case 'exponential':
+      return Math.exp(totalSupply / 1000000) / 100;
+    default:
+      return (totalSupply / 10000) + 0.01;
+  }
+};
+
+// Generate data points for bonding curves
+export const generateBondingCurvePoints = (
+  initialPrice: number,
+  currentSupply: number,
+  numPoints: number = 10,
+  curveType: 'linear' | 'quadratic' | 'exponential' = 'linear'
+) => {
   const points = [];
-  const maxSupply = currentSupply * 2; // Go up to double the current supply
-  const step = maxSupply / pointCount;
+  // Start from a bit less than current supply
+  const startSupply = currentSupply * 0.5;
+  // End at more than current supply
+  const endSupply = currentSupply * 2;
+  // Calculate step size
+  const step = (endSupply - startSupply) / (numPoints - 1);
   
-  for (let i = 0; i <= pointCount; i++) {
-    const supply = i * step;
+  for (let i = 0; i < numPoints; i++) {
+    const supply = startSupply + i * step;
     let price;
     
+    // Calculate price based on curve type
     switch (curveType) {
+      case 'linear':
+        price = (supply / 10000000) + initialPrice * 0.5;
+        break;
       case 'quadratic':
-        price = initialPrice * Math.pow(supply / currentSupply, 2);
+        price = Math.pow(supply / 20000000, 2) + initialPrice * 0.5;
         break;
       case 'exponential':
-        price = initialPrice * Math.exp(supply / currentSupply - 1);
+        price = initialPrice * 0.5 + (Math.exp(supply / (currentSupply * 2)) - 1) * initialPrice * 0.1;
         break;
-      case 'linear':
       default:
-        price = initialPrice * (supply / currentSupply);
-        break;
+        price = (supply / 10000000) + initialPrice * 0.5;
     }
     
-    // Ensure price is never below a small positive value
-    price = Math.max(0.000001, price);
+    // If this is close to the current supply point, use the actual price
+    if (Math.abs(supply - currentSupply) < step / 2) {
+      price = initialPrice;
+    }
     
     points.push({
       supply,
@@ -203,4 +94,53 @@ export const generateBondingCurvePoints = (
   }
   
   return points;
+};
+
+// Calculate estimated SOL amount for token purchase
+export const calculateSolAmount = (tokenAmount: number, tokenPrice: number): number => {
+  return tokenAmount * tokenPrice;
+};
+
+// Calculate estimated token amount for SOL spent
+export const calculateTokenAmount = (solAmount: number, tokenPrice: number): number => {
+  return solAmount / tokenPrice;
+};
+
+// Format token amount based on value
+export const formatTokenAmount = (amount: number): string => {
+  if (amount >= 1000000000) {
+    return (amount / 1000000000).toFixed(2) + 'B';
+  } else if (amount >= 1000000) {
+    return (amount / 1000000).toFixed(2) + 'M';
+  } else if (amount >= 1000) {
+    return (amount / 1000).toFixed(2) + 'K';
+  } else if (amount >= 1) {
+    return amount.toFixed(2);
+  } else {
+    return amount.toFixed(8);
+  }
+};
+
+// Format percentage change with + or - sign
+export const formatPercentageChange = (value: number): string => {
+  const sign = value >= 0 ? '+' : '';
+  return `${sign}${value.toFixed(2)}%`;
+};
+
+// Calculate market cap from token price and supply
+export const calculateMarketCap = (price: number, totalSupply: number): number => {
+  return price * totalSupply;
+};
+
+// Determine if token has reached the $50K milestone
+export const hasReached50kMilestone = (marketCap: number): boolean => {
+  return marketCap >= 50000;
+};
+
+// Calculate time remaining for milestone based on launch time
+export const calculateMilestoneTimeRemaining = (launchTime: Date): number => {
+  const now = new Date();
+  const fourDaysFromLaunch = new Date(launchTime.getTime() + 4 * 24 * 60 * 60 * 1000);
+  const remainingMs = fourDaysFromLaunch.getTime() - now.getTime();
+  return Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60))); // Hours remaining
 };

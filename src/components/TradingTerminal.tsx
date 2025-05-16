@@ -148,10 +148,32 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
       fee: trade.fee || 0.001,
       timestamp: trade.timestamp,
       walletAddress: trade.walletAddress || address || "",
-      status: trade.status === 'completed' ? 'confirmed' : trade.status,
+      status: trade.status === 'completed' ? 'confirmed' : trade.status || 'pending',
       amountTokens: trade.amountTokens,
       amountSol: trade.amountSol,
     })) : [];
+
+  // Calculate DexScreener listing progress based on market cap
+  const calculateListingProgress = () => {
+    // Market cap requirements for listing
+    const requiredMarketCap = 50000; // $50K
+    
+    if (!selectedToken.marketCap) return 0;
+    
+    const progress = Math.min(100, (selectedToken.marketCap / requiredMarketCap) * 100);
+    return Math.round(progress);
+  };
+
+  // Determine DexScreener listing status
+  const getDexScreenerStatus = () => {
+    if (selectedToken.marketCap >= 50000) {
+      return 'completed';
+    } else if (selectedToken.marketCap >= 25000) {
+      return 'in_progress';
+    } else {
+      return 'pending';
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
@@ -343,8 +365,9 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
               <div className="mt-4">
                 <DexScreenerListingProgress 
                   tokenSymbol={selectedToken.symbol}
-                  progress={65}
-                  status="in_progress"
+                  progress={calculateListingProgress()}
+                  status={getDexScreenerStatus()}
+                  marketCap={selectedToken.marketCap}
                 />
               </div>
             </TabsContent>
@@ -409,8 +432,9 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
         >
           <DexScreenerListingProgress 
             tokenSymbol={selectedToken.symbol}
-            progress={65}
-            status="in_progress"
+            progress={calculateListingProgress()}
+            status={getDexScreenerStatus()}
+            marketCap={selectedToken.marketCap}
           />
         </motion.div>
       </div>
