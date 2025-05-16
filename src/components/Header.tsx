@@ -178,7 +178,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                       to={link.to}
                       className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
                         location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
-                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30 text-black' : ''}`}
+                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30' : ''}`}
                     >
                       {link.icon && link.icon}
                       {link.label}

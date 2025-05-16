@@ -13,11 +13,91 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
-import { tokenTradingService, ListedToken } from "@/services/tokenTradingService";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const formatPrice = (price) => {
+interface HolderStats {
+  whales: number;
+  devs: number;
+  retail: number;
+}
+
+interface ListedToken {
+  id?: string;
+  name?: string;
+  symbol?: string;
+  logo?: string;
+  banner?: string;
+  price?: number;
+  marketCap?: number;
+  volume24h?: number;
+  change24h?: number;
+  holders?: number;
+  category?: string[];
+  holderStats?: HolderStats;
+}
+
+// Sample tokens for the demo
+const sampleTokens: ListedToken[] = [
+  {
+    id: "wybe-token",
+    name: "Wybe",
+    symbol: "WYBE",
+    logo: "/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png",
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.00145,
+    marketCap: 1450000,
+    volume24h: 345000,
+    change24h: 25.4,
+    holders: 1200,
+    category: ["Meme", "Utility"],
+    holderStats: { whales: 12, devs: 8, retail: 1180 }
+  },
+  {
+    id: "solana-doge",
+    name: "Solana Doge",
+    symbol: "SOLDOGE",
+    logo: "/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png", 
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.0000235,
+    marketCap: 2350000,
+    volume24h: 789000,
+    change24h: 12.8,
+    holders: 3500,
+    category: ["Meme", "Doge"],
+    holderStats: { whales: 23, devs: 5, retail: 3472 }
+  },
+  {
+    id: "pepe-sol",
+    name: "Pepe Solana",
+    symbol: "PEPES",
+    logo: "/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png",
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.00000812,
+    marketCap: 812000,
+    volume24h: 156000,
+    change24h: -8.2,
+    holders: 2100,
+    category: ["Meme", "Pepe"],
+    holderStats: { whales: 8, devs: 3, retail: 2089 }
+  },
+  {
+    id: "solana-cat",
+    name: "Solana Cat",
+    symbol: "SCAT",
+    logo: "/lovable-uploads/dcb3ea81-25ba-4438-90a5-c7403026c91e.png",
+    banner: "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png",
+    price: 0.000124,
+    marketCap: 1240000,
+    volume24h: 234000,
+    change24h: 5.6,
+    holders: 1800,
+    category: ["Meme", "Cat"],
+    holderStats: { whales: 15, devs: 7, retail: 1778 }
+  }
+];
+
+const formatPrice = (price?: number) => {
   if (price === undefined || price === null) return "0.00";
   if (isNaN(price)) return "0.00";
   
@@ -37,7 +117,7 @@ const formatPrice = (price) => {
   }
 };
 
-const formatMarketCap = (marketCap) => {
+const formatMarketCap = (marketCap?: number) => {
   if (marketCap === undefined || marketCap === null) return "$0";
   if (isNaN(marketCap)) return "$0";
   
@@ -55,7 +135,7 @@ const formatMarketCap = (marketCap) => {
   }
 };
 
-const formatNumber = (num) => {
+const formatNumber = (num?: number) => {
   if (num === undefined || num === null) return "0";
   if (isNaN(num)) return "0";
   
@@ -67,6 +147,16 @@ const formatNumber = (num) => {
   } catch (error) {
     console.error("Error formatting number:", error);
     return "0";
+  }
+};
+
+const formatPercentage = (value?: number) => {
+  if (value === undefined || value === null) return "0.00";
+  try {
+    return Math.abs(value).toFixed(2);
+  } catch (error) {
+    console.error("Error formatting percentage:", error);
+    return "0.00";
   }
 };
 
@@ -82,32 +172,35 @@ const Discover = () => {
     const fetchTokens = async () => {
       setIsLoading(true);
       try {
-        const listedTokens = await tokenTradingService.getListedTokens();
-        setCoins(listedTokens);
-        
-        // Extract all unique categories with safety checks
-        const categories = ["All"];
-        const uniqueCategories = new Set<string>();
-        
-        listedTokens.forEach(coin => {
-          if (Array.isArray(coin.category)) {
-            coin.category.forEach(category => {
-              if (typeof category === 'string') {
-                uniqueCategories.add(category);
-              }
-            });
-          }
-        });
-        
-        uniqueCategories.forEach(category => categories.push(category));
-        setAllCategories(categories);
+        // In a real app, you would fetch from API
+        // For now we'll use the sample data
+        setTimeout(() => {
+          setCoins(sampleTokens);
+          
+          // Extract all unique categories with safety checks
+          const categories = ["All"];
+          const uniqueCategories = new Set<string>();
+          
+          sampleTokens.forEach(coin => {
+            if (Array.isArray(coin.category)) {
+              coin.category.forEach(category => {
+                if (typeof category === 'string') {
+                  uniqueCategories.add(category);
+                }
+              });
+            }
+          });
+          
+          uniqueCategories.forEach(category => categories.push(category));
+          setAllCategories(categories);
+          setIsLoading(false);
+        }, 1000);
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
         toast.error("Failed to load tokens", { 
           description: "Please try again later"
         });
         setCoins([]);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -329,7 +422,7 @@ const Discover = () => {
 };
 
 // Coin card component with banner and safety checks
-const CoinCard = ({ coin, index }) => {
+const CoinCard = ({ coin, index }: { coin: ListedToken, index: number }) => {
   // Default placeholder images
   const defaultBanner = "/lovable-uploads/5f8a8eb9-3963-4b1b-8ca5-2beecbb60b39.png";
   const defaultLogo = "/placeholder.svg";
@@ -346,16 +439,6 @@ const CoinCard = ({ coin, index }) => {
 
   // Safety check for change24h
   const change24h = coin.change24h || 0;
-
-  // Safety function for percentage formatting
-  const formatPercentage = (value) => {
-    try {
-      return Math.abs(value).toFixed(2);
-    } catch (error) {
-      console.error("Error formatting percentage:", error);
-      return "0.00";
-    }
-  };
   
   return (
     <motion.div

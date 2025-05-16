@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,7 +21,7 @@ interface ActivityItem {
 const TraderActivity: React.FC<TraderActivityProps> = ({ 
   symbol, 
   tokenSymbol,
-  updateInterval = 5000 // Default to 5 seconds
+  updateInterval = 1000 // Default to 1 second for more frequent updates
 }) => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -58,16 +57,20 @@ const TraderActivity: React.FC<TraderActivityProps> = ({
   // Update activities periodically
   useEffect(() => {
     const interval = setInterval(() => {
-      // Generate new activity
-      const newActivity = generateRandomActivity();
-      
-      setActivities(prev => {
-        const updated = [newActivity, ...prev];
-        // Keep only the most recent 7 activities
-        return updated.slice(0, 7).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-      });
-      
-      setLastUpdate(new Date());
+      try {
+        // Generate new activity
+        const newActivity = generateRandomActivity();
+        
+        setActivities(prev => {
+          const updated = [newActivity, ...prev];
+          // Keep only the most recent 7 activities
+          return updated.slice(0, 7).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        });
+        
+        setLastUpdate(new Date());
+      } catch (error) {
+        console.error("Error updating trader activity:", error);
+      }
     }, updateInterval);
 
     return () => clearInterval(interval);

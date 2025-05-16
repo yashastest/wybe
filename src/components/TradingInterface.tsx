@@ -204,16 +204,16 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
                     <Share className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md mx-auto">
                   <DialogHeader>
                     <DialogTitle>Share {tokenName} ({tokenSymbol})</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    <div className="flex justify-center space-x-4">
+                    <div className="flex justify-center space-x-4 flex-wrap gap-2">
                       {/* Social Media Share Buttons */}
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline">
+                          <Button variant="outline" className="w-full sm:w-auto">
                             <Facebook className="h-4 w-4 mr-2" />
                             Share on Facebook
                           </Button>
@@ -239,7 +239,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
 
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline">
+                          <Button variant="outline" className="w-full sm:w-auto">
                             <Twitter className="h-4 w-4 mr-2" />
                             Share on Twitter
                           </Button>
@@ -331,7 +331,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
           {/* Activity and Analytics Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Trade Activity */}
-            <TraderActivity tokenSymbol={tokenSymbol} updateInterval={3000} />
+            <TraderActivity tokenSymbol={tokenSymbol} updateInterval={1000} />
             
             {/* Bonding Curve */}
             <TokenBondingCurve tokenSymbol={tokenSymbol} currentPrice={tokenPrice} />
