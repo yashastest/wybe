@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -41,7 +40,7 @@ const Dashboard = () => {
         launchTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
         first50kTime: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
         milestoneAchievedTime: null,
-        rewardType: null,
+        rewardType: null as "Premium" | "Standard" | null,
         lastFeeClaim: null,
         accumulatedFees: 2.5
       },
@@ -58,7 +57,7 @@ const Dashboard = () => {
         launchTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
         first50kTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
         milestoneAchievedTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        rewardType: "Premium",
+        rewardType: "Premium" as "Premium" | "Standard" | null,
         lastFeeClaim: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
         accumulatedFees: 5.8
       }

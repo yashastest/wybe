@@ -144,3 +144,25 @@ export const calculateMilestoneTimeRemaining = (launchTime: Date): number => {
   const remainingMs = fourDaysFromLaunch.getTime() - now.getTime();
   return Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60))); // Hours remaining
 };
+
+// Added missing utility functions:
+
+// Get color based on sentiment score
+export const getSentimentColor = (score: number): string => {
+  if (score >= 70) return "bg-green-500";
+  if (score >= 40) return "bg-green-400";
+  if (score >= 10) return "bg-green-300";
+  if (score >= -10) return "bg-orange-400";
+  if (score >= -40) return "bg-orange-500";
+  return "bg-red-500";
+};
+
+// Format percentage without the +/- sign
+export const formatPercentage = (value: number): string => {
+  return `${Math.abs(value).toFixed(2)}%`;
+};
+
+// Format number with commas for thousands
+export const formatNumber = (value: number): string => {
+  return value.toLocaleString();
+};
