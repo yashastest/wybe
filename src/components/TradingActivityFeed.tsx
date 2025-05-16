@@ -17,7 +17,7 @@ const TradingActivityFeed: React.FC<TradingActivityFeedProps> = ({
   trades = [],
   isLoading = false
 }) => {
-  // Sample data if no trades provided
+  // Sample data to simulate a more complete trading activity feed
   const sampleTrades = trades.length > 0 ? trades : [
     {
       id: "1",
@@ -52,6 +52,57 @@ const TradingActivityFeed: React.FC<TradingActivityFeedProps> = ({
       status: "confirmed",
       amountTokens: 3000,
       amountSol: 0.15
+    },
+    {
+      id: "3",
+      txHash: "tx_987654321abcdef",
+      tokenSymbol: tokenSymbol,
+      tokenName: "Token Name",
+      type: "buy",
+      side: "buy",
+      amount: 0.42,
+      amountUsd: 126,
+      price: 0.0155,
+      fee: 0.008,
+      timestamp: new Date(Date.now() - 14400000).toISOString(),
+      walletAddress: "wallet789",
+      status: "confirmed",
+      amountTokens: 8400,
+      amountSol: 0.42
+    },
+    {
+      id: "4",
+      txHash: "tx_fedcba123456789",
+      tokenSymbol: tokenSymbol,
+      tokenName: "Token Name",
+      type: "sell",
+      side: "sell",
+      amount: 0.18,
+      amountUsd: 54,
+      price: 0.0145,
+      fee: 0.004,
+      timestamp: new Date(Date.now() - 28800000).toISOString(),
+      walletAddress: "wallet321",
+      status: "confirmed",
+      amountTokens: 3600,
+      amountSol: 0.18
+    },
+    {
+      id: "5",
+      txHash: "tx_13579abcdef2468",
+      tokenSymbol: tokenSymbol,
+      tokenName: "Token Name",
+      type: "buy",
+      side: "buy",
+      amount: 0.55,
+      amountUsd: 165,
+      price: 0.0158,
+      fee: 0.01,
+      timestamp: new Date(Date.now() - 43200000).toISOString(),
+      walletAddress: "wallet654",
+      status: "confirmed",
+      amountTokens: 11000,
+      amountSol: 0.55
     }
   ];
   

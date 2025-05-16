@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -184,17 +183,14 @@ const TradingScreen: React.FC<TradingScreenProps> = ({
             </div>
           </div>
           
-          {/* Bonding Curve Panel */}
-          <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
-            <div className="text-xs uppercase font-medium text-gray-400 mb-2">Bonding Curve</div>
-            <div className="h-[150px]">
-              <BondingCurveVisualizer
-                initialPrice={selectedToken.price}
-                currentSupply={selectedToken.totalSupply || 100000000}
-                curveType="quadratic"
-                estimatedImpact={2.5}
-              />
-            </div>
+          {/* Bonding Curve Panel - Now using the simplified version */}
+          <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg">
+            <BondingCurveVisualizer
+              initialPrice={selectedToken.price}
+              currentSupply={selectedToken.totalSupply || 100000000}
+              curveType="quadratic"
+              estimatedImpact={2.5}
+            />
           </div>
         </div>
       </div>
