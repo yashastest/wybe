@@ -83,7 +83,7 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart 
         data={chartData} 
-        margin={compact ? { top: 0, right: 0, left: 0, bottom: 0 } : { top: 5, right: 5, left: 5, bottom: 5 }}
+        margin={compact ? { top: 0, right: 0, left: 0, bottom: 0 } : { top: 2, right: 2, left: 2, bottom: 2 }}
       >
         <defs>
           <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -102,7 +102,7 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
             }} 
             stroke="#666"
             opacity={0.6}
-            height={15}
+            height={12}
           />
         )}
         {!compact && (
@@ -110,7 +110,7 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
             domain={domain} 
             tick={{fontSize: 10}} 
             tickFormatter={(value) => value.toFixed(5)}
-            width={40}
+            width={38}
             stroke="#666"
             opacity={0.6}
           />
