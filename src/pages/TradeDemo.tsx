@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
+import { tokenTradingService } from '@/services/tokenTradingService';
+import { ListedToken } from '@/services/token/types'; // Updated import
 import { Badge } from '@/components/ui/badge';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useWalletBalance } from '@/hooks/useWalletBalance';

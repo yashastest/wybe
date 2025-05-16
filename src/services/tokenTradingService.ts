@@ -6,8 +6,7 @@ import {
   TradeHistoryFilters,
   TokenTransaction,
   TokenLaunchParams,
-  TokenLaunchResult,
-  InitialSupplyPurchaseResponse
+  TokenLaunchResult
 } from '@/services/token/types';
 
 // Get listed tokens
@@ -30,24 +29,24 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
       symbol: token.symbol,
       name: token.name,
       price: calculateTokenPrice(token.market_cap, token.symbol),
-      priceChange24h: token.price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3), // Use actual if available
-      change24h: token.change_24h || token.price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3), // Added for backward compatibility
+      priceChange24h: (token as any).price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3),
+      change24h: (token as any).change_24h || (token as any).price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3),
       marketCap: token.market_cap,
-      volume24h: token.volume_24h || token.market_cap * 0.1, // Use actual if available
-      totalSupply: token.total_supply || token.market_cap / calculateTokenPrice(token.market_cap, token.symbol), // Use actual
-      logo: token.logo_url || null, // Use actual if available
-      description: token.description || `${token.name} token`,
+      volume24h: (token as any).volume_24h || token.market_cap * 0.1,
+      totalSupply: (token as any).total_supply || token.market_cap / calculateTokenPrice(token.market_cap, token.symbol),
+      logo: (token as any).logo_url || null,
+      description: (token as any).description || `${token.name} token`,
       contractAddress: token.token_address,
       creatorAddress: token.creator_wallet,
-      isAssisted: token.is_assisted || false, // Added for admin views
-      category: token.category || ['meme'], // Added for MemeCoins component
-      banner: token.banner_url || undefined, // Added for useTokenListing
-      holderStats: token.holder_stats || { // Added for TrendingCoins component
+      isAssisted: (token as any).is_assisted || false,
+      category: (token as any).category || ['meme'],
+      banner: (token as any).banner_url || undefined,
+      holderStats: (token as any).holder_stats || {
         whales: Math.floor(Math.random() * 5),
         retail: Math.floor(Math.random() * 100) + 20,
         devs: 1
       },
-      liquidity: token.liquidity || undefined,
+      liquidity: (token as any).liquidity || undefined,
     }));
   } catch (error) {
     console.error('Error in getListedTokens:', error);
@@ -243,15 +242,6 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
       query = query.eq('side', filters.side);
     }
     
-    if (filters?.status) {
-      // Assuming 'trades' table has a 'status' column that maps to TokenTransactionStatus
-      // If not, this filter might need adjustment or be handled client-side post-fetch.
-      // For now, let's assume it does for the sake of Supabase query.
-      // query = query.eq('status', filters.status); 
-      // If 'trades' table doesn't have status, we might need to filter post-fetch or mock status.
-      // For now, we'll map all fetched trades to 'completed' or 'confirmed' as in previous code.
-    }
-    
     // Apply date filters if provided
     if (filters?.startDate) {
       query = query.gte('created_at', filters.startDate.toISOString());
@@ -270,7 +260,7 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
     
     return data.map((trade): TokenTransaction => {
       const price = calculateTokenPrice(1000, trade.token_symbol); // Mock price calculation
-      const status = trade.status || 'confirmed'; // Use actual status if available, else default
+      const status = (trade as any).status || 'confirmed'; // Use actual status if available, else default
 
       return {
         id: trade.id,
@@ -282,7 +272,7 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
         amount: trade.amount, // This is SOL amount for buys, token amount for sells based on original logic
         amountUsd: trade.amount * price, // Simplistic USD amount
         price: price,
-        fee: trade.fee || trade.amount * 0.05, // Use actual fee if available, else mock 5%
+        fee: (trade as any).fee || trade.amount * 0.05, // Use actual fee if available, else mock 5%
         timestamp: trade.created_at,
         walletAddress: trade.wallet_address,
         status: status as 'pending' | 'confirmed' | 'failed' | 'completed',
@@ -551,3 +541,14 @@ export const tokenTradingService = {
   launchToken,
   buyInitialSupply
 };
+
+// Re-export types for convenient access by components
+export type { 
+  ListedToken,
+  TradeParams,
+  TradeResult,
+  TradeHistoryFilters,
+  TokenTransaction,
+  TokenLaunchParams,
+  TokenLaunchResult
+} from '@/services/token/types';

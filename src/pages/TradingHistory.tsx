@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +13,9 @@ import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingSe
 import { TradeHistoryFilters } from '@/services/token/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
+import TransactionHistory from '@/components/TransactionHistory';
+import { toast } from 'sonner';
 
 const TradingHistory: React.FC = () => {
   const { connected, address } = useWallet();

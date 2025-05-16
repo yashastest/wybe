@@ -33,7 +33,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { calculatePriceImpact, formatCurrency, calculateTokenAmount, calculateSolAmount } from '@/utils/tradeUtils';
 import TokenPriceChart from './TokenPriceChart';
 import DexScreenerListingProgress from './DexScreenerListingProgress';
-import { ListedToken } from '@/services/tokenTradingService';
+import { ListedToken } from '@/services/token/types';
 
 interface EnhancedTradingInterfaceProps {
   tokens: { symbol: string; name: string; price: number; }[];

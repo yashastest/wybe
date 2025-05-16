@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { tokenTradingService, TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/tokenTradingService';
+import { tokenTradingService } from '@/services/tokenTradingService';
+import { TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/token/types'; // Updated import
 import { useWalletBalance } from './useWalletBalance';
 import { useWallet } from './useWallet.tsx';
 

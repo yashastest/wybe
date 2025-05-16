@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ListedToken } from '@/services/tokenTradingService';
+import { ListedToken } from '@/services/token/types'; // Updated import
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

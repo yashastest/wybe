@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ListedToken } from '@/services/tokenTradingService';
+import { ListedToken } from '@/services/token/types'; // Updated import
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
