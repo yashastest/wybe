@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -253,7 +252,7 @@ const TradeDemo: React.FC = () => {
               </div>
             </div>
           ) : selectedToken ? (
-            // PRO MODE - Advanced cockpit with additional features
+            // ENHANCED PRO MODE 
             <div className="space-y-1">
               {/* DexScreener Listing Progress */}
               <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
