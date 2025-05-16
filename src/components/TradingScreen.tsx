@@ -3,15 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TokenInfo from './TokenInfo';
 import TokenSelector from './TokenSelector';
-import TokenPriceChart from './TokenPriceChart';
+import TradingViewChartSimple from './TradingViewChartSimple';
 import TransactionHistory from './TransactionHistory';
-import TradingTerminal from './TradingTerminal';
-import { useTokenTrading } from '@/hooks/useTokenTrading';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SimpleTradingPanel from './SimpleTradingPanel';
+import TokenBondingCurveProgress from './TokenBondingCurveProgress';
+import DexScreenerListingProgress from './DexScreenerListingProgress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ListedToken, TokenTransaction } from '@/services/token/types';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { transactionService } from '@/services/token/transactionService';
+import { useTokenTrading } from '@/hooks/useTokenTrading';
 
 interface TradingScreenProps {
   selectedToken: ListedToken;
@@ -25,6 +27,8 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
   const [activeTab, setActiveTab] = useState('trading');
   const [transactions, setTransactions] = useState<TokenTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [chartType, setChartType] = useState<'price' | 'marketcap'>('price');
+  const [timeframe, setTimeframe] = useState('15m');
   
   // Fetch transaction history
   useEffect(() => {
@@ -45,7 +49,7 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
     fetchTransactions();
   }, [address, selectedToken]);
   
-  // Trading stats (could be fetched from an API or calculated)
+  // Trading stats
   const tradingStats = {
     marketCap: selectedToken?.marketCap ? `$${selectedToken.marketCap.toLocaleString()}` : 'N/A',
     volume24h: selectedToken?.volume24h ? `$${selectedToken.volume24h.toLocaleString()}` : 'N/A',
@@ -91,6 +95,38 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
             </CardContent>
           </Card>
         </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.2 }}
+        >
+          <DexScreenerListingProgress 
+            tokenSymbol={selectedToken?.symbol} 
+            progress={65} 
+            status="in_progress"
+          />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.3 }}
+        >
+          <Card className="bg-[#0F1118]/80 border border-gray-800">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">Bonding Curve Progress</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <TokenBondingCurveProgress 
+                tokenSymbol={selectedToken?.symbol}
+                progress={45}
+                currentPrice={selectedToken?.price || 0}
+                targetPrice={(selectedToken?.price || 0) * 1.5}
+              />
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
       
       {/* Right column - Trading interface and transactions */}
@@ -101,11 +137,51 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
           transition={{ duration: 0.2, delay: 0.2 }}
         >
           <Card className="bg-[#0F1118]/80 border border-gray-800">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Price Chart</CardTitle>
+            <CardHeader className="p-4 pb-2 flex flex-row justify-between items-center">
+              <CardTitle className="text-sm font-medium text-gray-400">
+                {chartType === 'price' ? 'Price Chart' : 'Market Cap Chart'}
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <div className="flex bg-[#1A1F2C]/60 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setChartType('price')}
+                    className={`px-2 py-1 text-xs ${
+                      chartType === 'price' ? 'bg-[#232734] text-white' : 'text-gray-400 hover:bg-[#1A1F2C]'
+                    }`}
+                  >
+                    Price
+                  </button>
+                  <button
+                    onClick={() => setChartType('marketcap')}
+                    className={`px-2 py-1 text-xs ${
+                      chartType === 'marketcap' ? 'bg-[#232734] text-white' : 'text-gray-400 hover:bg-[#1A1F2C]'
+                    }`}
+                  >
+                    Market Cap
+                  </button>
+                </div>
+                
+                <div className="flex bg-[#1A1F2C]/60 rounded-lg overflow-hidden">
+                  {['1s', '1m', '5m', '15m', '30m'].map((tf) => (
+                    <button
+                      key={tf}
+                      onClick={() => setTimeframe(tf)}
+                      className={`px-2 py-1 text-xs ${
+                        timeframe === tf ? 'bg-[#232734] text-white' : 'text-gray-400 hover:bg-[#1A1F2C]'
+                      }`}
+                    >
+                      {tf}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-4 pt-2">
-              <TokenPriceChart symbol={selectedToken?.symbol} />
+              <TradingViewChartSimple 
+                symbol={selectedToken?.symbol} 
+                type={chartType}
+                timeframe={timeframe}
+              />
             </CardContent>
           </Card>
         </motion.div>
@@ -129,17 +205,18 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
                 className="flex-1 data-[state=active]:bg-[#1A1F2C]"
                 onClick={() => setActiveTab('history')}
               >
-                History
+                Recent Activity
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="trading" className="mt-4">
               <Card className="bg-[#0F1118]/80 border border-gray-800">
                 <CardContent className="p-4">
-                  <TradingTerminal 
+                  <SimpleTradingPanel 
                     selectedToken={selectedToken}
-                    tokens={tokens}
-                    onSelectToken={onSelectToken}
+                    solBalance={solBalance}
+                    tokenBalance={tokenBalance}
+                    isLoading={tradingLoading}
                   />
                 </CardContent>
               </Card>

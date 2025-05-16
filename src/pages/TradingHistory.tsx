@@ -24,7 +24,8 @@ const TradingHistory = () => {
       if (connected && address) {
         setIsLoading(true);
         try {
-          const data = await tokenTradingService.getUserTransactions(address, tokenSymbol);
+          // Fix the API call to pass the correct parameters
+          const data = await tokenTradingService.getUserTransactions(address);
           setTransactions(data);
         } catch (error) {
           console.error('Error loading transactions:', error);
