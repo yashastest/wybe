@@ -16,13 +16,14 @@ import { Badge } from '@/components/ui/badge';
 import { useWallet } from '@/hooks/useWallet.tsx';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useTokenTrading } from '@/hooks/useTokenTrading';
-import { Loader2, Wallet as WalletIcon, CircleDollarSign } from 'lucide-react';
+import { Loader2, Wallet as WalletIcon, CircleDollarSign, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import TokenPriceChart from '@/components/TokenPriceChart';
 import DexScreenerListingProgress from '@/components/DexScreenerListingProgress';
 import TradingActivityFeed from '@/components/TradingActivityFeed';
 import { Card, CardContent } from '@/components/ui/card';
+import TradingInterface from '@/components/TradingInterface';
 
 const TradeDemo: React.FC = () => {
   useScrollToTop();
@@ -113,8 +114,8 @@ const TradeDemo: React.FC = () => {
           transition={{ duration: 0.3 }}
           className="max-w-[1920px] mx-auto"
         >
-          {/* Top Trading Bar - Minimal and compact */}
-          <div className="flex items-center justify-between gap-1 px-2 py-1 bg-[#0F1118]/90 border-b border-gray-800/50">
+          {/* Top Trading Bar with Prominent Toggle */}
+          <div className="relative flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-r from-[#0F1118]/95 via-[#131726]/95 to-[#0F1118]/95 border-b border-gray-800/50 shadow-md">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent hidden md:block">
                 Trading Terminal
@@ -129,23 +130,21 @@ const TradeDemo: React.FC = () => {
               )}
             </div>
             
+            {/* Prominent Mode Toggle */}
+            <motion.div
+              className="absolute left-1/2 transform -translate-x-1/2 top-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+            >
+              <EnhancedModeToggle 
+                isEnhanced={isEnhancedMode} 
+                onToggle={() => setIsEnhancedMode(!isEnhancedMode)}
+              />
+            </motion.div>
+            
             <div className="flex items-center gap-2">
               {renderWalletButton()}
-              
-              <div className="flex items-center">
-                {isEnhancedMode && (
-                  <Badge 
-                    variant="secondary" 
-                    className="mr-1 px-1.5 py-0 text-xs bg-[#8B5CF6] text-white animate-pulse"
-                  >
-                    Pro
-                  </Badge>
-                )}
-                <EnhancedModeToggle 
-                  isEnhanced={isEnhancedMode} 
-                  onToggle={() => setIsEnhancedMode(!isEnhancedMode)} 
-                />
-              </div>
             </div>
           </div>
           
