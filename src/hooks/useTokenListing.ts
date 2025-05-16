@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
-import { tokenTradingService } from '@/services/tokenTradingService'; // ListedToken will be from types via this service
+import { tokenTradingService } from '@/services/tokenTradingService';
 import { toast } from 'sonner';
-import { TokenLaunchParams, TradeResult, ListedToken } from '@/services/token/types'; // explicit import for clarity
+import { TokenLaunchParams, TradeResult, ListedToken } from '@/services/token/types';
 
 // LaunchedToken can extend the imported ListedToken directly
 export interface LaunchedToken extends ListedToken {
@@ -12,7 +12,7 @@ export interface LaunchedToken extends ListedToken {
 
 export const useTokenListing = () => {
   const [isLaunching, setIsLaunching] = useState(false);
-  const [launchedTokens, setLaunchedTokens] = useState<LaunchedToken[]>([]); // Use LaunchedToken
+  const [launchedTokens, setLaunchedTokens] = useState<LaunchedToken[]>([]);
 
   const launchToken = async (tokenParams: TokenLaunchParams) => {
     setIsLaunching(true);
@@ -54,8 +54,8 @@ export const useTokenListing = () => {
   
   const buyInitialSupply = async (tokenId: string, walletAddress: string, amountSol: number): Promise<Partial<TradeResult> & { success: boolean; error?: string }> => {
     try {
-      // tokenTradingService.buyInitialSupply should conform to ({tokenId, walletAddress, amountSol}) => Promise<TradeResult>
-      const result = await tokenTradingService.buyInitialSupply({ tokenId, walletAddress, amountSol });
+      // Fix: tokenTradingService.buyInitialSupply expects tokenSymbol, not an object
+      const result = await tokenTradingService.buyInitialSupply(tokenId, amountSol);
       
       if (result.success) {
         toast.success('Initial supply purchased', {

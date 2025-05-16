@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ListedToken } from '@/services/tokenTradingService';
+import { ListedToken } from '@/services/token/types';
 import TokenInfo from './TokenInfo';
 import TokenSelector from './TokenSelector';
 import TradingChart from './TradingChart';
@@ -29,14 +29,14 @@ import { useWallet } from '@/lib/wallet';
 import { TokenTransaction } from '@/services/token/types';
 
 interface TradingTerminalProps {
-  tokens: ListedToken[];
   selectedToken: ListedToken;
+  tokens: ListedToken[];
   onSelectToken: (token: ListedToken) => void;
 }
 
 const TradingTerminal: React.FC<TradingTerminalProps> = ({ 
-  tokens, 
   selectedToken, 
+  tokens, 
   onSelectToken 
 }) => {
   const isMobile = useIsMobile();

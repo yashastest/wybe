@@ -105,7 +105,7 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
               <CardTitle className="text-sm font-medium text-gray-400">Price Chart</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-2">
-              <TokenPriceChart tokenSymbol={selectedToken?.symbol} />
+              <TokenPriceChart symbol={selectedToken?.symbol} />
             </CardContent>
           </Card>
         </motion.div>
@@ -137,10 +137,9 @@ const TradingScreen: React.FC<TradingScreenProps> = ({ selectedToken, tokens, on
               <Card className="bg-[#0F1118]/80 border border-gray-800">
                 <CardContent className="p-4">
                   <TradingTerminal 
-                    token={selectedToken}
-                    solBalance={solBalance}
-                    tokenBalance={tokenBalance}
-                    isLoading={tradingLoading}
+                    selectedToken={selectedToken}
+                    tokens={tokens}
+                    onSelectToken={onSelectToken}
                   />
                 </CardContent>
               </Card>
