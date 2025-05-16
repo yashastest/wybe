@@ -10,20 +10,27 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-orange-500 text-white hover:bg-orange-600",
+          "border-transparent bg-gradient-to-r from-orange-500 to-orange-600 text-white",
         secondary:
-          "border-transparent bg-gray-600 text-white hover:bg-gray-700",
+          "border-transparent bg-gradient-to-r from-gray-600 to-gray-700 text-white",
         blue:
-          "border-transparent bg-blue-600 text-white hover:bg-blue-700",
+          "border-transparent bg-gradient-to-r from-blue-600 to-cyan-500 text-white",
         green:
-          "border-transparent bg-green-600 text-white hover:bg-green-700",
+          "border-transparent bg-gradient-to-r from-green-600 to-emerald-500 text-white",
         red:
-          "border-transparent bg-red-600 text-white hover:bg-red-700",
+          "border-transparent bg-gradient-to-r from-red-600 to-rose-500 text-white",
+        purple:
+          "border-transparent bg-gradient-to-r from-purple-600 to-violet-500 text-white",
+        amber:
+          "border-transparent bg-gradient-to-r from-amber-500 to-yellow-400 text-black",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground border-white/20",
+          "border-transparent bg-gradient-to-r from-red-600 to-rose-700 text-white",
+        outline: 
+          "text-foreground bg-black/20 backdrop-blur-sm border-white/20 hover:bg-white/5",
         success:
-          "border-transparent bg-green-600 text-white hover:bg-green-700",
+          "border-transparent bg-gradient-to-r from-green-600 to-emerald-500 text-white",
+        gradient:
+          "badge-gradient text-white",
       },
     },
     defaultVariants: {

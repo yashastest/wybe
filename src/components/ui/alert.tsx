@@ -9,15 +9,17 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
+        default: "bg-gradient-to-br from-black/80 to-gray-900/80 backdrop-blur-md border-white/10 text-foreground",
         destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+          "bg-gradient-to-br from-red-950/60 to-black/80 backdrop-blur-md border-red-500/30 text-red-400 [&>svg]:text-red-400",
         success:
-          "border-green-500/50 text-green-500 dark:border-green-500 [&>svg]:text-green-500",
+          "bg-gradient-to-br from-green-950/60 to-black/80 backdrop-blur-md border-green-500/30 text-green-400 [&>svg]:text-green-400",
         warning:
-          "border-yellow-500/50 text-yellow-500 dark:border-yellow-500 [&>svg]:text-yellow-500",
+          "bg-gradient-to-br from-amber-950/60 to-black/80 backdrop-blur-md border-amber-500/30 text-amber-400 [&>svg]:text-amber-400",
         info:
-          "border-blue-500/50 text-blue-500 dark:border-blue-500 [&>svg]:text-blue-500",
+          "bg-gradient-to-br from-blue-950/60 to-black/80 backdrop-blur-md border-blue-500/30 text-blue-400 [&>svg]:text-blue-400",
+        purple:
+          "bg-gradient-to-br from-purple-950/60 to-black/80 backdrop-blur-md border-purple-500/30 text-purple-400 [&>svg]:text-purple-400",
       },
     },
     defaultVariants: {
@@ -45,7 +47,7 @@ const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    className={cn("mb-1 font-medium leading-none tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300", className)}
     {...props}
   />
 ))
