@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -41,6 +42,8 @@ const Trade: React.FC = () => {
   const [activeTab, setActiveTab] = useState('trade');
   const [showAdvancedTrading, setShowAdvancedTrading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
   
   // Fetch tokens on mount
   useEffect(() => {
@@ -308,10 +311,16 @@ const Trade: React.FC = () => {
                     <CardContent>
                       {isMobile ? (
                         <div className="mt-4">
-                          <TransactionHistory tokenSymbol={currentToken?.symbol} />
+                          <TransactionHistory 
+                            transactions={transactions}
+                            isLoading={transactionsLoading}
+                          />
                         </div>
                       ) : (
-                        <TransactionHistory tokenSymbol={currentToken?.symbol} />
+                        <TransactionHistory 
+                          transactions={transactions}
+                          isLoading={transactionsLoading}
+                        />
                       )}
                     </CardContent>
                   </Card>

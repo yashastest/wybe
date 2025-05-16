@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -104,4 +105,3 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, i
 };
 
 export default TransactionHistory;
-
