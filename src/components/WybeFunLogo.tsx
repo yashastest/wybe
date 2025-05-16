@@ -47,7 +47,7 @@ const WybeFunLogo: React.FC<WybeFunLogoProps> = ({
     },
   };
 
-  // Animation variants
+  // Enhanced animation variants
   const logoVariants = {
     initial: withAnimation ? { scale: 0.8, opacity: 0, rotate: -5 } : { scale: 1, opacity: 1 },
     animate: withAnimation ? { 
@@ -68,6 +68,7 @@ const WybeFunLogo: React.FC<WybeFunLogoProps> = ({
     } : {}
   };
 
+  // Enhanced pulse animation with more vibrant colors
   const pulseAnimation = {
     initial: withAnimation ? { opacity: 0.9, scale: 0.98 } : { opacity: 1 },
     animate: withAnimation ? {
@@ -82,6 +83,7 @@ const WybeFunLogo: React.FC<WybeFunLogoProps> = ({
     } : { opacity: 1 }
   };
 
+  // Enhanced sparkle animations
   const sparkleVariants = {
     initial: { opacity: 0, scale: 0 },
     animate: withAnimation ? { 
@@ -94,6 +96,18 @@ const WybeFunLogo: React.FC<WybeFunLogoProps> = ({
         delay: 1
       }
     } : { opacity: 0 }
+  };
+
+  // Gradient animation for the text
+  const textGradientAnimation = {
+    animate: withAnimation ? {
+      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+      transition: {
+        duration: 8,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    } : {}
   };
 
   const Content = () => (
@@ -144,14 +158,14 @@ const WybeFunLogo: React.FC<WybeFunLogoProps> = ({
           </motion.span>
           <motion.span 
             className={`${sizeClasses[size].subtitle} text-orange-500 font-bold font-poppins -mt-1`}
-            animate={withAnimation ? { 
-              opacity: [0.8, 1, 0.8]
-            } : undefined}
-            transition={{ 
-              duration: 1.5,
-              repeat: Infinity,
-              repeatType: "reverse"
+            style={{
+              background: "linear-gradient(90deg, #f97316, #fbbf24, #f97316)",
+              backgroundSize: "200% 100%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
             }}
+            animate={textGradientAnimation}
           >
             Fun
           </motion.span>

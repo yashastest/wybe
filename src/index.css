@@ -46,15 +46,22 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Add padding to the top of the main content to prevent header overlap */
+  main, section[role="main"], div[role="main"] {
+    @apply pt-24;
+  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg;
+    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-lg 
+           hover:shadow-orange-500/20 transition-all duration-300;
   }
   
   .btn-primary {
-    @apply bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md;
+    @apply bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md
+           shadow-md hover:shadow-lg hover:shadow-orange-500/20 transition-all duration-300;
   }
 
   .text-gradient {
@@ -122,5 +129,20 @@
   
   .mobile-text-2xl {
     @apply text-2xl sm:text-3xl md:text-4xl;
+  }
+
+  /* Enhanced card designs */
+  .card-gradient {
+    @apply bg-gradient-to-br from-black via-gray-900 to-gray-800 
+           border border-white/10 rounded-xl shadow-xl;
+  }
+  
+  /* Glowing effects for important elements */
+  .glow-orange {
+    @apply shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)] transition-all;
+  }
+  
+  .glow-blue {
+    @apply shadow-[0_0_15px_rgba(51,195,240,0.5)] hover:shadow-[0_0_25px_rgba(51,195,240,0.8)] transition-all;
   }
 }
