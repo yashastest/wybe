@@ -1,131 +1,167 @@
 
-export function formatCurrency(value: number): string {
-  if (!value && value !== 0) return '0.00';
-  
-  if (value >= 1000000) {
-    return (value / 1000000).toFixed(2) + 'M';
+// Utility functions for trading-related operations
+
+export const formatCurrency = (value: number): string => {
+  // Format currency values neatly
+  if (value >= 1_000_000) {
+    return (value / 1_000_000).toFixed(2) + 'M';
+  }
+  if (value >= 1_000) {
+    return (value / 1_000).toFixed(2) + 'K';
   }
   
-  if (value >= 1000) {
-    return (value / 1000).toFixed(2) + 'K';
-  }
-  
-  if (value < 0.001) {
+  // Format based on value size
+  if (value < 0.01) {
     return value.toFixed(6);
   }
   
+  if (value < 1) {
+    return value.toFixed(4);
+  }
+  
   return value.toFixed(2);
-}
+};
 
-// Format large numbers with K, M, B suffixes
-export function formatNumber(value: number): string {
-  return formatCurrency(value);
-}
+export const formatPercentage = (value: number): string => {
+  // Format percentage with sign and proper decimal places
+  return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+};
 
-// Calculate price impact based on trade size and liquidity
-export function calculatePriceImpact(tradeSize: number, liquidity: number): number {
-  if (!liquidity || liquidity === 0) return 0;
-  return (tradeSize / liquidity) * 100;
-}
-
-// Estimate trade output including slippage
-export function estimateTradeOutput(
-  inputAmount: number, 
-  price: number, 
-  slippage: number, 
-  isBuy: boolean
-): number {
-  if (isBuy) {
-    // When buying, you get fewer tokens due to slippage
-    const baseOutput = inputAmount / price;
-    return baseOutput * (1 - slippage / 100);
-  } else {
-    // When selling, you get less SOL due to slippage
-    const baseOutput = inputAmount * price;
-    return baseOutput * (1 - slippage / 100);
+export const formatNumber = (value: number): string => {
+  // Format large numbers with K, M suffixes
+  if (value >= 1_000_000) {
+    return (value / 1_000_000).toFixed(2) + 'M';
   }
-}
+  if (value >= 1_000) {
+    return (value / 1_000).toFixed(2) + 'K';
+  }
+  return value.toLocaleString();
+};
 
-// Format wallet address for display (first 4 + last 4 chars)
-export function formatWalletAddress(address: string): string {
-  if (!address || address.length < 10) return address || '';
-  return `${address.substring(0, 4)}...${address.substring(address.length - 4)}`;
-}
+export const formatWalletAddress = (address: string, chars: number = 4): string => {
+  if (!address || address.length <= chars * 2) return address;
+  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
+};
 
-// Calculate potential profit/loss from trade
-export function calculatePnL(entryPrice: number, currentPrice: number, amount: number): number {
-  return (currentPrice - entryPrice) * amount;
-}
+export const calculateImpact = (orderSize: number, liquidity: number): number => {
+  // Simple price impact calculation as an example
+  // In real applications, this would be based on the bonding curve or orderbook
+  return Math.min(100, (orderSize / liquidity) * 100);
+};
 
-// Format percentage with + or - sign
-export function formatPercentage(value: number): string {
-  const prefix = value > 0 ? '+' : '';
-  return `${prefix}${value.toFixed(2)}%`;
-}
-
-// Calculate estimated gas fees based on priority
-export function estimateGasFee(priority: 'low' | 'medium' | 'high' | 'urgent'): number {
-  const baseFee = 0.000005; // Base fee in SOL
-  const multipliers = {
-    low: 1,
-    medium: 2,
-    high: 3,
-    urgent: 5
-  };
-  return baseFee * multipliers[priority];
-}
-
-// Get sentiment color based on score (-100 to 100)
-export function getSentimentColor(score: number): string {
-  if (score > 50) return 'bg-green-500';
-  if (score > 20) return 'bg-green-400';
-  if (score > 0) return 'bg-green-300';
-  if (score === 0) return 'bg-gray-400';
-  if (score > -20) return 'bg-red-300';
-  if (score > -50) return 'bg-red-400';
+export const getSentimentColor = (score: number): string => {
+  // Return appropriate color based on sentiment score (-100 to +100)
+  if (score >= 75) return 'bg-green-500';
+  if (score >= 50) return 'bg-green-400/80';
+  if (score >= 25) return 'bg-green-300/70';
+  if (score >= 0) return 'bg-blue-400/70';
+  if (score >= -25) return 'bg-orange-300/70';
+  if (score >= -50) return 'bg-orange-400/80';
+  if (score >= -75) return 'bg-red-400/80';
   return 'bg-red-500';
-}
+};
 
-// Determine if a wallet is a whale based on transaction size
-export function isWhale(amount: number): boolean {
-  // Define a whale as someone who trades more than 5 SOL in one transaction
-  return amount >= 5;
-}
-
-// Calculate price after slippage for display
-export function getPriceAfterSlippage(price: number, slippage: number, isBuy: boolean): number {
-  return isBuy ? 
-    price * (1 + slippage / 100) : // Buy price is higher with slippage
-    price * (1 - slippage / 100);  // Sell price is lower with slippage
-}
-
-// For bonding curve visualization
-export function generateBondingCurvePoints(
-  initialPrice: number,
-  currentSupply: number,
-  maxPoints: number = 20,
-  curveType: 'linear' | 'quadratic' | 'exponential' = 'linear'
-): { supply: number, price: number }[] {
-  const points: { supply: number, price: number }[] = [];
+export const simulateBondingCurve = (
+  supply: number,
+  amount: number,
+  curveType: 'linear' | 'quadratic' | 'exponential' = 'quadratic'
+): { price: number; newSupply: number; newPrice: number } => {
+  let price = 0;
   
-  for (let i = 0; i < maxPoints; i++) {
-    const supplyFraction = currentSupply * (1 + i / (maxPoints - 1));
-    let price: number;
-    
-    switch (curveType) {
-      case 'quadratic':
-        price = initialPrice * Math.pow(supplyFraction / currentSupply, 2);
-        break;
-      case 'exponential':
-        price = initialPrice * Math.exp(0.1 * (supplyFraction / currentSupply - 1));
-        break;
-      case 'linear':
-      default:
-        price = initialPrice * (supplyFraction / currentSupply);
-    }
-    
-    points.push({ supply: supplyFraction, price });
+  // Base price calculation based on curve type
+  switch (curveType) {
+    case 'linear':
+      price = supply / 1000000;
+      break;
+    case 'quadratic':
+      price = Math.pow(supply / 1000000, 2) + 0.0001;
+      break;
+    case 'exponential':
+      price = Math.exp(supply / 10000000) / 100;
+      break;
+    default:
+      price = Math.pow(supply / 1000000, 2) + 0.0001;
   }
   
-  return points;
-}
+  // Calculate new supply and resulting price
+  const newSupply = supply + amount;
+  let newPrice = 0;
+  
+  // Calc new price based on curve type
+  switch (curveType) {
+    case 'linear':
+      newPrice = newSupply / 1000000;
+      break;
+    case 'quadratic':
+      newPrice = Math.pow(newSupply / 1000000, 2) + 0.0001;
+      break;
+    case 'exponential':
+      newPrice = Math.exp(newSupply / 10000000) / 100;
+      break;
+    default:
+      newPrice = Math.pow(newSupply / 1000000, 2) + 0.0001;
+  }
+  
+  return {
+    price,
+    newSupply,
+    newPrice
+  };
+};
+
+// Generates realistic trading data for chart visualization
+export const generateChartData = (
+  basePrice: number,
+  volatility: number = 0.05,
+  periods: number = 100,
+  timeframe: string = '1D'
+): { time: string; open: number; high: number; low: number; close: number; volume: number }[] => {
+  const data = [];
+  let lastClose = basePrice;
+  const now = Date.now();
+  
+  // Determine time interval based on timeframe
+  let interval: number;
+  switch (timeframe) {
+    case '15m': interval = 15 * 60 * 1000; break;
+    case '1H': interval = 60 * 60 * 1000; break;
+    case '4H': interval = 4 * 60 * 60 * 1000; break;
+    case '1D': interval = 24 * 60 * 60 * 1000; break; 
+    case '1W': interval = 7 * 24 * 60 * 60 * 1000; break;
+    default: interval = 24 * 60 * 60 * 1000;
+  }
+  
+  for (let i = periods; i >= 0; i--) {
+    // Calculate time for this candle
+    const time = new Date(now - i * interval).toISOString();
+    
+    // Random change with momentum
+    const changePercent = (Math.random() - 0.5) * volatility * 2;
+    const close = Math.max(lastClose * (1 + changePercent), 0.000001);
+    
+    // Calculate high, low, and open with some randomness
+    const range = close * volatility;
+    const randomFactor = Math.random() * 0.8 + 0.2; // between 0.2 and 1
+    const high = close * (1 + volatility * randomFactor);
+    const low = close * (1 - volatility * randomFactor);
+    
+    // Open is previous close with some intraperiod variation
+    const open = lastClose * (1 + (Math.random() - 0.5) * volatility * 0.3);
+    
+    // Generate realistic volume
+    const volume = Math.floor(basePrice * (10000 + Math.random() * 90000));
+    
+    data.push({
+      time,
+      open,
+      high: Math.max(high, open, close),
+      low: Math.min(low, open, close),
+      close,
+      volume
+    });
+    
+    lastClose = close;
+  }
+  
+  return data;
+};

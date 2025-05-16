@@ -1,84 +1,127 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { formatCurrency } from '@/utils/tradeUtils';
+import { formatDistanceToNow } from 'date-fns';
+import { ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { TokenTransaction } from '@/services/token/types';
 
 interface TradingActivityFeedProps {
   tokenSymbol: string;
+  trades?: TokenTransaction[];
+  isLoading?: boolean;
 }
 
-interface TradeActivity {
-  id: string;
-  type: 'buy' | 'sell';  // Explicitly typed as union of 'buy' or 'sell'
-  amount: number;
-  price: number;
-  timestamp: string;
-}
-
-const TradingActivityFeed: React.FC<TradingActivityFeedProps> = ({ tokenSymbol }) => {
-  const [tradeActivities, setTradeActivities] = useState<TradeActivity[]>([
-    { id: "1", type: 'buy', amount: 500, price: 0.0015, timestamp: '10:23 AM' },
-    { id: "2", type: 'sell', amount: 200, price: 0.00148, timestamp: '10:19 AM' },
-    { id: "3", type: 'buy', amount: 1000, price: 0.00145, timestamp: '10:15 AM' },
-    { id: "4", type: 'sell', amount: 150, price: 0.00151, timestamp: '10:10 AM' },
-    { id: "5", type: 'buy', amount: 750, price: 0.00147, timestamp: '10:05 AM' },
-  ]);
+const TradingActivityFeed: React.FC<TradingActivityFeedProps> = ({ 
+  tokenSymbol, 
+  trades = [],
+  isLoading = false
+}) => {
+  // Sample data if no trades provided
+  const sampleTrades = trades.length > 0 ? trades : [
+    {
+      id: "1",
+      txHash: "tx_123456789abcdef",
+      tokenSymbol: tokenSymbol,
+      tokenName: "Token Name",
+      type: "buy",
+      side: "buy",
+      amount: 0.25,
+      amountUsd: 75,
+      price: 0.015,
+      fee: 0.005,
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      walletAddress: "wallet123",
+      status: "confirmed",
+      amountTokens: 5000,
+      amountSol: 0.25
+    },
+    {
+      id: "2",
+      txHash: "tx_abcdef123456789",
+      tokenSymbol: tokenSymbol,
+      tokenName: "Token Name",
+      type: "sell",
+      side: "sell",
+      amount: 0.15,
+      amountUsd: 45,
+      price: 0.014,
+      fee: 0.003,
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      walletAddress: "wallet456",
+      status: "confirmed",
+      amountTokens: 3000,
+      amountSol: 0.15
+    }
+  ];
   
-  // Simulate new trades coming in
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Generate random trade with explicit type
-      const newTrade: TradeActivity = {
-        id: Date.now().toString(),
-        type: Math.random() > 0.5 ? 'buy' : 'sell',
-        amount: Math.floor(Math.random() * 1000) + 100,
-        price: 0.0015 + (Math.random() * 0.0001 - 0.00005),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      setTradeActivities(prev => [newTrade, ...prev.slice(0, 9)]);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  const sortedTrades = [...sampleTrades].sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 text-purple-500 animate-spin mb-2" />
+        <p className="text-sm text-gray-400">Loading trading activity...</p>
+      </div>
+    );
+  }
+  
+  if (sortedTrades.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-400">No trading activity yet</p>
+      </div>
+    );
+  }
   
   return (
-    <div className="space-y-1">
-      {tradeActivities.map(activity => (
-        <div 
-          key={activity.id} 
-          className="flex justify-between items-center p-1.5 rounded-md hover:bg-[#1A1F2C]/60 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <div className={`p-1 rounded-full ${activity.type === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-              {activity.type === 'buy' ? (
-                <ArrowUp className="h-3 w-3 text-green-400" />
-              ) : (
-                <ArrowDown className="h-3 w-3 text-red-400" />
-              )}
-            </div>
-            <div className="flex flex-col">
-              <div className="text-xs font-medium">
-                {activity.amount} {tokenSymbol}
+    <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+      {sortedTrades.map((trade) => {
+        const isBuy = trade.side === 'buy' || trade.type === 'buy';
+        const formattedTime = formatDistanceToNow(new Date(trade.timestamp), { addSuffix: true });
+        
+        return (
+          <div 
+            key={trade.id} 
+            className="bg-[#1A1F2C]/70 border border-gray-800 rounded-lg p-2.5"
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Badge 
+                  className={`mr-2 ${isBuy ? 'bg-green-600/80' : 'bg-red-500/80'} text-white border-0`}
+                >
+                  {isBuy ? (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  )}
+                  {isBuy ? 'BUY' : 'SELL'}
+                </Badge>
+                <div>
+                  <div className="font-medium text-sm">
+                    {isBuy ? 'Bought' : 'Sold'} {Math.floor(trade.amountTokens || 0).toLocaleString()} {tokenSymbol}
+                  </div>
+                  <div className="text-xs text-gray-400 flex items-center">
+                    <span className="inline-block w-16">Price</span>
+                    <span className="font-medium text-white">${trade.price.toFixed(6)}</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-gray-400">Price: ${activity.price.toFixed(6)}</div>
+              
+              <div className="text-right">
+                <div className="text-sm font-medium">
+                  {trade.amountSol?.toFixed(3) || (trade.amount || 0).toFixed(3)} SOL
+                </div>
+                <div className="text-xs text-gray-400">
+                  {formattedTime}
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex items-center">
-            <Badge 
-              variant="outline" 
-              className={`text-xs border-0 ${
-                activity.type === 'buy' 
-                ? 'bg-green-500/10 text-green-400' 
-                : 'bg-red-500/10 text-red-400'
-              }`}
-            >
-              {activity.type.toUpperCase()}
-            </Badge>
-            <span className="text-xs text-gray-400 ml-2">{activity.timestamp}</span>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

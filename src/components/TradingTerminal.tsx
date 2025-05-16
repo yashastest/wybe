@@ -9,10 +9,23 @@ import TradingActivityFeed from './TradingActivityFeed';
 import TradeEntryPanel from './TradeEntryPanel';
 import { tradingService } from '@/services/token/tradingService';
 import { formatCurrency } from '@/utils/tradeUtils';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ChartCandlestick, ChartLine, Eye, Signal, Star } from 'lucide-react';
+import { 
+  ChartCandlestick, 
+  ChartLine, 
+  Eye, 
+  Signal, 
+  Star, 
+  History, 
+  RefreshCw, 
+  TrendingUp,
+  ChevronsUpDown
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useTokenTrading } from '@/hooks/useTokenTrading';
+import { useWallet } from '@/lib/wallet';
 
 interface TradingTerminalProps {
   tokens: ListedToken[];
@@ -26,42 +39,43 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
   onSelectToken 
 }) => {
   const isMobile = useIsMobile();
+  const { address, connected } = useWallet();
   const [timeframe, setTimeframe] = useState('1D');
   const [chartType, setChartType] = useState('candles');
   const [showTokenSelector, setShowTokenSelector] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
   const [tradeHistory, setTradeHistory] = useState<any[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use the token trading hook for real functionality
+  const { 
+    trades, 
+    tradeHistory: tokenTradeHistory, 
+    fetchTradeHistory, 
+    isLoading 
+  } = useTokenTrading(selectedToken?.symbol);
 
-  const fetchTradeHistory = async (symbol: string) => {
-    try {
-      // Fetch trade history from API
-      console.log(`Fetching trade history for ${symbol}...`);
-      // This would be replaced with real API call
-      setTradeHistory([]);
-    } catch (error) {
-      console.error("Failed to fetch trade history:", error);
+  const fetchTradeData = async () => {
+    if (connected && address && selectedToken) {
+      setIsRefreshing(true);
+      try {
+        await fetchTradeHistory(address);
+        toast.success("Trade data refreshed");
+      } catch (error) {
+        console.error("Failed to fetch trade history:", error);
+        toast.error("Failed to refresh trade data");
+      } finally {
+        setIsRefreshing(false);
+      }
+    } else {
+      toast.error("Connect wallet to view your trade history");
     }
   };
 
   useEffect(() => {
-    // Simulate checking wallet connection
-    const checkWalletConnection = () => {
-      const isConnected = localStorage.getItem('walletConnected') === 'true';
-      const walletAddress = localStorage.getItem('walletAddress');
-      
-      setConnected(isConnected);
-      setAddress(walletAddress);
-    };
-    
-    checkWalletConnection();
-  }, []);
-
-  useEffect(() => {
     if (connected && address && selectedToken) {
-      fetchTradeHistory(selectedToken.symbol);
+      fetchTradeHistory(address);
     }
-  }, [connected, address, selectedToken.symbol, fetchTradeHistory]);
+  }, [connected, address, selectedToken, fetchTradeHistory]);
 
   // Calculate derived trading stats
   const high24h = selectedToken.price * 1.05; // Default calculation if high24h is not available
@@ -85,33 +99,67 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
     { value: '1W', label: '1W' },
   ];
 
-  const handleTrade = (action: 'buy' | 'sell', amount: number, slippage: number, gasPriority: string) => {
-    console.log(`${action} ${amount} SOL of ${selectedToken.symbol} with ${slippage}% slippage and ${gasPriority} gas`);
-    // Here you would call your trading service
+  // Handler for trade execution
+  const handleTrade = async (action: 'buy' | 'sell', amount: number, slippage: number, gasPriority: string) => {
+    if (!connected || !address) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
+    try {
+      const result = await tradingService.executeTrade({
+        tokenSymbol: selectedToken.symbol,
+        action,
+        walletAddress: address,
+        amountSol: action === 'buy' ? amount : undefined,
+        amountTokens: action === 'sell' ? amount : undefined,
+        gasPriority: gasPriority as any
+      });
+      
+      if (result.success) {
+        toast.success(
+          `${action === 'buy' ? 'Bought' : 'Sold'} ${selectedToken.symbol} successfully`, 
+          { description: `Transaction hash: ${result.txHash?.substring(0, 8)}...` }
+        );
+        
+        // Refresh trade history after successful trade
+        fetchTradeHistory(address);
+      } else {
+        toast.error(`Failed to ${action} ${selectedToken.symbol}`, { description: result.error });
+      }
+    } catch (error) {
+      console.error(`Error during ${action} transaction:`, error);
+      toast.error(`Error during ${action} transaction`);
+    }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
       {/* Left Panel - Token Selector (Mobile: Hidden, Desktop: Shown) */}
       <motion.div 
-        className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-hidden transition-all ${
+        className={`fixed inset-0 z-50 bg-black/90 backdrop-blur-lg overflow-hidden transition-all ${
           showTokenSelector && isMobile ? 'block' : 'hidden'
         } lg:static lg:block lg:bg-transparent lg:backdrop-blur-none lg:z-0 lg:col-span-1`}
         initial={false}
         animate={showTokenSelector && isMobile ? { opacity: 1 } : { opacity: 0 }}
       >
         <div className={`absolute inset-y-0 left-0 w-full max-w-xs p-4 bg-[#0F1118] border-r border-gray-800 overflow-y-auto ${
-          !isMobile && 'static w-full h-[calc(100vh-12rem)] rounded-xl border'
+          !isMobile && 'static w-full h-[calc(100vh-14rem)] max-h-[650px] rounded-xl border border-gray-800 bg-[#0F1118]/90 backdrop-blur-md'
         }`}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Select Token</h3>
+            <h3 className="text-lg font-medium flex items-center">
+              <ChevronsUpDown className="mr-2 h-4 w-4 text-purple-400" />
+              Select Token
+            </h3>
             {isMobile && (
-              <button 
+              <Button 
+                variant="ghost"
+                size="icon"
                 className="text-gray-400 hover:text-white"
                 onClick={() => setShowTokenSelector(false)}
               >
                 ✕
-              </button>
+              </Button>
             )}
           </div>
           <TokenSelector 
@@ -130,10 +178,10 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
       {/* Middle Panel - Trading Chart & Info */}
       <div className="lg:col-span-2 space-y-4">
         {/* Token Info Bar */}
-        <div className="flex items-center justify-between mb-2 lg:mb-4">
+        <div className="flex items-center justify-between mb-4">
           <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
             className="flex-grow"
           >
@@ -141,37 +189,42 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
           </motion.div>
 
           {isMobile && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowTokenSelector(true)}
-              className="ml-2 p-2 rounded-lg bg-[#1A1F2C] border border-gray-800"
+              className="ml-2 p-2 rounded-lg bg-[#1A1F2C] border-gray-700"
             >
               <span className="sr-only">Select Token</span>
-              Change
-            </button>
+              Select
+            </Button>
           )}
         </div>
 
         {/* Chart Controls */}
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <div className="flex p-1 bg-[#1A1F2C]/60 rounded-lg">
-            <button
+        <div className="flex flex-wrap items-center gap-2 mb-2 bg-[#0F1118]/60 border border-gray-800 rounded-lg p-1.5">
+          <div className="flex p-0.5 bg-[#1A1F2C]/60 rounded-lg">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setChartType('candles')}
-              className={`p-1.5 rounded-md ${
+              className={`h-7 w-7 rounded-md ${
                 chartType === 'candles' ? 'bg-[#232734]' : 'hover:bg-[#1A1F2C]'
               }`}
               aria-label="Candlestick chart"
             >
-              <ChartCandlestick className="h-4 w-4" />
-            </button>
-            <button
+              <ChartCandlestick className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setChartType('line')}
-              className={`p-1.5 rounded-md ${
+              className={`h-7 w-7 rounded-md ${
                 chartType === 'line' ? 'bg-[#232734]' : 'hover:bg-[#1A1F2C]'
               }`}
               aria-label="Line chart"
             >
-              <ChartLine className="h-4 w-4" />
-            </button>
+              <ChartLine className="h-3.5 w-3.5" />
+            </Button>
           </div>
           
           <div className="flex bg-[#1A1F2C]/60 rounded-lg overflow-hidden">
@@ -179,7 +232,7 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
               <button
                 key={tf.value}
                 onClick={() => setTimeframe(tf.value)}
-                className={`px-2.5 py-1.5 text-xs ${
+                className={`px-2 py-1 text-xs ${
                   timeframe === tf.value 
                     ? 'bg-[#232734] text-white' 
                     : 'text-gray-400 hover:bg-[#1A1F2C]'
@@ -192,16 +245,24 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
           
           <div className="flex-grow"></div>
           
-          <div className="flex gap-1.5">
-            <button className="p-1.5 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
-              <Eye className="h-4 w-4" />
-            </button>
-            <button className="p-1.5 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
-              <Star className="h-4 w-4" />
-            </button>
-            <button className="p-1.5 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
-              <Signal className="h-4 w-4" />
-            </button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
+              <Star className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md bg-[#1A1F2C]/60 hover:bg-[#1A1F2C]">
+              <Signal className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Live Price Badge */}
+        <div className="absolute top-4 right-4 z-10 bg-[#0F1118]/80 border border-gray-800 rounded-lg px-3 py-1.5 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-3.5 w-3.5 text-green-400" />
+            <span className="text-sm font-medium">${selectedToken.price.toFixed(6)}</span>
           </div>
         </div>
 
@@ -210,7 +271,7 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="rounded-xl overflow-hidden border border-gray-800 bg-[#0F1118]"
+          className="relative rounded-xl overflow-hidden border border-gray-800 bg-[#0F1118]/80 h-[350px] sm:h-[400px]"
         >
           <TradingChart symbol={selectedToken.symbol} timeframe={timeframe} />
         </motion.div>
@@ -230,12 +291,32 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
               />
             </TabsContent>
             <TabsContent value="activity" className="mt-4">
-              <div className="border border-gray-800 rounded-xl p-4 bg-[#0F1118]">
-                <h3 className="text-sm font-medium mb-3 flex items-center">
-                  <Signal className="h-4 w-4 mr-1.5" />
-                  Trading Activity
-                </h3>
-                <TradingActivityFeed tokenSymbol={selectedToken.symbol} />
+              <div className="border border-gray-800 rounded-xl p-4 bg-[#0F1118]/80 backdrop-blur-md">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Signal className="h-4 w-4 mr-1.5" />
+                    Trading Activity
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchTradeData}
+                    disabled={isRefreshing}
+                    className="h-7 text-xs bg-transparent border-gray-700"
+                  >
+                    {isRefreshing ? (
+                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <History className="h-3 w-3 mr-1" />
+                    )}
+                    Refresh
+                  </Button>
+                </div>
+                <TradingActivityFeed 
+                  tokenSymbol={selectedToken.symbol} 
+                  trades={tokenTradeHistory || []}
+                  isLoading={isLoading}
+                />
               </div>
             </TabsContent>
           </Tabs>
@@ -246,8 +327,8 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
       <div className="hidden lg:block space-y-4">
         {/* Trade Entry Panel */}
         <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           <TradeEntryPanel 
@@ -259,16 +340,36 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
 
         {/* Activity Feed */}
         <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="border border-gray-800 rounded-xl p-4 bg-[#0F1118]"
+          className="border border-gray-800 rounded-xl p-4 bg-[#0F1118]/80 backdrop-blur-md"
         >
-          <h3 className="text-sm font-medium mb-3 flex items-center">
-            <Signal className="h-4 w-4 mr-1.5" />
-            Trading Activity
-          </h3>
-          <TradingActivityFeed tokenSymbol={selectedToken.symbol} />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium flex items-center">
+              <Signal className="h-4 w-4 mr-1.5" />
+              Trading Activity
+            </h3>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchTradeData}
+              disabled={isRefreshing}
+              className="h-7 text-xs bg-transparent border-gray-700"
+            >
+              {isRefreshing ? (
+                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <History className="h-3 w-3 mr-1" />
+              )}
+              Refresh
+            </Button>
+          </div>
+          <TradingActivityFeed 
+            tokenSymbol={selectedToken.symbol} 
+            trades={tokenTradeHistory || []}
+            isLoading={isLoading}
+          />
         </motion.div>
       </div>
     </div>

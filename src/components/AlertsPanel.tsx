@@ -1,182 +1,298 @@
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bell, Plus, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { useWallet } from '@/lib/wallet';
+import { toast } from 'sonner';
 
-interface Alert {
+interface TokenAlert {
   id: string;
-  type: 'price' | 'whale' | 'gas';
-  condition: string;
-  active: boolean;
-  createdAt: string;
+  token: string;
+  type: 'price' | 'volume' | 'marketcap' | 'whale';
+  threshold: number; 
+  condition: 'above' | 'below';
+  enabled: boolean;
+  triggered?: boolean;
 }
 
-interface AlertsPanelProps {
-  onCreateAlert?: (alert: Omit<Alert, 'id' | 'createdAt'>) => void;
-  onDeleteAlert?: (id: string) => void;
-  onToggleAlert?: (id: string, active: boolean) => void;
-}
-
-const AlertsPanel: React.FC<AlertsPanelProps> = ({
-  onCreateAlert,
-  onDeleteAlert,
-  onToggleAlert
-}) => {
-  const [newAlertType, setNewAlertType] = useState<Alert['type']>('price');
-  const [newAlertCondition, setNewAlertCondition] = useState<string>('');
-  const [alerts, setAlerts] = useState<Alert[]>([
+const AlertsPanel = () => {
+  const { connected } = useWallet();
+  const [alerts, setAlerts] = useState<TokenAlert[]>([
     {
       id: '1',
+      token: 'WYBE',
       type: 'price',
-      condition: 'Price increases 2x from entry',
-      active: true,
-      createdAt: new Date().toISOString()
+      threshold: 0.0018,
+      condition: 'above',
+      enabled: true
     },
     {
       id: '2',
+      token: 'DOGE',
       type: 'whale',
-      condition: 'Whale buys > 5 SOL',
-      active: true,
-      createdAt: new Date().toISOString()
+      threshold: 100000,
+      condition: 'above',
+      enabled: false
     },
     {
       id: '3',
-      type: 'gas',
-      condition: 'Gas spikes 2x above baseline',
-      active: false,
-      createdAt: new Date().toISOString()
+      token: 'SHIB',
+      type: 'price',
+      threshold: 0.000020,
+      condition: 'below',
+      enabled: true,
+      triggered: true
     }
   ]);
-
-  const handleCreateAlert = () => {
-    if (!newAlertCondition) return;
+  
+  const [newAlert, setNewAlert] = useState({
+    token: '',
+    type: 'price',
+    threshold: '',
+    condition: 'above'
+  });
+  
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  const addNewAlert = () => {
+    if (!connected) {
+      toast.error("Please connect wallet to add alerts");
+      return;
+    }
     
-    const newAlert: Alert = {
+    if (!newAlert.token || !newAlert.threshold) {
+      toast.error("Please fill all fields");
+      return;
+    }
+    
+    const alert = {
       id: Date.now().toString(),
-      type: newAlertType,
-      condition: newAlertCondition,
-      active: true,
-      createdAt: new Date().toISOString()
+      token: newAlert.token.toUpperCase(),
+      type: newAlert.type as any,
+      threshold: parseFloat(newAlert.threshold),
+      condition: newAlert.condition as 'above' | 'below',
+      enabled: true
     };
     
-    setAlerts([newAlert, ...alerts]);
-    setNewAlertCondition('');
-    
-    if (onCreateAlert) {
-      onCreateAlert({
-        type: newAlertType,
-        condition: newAlertCondition,
-        active: true
-      });
+    setAlerts([...alerts, alert]);
+    setNewAlert({
+      token: '',
+      type: 'price',
+      threshold: '',
+      condition: 'above'
+    });
+    setShowAddForm(false);
+    toast.success(`Alert created for ${alert.token}`);
+  };
+  
+  const toggleAlertStatus = (id: string) => {
+    setAlerts(alerts.map(alert => 
+      alert.id === id ? { ...alert, enabled: !alert.enabled } : alert
+    ));
+  };
+  
+  const deleteAlert = (id: string) => {
+    setAlerts(alerts.filter(alert => alert.id !== id));
+    toast.success("Alert removed");
+  };
+  
+  const getAlertTypeLabel = (type: string) => {
+    switch(type) {
+      case 'price': return 'Price';
+      case 'volume': return 'Volume';
+      case 'marketcap': return 'Market Cap';
+      case 'whale': return 'Whale Transaction';
+      default: return type;
     }
   };
-
-  const handleDeleteAlert = (id: string) => {
-    setAlerts(alerts.filter(a => a.id !== id));
-    
-    if (onDeleteAlert) {
-      onDeleteAlert(id);
-    }
-  };
-
-  const handleToggleAlert = (id: string) => {
-    setAlerts(alerts.map(a => {
-      if (a.id === id) {
-        const updatedAlert = { ...a, active: !a.active };
-        
-        if (onToggleAlert) {
-          onToggleAlert(id, updatedAlert.active);
-        }
-        
-        return updatedAlert;
-      }
-      return a;
-    }));
-  };
-
+  
   return (
-    <Card className="bg-[#0F1118] border border-gray-800">
+    <Card className="bg-[#0F1118]/80 border border-gray-800 backdrop-blur-md rounded-xl">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <span className="text-[#8B5CF6] mr-2">🚨</span> Custom Alerts
+        <CardTitle className="text-lg flex items-center justify-between">
+          <div className="flex items-center">
+            <Bell className="text-[#8B5CF6] w-5 h-5 mr-2" />
+            <span>Price Alerts</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="h-7 bg-transparent border-gray-700 hover:bg-[#1A1F2C]"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex space-x-2">
-          <select
-            value={newAlertType}
-            onChange={(e) => setNewAlertType(e.target.value as Alert['type'])}
-            className="bg-[#1A1F2C] text-white border border-gray-700 rounded-lg p-2 text-sm flex-shrink-0 w-24"
+      <CardContent>
+        {showAddForm && (
+          <motion.div 
+            className="mb-3 p-3 bg-[#1A1F2C]/70 border border-gray-800 rounded-lg"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            <option value="price">Price</option>
-            <option value="whale">Whale</option>
-            <option value="gas">Gas</option>
-          </select>
-          
-          <Input
-            placeholder="Alert condition..."
-            value={newAlertCondition}
-            onChange={(e) => setNewAlertCondition(e.target.value)}
-            className="bg-[#1A1F2C] border-gray-700"
-          />
-          
-          <Button 
-            onClick={handleCreateAlert}
-            className="bg-[#8B5CF6] hover:bg-[#7c4ddf] flex-shrink-0"
-          >
-            Add
-          </Button>
-        </div>
-        
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-          {alerts.map(alert => (
-            <div 
-              key={alert.id} 
-              className={`bg-[#1A1F2C] border border-gray-700 rounded-lg p-2 flex items-center ${
-                !alert.active && 'opacity-60'
-              }`}
-            >
-              <div className="flex-grow">
-                <div className="flex items-center space-x-2">
-                  <div className={`
-                    w-2 h-2 rounded-full 
-                    ${alert.type === 'price' ? 'bg-green-500' : 
-                      alert.type === 'whale' ? 'bg-blue-500' : 'bg-orange-500'}`
-                  }></div>
-                  <span className="text-xs uppercase text-gray-400">{alert.type}</span>
-                </div>
-                <div className="mt-1">{alert.condition}</div>
+            <div className="text-sm font-medium mb-2">New Alert</div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Token (e.g. WYBE)"
+                  className="bg-[#0F1118] border-gray-800 text-sm"
+                  value={newAlert.token}
+                  onChange={(e) => setNewAlert({...newAlert, token: e.target.value})}
+                />
+                <select 
+                  className="bg-[#0F1118] border border-gray-800 rounded-md text-sm px-3 py-1"
+                  value={newAlert.type}
+                  onChange={(e) => setNewAlert({...newAlert, type: e.target.value})}
+                >
+                  <option value="price">Price</option>
+                  <option value="volume">Volume</option>
+                  <option value="marketcap">Market Cap</option>
+                  <option value="whale">Whale Activity</option>
+                </select>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <div 
-                  className={`h-4 w-8 rounded-full relative cursor-pointer ${
-                    alert.active ? 'bg-[#8B5CF6]' : 'bg-gray-600'
-                  }`}
-                  onClick={() => handleToggleAlert(alert.id)}
-                >
-                  <div 
-                    className={`absolute h-3 w-3 rounded-full bg-white top-0.5 transition-transform ${
-                      alert.active ? 'translate-x-4 right-0.5' : 'left-0.5'
-                    }`}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-800 bg-[#0F1118] text-gray-400 text-sm">
+                    {newAlert.condition === 'above' ? 'Above' : 'Below'}
+                  </span>
+                  <Input
+                    type="text"
+                    className="bg-[#0F1118] border-gray-800 text-sm rounded-l-none"
+                    placeholder="Threshold"
+                    value={newAlert.threshold}
+                    onChange={(e) => setNewAlert({...newAlert, threshold: e.target.value})}
                   />
                 </div>
-                
+                <div className="flex gap-2 items-center bg-[#0F1118]/70 rounded-md border border-gray-800 px-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 px-2 ${newAlert.condition === 'above' ? 'bg-[#2A1F3D] text-purple-400' : ''}`}
+                    onClick={() => setNewAlert({...newAlert, condition: 'above'})}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 px-2 ${newAlert.condition === 'below' ? 'bg-[#2A1F3D] text-purple-400' : ''}`}
+                    onClick={() => setNewAlert({...newAlert, condition: 'below'})}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex justify-between gap-2">
                 <Button 
-                  variant="outline" 
-                  className="h-6 w-6 p-0 text-gray-400"
-                  onClick={() => handleDeleteAlert(alert.id)}
+                  variant="ghost" 
+                  className="flex-1 bg-transparent hover:bg-[#1A1F2C]"
+                  onClick={() => setShowAddForm(false)}
                 >
-                  ×
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
+                  onClick={addNewAlert}
+                >
+                  Add Alert
                 </Button>
               </div>
             </div>
-          ))}
+          </motion.div>
+        )}
+        
+        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+          {alerts.length > 0 ? alerts.map((alert, index) => (
+            <motion.div 
+              key={alert.id} 
+              className={`p-3 border rounded-lg ${
+                alert.triggered 
+                  ? 'bg-red-900/20 border-red-800/30 animate-pulse' 
+                  : 'bg-[#1A1F2C]/70 border-gray-800'
+              }`}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <Badge className="mr-2 bg-[#2A1F3D] text-purple-300 border-0">
+                    {alert.token}
+                  </Badge>
+                  <div className="text-sm">
+                    {getAlertTypeLabel(alert.type)} {alert.condition} {alert.type === 'whale' ? formatNumber(alert.threshold) : formatValue(alert.threshold, alert.type)}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={alert.enabled}
+                    onCheckedChange={() => toggleAlertStatus(alert.id)}
+                    className="data-[state=checked]:bg-purple-600"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-gray-500 hover:text-white hover:bg-red-900/30"
+                    onClick={() => deleteAlert(alert.id)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              
+              {alert.triggered && (
+                <div className="mt-2 text-xs bg-red-500/10 border border-red-800/30 rounded p-1.5 text-red-300">
+                  Alert triggered! {alert.token} is now {
+                    alert.condition === 'below' ? 'below' : 'above'
+                  } your threshold.
+                </div>
+              )}
+            </motion.div>
+          )) : (
+            <div className="text-center py-8 text-gray-400">
+              <Bell className="h-5 w-5 mx-auto mb-2 opacity-50" />
+              <p>No alerts configured</p>
+              <p className="text-sm mt-1">Click the + button to add one</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
+};
+
+// Helper function to format values based on their type
+const formatValue = (value: number, type: string): string => {
+  if (type === 'price') {
+    return `$${value < 0.001 ? value.toFixed(6) : value.toFixed(4)}`;
+  }
+  if (type === 'marketcap') {
+    return `$${value >= 1000000 ? (value / 1000000).toFixed(2) + 'M' : (value / 1000).toFixed(2) + 'K'}`;
+  }
+  if (type === 'volume') {
+    return `$${value >= 1000000 ? (value / 1000000).toFixed(2) + 'M' : (value / 1000).toFixed(2) + 'K'}`;
+  }
+  return value.toString();
+};
+
+// Helper function to format large numbers
+const formatNumber = (value: number): string => {
+  if (value >= 1000000) {
+    return (value / 1000000).toFixed(2) + 'M';
+  }
+  if (value >= 1000) {
+    return (value / 1000).toFixed(2) + 'K';
+  }
+  return value.toString();
 };
 
 export default AlertsPanel;
