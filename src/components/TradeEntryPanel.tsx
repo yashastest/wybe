@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown, Flame, Zap, Info } from 'lucide-react';
@@ -30,14 +29,15 @@ const TradeEntryPanel: React.FC<TradeEntryPanelProps> = ({
   const { connected } = useWallet();
   const { solBalance, tokenBalances } = useWalletBalance(tokenSymbol);
   
-  // Get token balance for the selected token
+  // Get token balance for the selected token and ensure it's a number
   const tokenBalance = tokenBalances?.[tokenSymbol] || 0;
+  const numericTokenBalance = typeof tokenBalance === 'number' ? tokenBalance : 0;
   
   // Calculate estimated token amount based on SOL input
   const estimatedTokens = parseFloat(amount || '0') / tokenPrice;
   
   // Calculate max amount based on available balance
-  const maxAmount = action === 'buy' ? solBalance : tokenBalance;
+  const maxAmount = action === 'buy' ? solBalance : numericTokenBalance;
   
   // Handle "Max" button click
   const handleSetMax = () => {
@@ -45,7 +45,7 @@ const TradeEntryPanel: React.FC<TradeEntryPanelProps> = ({
       // Leave a small amount for gas fees
       setAmount(Math.max(0, solBalance - 0.01).toFixed(2));
     } else {
-      setAmount(tokenBalance.toString());
+      setAmount(numericTokenBalance.toString());
     }
   };
   
@@ -59,10 +59,10 @@ const TradeEntryPanel: React.FC<TradeEntryPanelProps> = ({
   useEffect(() => {
     if (action === 'buy' && solBalance > 0) {
       setAmount((solBalance / 4).toFixed(2));
-    } else if (action === 'sell' && tokenBalance > 0) {
-      setAmount((tokenBalance / 2).toFixed(0));
+    } else if (action === 'sell' && numericTokenBalance > 0) {
+      setAmount((numericTokenBalance / 2).toFixed(0));
     }
-  }, [action, solBalance, tokenBalance]);
+  }, [action, solBalance, numericTokenBalance]);
   
   return (
     <TooltipProvider>
@@ -108,7 +108,7 @@ const TradeEntryPanel: React.FC<TradeEntryPanelProps> = ({
               <div className="flex items-center gap-1">
                 <span className="text-xs text-gray-400">Balance: {action === 'buy' ? 
                   solBalance.toFixed(4) + ' SOL' : 
-                  Math.floor(tokenBalance).toLocaleString() + ` ${tokenSymbol}`}
+                  Math.floor(numericTokenBalance).toLocaleString() + ` ${tokenSymbol}`}
                 </span>
                 <Button 
                   variant="ghost" 

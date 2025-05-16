@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { tokenTradingService, TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/tokenTradingService';
@@ -6,15 +5,21 @@ import { useWalletBalance } from './useWalletBalance';
 import { useWallet } from './useWallet.tsx';
 
 export interface TokenTrade {
-  tokenSymbol: string;
-  side: 'buy' | 'sell';
-  amount: number;
-  price?: number;
-  timestamp: string;
-  status: 'completed' | 'pending' | 'failed' | 'confirmed'; // Added 'confirmed' to make compatible with TokenTransaction
+  id?: string;               // Added to match TokenTransaction
   txHash?: string;
-  amountTokens?: number; // Added to align with TokenTransaction
-  amountSol?: number;    // Added to align with TokenTransaction
+  tokenSymbol: string;
+  tokenName?: string;        // Added to match TokenTransaction
+  side: 'buy' | 'sell';
+  type?: 'buy' | 'sell';     // Added to match TokenTransaction
+  amount: number;
+  amountUsd?: number;        // Added to match TokenTransaction
+  price?: number;
+  fee?: number;              // Added to match TokenTransaction
+  timestamp: string;
+  walletAddress?: string;    // Added to match TokenTransaction
+  status: 'pending' | 'completed' | 'failed' | 'confirmed';
+  amountTokens?: number;
+  amountSol?: number;
 }
 
 export const useTokenTrading = (tokenSymbol?: string) => {
@@ -52,15 +57,21 @@ export const useTokenTrading = (tokenSymbol?: string) => {
       if (result.success) {
         // Create transaction record and update local state with new trade
         const newTrade: TokenTrade = {
+          id: result.txHash || new Date().toISOString(), // Ensure there's always an ID
           tokenSymbol: tradeParams.tokenSymbol,
+          tokenName: tradeParams.tokenSymbol, // Use symbol as name if needed
+          type: tradeParams.action,
           side: tradeParams.action,
           amount: tradeParams.action === 'buy' 
             ? (result.amountTokens || result.amount || 0) 
             : (tradeParams.amountTokens || 0),
+          amountUsd: (result.amount || 0) * (result.price || 0),
           price: result.price,
+          fee: result.fee || 0,
           timestamp: new Date().toISOString(),
           status: 'completed',
           txHash: result.txHash,
+          walletAddress: tradeParams.walletAddress,
           amountTokens: result.amountTokens || (tradeParams.action === 'buy' ? result.amount : undefined),
           amountSol: result.amountSol || result.amount
         };
@@ -86,16 +97,22 @@ export const useTokenTrading = (tokenSymbol?: string) => {
     try {
       const history = await tokenTradingService.getUserTransactions(walletAddress);
       
-      // Convert TokenTransaction[] to TokenTrade[]
+      // Convert TokenTransaction[] to TokenTrade[] with all required fields
       const tradeHistory: TokenTrade[] = history.map(tx => ({
+        id: tx.id,
         tokenSymbol: tx.tokenSymbol,
-        side: tx.side || (tx.type as 'buy' | 'sell'), // Use side if available, fall back to type
+        tokenName: tx.tokenName,
+        side: tx.side || (tx.type as 'buy' | 'sell'),
+        type: tx.type,
         amount: tx.amount,
+        amountUsd: tx.amountUsd,
         price: tx.price,
+        fee: tx.fee,
         timestamp: tx.timestamp,
-        status: tx.status as 'completed' | 'pending' | 'failed' | 'confirmed',
+        status: tx.status === 'confirmed' ? tx.status : (tx.status === 'pending' ? tx.status : (tx.status === 'failed' ? tx.status : 'completed')),
         txHash: tx.txHash,
-        amountTokens: tx.amountTokens || tx.amount, // Fall back to amount if amountTokens isn't available
+        walletAddress: tx.walletAddress,
+        amountTokens: tx.amountTokens || tx.amount,
         amountSol: tx.amountSol || (tx.price ? tx.amount * tx.price : undefined)
       }));
       
@@ -169,6 +186,6 @@ export const useTokenTrading = (tokenSymbol?: string) => {
     sellTokens,
     sellAllTokens,
     solBalance,
-    tokenBalance
+    tokenBalance: typeof tokenBalance === 'number' ? tokenBalance : 0
   };
 };

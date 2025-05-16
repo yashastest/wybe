@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ListedToken } from '@/services/tokenTradingService';
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useTokenTrading } from '@/hooks/useTokenTrading';
+import { useTokenTrading, TokenTrade } from '@/hooks/useTokenTrading';
 import { useWallet } from '@/lib/wallet';
 import { TokenTransaction } from '@/services/token/types';
 
@@ -133,27 +132,25 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
     }
   };
 
-  // Ensure tradeHistory is compatible with TokenTransaction[] type
+  // Ensure tradeHistory is compatible with TokenTransaction[] type by mapping properties
   const convertedTradeHistory: TokenTransaction[] = tradeHistory ? 
-    tradeHistory.map(trade => {
-      return {
-        id: trade.id || String(Date.now()),
-        txHash: trade.txHash || "",
-        tokenSymbol: trade.tokenSymbol || selectedToken.symbol,
-        tokenName: trade.tokenName || selectedToken.name,
-        type: trade.side || 'buy',
-        side: trade.side || 'buy',
-        amount: trade.amount || 0,
-        amountUsd: trade.amountUsd || trade.amount * selectedToken.price || 0,
-        price: trade.price || selectedToken.price,
-        fee: trade.fee || 0.001,
-        timestamp: trade.timestamp || new Date().toISOString(),
-        walletAddress: trade.walletAddress || address || "",
-        status: trade.status || "confirmed",
-        amountTokens: trade.amountTokens,
-        amountSol: trade.amountSol,
-      };
-    }) : [];
+    tradeHistory.map(trade => ({
+      id: trade.id || String(Date.now()),
+      txHash: trade.txHash || "",
+      tokenSymbol: trade.tokenSymbol,
+      tokenName: trade.tokenName || selectedToken.name,
+      type: trade.type || trade.side || 'buy',
+      side: trade.side || 'buy',
+      amount: trade.amount,
+      amountUsd: trade.amountUsd || trade.amount * selectedToken.price || 0,
+      price: trade.price || selectedToken.price,
+      fee: trade.fee || 0.001,
+      timestamp: trade.timestamp,
+      walletAddress: trade.walletAddress || address || "",
+      status: trade.status === 'completed' ? 'confirmed' : trade.status,
+      amountTokens: trade.amountTokens,
+      amountSol: trade.amountSol,
+    })) : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
