@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatPercentage } from '@/utils/tradeUtils';
+import { formatCurrency, formatPercentage, formatNumber } from '@/utils/tradeUtils';
 
 interface PortfolioToken {
   symbol: string;
