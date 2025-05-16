@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -5,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import MemeCoinParty from "./MemeCoinParty";
 import MemeRocketAnimation from "./MemeRocketAnimation";
+import WybeHero3D from "./WybeHero3D";
 import { TypewriterText, TypewriterHeading, SplitColorHeading, RotatingTypewriterWord } from "@/components/ui/typewriter-text";
 
 const HeroSection = () => {
   const [showFullTagline, setShowFullTagline] = useState(false);
+  const [showMemeRocket, setShowMemeRocket] = useState(true);
   
   const handleTypewriterComplete = () => {
     setShowFullTagline(true);
@@ -114,7 +117,12 @@ const HeroSection = () => {
           
           {/* Right Column - Animation */}
           <div className="flex justify-center">
-            <MemeRocketAnimation />
+            {/* Toggle between current animation and the 3D placeholder */}
+            {showMemeRocket ? (
+              <MemeRocketAnimation />
+            ) : (
+              <WybeHero3D />
+            )}
           </div>
         </div>
       </div>
@@ -139,6 +147,16 @@ const HeroSection = () => {
       
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+      
+      {/* Toggle button for demo purposes - remove in production */}
+      <div className="absolute bottom-4 right-4 z-20">
+        <button 
+          onClick={() => setShowMemeRocket(!showMemeRocket)}
+          className="text-xs bg-black/70 border border-orange-500/30 px-3 py-1 rounded-full text-gray-400 hover:text-white"
+        >
+          Toggle {showMemeRocket ? '3D Placeholder' : 'Current Animation'}
+        </button>
+      </div>
     </section>
   );
 };
