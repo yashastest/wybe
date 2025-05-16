@@ -64,7 +64,11 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   const navLinks: NavLink[] = [
     { to: "/", label: "Home" },
     { to: "/discover", label: "Discover" },
-    { to: "/trade-demo", label: "Trade Demo", icon: <TrendingUp className="h-4 w-4 mr-1" /> },
+    { 
+      to: "/trade-demo", 
+      label: connected ? "Trade" : "Trade Demo", 
+      icon: <TrendingUp className="h-4 w-4 mr-1" /> 
+    },
     { to: "/dashboard", label: "Dashboard" },
     { to: "/launch", label: "Launch" },
     { to: "/package", label: "Launch Package" },
