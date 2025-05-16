@@ -6,6 +6,7 @@ import TokenSelector from './TokenSelector';
 import TradingChart from './TradingChart';
 import TradingActivityFeed from './TradingActivityFeed';
 import TradeEntryPanel from './TradeEntryPanel';
+import DexScreenerListingProgress from './DexScreenerListingProgress';
 import { tradingService } from '@/services/token/tradingService';
 import { formatCurrency } from '@/utils/tradeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -337,6 +338,15 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
                   isLoading={isLoading}
                 />
               </div>
+              
+              {/* Add DexScreener Listing Progress for Mobile View */}
+              <div className="mt-4">
+                <DexScreenerListingProgress 
+                  tokenSymbol={selectedToken.symbol}
+                  progress={65}
+                  status="in_progress"
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
@@ -388,6 +398,19 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
             tokenSymbol={selectedToken.symbol} 
             trades={convertedTradeHistory}
             isLoading={isLoading}
+          />
+        </motion.div>
+        
+        {/* Add DexScreener Listing Progress for Desktop View */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <DexScreenerListingProgress 
+            tokenSymbol={selectedToken.symbol}
+            progress={65}
+            status="in_progress"
           />
         </motion.div>
       </div>
