@@ -1,14 +1,9 @@
-
 // Format currency with commas
 export const formatCurrency = (value: number): string => {
-  if (!value) return '0';
-  
-  if (value >= 1000000000) {
-    return (value / 1000000000).toFixed(2) + 'B';
-  } else if (value >= 1000000) {
-    return (value / 1000000).toFixed(2) + 'M';
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(2)}M`;
   } else if (value >= 1000) {
-    return (value / 1000).toFixed(2) + 'K';
+    return `${(value / 1000).toFixed(2)}K`;
   } else {
     return value.toFixed(2);
   }
@@ -16,18 +11,15 @@ export const formatCurrency = (value: number): string => {
 
 // Calculate price impact for a trade
 export const calculatePriceImpact = (
-  tokenPrice: number,
-  tradeAmount: number,
+  price: number, 
+  amount: number, 
   action: 'buy' | 'sell',
-  slippage: number = 0.5
+  slippage: number
 ): number => {
-  // Simple price impact calculation
-  const impact = (tradeAmount / 1000) * (action === 'buy' ? 1 : -1);
-  
-  // Add slippage
-  const withSlippage = impact * (1 + slippage / 100);
-  
-  return Math.min(Math.abs(withSlippage), 10); // Cap at 10% for UI
+  // Basic simulation for demo purposes
+  const baseImpact = (amount / 10) * (action === 'buy' ? 1 : 0.8);
+  const impact = Math.min(20, Math.max(0.1, baseImpact + parseFloat(slippage.toString()) * 0.5));
+  return impact;
 };
 
 // Calculate token price with bonding curve
@@ -103,6 +95,7 @@ export const calculateSolAmount = (tokenAmount: number, tokenPrice: number): num
 
 // Calculate estimated token amount for SOL spent
 export const calculateTokenAmount = (solAmount: number, tokenPrice: number): number => {
+  if (!tokenPrice) return 0;
   return solAmount / tokenPrice;
 };
 
@@ -145,24 +138,21 @@ export const calculateMilestoneTimeRemaining = (launchTime: Date): number => {
   return Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60))); // Hours remaining
 };
 
-// Added missing utility functions:
-
-// Get color based on sentiment score
-export const getSentimentColor = (score: number): string => {
-  if (score >= 70) return "bg-green-500";
-  if (score >= 40) return "bg-green-400";
-  if (score >= 10) return "bg-green-300";
-  if (score >= -10) return "bg-orange-400";
-  if (score >= -40) return "bg-orange-500";
-  return "bg-red-500";
-};
-
-// Format percentage without the +/- sign
+// Helper for formatting percentage values
 export const formatPercentage = (value: number): string => {
-  return `${Math.abs(value).toFixed(2)}%`;
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 };
 
-// Format number with commas for thousands
+// Helper for formatting generic numbers with commas
 export const formatNumber = (value: number): string => {
-  return value.toLocaleString();
+  return new Intl.NumberFormat().format(value);
+};
+
+// Get color for sentiment indicator
+export const getSentimentColor = (sentiment: number): string => {
+  if (sentiment >= 80) return '#22c55e'; // Strong positive - green
+  if (sentiment >= 60) return '#84cc16'; // Positive - light green
+  if (sentiment >= 40) return '#eab308'; // Neutral - yellow
+  if (sentiment >= 20) return '#f97316'; // Negative - orange
+  return '#ef4444'; // Strong negative - red
 };

@@ -106,6 +106,12 @@ const TokenPriceChart: React.FC<TokenPriceChartProps> = ({
             }
             return time;
           }}
+          contentStyle={{
+            backgroundColor: '#1A1F2C',
+            borderColor: '#374151',
+            borderRadius: '4px',
+            fontSize: '12px'
+          }}
         />
       </AreaChart>
     </ResponsiveContainer>

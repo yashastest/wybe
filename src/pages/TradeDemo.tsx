@@ -67,7 +67,7 @@ const TradeDemo: React.FC = () => {
       return (
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 bg-[#2A1F3D] border-purple-800 hover:bg-[#3D2B52] text-white"
+          className="flex items-center gap-2 bg-[#1A1F2C]/80 border-purple-800 hover:bg-[#3D2B52] text-white"
           onClick={connect}
         >
           <WalletIcon className="h-4 w-4" />
@@ -77,15 +77,15 @@ const TradeDemo: React.FC = () => {
     }
     
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#2A1F3D] border border-purple-800 rounded-lg">
-          <CircleDollarSign className="h-4 w-4 text-purple-400" />
-          <span className="font-medium">{solBalance.toFixed(4)} SOL</span>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1A1F2C]/80 border border-purple-800 rounded-lg">
+          <CircleDollarSign className="h-3.5 w-3.5 text-purple-400" />
+          <span className="font-medium text-sm">{solBalance.toFixed(4)} SOL</span>
         </div>
         <Button 
           variant="outline" 
           size="sm"
-          className="h-8 px-3 bg-transparent border-gray-700 hover:bg-[#1A1F2C]"
+          className="h-7 px-2.5 py-0 bg-[#1A1F2C]/80 border-gray-700 hover:bg-[#1A1F2C] text-xs"
         >
           {address.substring(0, 4)}...{address.substring(address.length - 4)}
         </Button>
@@ -97,37 +97,37 @@ const TradeDemo: React.FC = () => {
     <div className="min-h-screen bg-[#0A0C12] text-white flex flex-col">
       <Header />
       
-      <main className="flex-grow px-2 sm:px-4 pt-20 pb-6">
+      <main className="flex-grow px-0 sm:px-1 pt-16 pb-2">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="max-w-[1920px] mx-auto"
         >
-          {/* Top Trading Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent hidden md:block">
+          {/* Top Trading Bar - Minimal and compact */}
+          <div className="flex items-center justify-between gap-1 mb-1 px-2 py-1 bg-[#0F1118]/90 border-b border-gray-800/50">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-300 bg-clip-text text-transparent hidden md:block">
                 Trading Terminal
               </h1>
               {selectedToken && (
                 <Badge 
                   variant="outline" 
-                  className="px-3 py-1 border-purple-800 bg-[#2A1F3D] text-white text-sm"
+                  className="px-2 py-0.5 border-purple-800 bg-[#1A1F2C]/80 text-white text-xs"
                 >
                   {selectedToken.name} ({selectedToken.symbol})
                 </Badge>
               )}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {renderWalletButton()}
               
               <div className="flex items-center">
                 {isEnhancedMode && (
                   <Badge 
                     variant="secondary" 
-                    className="mr-2 bg-[#8B5CF6] text-white animate-pulse"
+                    className="mr-1 px-1.5 py-0 text-xs bg-[#8B5CF6] text-white animate-pulse"
                   >
                     Pro
                   </Badge>
@@ -141,13 +141,13 @@ const TradeDemo: React.FC = () => {
           </div>
           
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-[70vh] w-full rounded-xl bg-[#0F1118]/80 border border-gray-800">
+            <div className="flex flex-col items-center justify-center h-[70vh] w-full rounded-lg bg-[#0F1118]/80 border border-gray-800">
               <Loader2 className="h-10 w-10 text-[#8B5CF6] animate-spin mb-4" />
               <div className="text-xl font-medium">Loading trading terminal...</div>
             </div>
           ) : selectedToken && !isEnhancedMode ? (
-            // Standard trading terminal
-            <div className="w-full bg-[#0F1118]/80 border border-gray-800 backdrop-blur-md rounded-xl overflow-hidden">
+            // Standard trading terminal - More compact
+            <div className="w-full bg-[#0F1118]/80 border border-gray-800 backdrop-blur-md rounded-lg overflow-hidden">
               <TradingTerminal 
                 tokens={tokens}
                 selectedToken={selectedToken}
@@ -155,11 +155,11 @@ const TradeDemo: React.FC = () => {
               />
             </div>
           ) : selectedToken ? (
-            // Enhanced trading terminal
-            <div className="space-y-4">
+            // Enhanced trading terminal - Cockpit style with tighter spacing
+            <div className="space-y-1">
               {/* Main trading interface */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <div className="lg:col-span-2 xl:col-span-3 bg-[#0F1118]/80 border border-gray-800 backdrop-blur-md rounded-xl overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-1">
+                <div className="lg:col-span-3 bg-[#0F1118]/90 border border-gray-800/50 backdrop-blur-md rounded-lg overflow-hidden">
                   <TradingTerminal 
                     tokens={tokens}
                     selectedToken={selectedToken}
@@ -167,29 +167,39 @@ const TradeDemo: React.FC = () => {
                   />
                 </div>
                 
-                {/* Right side enhanced panels */}
-                <div className="space-y-4">
-                  <WhaleSniperPanel />
-                  <SessionPortfolio tokens={[]} />
+                {/* Right side enhanced panels - Stacked and compact */}
+                <div className="space-y-1">
+                  <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                    <WhaleSniperPanel />
+                  </div>
+                  <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                    <SessionPortfolio tokens={[]} />
+                  </div>
                 </div>
               </div>
               
-              {/* Bottom enhanced panels */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <BondingCurveVisualizer 
-                  initialPrice={selectedToken.price}
-                  currentSupply={selectedToken.totalSupply || 100000000}
-                  curveType="quadratic"
-                  estimatedImpact={2.5}
-                />
-                <SentimentHeatmap 
-                  tokens={[]}
-                  onSelect={(symbol) => {
-                    const token = tokens.find(t => t.symbol === symbol);
-                    if (token) setSelectedToken(token);
-                  }}
-                />
-                <AlertsPanel />
+              {/* Bottom enhanced panels - Tighter grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
+                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <BondingCurveVisualizer 
+                    initialPrice={selectedToken.price}
+                    currentSupply={selectedToken.totalSupply || 100000000}
+                    curveType="quadratic"
+                    estimatedImpact={2.5}
+                  />
+                </div>
+                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <SentimentHeatmap 
+                    tokens={[]}
+                    onSelect={(symbol) => {
+                      const token = tokens.find(t => t.symbol === symbol);
+                      if (token) setSelectedToken(token);
+                    }}
+                  />
+                </div>
+                <div className="bg-[#0F1118]/90 border border-gray-800/50 rounded-lg p-2">
+                  <AlertsPanel />
+                </div>
               </div>
             </div>
           ) : null}

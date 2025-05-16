@@ -81,26 +81,26 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
   };
   
   return (
-    <Card className="bg-wybe-background-light border-white/10">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">
+    <Card className="bg-[#0F1118]/80 border-gray-800/50 shadow-none">
+      <CardHeader className="pb-1 px-3 pt-3">
+        <CardTitle className="text-base flex items-center">
           Trade {selectedToken.name} ({selectedToken.symbol})
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2 p-3">
         {/* Token Selector */}
         <div>
-          <Label htmlFor="token">Select Token</Label>
+          <Label htmlFor="token" className="text-xs text-gray-400 mb-1 block">Token</Label>
           <Select onValueChange={(value) => {
             const selected = tokens.find(token => token.symbol === value);
             if (selected) {
               onSelectToken(selected);
             }
           }}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
               <SelectValue placeholder="Select a token" defaultValue={selectedToken.symbol} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#1A1F2C] border-gray-700">
               {tokens.map((token) => (
                 <SelectItem key={token.symbol} value={token.symbol}>
                   {token.name} ({token.symbol})
@@ -112,12 +112,12 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
         
         {/* Trade Action */}
         <div>
-          <Label htmlFor="action">Action</Label>
+          <Label htmlFor="action" className="text-xs text-gray-400 mb-1 block">Action</Label>
           <Select defaultValue={action} onValueChange={handleActionChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
               <SelectValue placeholder="Select action" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#1A1F2C] border-gray-700">
               <SelectItem value="buy">Buy</SelectItem>
               <SelectItem value="sell">Sell</SelectItem>
             </SelectContent>
@@ -126,24 +126,25 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
         
         {/* Amount Input */}
         <div>
-          <Label htmlFor="amount">Amount ({action === 'buy' ? 'SOL' : selectedToken.symbol})</Label>
+          <Label htmlFor="amount" className="text-xs text-gray-400 mb-1 block">Amount ({action === 'buy' ? 'SOL' : selectedToken.symbol})</Label>
           <Input 
             type="number" 
             id="amount" 
             placeholder={`Enter amount to ${action}`} 
             value={amount}
             onChange={handleAmountChange}
+            className="h-8 text-sm bg-[#1A1F2C]/60 border-gray-700"
           />
         </div>
         
         {/* Slippage Tolerance */}
         <div>
-          <Label htmlFor="slippage">Slippage Tolerance</Label>
+          <Label htmlFor="slippage" className="text-xs text-gray-400 mb-1 block">Slippage</Label>
           <Select defaultValue={slippage} onValueChange={handleSlippageChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-8 text-sm bg-[#1A1F2C]/60 border-gray-700">
               <SelectValue placeholder="Select slippage" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#1A1F2C] border-gray-700">
               <SelectItem value="0.5">0.5%</SelectItem>
               <SelectItem value="1">1%</SelectItem>
               <SelectItem value="2">2%</SelectItem>
@@ -153,72 +154,71 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({ tokens, selectedTok
         
         {/* Estimated Price Impact */}
         <div>
-          <Label>Estimated Price Impact</Label>
-          <Progress value={15} className="h-2 bg-gray-700">
+          <div className="flex justify-between items-center mb-1">
+            <Label className="text-xs text-gray-400">Price Impact</Label>
+            <span className="text-xs text-orange-500">15%</span>
+          </div>
+          <Progress value={15} className="h-1.5 bg-gray-700">
             <div className="h-full bg-orange-500 transition-all" style={{ width: '15%' }} />
           </Progress>
-          <div className="text-xs text-gray-400 flex justify-between">
-            <span>0%</span>
-            <span>15%</span>
-          </div>
         </div>
         
         {/* Wallet Balances */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <div className="text-sm text-gray-400">SOL Balance</div>
-            <div className="font-medium">{solBalance.toFixed(4)} SOL</div>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
+            <div className="text-xs text-gray-400">SOL Balance</div>
+            <div className="font-medium text-sm">{solBalance.toFixed(4)}</div>
           </div>
-          <div>
-            <div className="text-sm text-gray-400">{selectedToken.symbol} Balance</div>
-            <div className="font-medium">{tokenBalance.toFixed(2)} {selectedToken.symbol}</div>
+          <div className="bg-[#1A1F2C]/40 border border-gray-800/50 p-2 rounded-md">
+            <div className="text-xs text-gray-400">{selectedToken.symbol} Balance</div>
+            <div className="font-medium text-sm">{tokenBalance.toFixed(2)}</div>
           </div>
         </div>
         
         {/* Trade Button */}
         <Button 
-          className="w-full bg-orange-600 hover:bg-orange-700"
+          className="w-full bg-orange-600 hover:bg-orange-700 h-8 text-sm mt-1"
           onClick={executeTrade}
           disabled={isExecuting}
         >
-          {isExecuting ? 'Executing Trade...' : `Swap ${amount} ${action === 'buy' ? 'SOL' : selectedToken.symbol} `}
+          {isExecuting ? 'Executing...' : `Swap ${amount || '0'} ${action === 'buy' ? 'SOL' : selectedToken.symbol} `}
         </Button>
         
         {/* Token Stats */}
-        <div className="border-t border-white/10 pt-4 mt-4">
-          <div className="text-sm font-medium mb-2">Token Stats</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="border-t border-gray-800/50 pt-2 mt-2">
+          <div className="text-xs font-medium mb-2 text-gray-300">Token Stats</div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <div className="text-xs text-gray-400">Market Cap</div>
+              <div className="text-gray-400">Market Cap</div>
               <div className="font-medium">${formatCurrency(tokenStats.marketCap)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">24h Volume</div>
+              <div className="text-gray-400">24h Volume</div>
               <div className="font-medium">${formatCurrency(tokenStats.volume24h)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">Liquidity</div>
+              <div className="text-gray-400">Liquidity</div>
               <div className="font-medium">${formatCurrency(tokenStats.liquidity)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">Time Since Launch</div>
+              <div className="text-gray-400">Time Since Launch</div>
               <div className="font-medium">{tokenStats.timeSinceLaunch}</div>
             </div>
           </div>
           
           {/* Token Security & Eligibility */}
-          <div className="mt-4">
-            <div className="text-xs text-gray-400 flex items-center gap-1.5">
-              <ListChecks className="h-3.5 w-3.5" />
+          <div className="mt-2">
+            <div className="text-xs text-gray-400 flex items-center gap-1">
+              <ListChecks className="h-3 w-3" />
               Eligibility & Security
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="bg-green-500 text-white text-xs">
-                <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              <Badge variant="secondary" className="bg-green-600/80 text-white text-xs px-1.5 py-0">
+                <ShieldCheck className="h-3 w-3 mr-0.5" />
                 {tokenStats.isAudited ? 'Audited' : 'Not Audited'}
               </Badge>
-              <Badge variant="secondary" className="bg-green-500 text-white text-xs">
-                <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              <Badge variant="secondary" className="bg-green-600/80 text-white text-xs px-1.5 py-0">
+                <CheckCircle className="h-3 w-3 mr-0.5" />
                 {tokenStats.isVerified ? 'Verified' : 'Unverified'}
               </Badge>
             </div>
