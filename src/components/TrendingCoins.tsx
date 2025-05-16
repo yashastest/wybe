@@ -8,38 +8,48 @@ import { tokenTradingService } from "@/services/tokenTradingService";
 import { toast } from "sonner";
 import { ListedToken } from "@/services/token/types";
 
+// Define a type for the mapped trending coin if it differs significantly from ListedToken
+// For now, it seems we can use ListedToken and map specific display fields
+interface DisplayTrendingCoin extends ListedToken {
+  displayPrice: string;
+  displayChange: string;
+  displayVolume: string;
+  displayMarketCap: string;
+  isPositiveTrend: boolean;
+  sparklineData: number[];
+}
+
 const TrendingCoins = () => {
-  const [trendingCoins, setTrendingCoins] = useState<any[]>([]);
+  const [trendingCoins, setTrendingCoins] = useState<DisplayTrendingCoin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchTrendingCoins = async () => {
       setIsLoading(true);
       try {
-        const allCoins = await tokenTradingService.getListedTokens();
+        const allCoins: ListedToken[] = await tokenTradingService.getListedTokens();
         
-        // Sort by volume/change and take top 4 as trending
-        const trending = allCoins
+        const trending: DisplayTrendingCoin[] = allCoins
           .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
           .slice(0, 4)
-          .map(coin => ({
-            id: coin.id,
-            name: coin.name,
-            symbol: coin.symbol,
-            price: coin.price.toString(),
-            change: (coin.change24h || coin.priceChange24h || 0) >= 0 
-              ? `+${(coin.change24h || coin.priceChange24h || 0).toFixed(1)}%` 
-              : `${(coin.change24h || coin.priceChange24h || 0).toFixed(1)}%`,
-            volume: formatVolume(coin.volume24h || 0),
-            marketCap: formatVolume(coin.marketCap || 0),
-            positive: (coin.change24h || coin.priceChange24h || 0) >= 0,
-            sparkline: generateMockSparkline((coin.change24h || coin.priceChange24h || 0) >= 0),
-            holderStats: coin.holderStats || {
-              whales: Math.floor(Math.random() * 5),
-              retail: Math.floor(Math.random() * 100) + 20,
-              devs: 1
-            }
-          }));
+          .map(coin => {
+            const isPositive = (coin.change24h || coin.priceChange24h || 0) >= 0;
+            return {
+              ...coin, // Spread all properties from ListedToken
+              displayPrice: `${coin.price.toFixed(4)} SOL`, // Example formatting
+              displayChange: `${isPositive ? '+' : ''}${(coin.change24h || coin.priceChange24h || 0).toFixed(1)}%`,
+              displayVolume: formatVolume(coin.volume24h || 0),
+              displayMarketCap: formatVolume(coin.marketCap || 0),
+              isPositiveTrend: isPositive,
+              sparklineData: generateMockSparkline(isPositive),
+              // holderStats is now part of ListedToken from types.ts, ensure service provides it
+              holderStats: coin.holderStats || {
+                whales: Math.floor(Math.random() * 5),
+                retail: Math.floor(Math.random() * 100) + 20,
+                devs: 1
+              }
+            };
+          });
         
         setTrendingCoins(trending);
       } catch (error) {
@@ -54,7 +64,8 @@ const TrendingCoins = () => {
   }, []);
   
   // Format volume for display
-  const formatVolume = (volume) => {
+  const formatVolume = (volume?: number) => {
+    if (volume === undefined || volume === null || isNaN(volume)) return "$0.00";
     if (volume >= 1000000) {
       return `$${(volume / 1000000).toFixed(2)}M`;
     } else if (volume >= 1000) {
@@ -65,7 +76,7 @@ const TrendingCoins = () => {
   };
   
   // Generate mock sparkline data based on positive/negative trend
-  const generateMockSparkline = (isPositive) => {
+  const generateMockSparkline = (isPositive: boolean) => {
     if (isPositive) {
       return [20, 22, 25, 22, 26, 27, 30, 28, 30, 35];
     } else {
@@ -97,7 +108,7 @@ const TrendingCoins = () => {
         ))
       ) : trendingCoins.length > 0 ? (
         trendingCoins.map((coin, index) => (
-          <TrendingCoinCard key={index} coin={coin} delay={index * 0.1} />
+          <TrendingCoinCard key={coin.id} coin={coin} delay={index * 0.1} />
         ))
       ) : (
         <div className="col-span-1 md:col-span-2 lg:col-span-4 text-center py-12 glass-card">
@@ -113,7 +124,7 @@ const TrendingCoins = () => {
   );
 };
 
-const TrendingCoinCard = ({ coin, delay }) => {
+const TrendingCoinCard = ({ coin, delay }: { coin: DisplayTrendingCoin, delay: number }) => {
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
@@ -140,33 +151,33 @@ const TrendingCoinCard = ({ coin, delay }) => {
           <p className="text-sm text-gray-400">{coin.symbol}</p>
         </div>
         <div className={`flex items-center px-2 py-1 rounded-full text-sm ${
-            coin.positive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+            coin.isPositiveTrend ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
           }`}
         >
-          {coin.positive ? 
+          {coin.isPositiveTrend ? 
             <TrendingUp size={14} className="mr-1" /> : 
             <TrendingDown size={14} className="mr-1" />
           }
-          {coin.change}
+          {coin.displayChange}
         </div>
       </div>
       
       <div className="mb-4 h-16 rounded-xl overflow-hidden bg-black/20">
-        <Sparkline data={coin.sparkline} positive={coin.positive} />
+        <Sparkline data={coin.sparklineData} positive={coin.isPositiveTrend} />
       </div>
       
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div className="bg-black/20 rounded-xl p-2">
           <p className="text-xs text-gray-400">💰 Price</p>
-          <p className="font-medium">{coin.price} SOL</p>
+          <p className="font-medium">{coin.displayPrice}</p>
         </div>
         <div className="bg-black/20 rounded-xl p-2">
           <p className="text-xs text-gray-400">📊 Volume</p>
-          <p className="font-medium">{coin.volume}</p>
+          <p className="font-medium">{coin.displayVolume}</p>
         </div>
       </div>
       
-      {/* Holder statistics with icons */}
+      {/* Holder statistics with icons, coin.holderStats is now available */}
       <div className="mb-4 bg-wybe-background-light/30 rounded-xl p-2">
         <p className="text-xs text-gray-300 mb-1 flex items-center gap-1">
           <Users size={12} className="text-wybe-primary" />
@@ -188,6 +199,7 @@ const TrendingCoinCard = ({ coin, delay }) => {
         </div>
       </div>
       
+      {/* Trade button */}
       <Link to={`/trade/${coin.symbol.toLowerCase()}`}>
         <Button className="w-full btn-primary text-sm py-1 h-8 flex items-center justify-center gap-1 group">
           <span>Trade {coin.symbol}</span>
@@ -198,28 +210,32 @@ const TrendingCoinCard = ({ coin, delay }) => {
   );
 };
 
-const Sparkline = ({ data, positive }) => {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min;
+const Sparkline = ({ data, positive }: { data: number[], positive: boolean }) => {
+  if (!data || data.length === 0) return <div className="w-full h-full bg-black/10" />; // Handle empty data
+  const maxVal = Math.max(...data);
+  const minVal = Math.min(...data);
+  // Avoid division by zero if all data points are the same
+  const range = (maxVal - minVal === 0) ? 1 : (maxVal - minVal);
   
   const points = data.map((value, index) => {
     const x = (index / (data.length - 1)) * 100;
-    const y = 100 - ((value - min) / range) * 100;
+    // Ensure y is between 0 and 100, default to 50 if range is 0
+    const yBase = range === 1 ? 50 : 100 - ((value - minVal) / range) * 100;
+    const y = Math.max(0, Math.min(100, yBase)); 
     return `${x},${y}`;
   }).join(' ');
   
   return (
     <div className="w-full h-full">
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <linearGradient id={`gradient-${positive}`} x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id={`gradient-${positive ? 'positive' : 'negative'}`} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor={positive ? "#22c55e" : "#ef4444"} stopOpacity="0.2" />
           <stop offset="100%" stopColor={positive ? "#22c55e" : "#ef4444"} stopOpacity="0" />
         </linearGradient>
         
         <polygon 
           points={`0,100 ${points} 100,100`} 
-          fill={`url(#gradient-${positive})`}
+          fill={`url(#gradient-${positive ? 'positive' : 'negative'})`}
         />
         
         <polyline

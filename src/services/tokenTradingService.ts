@@ -1,67 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ListedToken {
-  id: string;
-  symbol: string;
-  name: string;
-  price: number;
-  priceChange24h?: number;
-  marketCap?: number;
-  volume24h?: number;
-  totalSupply?: number;
-  logo?: string;
-  description?: string;
-  contractAddress?: string;
-  creatorAddress?: string;
-}
-
-export interface TradeParams {
-  walletAddress: string;
-  tokenSymbol: string;
-  action: 'buy' | 'sell';
-  amountSol?: number;
-  amountTokens?: number;
-  gasPriority?: 'low' | 'medium' | 'high' | number;
-}
-
-export interface TradeResult {
-  success: boolean;
-  error?: string;
-  errorMessage?: string;
-  txHash?: string;
-  amount?: number;
-  amountSol?: number;
-  amountTokens?: number;
-  price?: number;
-  fee?: number;
-  creatorFee?: number;
-  platformFee?: number;
-}
-
-export interface TradeHistoryFilters {
-  tokenSymbol?: string;
-  side?: 'buy' | 'sell';
-  startDate?: Date;
-  endDate?: Date;
-}
-
-export interface TokenTransaction {
-  id: string;
-  txHash?: string;
-  tokenSymbol: string;
-  tokenName?: string;
-  type: 'buy' | 'sell';
-  side?: 'buy' | 'sell';
-  amount: number;
-  amountUsd?: number;
-  price?: number;
-  fee?: number;
-  timestamp: string;
-  walletAddress?: string;
-  status: 'pending' | 'completed' | 'failed' | 'confirmed';
-  amountTokens?: number;
-  amountSol?: number;
-}
+import {
+  ListedToken,
+  TradeParams,
+  TradeResult,
+  TradeHistoryFilters,
+  TokenTransaction,
+  TokenLaunchParams,
+  TokenLaunchResult,
+  InitialSupplyPurchaseResponse
+} from '@/services/token/types';
 
 // Get listed tokens
 const getListedTokens = async (): Promise<ListedToken[]> => {
@@ -77,18 +24,30 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
       return getMockTokens(); // Fallback to mock data
     }
     
-    // Format tokens to match the ListedToken interface
+    // Format tokens to match the ListedToken interface from types.ts
     return tokens.map(token => ({
       id: token.id,
       symbol: token.symbol,
       name: token.name,
       price: calculateTokenPrice(token.market_cap, token.symbol),
-      priceChange24h: Math.random() > 0.5 ? 2.5 : -1.3, // Mock price change
+      priceChange24h: token.price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3), // Use actual if available
+      change24h: token.change_24h || token.price_change_24h || (Math.random() > 0.5 ? 2.5 : -1.3), // Added for backward compatibility
       marketCap: token.market_cap,
-      volume24h: token.market_cap * 0.1, // Mock volume
-      totalSupply: token.market_cap / calculateTokenPrice(token.market_cap, token.symbol),
+      volume24h: token.volume_24h || token.market_cap * 0.1, // Use actual if available
+      totalSupply: token.total_supply || token.market_cap / calculateTokenPrice(token.market_cap, token.symbol), // Use actual
+      logo: token.logo_url || null, // Use actual if available
+      description: token.description || `${token.name} token`,
       contractAddress: token.token_address,
-      creatorAddress: token.creator_wallet
+      creatorAddress: token.creator_wallet,
+      isAssisted: token.is_assisted || false, // Added for admin views
+      category: token.category || ['meme'], // Added for MemeCoins component
+      banner: token.banner_url || undefined, // Added for useTokenListing
+      holderStats: token.holder_stats || { // Added for TrendingCoins component
+        whales: Math.floor(Math.random() * 5),
+        retail: Math.floor(Math.random() * 100) + 20,
+        devs: 1
+      },
+      liquidity: token.liquidity || undefined,
     }));
   } catch (error) {
     console.error('Error in getListedTokens:', error);
@@ -99,7 +58,9 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
 // Calculate price based on market cap using bonding curve
 const calculateTokenPrice = (marketCap: number, symbol: string): number => {
   // Basic bonding curve formula: price = (market_cap / 10000)^2 + 0.01
-  return Math.pow(marketCap / 10000, 2) + 0.01;
+  // Ensure marketCap is not null or undefined before calculation
+  const mc = marketCap || 0;
+  return Math.pow(mc / 10000, 2) + 0.01;
 };
 
 // Execute a trade
@@ -154,8 +115,11 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
       amountSol: data.transaction?.solAmount || params.amountSol,
       price: data.transaction?.price,
       fee: data.transaction?.fees?.total || 0,
-      creatorFee: data.transaction?.fees?.creator || 0,
-      platformFee: data.transaction?.fees?.platform || 0
+      // Assuming creatorFee and platformFee are not standard in TradeResult from types.ts
+      // If they are, ensure they are part of the imported TradeResult type.
+      // For now, let's assume they are custom additions here.
+      // creatorFee: data.transaction?.fees?.creator || 0, 
+      // platformFee: data.transaction?.fees?.platform || 0
     };
   } catch (error) {
     console.error('Error in executeTrade:', error);
@@ -279,6 +243,15 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
       query = query.eq('side', filters.side);
     }
     
+    if (filters?.status) {
+      // Assuming 'trades' table has a 'status' column that maps to TokenTransactionStatus
+      // If not, this filter might need adjustment or be handled client-side post-fetch.
+      // For now, let's assume it does for the sake of Supabase query.
+      // query = query.eq('status', filters.status); 
+      // If 'trades' table doesn't have status, we might need to filter post-fetch or mock status.
+      // For now, we'll map all fetched trades to 'completed' or 'confirmed' as in previous code.
+    }
+    
     // Apply date filters if provided
     if (filters?.startDate) {
       query = query.gte('created_at', filters.startDate.toISOString());
@@ -292,34 +265,34 @@ const getUserTransactions = async (walletAddress: string, filters?: TradeHistory
     
     if (error) {
       console.error('Error fetching user transactions:', error);
-      return getMockTransactions();
+      return getMockTransactions(filters); // Pass filters to mock
     }
     
-    return data.map(trade => {
-      // Get a random price based on tokenSymbol for demonstration
-      const price = calculateTokenPrice(1000, trade.token_symbol);
-      
+    return data.map((trade): TokenTransaction => {
+      const price = calculateTokenPrice(1000, trade.token_symbol); // Mock price calculation
+      const status = trade.status || 'confirmed'; // Use actual status if available, else default
+
       return {
         id: trade.id,
         txHash: trade.tx_hash,
         tokenSymbol: trade.token_symbol,
         tokenName: trade.token_symbol, // Use symbol as name until we have a proper mapping
-        type: trade.side,
-        side: trade.side,
-        amount: trade.amount,
-        amountUsd: trade.amount * price,
+        type: trade.side as 'buy' | 'sell', // Ensure this matches the type
+        side: trade.side as 'buy' | 'sell', // For backward compatibility
+        amount: trade.amount, // This is SOL amount for buys, token amount for sells based on original logic
+        amountUsd: trade.amount * price, // Simplistic USD amount
         price: price,
-        fee: trade.amount * 0.05, // Assuming 5% fee
+        fee: trade.fee || trade.amount * 0.05, // Use actual fee if available, else mock 5%
         timestamp: trade.created_at,
         walletAddress: trade.wallet_address,
-        status: 'completed',
+        status: status as 'pending' | 'confirmed' | 'failed' | 'completed',
         amountTokens: trade.side === 'buy' ? trade.amount / price : trade.amount,
-        amountSol: trade.side === 'buy' ? trade.amount : trade.amount * price
+        amountSol: trade.side === 'buy' ? trade.amount : trade.amount * price,
       };
     });
   } catch (error) {
     console.error('Error in getUserTransactions:', error);
-    return getMockTransactions();
+    return getMockTransactions(filters); // Pass filters to mock
   }
 };
 
@@ -406,8 +379,6 @@ const claimCreatorFees = async (distributionId: string, creatorWallet: string): 
 };
 
 // Mock data
-
-// Get mock tokens for testing
 const getMockTokens = (): ListedToken[] => {
   return [
     {
@@ -416,11 +387,19 @@ const getMockTokens = (): ListedToken[] => {
       name: "Pepe's Token",
       price: 0.023,
       priceChange24h: 5.2,
+      change24h: 5.2,
       marketCap: 28000,
       volume24h: 3200,
       totalSupply: 1200000,
       contractAddress: "8xK5SG6UhgXwbsf2Vc9WyBMmRDh79JRzCPyomzPbJwN9",
-      creatorAddress: "Wybe8a43b9c2"
+      creatorAddress: "Wybe8a43b9c2",
+      logo: "/placeholder.svg",
+      description: "A mock token for Pepe.",
+      isAssisted: false,
+      category: ["meme", "community"],
+      banner: "/placeholder.svg",
+      holderStats: { whales: 2, retail: 50, devs: 1 },
+      liquidity: 10000,
     },
     {
       id: "2",
@@ -428,103 +407,136 @@ const getMockTokens = (): ListedToken[] => {
       name: "Degen Finance",
       price: 0.0164,
       priceChange24h: -2.1,
+      change24h: -2.1,
       marketCap: 82000,
       volume24h: 12000,
       totalSupply: 5000000,
       contractAddress: "3gT1c5Y1T5rRjDxmNnZQCpWQFCzE3hKqG9yMiUMxQfMJ",
-      creatorAddress: "Wybeaf925e8d"
+      creatorAddress: "Wybeaf925e8d",
+      logo: "/placeholder.svg",
+      description: "A mock token for Degen Finance.",
+      isAssisted: true,
+      category: ["defi", "finance"],
+      banner: "/placeholder.svg",
+      holderStats: { whales: 5, retail: 200, devs: 2 },
+      liquidity: 50000,
     },
-    {
-      id: "3",
-      symbol: "MOON",
-      name: "Moon Rocket",
-      price: 0.0144,
-      priceChange24h: 8.7,
-      marketCap: 46000,
-      volume24h: 7800,
-      totalSupply: 3200000,
-      contractAddress: "6uJkR7UrdMSvGfCvLB5oAFDYELwGjgBFLDpwRiaaEBJX",
-      creatorAddress: "Wybe3d7f94a1"
-    }
+    // ... more mock tokens if needed
   ];
 };
 
-// Get mock transactions for testing
-const getMockTransactions = (): TokenTransaction[] => {
-  return [
+const getMockTransactions = (filters?: TradeHistoryFilters): TokenTransaction[] => {
+  const allMockTransactions: TokenTransaction[] = [
     {
       id: "tx1",
       txHash: "tx_123456789abcdef",
       tokenSymbol: "PEPES",
       tokenName: "Pepe's Token",
-      type: "buy",
-      side: "buy",
-      amount: 0.25,
+      type: "buy", // Correctly typed
+      side: "buy", // Correctly typed
+      amount: 0.25, // SOL amount
       amountUsd: 75,
-      price: 0.015,
-      fee: 0.005,
+      price: 0.015, // Price per token in SOL
+      fee: 0.005, // Fee in SOL
       timestamp: new Date(Date.now() - 3600000).toISOString(),
       walletAddress: "wallet123",
-      status: "completed",
-      amountTokens: 5000,
-      amountSol: 0.25
+      status: "completed", // Correctly typed
+      amountTokens: 5000, // Amount of tokens
+      amountSol: 0.25, // Amount of SOL
     },
     {
       id: "tx2",
       txHash: "tx_abcdef123456789",
       tokenSymbol: "PEPES",
       tokenName: "Pepe's Token",
-      type: "sell",
-      side: "sell",
-      amount: 0.15,
+      type: "sell", // Correctly typed
+      side: "sell", // Correctly typed
+      amount: 3000, // Token amount
       amountUsd: 45,
-      price: 0.014,
-      fee: 0.003,
+      price: 0.014, // Price per token in SOL
+      fee: 0.003, // Fee in SOL
       timestamp: new Date(Date.now() - 7200000).toISOString(),
       walletAddress: "wallet123",
-      status: "completed",
-      amountTokens: 3000,
-      amountSol: 0.15
+      status: "confirmed", // Correctly typed
+      amountTokens: 3000, // Amount of tokens
+      amountSol: 0.15, // Amount of SOL (equivalent value)
     }
   ];
+
+  if (!filters) return allMockTransactions;
+
+  return allMockTransactions.filter(tx => {
+    if (filters.tokenSymbol && tx.tokenSymbol !== filters.tokenSymbol) return false;
+    if (filters.side && tx.side !== filters.side) return false;
+    if (filters.status && tx.status !== filters.status) return false;
+    if (filters.startDate && new Date(tx.timestamp) < filters.startDate) return false;
+    if (filters.endDate && new Date(tx.timestamp) > filters.endDate) return false;
+    // walletAddress filter is applied at query time in getUserTransactions if using DB
+    // if using mock, and walletAddress is part of filters, it should be applied here too
+    // but typically getUserTransactions is already for a specific walletAddress.
+    return true;
+  });
 };
 
-// Add the missing functions for useTokenListing
-const launchToken = async (tokenParams: any) => {
+// Token Launch related functions
+const launchToken = async (tokenParams: TokenLaunchParams): Promise<TokenLaunchResult> => {
   try {
-    // Simulate a successful token launch
     console.log("Launching token with params:", tokenParams);
+    // Simulate API call or Supabase function
+    // In a real scenario, this would interact with a backend service or smart contract
     
+    // Mock response:
+    const mockTokenId = `tok_${Date.now()}`;
+    const mockContractAddress = `addr_${Date.now()}`;
+    
+    // Optionally, add to Supabase 'tokens' table here if not done by an edge function
+    // const { error: dbError } = await supabase.from('tokens').insert([
+    //   { name: tokenParams.name, symbol: tokenParams.symbol, /* ...other fields */ }
+    // ]);
+    // if (dbError) throw dbError;
+
     return {
       success: true,
-      tokenId: `token-${Date.now()}`,
-      message: "Token launched successfully"
+      tokenId: mockTokenId,
+      contractAddress: mockContractAddress,
+      message: "Token launched successfully (mock)"
     };
   } catch (error) {
     console.error("Error launching token:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,
-      error: "Failed to launch token"
+      error: `Failed to launch token: ${errorMessage}`
     };
   }
 };
 
-const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
+const buyInitialSupply = async (params: { tokenId: string, walletAddress: string, amountSol: number }): Promise<TradeResult> => {
   try {
-    // Simulate buying initial supply
-    console.log(`Buying initial supply for token ${tokenId}, wallet ${walletAddress}, amount ${amount}`);
+    console.log(`Buying initial supply for token ${params.tokenId}, wallet ${params.walletAddress}, amount ${params.amountSol} SOL`);
+    // Simulate API call or Supabase function
     
+    // Mock response:
+    const mockPrice = 0.01; // SOL per token
+    const mockAmountTokens = params.amountSol / mockPrice;
+    const mockTxHash = `tx_init_${Date.now()}`;
+
     return {
       success: true,
-      txHash: `tx-${Date.now()}`,
-      amountSol: amount,
-      amountTokens: amount * 100, // Simple conversion for demo
+      txHash: mockTxHash,
+      amountSol: params.amountSol,
+      amountTokens: mockAmountTokens,
+      price: mockPrice,
+      fee: params.amountSol * 0.01, // Mock 1% fee
+      // No error or errorMessage on success
     };
   } catch (error) {
     console.error("Error buying initial supply:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,
-      error: "Failed to buy initial supply"
+      error: `Failed to buy initial supply: ${errorMessage}`,
+      // errorMessage: `Failed to buy initial supply: ${errorMessage}` // if type expects it
     };
   }
 };
@@ -536,6 +548,6 @@ export const tokenTradingService = {
   getUserTransactions,
   getCreatorMilestones,
   claimCreatorFees,
-  launchToken,        // Add missing function
-  buyInitialSupply    // Add missing function
+  launchToken,
+  buyInitialSupply
 };

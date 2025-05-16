@@ -1,29 +1,25 @@
 
 import { useState } from 'react';
-import { tokenTradingService, ListedToken } from '@/services/tokenTradingService';
+import { tokenTradingService } from '@/services/tokenTradingService'; // ListedToken will be from types via this service
 import { toast } from 'sonner';
-import { TokenLaunchParams } from '@/services/token/types';
+import { TokenLaunchParams, TradeResult, ListedToken } from '@/services/token/types'; // explicit import for clarity
 
-export interface LaunchedToken extends Omit<ListedToken, 'id'> {
-  id: string;
-  banner?: string;
+// LaunchedToken can extend the imported ListedToken directly
+export interface LaunchedToken extends ListedToken {
+  // banner is already optional in ListedToken from types.ts
+  // id is already required in ListedToken from types.ts
 }
 
 export const useTokenListing = () => {
   const [isLaunching, setIsLaunching] = useState(false);
-  const [launchedTokens, setLaunchedTokens] = useState<LaunchedToken[]>([]);
+  const [launchedTokens, setLaunchedTokens] = useState<LaunchedToken[]>([]); // Use LaunchedToken
 
   const launchToken = async (tokenParams: TokenLaunchParams) => {
     setIsLaunching(true);
     
     try {
-      // Make sure we use the correct properties based on the updated type
-      const response = await tokenTradingService.launchToken({
-        ...tokenParams,
-        initialSupply: tokenParams.initialSupply || tokenParams.totalSupply,
-        creatorWallet: tokenParams.creatorWallet || tokenParams.creatorAddress || 
-          (tokenParams.creator?.wallet || ''),
-      });
+      // tokenTradingService.launchToken should conform to (TokenLaunchParams) => Promise<TokenLaunchResult>
+      const response = await tokenTradingService.launchToken(tokenParams);
       
       if (response.success) {
         toast.success('Token launched successfully', {
@@ -32,7 +28,8 @@ export const useTokenListing = () => {
         
         return {
           success: true,
-          tokenId: response.tokenId
+          tokenId: response.tokenId, // tokenId is optional in TokenLaunchResult
+          contractAddress: response.contractAddress // contractAddress is optional
         };
       } else {
         toast.error('Failed to launch token', { 
@@ -55,19 +52,21 @@ export const useTokenListing = () => {
     }
   };
   
-  const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
+  const buyInitialSupply = async (tokenId: string, walletAddress: string, amountSol: number): Promise<Partial<TradeResult> & { success: boolean; error?: string }> => {
     try {
-      const result = await tokenTradingService.buyInitialSupply(tokenId, walletAddress, amount);
+      // tokenTradingService.buyInitialSupply should conform to ({tokenId, walletAddress, amountSol}) => Promise<TradeResult>
+      const result = await tokenTradingService.buyInitialSupply({ tokenId, walletAddress, amountSol });
       
       if (result.success) {
         toast.success('Initial supply purchased', {
-          description: `You have purchased ${result.amountTokens} tokens for ${result.amountSol} SOL.`
+          description: `You have purchased ${result.amountTokens || 0} tokens for ${result.amountSol || 0} SOL.`
         });
         
         return {
           success: true,
           amountSol: result.amountSol,
           amountTokens: result.amountTokens,
+          txHash: result.txHash,
         };
       } else {
         toast.error('Failed to purchase initial supply', {
@@ -89,15 +88,16 @@ export const useTokenListing = () => {
     }
   };
   
-  const getListedTokens = async () => {
+  const getListedTokens = async (): Promise<LaunchedToken[]> => {
     try {
-      const tokens = await tokenTradingService.getListedTokens();
+      const tokens: ListedToken[] = await tokenTradingService.getListedTokens();
       
-      // Convert ListedToken[] to LaunchedToken[]
+      // ListedToken from service already matches LaunchedToken structure (as banner, id are handled)
+      // So direct cast or map is fine.
       const launchedTokensData: LaunchedToken[] = tokens.map(token => ({
         ...token,
-        id: token.id,  // id is now required in both types
-        banner: token.banner || undefined
+        // id is already part of token
+        // banner is already part of token (optional)
       }));
       
       setLaunchedTokens(launchedTokensData);

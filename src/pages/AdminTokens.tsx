@@ -7,12 +7,12 @@ import TokensList from '@/components/admin/TokensList';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { ListedToken as TokenType } from '@/services/token/types';
+import { ListedToken } from '@/services/token/types'; // Correct import
 import { tokenTradingService } from '@/services/tokenTradingService';
 
 const AdminTokens: React.FC = () => {
   const { isAuthenticated, isLoading } = useAdmin();
-  const [tokens, setTokens] = useState<TokenType[]>([]);
+  const [tokens, setTokens] = useState<ListedToken[]>([]); // Use ListedToken directly
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const navigate = useNavigate();
   
@@ -29,27 +29,9 @@ const AdminTokens: React.FC = () => {
     setIsLoadingTokens(true);
     try {
       const listedTokens = await tokenTradingService.getListedTokens();
-      
-      // Convert from tokenTradingService.ListedToken to token/types.ListedToken
-      // Ensuring that all required properties are present
-      const convertedTokens: TokenType[] = listedTokens.map(token => ({
-        id: token.id,
-        symbol: token.symbol,
-        name: token.name,
-        price: token.price,
-        priceChange24h: token.priceChange24h,
-        logo: token.logo,
-        contractAddress: token.contractAddress || '',
-        marketCap: token.marketCap,
-        volume24h: token.volume24h,
-        totalSupply: token.totalSupply,
-        description: token.description,
-        isAssisted: token.isAssisted,
-        creatorAddress: token.creatorAddress
-        // Add any other required properties from TokenType
-      }));
-      
-      setTokens(convertedTokens);
+      // listedTokens are already of type ListedToken from types.ts (due to service update)
+      // No complex conversion needed if the service returns the correct type.
+      setTokens(listedTokens);
     } catch (error) {
       console.error("Error loading tokens:", error);
       toast.error("Failed to load tokens");

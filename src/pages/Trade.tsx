@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -28,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Clock, DollarSign, Share } from 'lucide-react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { useWallet } from '@/hooks/useWallet.tsx';
+import { ListedToken } from '@/services/token/types'; // Correct import
 
 const Trade: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
@@ -35,8 +35,8 @@ const Trade: React.FC = () => {
   const { connected, connect } = useWallet();
   
   // State for current token and token list
-  const [currentToken, setCurrentToken] = useState<any>(null);
-  const [tokens, setTokens] = useState<any[]>([]);
+  const [currentToken, setCurrentToken] = useState<ListedToken | null>(null); // Use ListedToken
+  const [tokens, setTokens] = useState<ListedToken[]>([]); // Use ListedToken[]
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('trade');
   const [showAdvancedTrading, setShowAdvancedTrading] = useState(false);
@@ -47,22 +47,27 @@ const Trade: React.FC = () => {
     const fetchTokens = async () => {
       try {
         setIsLoading(true);
-        const listedTokens = await tokenTradingService.getListedTokens();
+        const listedTokens: ListedToken[] = await tokenTradingService.getListedTokens();
         setTokens(listedTokens);
         
         // If tokenId is provided, find that token
         if (tokenId) {
-          const selectedToken = listedTokens.find(token => token.id === tokenId || token.symbol === tokenId);
+          const selectedToken = listedTokens.find(token => token.id === tokenId || token.symbol.toLowerCase() === tokenId.toLowerCase());
           if (selectedToken) {
             setCurrentToken(selectedToken);
-          } else {
+          } else if (listedTokens.length > 0) {
             // If token not found, use first token
             setCurrentToken(listedTokens[0]);
-            toast.error("Token not found, showing default token");
+            toast.info("Token not found, showing default token.");
+          } else {
+            setCurrentToken(null);
+            toast.error("Token not found and no other tokens available.");
           }
         } else if (listedTokens.length > 0) {
           // If no tokenId provided, use first token
           setCurrentToken(listedTokens[0]);
+        } else {
+          setCurrentToken(null);
         }
       } catch (error) {
         console.error("Error fetching tokens:", error);
@@ -88,7 +93,7 @@ const Trade: React.FC = () => {
       newIndex = (currentIndex - 1 + tokens.length) % tokens.length;
     }
     
-    navigate(`/trade/${tokens[newIndex].id}`);
+    navigate(`/trade/${tokens[newIndex].symbol.toLowerCase()}`); // Navigate by symbol for consistency
   };
   
   // Handle wallet connection
@@ -103,7 +108,8 @@ const Trade: React.FC = () => {
   
   // Handle bookmark
   const handleBookmark = () => {
-    toast.success(`Added ${currentToken?.symbol} to your watchlist`);
+    if (!currentToken) return;
+    toast.success(`Added ${currentToken.symbol} to your watchlist`);
   };
   
   // Handle share
@@ -113,9 +119,8 @@ const Trade: React.FC = () => {
   };
   
   // Handle token selection
-  const handleSelectToken = (token: any) => {
-    // Navigate to the selected token
-    navigate(`/trade/${token.symbol}`);
+  const handleSelectToken = (token: { symbol: string }) => { // Assuming token has at least symbol
+    navigate(`/trade/${token.symbol.toLowerCase()}`);
   };
   
   // Loading state
@@ -146,18 +151,19 @@ const Trade: React.FC = () => {
     );
   }
 
-  // Format tokens for trading interface
-  const formattedTokens = tokens.map(token => ({
+  // Format tokens for trading interface (TradingInterface might expect a specific subset of ListedToken)
+  const formattedTokensForTradingInterface = tokens.map(token => ({
     symbol: token.symbol,
     name: token.name,
-    price: token.price
+    price: token.price,
+    logo: token.logo // Pass logo if TradingInterface uses it
   }));
 
-  // Format selected token for trading interface
-  const selectedToken = {
+  const selectedTokenForTradingInterface = {
     symbol: currentToken.symbol,
     name: currentToken.name,
-    price: currentToken.price
+    price: currentToken.price,
+    logo: currentToken.logo // Pass logo
   };
 
   return (
@@ -194,9 +200,9 @@ const Trade: React.FC = () => {
                   </h1>
                   <div className="flex items-center text-xl">
                     <span className="font-medium">${currentToken.price.toFixed(4)}</span>
-                    {currentToken.priceChange24h && (
-                      <span className={`ml-2 text-sm ${currentToken.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {currentToken.priceChange24h > 0 ? '+' : ''}{currentToken.priceChange24h.toFixed(2)}%
+                    {(currentToken.change24h || currentToken.priceChange24h) !== undefined && (
+                      <span className={`ml-2 text-sm ${(currentToken.change24h || currentToken.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {(currentToken.change24h || currentToken.priceChange24h || 0) > 0 ? '+' : ''}{(currentToken.change24h || currentToken.priceChange24h || 0).toFixed(2)}%
                       </span>
                     )}
                   </div>
@@ -286,7 +292,7 @@ const Trade: React.FC = () => {
                             Platform Fee
                           </div>
                           <div className="font-semibold">
-                            2.5%
+                            2.5% {/* This seems static, ensure it's correct */}
                           </div>
                         </div>
                       </div>
@@ -345,7 +351,7 @@ const Trade: React.FC = () => {
                       type="checkbox"
                       checked={showAdvancedTrading}
                       onChange={() => setShowAdvancedTrading(!showAdvancedTrading)}
-                      className="toggle toggle-primary toggle-sm"
+                      className="toggle toggle-primary toggle-sm" // Ensure this class exists or use shadcn Switch
                     />
                   </div>
                 </CardHeader>
@@ -357,14 +363,14 @@ const Trade: React.FC = () => {
                     </div>
                   ) : showAdvancedTrading ? (
                     <EnhancedTradingInterface
-                      tokens={formattedTokens}
-                      selectedToken={selectedToken}
+                      tokens={formattedTokensForTradingInterface}
+                      selectedToken={selectedTokenForTradingInterface}
                       onSelectToken={handleSelectToken}
                     />
                   ) : (
                     <TradingInterface 
-                      tokens={formattedTokens}
-                      selectedToken={selectedToken}
+                      tokens={formattedTokensForTradingInterface}
+                      selectedToken={selectedTokenForTradingInterface}
                       onSelectToken={handleSelectToken}
                     />
                   )}
@@ -397,6 +403,15 @@ const Trade: React.FC = () => {
                         {currentToken.creatorAddress || 'Unknown'}
                       </div>
                     </div>
+                    {/* isAssisted property can be displayed if needed */}
+                    {currentToken.isAssisted !== undefined && (
+                       <div>
+                         <h3 className="font-medium mb-1">Assisted Launch</h3>
+                         <div className="text-sm">
+                           {currentToken.isAssisted ? 'Yes' : 'No'}
+                         </div>
+                       </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

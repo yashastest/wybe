@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -6,18 +5,7 @@ import { tokenTradingService } from "@/services/tokenTradingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-
-interface CoinData {
-  id: string;
-  name: string;
-  symbol: string;
-  logo: string | null;
-  price: number;
-  change24h: number;
-  marketCap: number;
-  volume24h: number;
-  category: string[];
-}
+import { ListedToken } from "@/services/token/types"; // Ensure this import path
 
 const formatPrice = (price: number): string => {
   if (price === undefined || price === null) return "0.00";
@@ -39,7 +27,7 @@ const formatPrice = (price: number): string => {
   }
 };
 
-const formatMarketCap = (marketCap: number): string => {
+const formatMarketCap = (marketCap?: number): string => {
   if (marketCap === undefined || marketCap === null) return "$0";
   if (isNaN(marketCap)) return "$0";
   
@@ -58,7 +46,7 @@ const formatMarketCap = (marketCap: number): string => {
 };
 
 const MemeCoins: React.FC = () => {
-  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [coins, setCoins] = useState<ListedToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -67,21 +55,13 @@ const MemeCoins: React.FC = () => {
       try {
         const tokens = await tokenTradingService.getListedTokens();
         
-        // Map tokens to CoinData format with safety checks
-        const coinData: CoinData[] = tokens.map(token => ({
-          id: token.id || `token-${Math.random().toString(36).substring(2, 9)}`,
-          name: token.name || 'Unknown Token',
-          symbol: token.symbol || 'UNKNOWN',
-          logo: token.logo,
-          price: token.price || 0,
-          change24h: token.change24h || token.priceChange24h || 0,
-          marketCap: token.marketCap || 0,
-          volume24h: token.volume24h || 0,
-          category: Array.isArray(token.category) ? token.category : ['meme'],
-        }));
+        // Filter for meme category if desired, or sort and slice
+        const memeTokens = tokens
+            .filter(token => token.category?.includes('meme') || token.category?.includes('community')) // Example filter
+            .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0))
+            .slice(0, 6);
         
-        // Sort by market cap and take top 6
-        setCoins(coinData.sort((a, b) => b.marketCap - a.marketCap).slice(0, 6));
+        setCoins(memeTokens);
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
         toast.error("Failed to load token data");
@@ -94,8 +74,7 @@ const MemeCoins: React.FC = () => {
     fetchTokens();
   }, []);
 
-  // Function to safely format percentage changes
-  const formatPercentage = (value: number) => {
+  const formatPercentage = (value?: number) => {
     if (value === undefined || value === null) return "0.00%";
     if (isNaN(value)) return "0.00%";
     
@@ -169,17 +148,17 @@ const MemeCoins: React.FC = () => {
                       </span>
                       <div
                         className={`flex items-center gap-1 text-sm ${
-                          (coin.change24h || 0) >= 0
+                          (coin.change24h || coin.priceChange24h || 0) >= 0
                             ? "text-green-500"
                             : "text-red-500"
                         }`}
                       >
-                        {(coin.change24h || 0) >= 0 ? (
+                        {(coin.change24h || coin.priceChange24h || 0) >= 0 ? (
                           <ArrowUp className="w-3 h-3" />
                         ) : (
                           <ArrowDown className="w-3 h-3" />
                         )}
-                        <span>{formatPercentage(coin.change24h)}</span>
+                        <span>{formatPercentage(coin.change24h || coin.priceChange24h)}</span>
                       </div>
                     </div>
                   </div>
