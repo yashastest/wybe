@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,8 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useWallet } from '@/hooks/useWallet.tsx';
-import { tokenTradingService, TokenTransaction, TradeHistoryFilters } from '@/services/tokenTradingService';
+import { tokenTradingService, TokenTransaction } from '@/services/tokenTradingService';
+import { TradeHistoryFilters } from '@/services/token/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -35,7 +35,7 @@ const TradingHistory: React.FC = () => {
     try {
       const updatedFilter: TradeHistoryFilters = { 
         ...filter,
-        walletAddress: address,
+        // walletAddress is now part of TradeHistoryFilters
       };
       
       if (fromDate) {
@@ -139,6 +139,7 @@ const TradingHistory: React.FC = () => {
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

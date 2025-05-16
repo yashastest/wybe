@@ -1,4 +1,3 @@
-
 // Token trading related types
 export interface TokenTransaction {
   id: string;
@@ -13,7 +12,7 @@ export interface TokenTransaction {
   fee: number;
   timestamp: string;
   walletAddress: string;
-  status: 'pending' | 'confirmed' | 'failed';
+  status: 'pending' | 'confirmed' | 'failed' | 'completed'; // Added 'completed' status
   amountTokens?: number;  // For backward compatibility
   amountSol?: number; // For backward compatibility
 }
@@ -23,8 +22,8 @@ export interface TradeHistoryFilters {
   side?: 'buy' | 'sell'; // Type of transaction
   startDate?: Date;
   endDate?: Date;
-  status?: 'pending' | 'confirmed' | 'failed';
-  walletAddress?: string;
+  status?: 'pending' | 'confirmed' | 'failed' | 'completed'; // Added status filter
+  walletAddress?: string; // Added wallet address filter
 }
 
 export interface ListedToken {
@@ -33,6 +32,7 @@ export interface ListedToken {
   name: string;
   price: number;
   priceChange24h?: number;
+  change24h?: number; // Added for backward compatibility
   logo?: string | null;
   contractAddress?: string;
   marketCap?: number;
@@ -40,8 +40,15 @@ export interface ListedToken {
   liquidity?: number;
   totalSupply?: number;
   description?: string;
-  isAssisted?: boolean;
+  isAssisted?: boolean; // Added for admin views
   creatorAddress?: string;
+  category?: string[]; // Added for MemeCoins component
+  banner?: string; // Added for useTokenListing
+  holderStats?: { // Added for TrendingCoins component
+    whales: number;
+    retail: number;
+    devs: number;
+  };
 }
 
 export interface TradeParams {

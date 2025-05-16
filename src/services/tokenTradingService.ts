@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ListedToken {
@@ -490,11 +489,53 @@ const getMockTransactions = (): TokenTransaction[] => {
   ];
 };
 
+// Add the missing functions for useTokenListing
+const launchToken = async (tokenParams: any) => {
+  try {
+    // Simulate a successful token launch
+    console.log("Launching token with params:", tokenParams);
+    
+    return {
+      success: true,
+      tokenId: `token-${Date.now()}`,
+      message: "Token launched successfully"
+    };
+  } catch (error) {
+    console.error("Error launching token:", error);
+    return {
+      success: false,
+      error: "Failed to launch token"
+    };
+  }
+};
+
+const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
+  try {
+    // Simulate buying initial supply
+    console.log(`Buying initial supply for token ${tokenId}, wallet ${walletAddress}, amount ${amount}`);
+    
+    return {
+      success: true,
+      txHash: `tx-${Date.now()}`,
+      amountSol: amount,
+      amountTokens: amount * 100, // Simple conversion for demo
+    };
+  } catch (error) {
+    console.error("Error buying initial supply:", error);
+    return {
+      success: false,
+      error: "Failed to buy initial supply"
+    };
+  }
+};
+
 export const tokenTradingService = {
   getListedTokens,
   executeTrade,
   logTradeInDatabase,
   getUserTransactions,
   getCreatorMilestones,
-  claimCreatorFees
+  claimCreatorFees,
+  launchToken,        // Add missing function
+  buyInitialSupply    // Add missing function
 };
