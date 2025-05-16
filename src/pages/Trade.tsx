@@ -32,8 +32,7 @@ const TradingViewChartWrapper = ({ symbol }: { symbol: string }) => {
   return (
     <div className="mb-6">
       <TradingViewChart 
-        symbol={symbol} 
-        containerClassName="h-[400px]"
+        symbol={symbol}
       />
     </div>
   );
