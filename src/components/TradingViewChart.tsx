@@ -124,6 +124,22 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           "header_fullscreen_button", // Disable fullscreen button
           "control_bar", // Disable bottom control bar with indicators
           "timeframes_toolbar", // Disable built-in timeframes toolbar
+          "legend_context_menu", // Disable legend context menu
+          "symbol_info", // Disable symbol info dialog
+          "show_interval_dialog_on_key_press", // Disable interval dialog
+          "border_around_the_chart", // Disable chart border
+          "remove_library_container_border", // Remove container border
+          "property_pages", // Disable property pages
+          "chart_property_page_scales", // Disable scales property page
+          "chart_property_page_background", // Disable background property page
+          "chart_property_page_timezone_sessions", // Disable timezone sessions property page
+          "symbol_search_hot_key", // Disable symbol search hot key
+          "pane_context_menu", // Disable pane context menu
+          "scales_context_menu", // Disable scales context menu
+          "go_to_date", // Disable go to date
+          "edit_buttons_in_legend", // Disable edit buttons in legend
+          "create_volume_indicator_by_default", // Disable volume indicator by default
+          "create_volume_indicator_by_default_once", // Disable volume indicator by default once
           ...(isMobile ? ["left_toolbar", "header_chart_type"] : []),
         ],
         enabled_features: ["save_chart_properties_to_local_storage"],

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -27,16 +28,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Clock, DollarSign, Share } from 'lucide-react';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { useWallet } from '@/hooks/useWallet.tsx';
-
-const TradingViewChartWrapper = ({ symbol }: { symbol: string }) => {
-  return (
-    <div className="mb-6">
-      <TradingViewChart 
-        symbol={symbol}
-      />
-    </div>
-  );
-};
 
 const Trade: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
@@ -242,7 +233,7 @@ const Trade: React.FC = () => {
                   <CardTitle className="text-lg">Price Chart</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TradingViewChartWrapper symbol={currentToken?.symbol} />
+                  <TradingViewChart symbol={currentToken?.symbol} />
                 </CardContent>
               </Card>
               
@@ -314,7 +305,7 @@ const Trade: React.FC = () => {
                           <TransactionHistory tokenSymbol={currentToken?.symbol} />
                         </div>
                       ) : (
-                        <TradingViewChartWrapper symbol={currentToken?.symbol} />
+                        <TransactionHistory tokenSymbol={currentToken?.symbol} />
                       )}
                     </CardContent>
                   </Card>
