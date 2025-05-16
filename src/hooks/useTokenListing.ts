@@ -71,12 +71,12 @@ export const useTokenListing = () => {
         };
       } else {
         toast.error('Failed to purchase initial supply', {
-          description: result.error || result.errorMessage || 'Please try again later'
+          description: result.error || 'Please try again later'
         });
         
         return {
           success: false,
-          error: result.error || result.errorMessage || 'Failed to purchase initial supply'
+          error: result.error || 'Failed to purchase initial supply'
         };
       }
     } catch (error) {

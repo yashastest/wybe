@@ -48,7 +48,6 @@ export interface TradeResult {
   amountTokens?: number;
   price?: number;
   error?: string;
-  errorMessage?: string;
   amountSol?: number;
   fee?: number;
 }
@@ -178,33 +177,22 @@ const sampleTransactions: TokenTransaction[] = [
 
 // Mock implementation that simulates API calls
 const getListedTokens = async (): Promise<ListedToken[]> => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Return sample tokens
   return [...sampleTokens];
 };
 
 const getTokenDetails = async (symbol: string): Promise<ListedToken | null> => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Find token by symbol (case insensitive)
   const token = sampleTokens.find(t => 
     t.symbol?.toLowerCase() === symbol.toLowerCase()
   );
-  
   return token || null;
 };
 
-// Modified to include error property in the return type
 const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1200));
   
   const { tokenSymbol, action, amountSol, amountTokens } = params;
-  
-  // Find the token to get current price
   const token = sampleTokens.find(t => t.symbol === tokenSymbol);
   
   if (!token) {
@@ -216,7 +204,6 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
   
   const price = token.price || 0.001;
   
-  // Calculate result based on action
   if (action === 'buy') {
     const calculatedTokens = amountSol ? amountSol / price : (amountTokens || 0);
     
@@ -245,16 +232,11 @@ const executeTrade = async (params: TradeParams): Promise<TradeResult> => {
 };
 
 const getUserTransactions = async (walletAddress: string, filters?: TradeHistoryFilters): Promise<TokenTransaction[]> => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 700));
-  
-  // Apply basic filtering (just wallet for now)
   return sampleTransactions.filter(tx => tx.walletAddress === walletAddress);
 };
 
-// Modified to include error property in the return type
 const launchToken = async (params: any) => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   return {
@@ -265,9 +247,7 @@ const launchToken = async (params: any) => {
   };
 };
 
-// Modified to include error property in the return type
 const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: number) => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1500));
   
   return {
@@ -275,7 +255,7 @@ const buyInitialSupply = async (tokenId: string, walletAddress: string, amount: 
     amountSol: amount,
     amountTokens: amount * 10000,
     txHash: `tx_${Math.random().toString(36).substring(2, 15)}`,
-    error: null // Adding error property that will be null on success
+    error: null // Using error instead of errorMessage for consistency
   };
 };
 

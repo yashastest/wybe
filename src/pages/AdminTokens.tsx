@@ -31,6 +31,7 @@ const AdminTokens: React.FC = () => {
       const listedTokens = await tokenTradingService.getListedTokens();
       
       // Convert from tokenTradingService.ListedToken to token/types.ListedToken
+      // Ensuring that all required properties are present
       const convertedTokens: TokenType[] = listedTokens.map(token => ({
         id: token.id,
         symbol: token.symbol,
@@ -38,13 +39,13 @@ const AdminTokens: React.FC = () => {
         price: token.price,
         priceChange24h: token.priceChange24h,
         logo: token.logo,
-        contractAddress: token.contractAddress,
+        contractAddress: token.contractAddress || '',
         marketCap: token.marketCap,
         volume24h: token.volume24h,
         totalSupply: token.totalSupply,
         description: token.description,
         isAssisted: token.isAssisted,
-        creatorAddress: token.creatorAddress,
+        creatorAddress: token.creatorAddress
         // Add any other required properties from TokenType
       }));
       
