@@ -14,7 +14,7 @@ import SessionPortfolio from '@/components/SessionPortfolio';
 import BondingCurveVisualizer from '@/components/BondingCurveVisualizer';
 import { Badge } from '@/components/ui/badge';
 
-const TradeDemo = () => {
+const TradeDemo: React.FC = () => {
   // Add scroll to top hook
   useScrollToTop();
 
@@ -123,7 +123,7 @@ const TradeDemo = () => {
                 <AlertsPanel />
               </div>
             </>
-          )}
+          ) : null}
         </motion.div>
       </main>
       
