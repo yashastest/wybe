@@ -25,21 +25,27 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(
-    React.createContext<{
-      theme: string | undefined;
-      setTheme: (theme: string) => void;
-    }>({ 
-      theme: undefined, 
-      setTheme: () => {} 
-    })
-  );
+  const [theme, setTheme] = React.useState("dark");
   
-  // Fallback for when context is not available
-  const [internalTheme, setInternalTheme] = React.useState("dark");
-  
-  return {
-    theme: context.theme || internalTheme, 
-    setTheme: context.setTheme || setInternalTheme
-  };
+  // Use next-themes' useTheme if available, otherwise fall back to our implementation
+  try {
+    const { useTheme: nextUseTheme } = require("next-themes");
+    // This will throw an error if next-themes is not properly initialized
+    const nextTheme = nextUseTheme();
+    
+    return nextTheme;
+  } catch (error) {
+    // Fall back to a simple theme implementation
+    return {
+      theme,
+      setTheme: (newTheme: string) => {
+        setTheme(newTheme);
+        if (typeof document !== 'undefined') {
+          document.documentElement.classList.remove('light', 'dark');
+          document.documentElement.classList.add(newTheme);
+        }
+      },
+      themes: ["light", "dark"]
+    };
+  }
 };
