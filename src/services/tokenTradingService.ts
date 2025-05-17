@@ -1,4 +1,3 @@
-
 import { TokenTransaction, ListedToken, TokenLaunchParams, TradeResult, TradeParams } from './token/types';
 
 // Sample mock data for transactions
@@ -164,6 +163,17 @@ export const tokenTradingService = {
     const tokenId = Math.random().toString(36).substring(2, 10);
     const contractAddress = '0x' + Math.random().toString(36).substring(2, 42);
     
+    // Handle logo which could be a string, File, or null
+    let logoUrl: string | null = null;
+    if (params.logo) {
+      if (typeof params.logo === 'string') {
+        logoUrl = params.logo;
+      } else if (params.logo instanceof File) {
+        // In a real app, we'd upload the file and get a URL
+        logoUrl = URL.createObjectURL(params.logo);
+      }
+    }
+    
     // Add to mock listed tokens
     mockListedTokens.push({
       id: tokenId,
@@ -173,20 +183,24 @@ export const tokenTradingService = {
       marketCap: 10000,
       volume24h: 0,
       change24h: 0,
-      logo: params.logo || null,
+      logo: logoUrl,
       category: params.categories || ['new'],
       holderStats: {
         whales: 0,
         retail: 1,
         devs: 1
       },
-      holders: 1
+      holders: 1,
+      totalSupply: params.totalSupply || params.initialSupply,
+      creatorWallet: params.creatorWallet,
+      creatorAddress: params.creatorAddress || params.creatorWallet
     });
     
     return {
       success: true,
       tokenId,
-      contractAddress
+      contractAddress,
+      error: undefined  // Add error field to match expected type
     };
   },
   
@@ -201,7 +215,8 @@ export const tokenTradingService = {
       success: true,
       amountSol,
       amountTokens: amountSol * 100, // Mock conversion rate
-      txHash: '0x' + Math.random().toString(36).substring(2, 42)
+      txHash: '0x' + Math.random().toString(36).substring(2, 42),
+      error: undefined  // Add error field to match expected type
     };
   },
   

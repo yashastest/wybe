@@ -27,7 +27,21 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
     try {
       setIsLoading(true);
       const testnetContracts = await smartContractService.getTestnetContracts();
-      setContracts(testnetContracts);
+      // Convert from smartContractService.TestnetContract to our TestnetContract type
+      const convertedContracts: TestnetContract[] = testnetContracts.map(contract => ({
+        id: contract.id,
+        name: contract.name,
+        symbol: contract.name.split(' ')[0] || '', // Extract symbol from name as fallback
+        address: contract.address,
+        programId: contract.programId,
+        status: contract.status === 'active' ? 'deployed' : 
+                contract.status === 'failed' ? 'failed' : 'pending',
+        network: contract.network,
+        createdAt: contract.deployedAt,
+        deploymentDate: contract.deploymentDate,
+        testTxCount: contract.testTxCount
+      }));
+      setContracts(convertedContracts);
     } catch (error) {
       console.error("Error loading testnet contracts:", error);
       toast.error("Failed to load testnet contracts");
@@ -39,8 +53,10 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
+      case 'deployed':
         return <Badge className="bg-green-500">Active</Badge>;
       case 'testing':
+      case 'pending':
         return <Badge variant="outline" className="text-blue-500 border-blue-500">Testing</Badge>;
       case 'failed':
         return <Badge className="bg-red-500">Failed</Badge>;

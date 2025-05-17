@@ -29,7 +29,8 @@ export const useTokenListing = () => {
         return {
           success: true,
           tokenId: response.tokenId, // tokenId is optional in TokenLaunchResult
-          contractAddress: response.contractAddress // contractAddress is optional
+          contractAddress: response.contractAddress, // contractAddress is optional
+          error: undefined // Explicitly set error as undefined
         };
       } else {
         toast.error('Failed to launch token', { 
@@ -67,6 +68,7 @@ export const useTokenListing = () => {
           amountSol: result.amountSol,
           amountTokens: result.amountTokens,
           txHash: result.txHash,
+          error: undefined // Explicitly set error as undefined
         };
       } else {
         toast.error('Failed to purchase initial supply', {

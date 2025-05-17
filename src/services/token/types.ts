@@ -1,4 +1,3 @@
-
 export interface TokenTransaction {
   id: string;
   tokenSymbol: string;
@@ -121,4 +120,9 @@ export interface TestnetContract {
   status: 'pending' | 'deployed' | 'verified';
   network: string;
   createdAt: string;
+  programId: string;
+  deploymentDate: string;
+  testTxCount: number;
+  auditStatus?: 'audited' | 'pending' | 'failed';
+  securityScore?: number;
 }
