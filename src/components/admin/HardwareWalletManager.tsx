@@ -14,25 +14,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWallet } from '@/lib/wallet';
+import { useWallet } from '@/lib/wallet'; // Corrected path
 
 const HardwareWalletManager = () => {
-  const { connect, connectHardwareWallet, address, isConnecting, isHardwareWallet } = useWallet();
+  // const { connect, connectHardwareWallet, address, isConnecting, isHardwareWallet } = useWallet(); // Temporarily comment out parts causing issues
+  const { connect, address, isConnecting, connected } = useWallet(); // Use available properties
   const [isChecking, setIsChecking] = useState(false);
   const [securityStatus, setSecurityStatus] = useState<'secure' | 'warning' | 'unknown'>('unknown');
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
+  // Simulate isHardwareWallet for now, this needs proper implementation for EVM
+  const isHardwareWallet = false; 
+
   useEffect(() => {
     checkWalletSecurity();
-  }, [address, isHardwareWallet]);
+  // }, [address, isHardwareWallet]); // isHardwareWallet is now locally simulated
+  }, [address, connected]); // Re-evaluate when address or connection status changes
 
   const checkWalletSecurity = () => {
     setIsChecking(true);
     
     // Simulate security check
     setTimeout(() => {
+      if (!connected) {
+        setSecurityStatus('unknown');
+        setLastChecked(new Date());
+        setIsChecking(false);
+        return;
+      }
       // For demo purposes, hardware wallets are always considered secure
-      if (isHardwareWallet) {
+      // This logic will need to be updated for actual EVM hardware wallet detection
+      if (isHardwareWallet) { // This will be false based on current simulation
         setSecurityStatus('secure');
       } else {
         // For demo purposes, regular wallets are considered less secure
@@ -42,6 +54,13 @@ const HardwareWalletManager = () => {
       setLastChecked(new Date());
       setIsChecking(false);
     }, 1500);
+  };
+
+  const handleConnectHardwareWallet = async () => {
+    // This function needs to be reimplemented for Web3Modal/EVM hardware wallet flows.
+    // For now, it can just call the standard connect or show a message.
+    toast.info("Hardware wallet connection via Web3Modal typically uses the standard connect flow. Select your hardware wallet from the modal.");
+    await connect(); 
   };
 
   return (
@@ -54,19 +73,19 @@ const HardwareWalletManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <ShieldCheck className="mr-2 text-blue-500" />
-            Treasury Hardware Wallet Security
+            Treasury Wallet Security
           </CardTitle>
           <CardDescription>
-            Secure your treasury with a hardware wallet for maximum protection
+            Secure your treasury with a hardware wallet for maximum protection. (EVM context)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium">Current Wallet Type:</p>
-              {address ? (
+              {address && connected ? (
                 <div className="flex items-center mt-1">
-                  {isHardwareWallet ? (
+                  {isHardwareWallet ? ( // This will currently show "Regular Wallet"
                     <Badge className="bg-green-500">Hardware Wallet</Badge>
                   ) : (
                     <Badge className="bg-amber-500">Regular Wallet</Badge>
@@ -93,19 +112,24 @@ const HardwareWalletManager = () => {
                   Improve Security
                 </Badge>
               )}
+               {securityStatus === 'unknown' && !connected && (
+                <Badge className="bg-gray-500 flex items-center">
+                  Connect Wallet
+                </Badge>
+              )}
             </div>
           </div>
           
-          {securityStatus === 'warning' && (
+          {connected && securityStatus === 'warning' && (
             <Alert className="border-amber-500/50 bg-amber-500/10">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               <AlertDescription className="text-amber-500">
-                For treasury management, we strongly recommend using a hardware wallet for enhanced security.
+                For treasury management with EVM wallets, consider using a hardware wallet through Ledger Live or Trezor Suite, connected via Web3Modal.
               </AlertDescription>
             </Alert>
           )}
           
-          {securityStatus === 'secure' && (
+          {connected && securityStatus === 'secure' && ( // This state might not be reachable with current simulation
             <Alert className="border-green-500/50 bg-green-500/10">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               <AlertDescription className="text-green-500">
@@ -119,7 +143,7 @@ const HardwareWalletManager = () => {
               <Button
                 variant="default"
                 disabled={isConnecting}
-                onClick={connectHardwareWallet}
+                onClick={handleConnectHardwareWallet} // Updated to new handler
                 className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
               >
                 {isConnecting ? (
@@ -149,7 +173,7 @@ const HardwareWalletManager = () => {
               variant="ghost"
               size="sm"
               onClick={checkWalletSecurity}
-              disabled={isChecking || !address}
+              disabled={isChecking || !address || !connected}
               className="w-full text-xs"
             >
               {isChecking ? (
@@ -168,12 +192,13 @@ const HardwareWalletManager = () => {
           )}
           
           <div className="mt-4 pt-4 border-t border-wybe-primary/10">
-            <h4 className="text-sm font-medium mb-2">Security Recommendations:</h4>
+            <h4 className="text-sm font-medium mb-2">Security Recommendations (EVM):</h4>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li className="flex items-start">
                 <CheckCircle2 className="min-w-4 w-4 h-4 mr-2 text-green-500 mt-0.5" />
-                Use a hardware wallet like Ledger or Trezor for treasury wallets
+                Use a hardware wallet (Ledger, Trezor) with MetaMask or WalletConnect.
               </li>
+              
               <li className="flex items-start">
                 <CheckCircle2 className="min-w-4 w-4 h-4 mr-2 text-green-500 mt-0.5" />
                 Configure multi-signature requirements for treasury transactions
@@ -191,12 +216,12 @@ const HardwareWalletManager = () => {
           
           <div className="text-center mt-4">
             <a 
-              href="https://docs.phantom.app/integrating/extension-and-mobile/ledger-hardware-wallet" 
+              href="https://walletconnect.com/" // General WalletConnect link
               target="_blank" 
               rel="noopener noreferrer"
               className="text-xs text-blue-500 hover:underline flex items-center justify-center"
             >
-              Learn more about Phantom's hardware wallet support
+              Learn more about WalletConnect
               <ExternalLink className="ml-1 w-3 h-3" />
             </a>
           </div>
