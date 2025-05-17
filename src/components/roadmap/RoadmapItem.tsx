@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Circle, CheckCircle2, AlertCircle, Lock } from 'lucide-react';
+import { Circle, CheckCircle2, AlertCircle, Lock, LayoutDashboard, Database, Code, Server, BarChart3 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RoadmapItem as RoadmapItemType } from '@/data/roadmapData';
@@ -13,7 +13,7 @@ interface RoadmapItemProps {
 export const RoadmapItem: React.FC<RoadmapItemProps> = ({ item, allItems }) => {
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'frontend': return <Layout size={18} />;
+      case 'frontend': return <LayoutDashboard size={18} />;
       case 'backend': return <Database size={18} />;
       case 'smart-contract': return <Code size={18} />;
       case 'deployment': return <Server size={18} />;
