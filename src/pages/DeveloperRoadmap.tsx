@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useToast } from "@/hooks/use-toast";
-import { RoadmapItem } from '@/components/roadmap/RoadmapItem';
+import RoadmapItem from '@/components/roadmap/RoadmapItem';
 import { RoadmapProgress } from '@/components/roadmap/RoadmapProgress';
 import { ProgressSummary } from '@/components/roadmap/ProgressSummary';
 import { roadmapItems, calculateProgress } from '@/data/roadmapData';
