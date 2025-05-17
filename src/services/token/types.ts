@@ -37,6 +37,9 @@ export interface ListedToken {
   isAssisted?: boolean;
   devWallet?: string;
   category: string[];
+  totalSupply?: number;
+  creatorAddress?: string;
+  creatorWallet?: string;
   holderStats: {
     whales: number;
     retail: number;
@@ -48,11 +51,15 @@ export interface ListedToken {
 export interface TokenLaunchParams {
   name: string;
   symbol: string;
-  logo?: string | null;
+  logo?: string | null | File;
   description?: string;
   initialSupply: number;
   totalSupply?: number;
   creatorWallet: string;
+  creatorAddress?: string;
+  creator?: {
+    wallet: string;
+  };
   categories?: string[];
 }
 
@@ -79,7 +86,39 @@ export interface TradeParams {
 
 export interface TradeHistoryFilters {
   tokenSymbol?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
   side?: 'buy' | 'sell';
+}
+
+export interface TokenLaunchResponse {
+  success: boolean;
+  error?: string;
+  tokenId?: string;
+  contractAddress?: string;
+}
+
+export interface TokenLaunchResult {
+  success: boolean;
+  tokenId?: string;
+  contractAddress?: string;
+  error?: string;
+}
+
+export interface InitialSupplyPurchaseResponse {
+  success: boolean;
+  error?: string;
+  amountSol?: number;
+  amountTokens?: number;
+  txHash?: string;
+}
+
+export interface TestnetContract {
+  id: string;
+  name: string;
+  symbol: string;
+  address: string;
+  status: 'pending' | 'deployed' | 'verified';
+  network: string;
+  createdAt: string;
 }

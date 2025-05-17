@@ -1,7 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   TokenLaunchParams, 
-  TokenLaunchResult,
   TokenLaunchResponse, 
   ListedToken, 
   InitialSupplyPurchaseResponse
@@ -22,7 +22,7 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
     
     // Get the creator wallet from either direct field or creator object
     const creatorWallet = params.creatorWallet || params.creatorAddress || 
-      (params.creator ? params.creator.wallet : undefined);
+      (params.creator && params.creator.wallet ? params.creator.wallet : undefined);
     
     if (!creatorWallet) {
       return {
@@ -38,7 +38,8 @@ const launchToken = async (params: TokenLaunchParams): Promise<TokenLaunchRespon
       initialSupply: params.initialSupply || params.totalSupply,
       totalSupply: params.totalSupply || params.initialSupply,
       creatorWallet: creatorWallet,
-      logo: params.logo ? await convertFileToBase64(params.logo) : undefined
+      logo: params.logo && typeof params.logo === 'object' && 'type' in params.logo ? 
+            await convertFileToBase64(params.logo as File) : params.logo
     });
     
     // Log the token launch in the database
@@ -174,6 +175,7 @@ const getListedTokens = async (): Promise<ListedToken[]> => {
           marketCap: token.market_cap || 0,
           logo: null, // No logo in database
           creatorWallet: token.creator_wallet,
+          creatorAddress: token.creator_wallet, // For backward compatibility
           totalSupply: 1000000, // Default if not specified
           category: tags,
           status: token.status || 'active',

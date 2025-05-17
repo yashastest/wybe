@@ -12,6 +12,7 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
       txHash: 'tx_123456789abcdef',
       tokenSymbol: 'WYBE',
       tokenName: 'Wybe Token',
+      userId: 'user1', // Added userId property
       type: 'buy',
       side: 'buy', // For backwards compatibility 
       amount: 0.25,
@@ -29,6 +30,7 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
       txHash: 'tx_abcdef123456789',
       tokenSymbol: 'WYBE',
       tokenName: 'Wybe Token',
+      userId: 'user1', // Added userId property
       type: 'sell',
       side: 'sell', // For backwards compatibility
       amount: 0.15,
@@ -53,12 +55,20 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
         return false;
       }
       
-      if (filters.startDate && new Date(tx.timestamp) < filters.startDate) {
-        return false;
+      if (filters.startDate) {
+        const txDate = new Date(tx.timestamp);
+        const startDate = filters.startDate instanceof Date ? filters.startDate : new Date(filters.startDate);
+        if (txDate < startDate) {
+          return false;
+        }
       }
       
-      if (filters.endDate && new Date(tx.timestamp) > filters.endDate) {
-        return false;
+      if (filters.endDate) {
+        const txDate = new Date(tx.timestamp);
+        const endDate = filters.endDate instanceof Date ? filters.endDate : new Date(filters.endDate);
+        if (txDate > endDate) {
+          return false;
+        }
       }
       
       return true;

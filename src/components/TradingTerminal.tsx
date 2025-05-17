@@ -148,6 +148,7 @@ const TradingTerminal: React.FC<TradingTerminalProps> = ({
       fee: trade.fee || 0.001,
       timestamp: trade.timestamp,
       walletAddress: trade.walletAddress || address || "",
+      userId: address || "anonymous",  // Add the missing userId field
       status: trade.status === 'completed' ? 'confirmed' : trade.status || 'pending',
       amountTokens: trade.amountTokens,
       amountSol: trade.amountSol,
