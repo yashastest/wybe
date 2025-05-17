@@ -47,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
     { label: "Launch", href: "/launch" },
     { label: "Dashboard", href: "/dashboard" },
     { label: "Developer Roadmap", href: "/developer-roadmap" },
+    { label: "Deployment Guide", href: "/master-deployment-guide" }
   ];
 
   return (

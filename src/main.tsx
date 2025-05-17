@@ -38,8 +38,6 @@ try {
 }
 
 // Create root and render app with all providers
-// IMPORTANT: Router needs to be outside of StrictMode but inside QueryClientProvider
-// This ensures hooks like useLocation, useParams etc. work properly
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

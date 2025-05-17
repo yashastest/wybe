@@ -8,24 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from "@/hooks/use-toast";
 
-interface RoadmapItem {
-  id: string;
-  title: string;
-  description: string;
-  status: 'completed' | 'in-progress' | 'pending';
-  steps: {
-    title: string;
-    description: string;
-    code?: string;
-  }[];
-  priority: 'high' | 'medium' | 'low';
-  category: 'frontend' | 'backend' | 'smart-contract' | 'deployment';
-  estimatedTime: string;
-  dependencies?: string[];
-}
-
-const roadmapItems: RoadmapItem[] = [
+// Simplified data structure - reduced for performance
+const roadmapItems = [
   {
     id: 'env-setup',
     title: 'Environment Setup',
@@ -38,8 +24,6 @@ const roadmapItems: RoadmapItem[] = [
       {
         title: 'Create .env file',
         description: 'Create a .env file in the project root with the WalletConnect Project ID',
-        code: `# .env file in project root
-VITE_WALLETCONNECT_PROJECT_ID='your_project_id_from_walletconnect'`
       },
       {
         title: 'Configure Supabase Project',
@@ -67,14 +51,6 @@ VITE_WALLETCONNECT_PROJECT_ID='your_project_id_from_walletconnect'`
       {
         title: 'Deploy to Test Network',
         description: 'Deploy contracts to a test network and verify functionality'
-      },
-      {
-        title: 'Record Contract Addresses and ABIs',
-        description: 'Document all deployed contract addresses and ABIs for frontend integration'
-      },
-      {
-        title: 'Contract Verification',
-        description: 'Verify contract source code on block explorers'
       }
     ]
   },
@@ -90,189 +66,11 @@ VITE_WALLETCONNECT_PROJECT_ID='your_project_id_from_walletconnect'`
     steps: [
       {
         title: 'Create Contract Helper Classes',
-        description: 'Create typed wrappers for contract interactions',
-        code: `// src/services/contracts/tokenContract.ts
-import { ethers } from 'ethers';
-import TOKEN_ABI from '@/abis/Token.json';
-
-export class TokenContract {
-  contract: ethers.Contract;
-  
-  constructor(address: string, provider: ethers.providers.Provider) {
-    this.contract = new ethers.Contract(address, TOKEN_ABI, provider);
-  }
-  
-  async getPrice(): Promise<ethers.BigNumber> {
-    return this.contract.getCurrentPrice();
-  }
-  
-  async buy(signer: ethers.Signer, amount: ethers.BigNumber): Promise<ethers.ContractTransaction> {
-    return this.contract.connect(signer).buy({ value: amount });
-  }
-}`
+        description: 'Create typed wrappers for contract interactions'
       },
       {
         title: 'Implement Contract Event Listeners',
         description: 'Set up listeners for contract events to update UI in real-time'
-      },
-      {
-        title: 'Error Handling for Contract Interactions',
-        description: 'Implement robust error handling for contract interactions'
-      }
-    ]
-  },
-  {
-    id: 'real-data-integration',
-    title: 'Replace Mock Data with Real Data',
-    description: 'Update services to use real blockchain data instead of mock data',
-    status: 'pending',
-    priority: 'high',
-    category: 'frontend',
-    estimatedTime: '5-8 hours',
-    dependencies: ['contract-integration'],
-    steps: [
-      {
-        title: 'Update Token Trading Service',
-        description: 'Replace mock API calls with real contract interactions'
-      },
-      {
-        title: 'Implement Token Price Feeds',
-        description: 'Connect to oracles or other price feed sources for real-time pricing'
-      },
-      {
-        title: 'Update Wallet Balance Hooks',
-        description: 'Replace mock balance data with real on-chain queries'
-      },
-      {
-        title: 'Update Transaction History',
-        description: 'Fetch real transaction data from blockchain or indexers'
-      }
-    ]
-  },
-  {
-    id: 'backend-integration',
-    title: 'Backend Services Integration',
-    description: 'Update Supabase functions and services to work with real contracts',
-    status: 'pending',
-    priority: 'medium',
-    category: 'backend',
-    estimatedTime: '6-10 hours',
-    dependencies: ['contract-integration'],
-    steps: [
-      {
-        title: 'Update Token Transactions Edge Function',
-        description: 'Modify the token-transactions function to interact with real contracts'
-      },
-      {
-        title: 'Implement Backend Event Listeners',
-        description: 'Create services to listen for and process blockchain events'
-      },
-      {
-        title: 'Set Up Data Sync Processes',
-        description: 'Create indexers or listeners for blockchain events'
-      },
-      {
-        title: 'Create Admin API Endpoints',
-        description: 'Implement secure API endpoints for admin functions'
-      }
-    ]
-  },
-  {
-    id: 'admin-functionality',
-    title: 'Admin Functionality',
-    description: 'Connect admin panels to real contract deployment and management',
-    status: 'pending',
-    priority: 'medium',
-    category: 'frontend',
-    estimatedTime: '4-6 hours',
-    dependencies: ['backend-integration'],
-    steps: [
-      {
-        title: 'Connect Token Deployment Panel',
-        description: 'Connect the Token Deployment Panel to actual deployment functions'
-      },
-      {
-        title: 'Implement Admin Authentication',
-        description: 'Set up secure authentication for admin functions'
-      },
-      {
-        title: 'Create Token Management Functions',
-        description: 'Implement functions for managing existing tokens'
-      }
-    ]
-  },
-  {
-    id: 'testing',
-    title: 'Testing and Quality Assurance',
-    description: 'Comprehensive testing of all application features',
-    status: 'pending',
-    priority: 'high',
-    category: 'deployment',
-    estimatedTime: '8-12 hours',
-    dependencies: ['contract-integration', 'real-data-integration', 'admin-functionality'],
-    steps: [
-      {
-        title: 'Wallet Connection Testing',
-        description: 'Test wallet connection with multiple providers'
-      },
-      {
-        title: 'Token Trading Testing',
-        description: 'Test buying and selling tokens with small amounts'
-      },
-      {
-        title: 'Admin Function Testing',
-        description: 'Test all admin functions and permissions'
-      },
-      {
-        title: 'Cross-browser Testing',
-        description: 'Test application across different browsers and devices'
-      }
-    ]
-  },
-  {
-    id: 'deployment',
-    title: 'Production Deployment',
-    description: 'Deploy the application to production environment',
-    status: 'pending',
-    priority: 'medium',
-    category: 'deployment',
-    estimatedTime: '3-5 hours',
-    dependencies: ['testing'],
-    steps: [
-      {
-        title: 'Frontend Deployment',
-        description: 'Deploy the frontend to a production hosting service'
-      },
-      {
-        title: 'Configure Domain and SSL',
-        description: 'Set up proper domain and SSL certificates'
-      },
-      {
-        title: 'Set Up Monitoring',
-        description: 'Configure monitoring and alerts'
-      }
-    ]
-  },
-  {
-    id: 'documentation',
-    title: 'Documentation',
-    description: 'Create comprehensive documentation for the application',
-    status: 'pending',
-    priority: 'low',
-    category: 'deployment',
-    estimatedTime: '4-6 hours',
-    steps: [
-      {
-        title: 'User Documentation',
-        description: 'Create documentation for end users'
-      },
-      {
-        title: 'API Documentation',
-        description: 'Document all API endpoints and contract interactions'
-      },
-      {
-        title: 'Developer Documentation',
-        description: 'Create documentation for future developers'
       }
     ]
   }
@@ -292,6 +90,16 @@ const calculateProgress = () => {
 
 const DeveloperRoadmap = () => {
   const progress = calculateProgress();
+  const { toast } = useToast();
+  
+  React.useEffect(() => {
+    // Show a welcome toast when the component mounts
+    toast({
+      title: "Developer Roadmap Loaded",
+      description: "Welcome to the Wybe Developer Roadmap",
+      type: "info"
+    });
+  }, []);
   
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -371,7 +179,7 @@ const DeveloperRoadmap = () => {
               </h2>
               
               <div className="space-y-6">
-                {roadmapItems.map((item, index) => (
+                {roadmapItems.map((item) => (
                   <Card key={item.id} className="bg-black/30 border-wybe-primary/10 overflow-hidden">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -395,11 +203,6 @@ const DeveloperRoadmap = () => {
                           <div key={stepIndex} className="pb-2">
                             <div className="font-medium text-sm mb-1">{stepIndex + 1}. {step.title}</div>
                             <div className="text-xs text-gray-400">{step.description}</div>
-                            {step.code && (
-                              <div className="mt-2 p-2 bg-black border border-gray-800 rounded text-xs font-mono text-green-400 whitespace-pre overflow-x-auto">
-                                {step.code}
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
