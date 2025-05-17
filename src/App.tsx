@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Discover from "./pages/Discover";
 import Launch from "./pages/Launch";
 import TradeDemo from "./pages/TradeDemo";
@@ -17,6 +17,7 @@ import TokenDeployment from "./pages/TokenDeployment";
 import AdminLogin from "./pages/AdminLogin";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import DeveloperRoadmap from "./pages/DeveloperRoadmap";
+import MasterDeploymentGuide from "./pages/MasterDeploymentGuide";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/security-report" element={<SecurityReport />} />
         <Route path="/bonding-curves" element={<BondingCurves />} />
         <Route path="/developer-roadmap" element={<DeveloperRoadmap />} />
+        <Route path="/master-deployment-guide" element={<MasterDeploymentGuide />} />
         
         {/* Admin routes */}
         <Route path="/admin-login" element={<AdminLogin />} />

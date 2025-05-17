@@ -74,14 +74,6 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
               {link.label}
             </Link>
           ))}
-          {!adminOnly && (
-            <Link
-              to="/developer-roadmap"
-              className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
-            >
-              Developer Roadmap
-            </Link>
-          )}
         </nav>
 
         {/* Mobile Navigation Trigger */}
@@ -109,12 +101,6 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  to="/developer-roadmap"
-                  className="block text-lg text-gray-300 hover:text-white py-2"
-                >
-                  Developer Roadmap
-                </Link>
               </div>
             </SheetContent>
           </Sheet>
