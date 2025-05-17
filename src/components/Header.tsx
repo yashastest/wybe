@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          {!adminOnly && navLinks.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
@@ -78,34 +78,33 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
         </nav>
 
         {/* Mobile Navigation Trigger */}
-        {!adminOnly && (
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="bg-black border-r border-wybe-primary/10">
-              <SheetHeader className="space-y-2">
-                <SheetTitle>Menu</SheetTitle>
-                <SheetDescription>
-                  Navigate the Wybe platform.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    className={`block text-lg text-gray-300 hover:text-white py-2 ${location.pathname === link.href ? 'text-white' : ''}`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
+        <Sheet>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="bg-black border-r border-wybe-primary/10">
+            <SheetHeader className="space-y-2">
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription>
+                Navigate the Wybe platform.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`block text-lg text-gray-300 hover:text-white py-2 ${location.pathname === link.href ? 'text-white' : ''}`}
+                  onClick={() => {}}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Wallet Connection & Actions */}
         <div className="flex items-center space-x-4">

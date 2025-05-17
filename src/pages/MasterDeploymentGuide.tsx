@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { motion } from "framer-motion";
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,9 +90,11 @@ const MasterDeploymentGuide = () => {
           </Card>
           
           <div className="flex justify-center mt-8">
-            <Button className="bg-wybe-primary hover:bg-wybe-primary/90" size="lg">
-              <ArrowRight className="mr-2" size={16} />
-              View Full Developer Roadmap
+            <Button className="bg-wybe-primary hover:bg-wybe-primary/90" size="lg" asChild>
+              <Link to="/developer-roadmap">
+                <ArrowRight className="mr-2" size={16} />
+                View Full Developer Roadmap
+              </Link>
             </Button>
           </div>
         </motion.div>

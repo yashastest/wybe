@@ -21,7 +21,6 @@ import MasterDeploymentGuide from "./pages/MasterDeploymentGuide";
 
 function App() {
   return (
-    // NOTE: Router is moved to main.tsx to ensure all components have proper context
     <>
       <ScrollToTop />
       <Routes>

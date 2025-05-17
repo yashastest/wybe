@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, AlertCircle, ArrowRight, Code, Database, Wallet, Server, Layout, BarChart3, Lock } from 'lucide-react';
 import Header from '@/components/Header';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 // Simplified data structure - reduced for performance
 const roadmapItems = [
@@ -92,14 +92,13 @@ const DeveloperRoadmap = () => {
   const progress = calculateProgress();
   const { toast } = useToast();
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Show a welcome toast when the component mounts
     toast({
       title: "Developer Roadmap Loaded",
       description: "Welcome to the Wybe Developer Roadmap",
-      type: "info"
     });
-  }, []);
+  }, [toast]);
   
   const getCategoryIcon = (category: string) => {
     switch (category) {

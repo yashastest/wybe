@@ -18,14 +18,15 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(React.createContext<{
-    theme: string | undefined;
-    setTheme: (theme: string) => void;
-  }>({ theme: undefined, setTheme: () => {} }));
+  const { theme, setTheme } = React.useContext(
+    React.createContext<{
+      theme: string | undefined;
+      setTheme: (theme: string) => void;
+    }>({ 
+      theme: undefined, 
+      setTheme: () => {} 
+    })
+  );
   
-  if (context === undefined) {
-    return { theme: "dark", setTheme: () => {} };
-  }
-  
-  return context;
+  return { theme: theme || "dark", setTheme };
 };
