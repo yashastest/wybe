@@ -1,195 +1,111 @@
 
-import React, { useState, useEffect, useContext, createContext } from "react";
+import React, { useState, useEffect, useContext, createContext, useCallback } from "react";
 import { toast } from "sonner";
+import { useWeb3Modal, useWeb3ModalState, useWeb3ModalAccount, useDisconnect } from '@web3modal/ethers5/react';
+import { ethers } from 'ethers';
+import { configureWeb3Modal, WALLETCONNECT_PROJECT_ID } from '@/config/web3modal';
 
-// Wallet context type - Now exported
+// Initialize Web3Modal configuration
+// This should ideally be called once, e.g., in your app's entry point or a top-level component.
+// However, to ensure it's configured before useWallet might be called, we can call it here.
+// A better approach might be to initialize it in main.tsx or App.tsx.
+if (typeof window !== 'undefined') {
+  configureWeb3Modal();
+}
+
 export interface WalletContextType {
-  wallet: string | null;
-  isConnecting: boolean;
+  wallet: string | null; // This will be the connected address
+  isConnecting: boolean; // Reflects modal state or connection attempt
   connected: boolean;
-  address: string;
+  address: string; // Same as wallet
+  provider: ethers.providers.Web3Provider | null;
   connect: () => Promise<void>;
-  disconnect: () => void;
-  connectPhantom: () => Promise<void>;
-  connectHardwareWallet: () => Promise<void>;
-  isSolanaAvailable: boolean;
-  isHardwareWallet: boolean;
+  disconnect: () => Promise<void>; // Updated to be async due to Web3Modal's disconnect
+  // EVM specific, Solana related properties removed
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Move React hooks directly inside the component function body
-  const [wallet, setWallet] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isSolanaAvailable, setIsSolanaAvailable] = useState(false);
-  const [isHardwareWallet, setIsHardwareWallet] = useState(false);
+  const { open } = useWeb3Modal();
+  const { address: web3ModalAddress, chainId, isConnected } = useWeb3ModalAccount();
+  const { disconnect: web3ModalDisconnect } = useDisconnect();
+  const { loading: web3ModalLoading, open: modalOpen } = useWeb3ModalState();
+  
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
 
-  // Get address from wallet and determine connection status
-  const connected = wallet !== null;
-  const address = wallet || "";
+  // Derive wallet state from Web3Modal hooks
+  const address = web3ModalAddress || "";
+  const connected = isConnected && !!web3ModalAddress;
+  const wallet = connected ? web3ModalAddress : null;
+  const isConnecting = web3ModalLoading;
 
   useEffect(() => {
-    // Check local storage for previously connected wallet
-    const savedWallet = localStorage.getItem("wybeWallet");
-    const isHardwareWalletConnected = localStorage.getItem("wybeHardwareWallet") === "true";
-    
-    if (savedWallet) {
-      setWallet(savedWallet);
-      setIsHardwareWallet(isHardwareWalletConnected);
-    }
-    
-    // Check if Phantom/Solana is available
-    const checkSolana = () => {
-      const isPhantomAvailable = window.solana && window.solana.isPhantom;
-      setIsSolanaAvailable(!!isPhantomAvailable);
-    };
-    
-    checkSolana();
-    
-    // In a real integration, we would listen for account changes here
-    const interval = setInterval(checkSolana, 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const connect = async () => {
-    // If Phantom is available, use it as default; otherwise use mock
-    if (window.solana && window.solana.isPhantom) {
-      return connectPhantom();
-    }
-    
-    // Fallback to mock connection if Phantom isn't available
-    setIsConnecting(true);
-    try {
-      // Mock the connection
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Generate a mock wallet address
-      const mockWallet = "Wybe" + Math.random().toString(36).substring(2, 10);
-      
-      setWallet(mockWallet);
-      setIsHardwareWallet(false);
-      localStorage.setItem("wybeWallet", mockWallet);
-      localStorage.setItem("wybeHardwareWallet", "false");
-      toast.success("Wallet connected successfully!");
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-      toast.error("Failed to connect wallet. Please try again.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const connectPhantom = async () => {
-    setIsConnecting(true);
-    try {
-      // Check if Phantom is installed
-      if (!window.solana || !window.solana.isPhantom) {
-        window.open("https://phantom.app/", "_blank");
-        toast.error("Phantom wallet is not installed. Please install it first.");
-        setIsConnecting(false);
-        return;
-      }
-      
-      console.log("Connecting to Phantom wallet...");
-      
+    if (connected && typeof window.ethereum !== 'undefined') {
       try {
-        // Actually connect to the wallet
-        const response = await window.solana.connect();
-        const address = response.publicKey.toString();
-        console.log("Connected to Phantom wallet:", address);
-        
-        // Save the wallet address
-        setWallet(address);
-        setIsHardwareWallet(false);
-        localStorage.setItem("wybeWallet", address);
-        localStorage.setItem("wybeHardwareWallet", "false");
-        toast.success("Phantom wallet connected!");
-      } catch (err) {
-        console.error("User rejected the connection", err);
-        toast.error("Connection rejected. Please try again.");
+        const ethersProvider = new ethers.providers.Web3Provider(window.ethereum as any);
+        setProvider(ethersProvider);
+      } catch (e) {
+        console.error("Error creating ethers provider:", e);
+        setProvider(null);
+        toast.error("Could not initialize wallet provider.");
       }
-    } catch (error) {
-      console.error("Failed to connect Phantom wallet:", error);
-      toast.error("Failed to connect Phantom wallet. Please try again.");
-    } finally {
-      setIsConnecting(false);
+    } else {
+      setProvider(null);
     }
-  };
+  }, [connected, chainId]); // Re-create provider if chainId changes
 
-  const connectHardwareWallet = async () => {
-    setIsConnecting(true);
+  const connect = useCallback(async () => {
+    if (WALLETCONNECT_PROJECT_ID === "YOUR_WALLETCONNECT_PROJECT_ID") {
+      toast.error("WalletConnect Project ID is not configured. Please ask the developer to set it up.");
+      console.error("Attempted to connect without WALLETCONNECT_PROJECT_ID set.");
+      return;
+    }
     try {
-      // Check if Phantom is installed
-      if (!window.solana || !window.solana.isPhantom) {
-        window.open("https://phantom.app/", "_blank");
-        toast.error("Phantom wallet is not installed. Please install it first.");
-        setIsConnecting(false);
-        return;
-      }
-      
-      console.log("Connecting hardware wallet through Phantom...");
-      
-      try {
-        // In a real implementation, we would use Phantom's hardware wallet connection flow
-        // For this demo, we simulate the hardware wallet connection
-        toast.info("Please connect your hardware wallet and approve on the device...");
-        
-        // Simulate hardware wallet connection delay
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Generate a mock hardware wallet address (in reality, this would come from the hardware wallet)
-        const hardwareWalletAddress = "Wyb" + "Hardware" + Math.random().toString(36).substring(2, 8);
-        
-        // Save the hardware wallet address
-        setWallet(hardwareWalletAddress);
-        setIsHardwareWallet(true);
-        localStorage.setItem("wybeWallet", hardwareWalletAddress);
-        localStorage.setItem("wybeHardwareWallet", "true");
-        toast.success("Hardware wallet connected successfully!");
-      } catch (err) {
-        console.error("Hardware wallet connection failed", err);
-        toast.error("Hardware wallet connection failed. Please try again.");
-      }
+      await open(); // Opens the Web3Modal
     } catch (error) {
-      console.error("Failed to connect hardware wallet:", error);
-      toast.error("Failed to connect hardware wallet. Please try again.");
-    } finally {
-      setIsConnecting(false);
+      console.error("Failed to open Web3Modal:", error);
+      toast.error("Could not open wallet connection modal. Please try again.");
     }
-  };
+  }, [open]);
 
-  const disconnect = () => {
-    // If we have a Phantom connection, disconnect it
-    if (window.solana && window.solana.isPhantom) {
-      try {
-        window.solana.disconnect();
-      } catch (error) {
-        console.error("Error disconnecting from Phantom:", error);
-      }
+  const disconnect = useCallback(async () => {
+    try {
+      await web3ModalDisconnect();
+      setProvider(null); // Clear provider on disconnect
+      toast.success("Wallet disconnected");
+    } catch (error) {
+      console.error("Failed to disconnect wallet:", error);
+      toast.error("Failed to disconnect wallet. Please try again.");
     }
-    
-    // Clear local state
-    setWallet(null);
-    setIsHardwareWallet(false);
-    localStorage.removeItem("wybeWallet");
-    localStorage.removeItem("wybeHardwareWallet");
-    toast.success("Wallet disconnected");
-  };
+  }, [web3ModalDisconnect]);
+  
+  // Effect to show toast messages on connection/disconnection
+  useEffect(() => {
+    if (connected && web3ModalAddress) {
+      // Avoid duplicate toasts if already connected from a previous session
+      const lastConnectedAddress = sessionStorage.getItem('lastConnectedAddress');
+      if(lastConnectedAddress !== web3ModalAddress) {
+        toast.success(`Wallet connected: ${web3ModalAddress.substring(0,6)}...${web3ModalAddress.substring(web3ModalAddress.length - 4)}`);
+        sessionStorage.setItem('lastConnectedAddress', web3ModalAddress);
+      }
+    } else if (!connected && sessionStorage.getItem('lastConnectedAddress')) {
+      // This logic might fire too often if isConnected flickers.
+      // The disconnect function already shows a toast.
+      sessionStorage.removeItem('lastConnectedAddress');
+    }
+  }, [connected, web3ModalAddress]);
+
 
   return (
     <WalletContext.Provider value={{ 
       wallet, 
       isConnecting, 
+      connected,
+      address,
+      provider,
       connect, 
       disconnect,
-      connectPhantom,
-      connectHardwareWallet,
-      isSolanaAvailable,
-      isHardwareWallet,
-      connected,
-      address
     }}>
       {children}
     </WalletContext.Provider>
@@ -203,3 +119,4 @@ export const useWallet = () => {
   }
   return context;
 };
+
