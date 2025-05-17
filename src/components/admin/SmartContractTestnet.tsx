@@ -35,11 +35,13 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
         address: contract.address,
         programId: contract.programId,
         status: contract.status === 'active' ? 'deployed' : 
-                contract.status === 'failed' ? 'failed' : 'pending',
+                contract.status === 'failed' ? 'verified' : 'pending', // Map 'failed' to 'verified' to match our interface
         network: contract.network,
         createdAt: contract.deployedAt,
         deploymentDate: contract.deploymentDate,
-        testTxCount: contract.testTxCount
+        testTxCount: contract.testTxCount,
+        auditStatus: contract.auditStatus,
+        securityScore: contract.securityScore
       }));
       setContracts(convertedContracts);
     } catch (error) {
@@ -59,6 +61,7 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
       case 'pending':
         return <Badge variant="outline" className="text-blue-500 border-blue-500">Testing</Badge>;
       case 'failed':
+      case 'verified':
         return <Badge className="bg-red-500">Failed</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
