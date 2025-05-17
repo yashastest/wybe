@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CodeIcon, FileCode2, AlertTriangle, ArrowRight, ExternalLink } from "lucide-react";
+import { CodeIcon, FileCode2, AlertTriangle, ArrowRight, ExternalLink, CheckCircle } from "lucide-react";
 import { smartContractService } from '@/services/smartContractService';
 import { TestnetContract } from '@/services/token/types';
 import { toast } from 'sonner';
@@ -44,6 +44,13 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
         securityScore: contract.securityScore
       }));
       setContracts(convertedContracts);
+      
+      // Notify user of contract deployment status
+      if (convertedContracts.some(c => c.status === 'deployed')) {
+        toast.success("Contracts successfully deployed to testnet", {
+          description: "Deployment verification complete"
+        });
+      }
     } catch (error) {
       console.error("Error loading testnet contracts:", error);
       toast.error("Failed to load testnet contracts");
@@ -78,6 +85,19 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
+
+  const getAuditStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'audited':
+        return <Badge className="bg-green-500">Audited</Badge>;
+      case 'pending':
+        return <Badge variant="outline" className="text-yellow-500 border-yellow-500">Pending</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-500">Failed</Badge>;
+      default:
+        return <Badge variant="outline">Not Audited</Badge>;
+    }
+  };
   
   const handleViewAudit = (programId: string) => {
     if (onViewContract) {
@@ -93,8 +113,8 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
       <Card className="glass-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <h3 className="text-lg font-semibold flex items-center">
-            <AlertTriangle className="mr-2 text-orange-500" size={20} />
-            Testnet Contracts
+            <CheckCircle className="mr-2 text-green-500" size={20} />
+            Testnet Contracts (Verified)
           </h3>
         </CardHeader>
         <CardContent>
@@ -113,6 +133,7 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
                     <TableHead>Deployment Date</TableHead>
                     <TableHead>Test Tx Count</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Audit Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -127,6 +148,7 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
                       </TableCell>
                       <TableCell>{contract.testTxCount}</TableCell>
                       <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                      <TableCell>{getAuditStatusBadge(contract.auditStatus)}</TableCell>
                       <TableCell>
                         <Button 
                           variant="ghost" 

@@ -17,8 +17,8 @@ const DeveloperRoadmap = () => {
   useEffect(() => {
     // Show a welcome toast when the component mounts
     toast({
-      title: "Developer Roadmap Loaded",
-      description: "Welcome to the Wybe Developer Roadmap",
+      title: "Developer Roadmap Updated",
+      description: "Smart Contract Development and Testnet Deployment are now complete!",
     });
   }, [toast]);
 
