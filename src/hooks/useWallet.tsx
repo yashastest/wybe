@@ -1,7 +1,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 
-interface WalletContextProps {
+export interface WalletContextProps {
   address: string | null;
   connected: boolean;
   connect: () => Promise<void>;
@@ -9,6 +9,9 @@ interface WalletContextProps {
   wallet: string | null;
   connecting: boolean;
 }
+
+// Create a WalletContextType alias for easier export
+export type WalletContextType = WalletContextProps;
 
 const WalletContext = createContext<WalletContextProps>({
   address: null,

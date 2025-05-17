@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { tokenTradingService } from '@/services/tokenTradingService';
 import { TradeParams, TradeResult, TokenTransaction, TradeHistoryFilters } from '@/services/token/types'; // Updated import
 import { useWalletBalance } from './useWalletBalance';
-import { useWallet } from './useWallet.tsx';
+import { useWallet } from './useWallet';
 
 export interface TokenTrade {
   id?: string;               // Added to match TokenTransaction
@@ -44,17 +44,8 @@ export const useTokenTrading = (tokenSymbol?: string) => {
     let result: TradeResult;
     
     try {
-      // Use the tokenTradingService to execute the trade
-      result = await tokenTradingService.executeTrade({
-        ...tradeParams,
-        // Convert numeric gasPriority to string format expected by the API
-        gasPriority: tradeParams.gasPriority ? 
-          (typeof tradeParams.gasPriority === 'number' ? 
-            (tradeParams.gasPriority <= 1 ? 'low' : 
-             tradeParams.gasPriority >= 3 ? 'high' : 'medium') : 
-            tradeParams.gasPriority) : 
-          'medium'
-      });
+      // Use the tokenTradingService to execute the trade with the proper params
+      result = await tokenTradingService.executeTrade(tradeParams);
       
       if (result.success) {
         // Create transaction record and update local state with new trade
