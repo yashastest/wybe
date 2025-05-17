@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
@@ -7,7 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { smartContractService } from './services/smartContractService.ts';
 import { WalletProvider } from './lib/wallet';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { configureWeb3Modal } from './config/web3modal'; // Import the function
+import { configureWeb3Modal } from './config/web3modal';
+import { ThemeProvider } from './components/ThemeProvider';
 
 // Initialize Web3Modal configuration
 if (typeof window !== 'undefined') {
@@ -42,10 +44,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <Router>
-        <WalletProvider>
-          <App />
-          <Toaster position="top-right" />
-        </WalletProvider>
+        <ThemeProvider defaultTheme="dark">
+          <WalletProvider>
+            <App />
+            <Toaster position="top-right" />
+          </WalletProvider>
+        </ThemeProvider>
       </Router>
     </QueryClientProvider>
   </React.StrictMode>,

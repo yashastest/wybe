@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -23,7 +24,11 @@ import {
 import { Menu, Moon, Sun } from 'lucide-react';
 import { useTheme } from "@/components/ThemeProvider";
 
-const Header = () => {
+interface HeaderProps {
+  adminOnly?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   const location = useLocation();
   const { wallet, connect, disconnect, connected } = useWallet();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -60,7 +65,7 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
+          {!adminOnly && navLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
@@ -69,47 +74,51 @@ const Header = () => {
               {link.label}
             </Link>
           ))}
-          <Link
-            to="/developer-roadmap"
-            className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
-          >
-            Developer Roadmap
-          </Link>
+          {!adminOnly && (
+            <Link
+              to="/developer-roadmap"
+              className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
+            >
+              Developer Roadmap
+            </Link>
+          )}
         </nav>
 
         {/* Mobile Navigation Trigger */}
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-black border-r border-wybe-primary/10">
-            <SheetHeader className="space-y-2">
-              <SheetTitle>Menu</SheetTitle>
-              <SheetDescription>
-                Navigate the Wybe platform.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-4 py-4">
-              {navLinks.map((link) => (
+        {!adminOnly && (
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="bg-black border-r border-wybe-primary/10">
+              <SheetHeader className="space-y-2">
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>
+                  Navigate the Wybe platform.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="grid gap-4 py-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={`block text-lg text-gray-300 hover:text-white py-2 ${location.pathname === link.href ? 'text-white' : ''}`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
                 <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`block text-lg text-gray-300 hover:text-white py-2 ${location.pathname === link.href ? 'text-white' : ''}`}
+                  to="/developer-roadmap"
+                  className="block text-lg text-gray-300 hover:text-white py-2"
                 >
-                  {link.label}
+                  Developer Roadmap
                 </Link>
-              ))}
-              <Link
-                to="/developer-roadmap"
-                className="block text-lg text-gray-300 hover:text-white py-2"
-              >
-                Developer Roadmap
-              </Link>
-            </div>
-          </SheetContent>
-        </Sheet>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
 
         {/* Wallet Connection & Actions */}
         <div className="flex items-center space-x-4">
@@ -123,7 +132,7 @@ const Header = () => {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {connected ? (
+          {!adminOnly && connected ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -146,9 +155,11 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="default" size="sm" onClick={connect} className="font-semibold font-poppins">
-              Connect Wallet
-            </Button>
+            !adminOnly && (
+              <Button variant="default" size="sm" onClick={connect} className="font-semibold font-poppins">
+                Connect Wallet
+              </Button>
+            )
           )}
         </div>
       </div>
