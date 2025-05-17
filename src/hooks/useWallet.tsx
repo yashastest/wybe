@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, createContext, useCallback } from "react";
 import { toast } from "sonner";
 import { useWeb3Modal, useWeb3ModalState, useWeb3ModalAccount, useDisconnect } from '@web3modal/ethers5/react';
@@ -30,7 +29,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { open } = useWeb3Modal();
   const { address: web3ModalAddress, chainId, isConnected } = useWeb3ModalAccount();
   const { disconnect: web3ModalDisconnect } = useDisconnect();
-  const { loading: web3ModalLoading, open: modalOpen } = useWeb3ModalState();
+  const { loading: web3ModalLoading } = useWeb3ModalState();
   
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
 
@@ -50,15 +49,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setProvider(null);
         toast.error("Could not initialize wallet provider.");
       }
-    } else {
+    } else if (connected && web3ModalAddress) {
+        // Handle case where window.ethereum might not be immediately available
+        // or for other provider types from WalletConnect
+        // This part might need adjustment based on how Web3ModalProvider directly gives provider
+        // Let's assume for now direct interaction isn't needed if not MetaMask.
+        console.warn("Connected, but window.ethereum is not standard. Web3Modal should provide the provider.");
+    }
+    else {
       setProvider(null);
     }
-  }, [connected, chainId]); // Re-create provider if chainId changes
+  }, [connected, chainId, web3ModalAddress]); // Re-create provider if chainId changes or address appears
 
   const connect = useCallback(async () => {
     if (WALLETCONNECT_PROJECT_ID === "YOUR_WALLETCONNECT_PROJECT_ID") {
-      toast.error("WalletConnect Project ID is not configured. Please ask the developer to set it up.");
-      console.error("Attempted to connect without WALLETCONNECT_PROJECT_ID set.");
+      toast.error("WalletConnect Project ID is not configured. Please set VITE_WALLETCONNECT_PROJECT_ID in your .env file.");
+      console.error("Attempted to connect without VITE_WALLETCONNECT_PROJECT_ID set. Create a .env file with VITE_WALLETCONNECT_PROJECT_ID='your_project_id'.");
       return;
     }
     try {
@@ -74,6 +80,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       await web3ModalDisconnect();
       setProvider(null); // Clear provider on disconnect
       toast.success("Wallet disconnected");
+      sessionStorage.removeItem('lastConnectedAddress'); // Clear session item on explicit disconnect
     } catch (error) {
       console.error("Failed to disconnect wallet:", error);
       toast.error("Failed to disconnect wallet. Please try again.");
@@ -89,10 +96,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         toast.success(`Wallet connected: ${web3ModalAddress.substring(0,6)}...${web3ModalAddress.substring(web3ModalAddress.length - 4)}`);
         sessionStorage.setItem('lastConnectedAddress', web3ModalAddress);
       }
-    } else if (!connected && sessionStorage.getItem('lastConnectedAddress')) {
-      // This logic might fire too often if isConnected flickers.
-      // The disconnect function already shows a toast.
-      sessionStorage.removeItem('lastConnectedAddress');
+    } else if (!connected) {
+      // Only remove if it was previously set, to avoid issues if it was never set.
+      if (sessionStorage.getItem('lastConnectedAddress')) {
+         // Disconnect toast is handled by the disconnect function now.
+         // We might not need this else if block or adjust its logic
+         // For now, let's keep removing it to ensure clean state.
+        sessionStorage.removeItem('lastConnectedAddress');
+      }
     }
   }, [connected, web3ModalAddress]);
 
@@ -119,4 +130,3 @@ export const useWallet = () => {
   }
   return context;
 };
-
