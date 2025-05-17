@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CodeIcon, FileCode2, AlertTriangle, ArrowRight, ExternalLink, CheckCircle } from "lucide-react";
+import { CodeIcon, FileCode2, AlertTriangle, ArrowRight, ExternalLink, CheckCircle2 } from "lucide-react";
 import { smartContractService } from '@/services/smartContractService';
 import { TestnetContract } from '@/services/token/types';
 import { toast } from 'sonner';
@@ -113,7 +113,7 @@ const SmartContractTestnet: React.FC<SmartContractTestnetProps> = ({ onViewContr
       <Card className="glass-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <h3 className="text-lg font-semibold flex items-center">
-            <CheckCircle className="mr-2 text-green-500" size={20} />
+            <CheckCircle2 className="mr-2 text-green-500" size={20} />
             Testnet Contracts (Verified)
           </h3>
         </CardHeader>

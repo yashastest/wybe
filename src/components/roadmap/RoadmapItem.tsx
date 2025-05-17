@@ -1,8 +1,10 @@
 
-import React from 'react';
-import { Circle, CheckCircle2, AlertCircle, Lock, LayoutDashboard, Database, Code, Server, BarChart3 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronRight, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { RoadmapItem as RoadmapItemType } from '@/data/roadmapData';
 
 interface RoadmapItemProps {
@@ -10,78 +12,169 @@ interface RoadmapItemProps {
   allItems: RoadmapItemType[];
 }
 
-export const RoadmapItem: React.FC<RoadmapItemProps> = ({ item, allItems }) => {
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'frontend': return <LayoutDashboard size={18} />;
-      case 'backend': return <Database size={18} />;
-      case 'smart-contract': return <Code size={18} />;
-      case 'deployment': return <Server size={18} />;
-      default: return <BarChart3 size={18} />;
+const RoadmapItem: React.FC<RoadmapItemProps> = ({ item, allItems }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
+  };
+  
+  const getStatusIcon = () => {
+    switch (item.status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-400" />;
+      case 'in-progress':
+        return <Clock className="w-5 h-5 text-blue-400" />;
+      case 'pending':
+        return <AlertCircle className="w-5 h-5 text-gray-400" />;
+      default:
+        return null;
     }
   };
   
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle2 className="text-green-500" size={20} />;
-      case 'in-progress': return <Circle className="text-amber-400" size={20} />;
-      case 'pending': return <Circle className="text-gray-400" size={20} />;
-      default: return <AlertCircle className="text-red-500" size={20} />;
+  const getStatusColor = () => {
+    switch (item.status) {
+      case 'completed':
+        return 'bg-green-500/20 border-green-500/50';
+      case 'in-progress':
+        return 'bg-blue-500/20 border-blue-500/50';
+      case 'pending':
+        return 'bg-gray-500/20 border-gray-500/30';
+      default:
+        return 'bg-gray-500/10 border-gray-500/20';
     }
   };
-
+  
+  const getCategoryBadge = () => {
+    switch (item.category) {
+      case 'frontend':
+        return <Badge variant="outline" className="border-purple-500 text-purple-400">Frontend</Badge>;
+      case 'backend':
+        return <Badge variant="outline" className="border-green-500 text-green-400">Backend</Badge>;
+      case 'smart-contract':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-400">Smart Contract</Badge>;
+      case 'deployment':
+        return <Badge variant="outline" className="border-blue-500 text-blue-400">Deployment</Badge>;
+      default:
+        return <Badge variant="outline">Other</Badge>;
+    }
+  };
+  
+  const getStatusBadge = () => {
+    switch (item.status) {
+      case 'completed':
+        return <Badge className="bg-green-500">Completed</Badge>;
+      case 'in-progress':
+        return <Badge className="bg-blue-500">In Progress</Badge>;
+      case 'pending':
+        return <Badge variant="outline">Pending</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+  
+  const getDependencyNames = () => {
+    if (!item.dependencies || item.dependencies.length === 0) return [];
+    return item.dependencies.map(depId => {
+      const dep = allItems.find(i => i.id === depId);
+      return dep ? dep.title : depId;
+    });
+  };
+  
+  const dependencyNames = getDependencyNames();
+  
   return (
-    <Card className="bg-black/30 border-wybe-primary/10 overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {getStatusIcon(item.status)}
-            <CardTitle className="text-lg">{item.title}</CardTitle>
-          </div>
-          <Badge
-            variant={item.priority === 'high' ? 'destructive' : item.priority === 'medium' ? 'default' : 'outline'}
-            className="capitalize"
+    <div className={cn('rounded-lg border p-4 shadow-sm', getStatusColor())}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          {getStatusIcon()}
+          <h3 className="text-lg font-semibold">{item.title}</h3>
+          {getCategoryBadge()}
+        </div>
+        <div className="flex items-center space-x-2">
+          {getStatusBadge()}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="h-8 w-8"
+            onClick={toggleOpen}
           >
-            {item.priority} priority
-          </Badge>
+            {isOpen ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-        <CardDescription>{item.description}</CardDescription>
-      </CardHeader>
+      </div>
       
-      <CardContent className="pb-0">
-        <div className="space-y-3">
-          {item.steps.map((step, stepIndex) => (
-            <div key={stepIndex} className="pb-2">
-              <div className="font-medium text-sm mb-1">{stepIndex + 1}. {step.title}</div>
-              <div className="text-xs text-gray-400">{step.description}</div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 space-y-4">
+              <p className="text-gray-400">{item.description}</p>
+              
+              {item.steps.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Implementation Steps</h4>
+                  <div className="space-y-2">
+                    {item.steps.map((step, index) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <div className={cn(
+                          'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
+                          item.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                          item.status === 'in-progress' && index <= 1 ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        )}>
+                          {item.status === 'completed' || (item.status === 'in-progress' && index <= 1) ? (
+                            <CheckCircle className="w-3 h-3" />
+                          ) : (
+                            <span className="text-xs">{index + 1}</span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium">{step.title}</div>
+                          <div className="text-xs text-gray-400">{step.description}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center text-sm text-gray-400">
+                <div className="flex items-center">
+                  <span className="mr-1">Priority:</span>
+                  <Badge variant="outline" className={cn(
+                    'capitalize',
+                    item.priority === 'high' ? 'text-red-400 border-red-400' :
+                    item.priority === 'medium' ? 'text-yellow-400 border-yellow-400' :
+                    'text-blue-400 border-blue-400'
+                  )}>
+                    {item.priority}
+                  </Badge>
+                </div>
+                <div>Est: {item.estimatedTime} hours</div>
+              </div>
+              
+              {dependencyNames.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-gray-400">Dependencies: </span>
+                  <span>{dependencyNames.join(', ')}</span>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </CardContent>
-      
-      <CardFooter className="pt-3 pb-3 flex items-center justify-between text-xs text-gray-400 border-t border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-800 p-1 rounded">
-            {getCategoryIcon(item.category)}
-          </div>
-          <span className="capitalize">{item.category}</span>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {item.dependencies && (
-            <div className="flex items-center gap-1">
-              <Lock size={12} />
-              <span>
-                Dependencies: {item.dependencies.map(dep => {
-                  const depItem = allItems.find(i => i.id === dep);
-                  return depItem ? depItem.title.split(' ')[0] : dep;
-                }).join(', ')}
-              </span>
-            </div>
-          )}
-          <div>Est. time: {item.estimatedTime}</div>
-        </div>
-      </CardFooter>
-    </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
+
+export default RoadmapItem;
