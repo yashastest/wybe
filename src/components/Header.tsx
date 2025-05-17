@@ -45,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
   const navLinks = [
     { label: "Discover", href: "/discover" },
     { label: "Launch", href: "/launch" },
+    { label: "Trade", href: "/trade-demo" },
     { label: "Dashboard", href: "/dashboard" },
     { label: "Developer Roadmap", href: "/developer-roadmap" },
     { label: "Deployment Guide", href: "/master-deployment-guide" }

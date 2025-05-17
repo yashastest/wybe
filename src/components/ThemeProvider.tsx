@@ -7,9 +7,16 @@ import { type ThemeProviderProps } from "next-themes/dist/types"
 
 export function ThemeProvider({ 
   children, 
-  defaultTheme = "system",
+  defaultTheme = "dark",
   ...props 
 }: ThemeProviderProps) {
+  const [mounted, setMounted] = React.useState(false);
+
+  // After mounting, we can safely show the UI that depends on client-side theme detection
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <NextThemesProvider defaultTheme={defaultTheme} {...props}>
       {children}
@@ -18,7 +25,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const { theme, setTheme } = React.useContext(
+  const context = React.useContext(
     React.createContext<{
       theme: string | undefined;
       setTheme: (theme: string) => void;
@@ -28,5 +35,11 @@ export const useTheme = () => {
     })
   );
   
-  return { theme: theme || "dark", setTheme };
+  // Fallback for when context is not available
+  const [internalTheme, setInternalTheme] = React.useState("dark");
+  
+  return {
+    theme: context.theme || internalTheme, 
+    setTheme: context.setTheme || setInternalTheme
+  };
 };

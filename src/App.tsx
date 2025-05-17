@@ -3,6 +3,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Discover from "./pages/Discover";
 import Launch from "./pages/Launch";
+import LaunchToken from "./pages/LaunchToken";
 import TradeDemo from "./pages/TradeDemo";
 import NotFound from "./pages/NotFound";
 import SecurityReport from "./pages/SecurityReport";
@@ -18,6 +19,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import DeveloperRoadmap from "./pages/DeveloperRoadmap";
 import MasterDeploymentGuide from "./pages/MasterDeploymentGuide";
+import TradingHistory from "./pages/TradingHistory";
 
 function App() {
   return (
@@ -28,12 +30,15 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/launch" element={<Launch />} />
+        <Route path="/launch-token" element={<LaunchToken />} />
         <Route path="/trade-demo" element={<TradeDemo />} />
         <Route path="/package" element={<LaunchPackage />} />
         <Route path="/security-report" element={<SecurityReport />} />
         <Route path="/bonding-curves" element={<BondingCurves />} />
         <Route path="/developer-roadmap" element={<DeveloperRoadmap />} />
         <Route path="/master-deployment-guide" element={<MasterDeploymentGuide />} />
+        <Route path="/trading-history" element={<TradingHistory />} />
+        <Route path="/trading-history/:tokenSymbol" element={<TradingHistory />} />
         
         {/* Admin routes */}
         <Route path="/admin-login" element={<AdminLogin />} />

@@ -1,7 +1,12 @@
 
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const NotFound = () => {
   const location = useLocation();
@@ -16,14 +21,28 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      <Header />
+      
+      <motion.div 
+        className="flex-grow flex items-center justify-center p-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="text-center max-w-md mx-auto">
+          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-500 via-indigo-400 to-blue-500 bg-clip-text text-transparent">404</h1>
+          <p className="text-2xl text-gray-300 mb-6">Oops! Page not found</p>
+          <p className="text-gray-400 mb-8">
+            The page you're looking for doesn't exist or has been moved.
+          </p>
+          <Button asChild className="bg-wybe-primary hover:bg-wybe-primary/90">
+            <Link to="/">Return to Home</Link>
+          </Button>
+        </div>
+      </motion.div>
+      
+      <Footer />
     </div>
   );
 };
