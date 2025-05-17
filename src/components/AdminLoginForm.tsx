@@ -29,12 +29,24 @@ const AdminLoginForm = () => {
     
     try {
       // Call the auth-admin edge function to authenticate
-      const { data, error } = await supabase.functions.invoke('auth-admin', {
+      const { data, error: functionError } = await supabase.functions.invoke('auth-admin', {
         body: { email, password }
       });
       
-      if (error || !data.success) {
-        throw new Error(error?.message || data?.error || 'Invalid credentials');
+      if (functionError || !data || !data.success) {
+        let displayErrorMessage = 'Invalid credentials'; // Default error message
+
+        if (data && data.error) {
+          // Use the error message from the function's response body if available
+          displayErrorMessage = data.error;
+        } else if (functionError && functionError.message && !functionError.message.includes('non-2xx status code')) {
+          // Use the Supabase client error if it's specific
+          displayErrorMessage = functionError.message;
+        }
+        // If functionError.message is the generic "non-2xx" and data.error is not present,
+        // 'Invalid credentials' (our default) will be used.
+        
+        throw new Error(displayErrorMessage);
       }
       
       // Authentication successful
@@ -49,9 +61,9 @@ const AdminLoginForm = () => {
       
       // Redirect to admin dashboard
       navigate('/admin', { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Login failed: ' + (error.message || 'Invalid credentials'));
+      toast.error(`Login failed: ${error.message || 'An unexpected error occurred'}`);
     } finally {
       setIsLoading(false);
     }
@@ -120,3 +132,4 @@ const AdminLoginForm = () => {
 };
 
 export default AdminLoginForm;
+
