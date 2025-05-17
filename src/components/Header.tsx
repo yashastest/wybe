@@ -1,223 +1,158 @@
-
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Menu, Wallet, DollarSign, TrendingUp } from "lucide-react";
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useWallet } from '@/lib/wallet';
 import { Button } from "@/components/ui/button";
-import { 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useWallet } from "@/hooks/useWallet";
-import WybeFunLogo from "./WybeFunLogo";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Menu, Moon, Sun } from 'lucide-react';
+import { useTheme } from "@/components/ThemeProvider";
 
-interface HeaderProps {
-  adminOnly?: boolean;
-}
-
-interface NavLink {
-  to: string;
-  label: string;
-  icon?: React.ReactNode;
-}
-
-const Header: React.FC<HeaderProps> = ({ adminOnly = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+const Header = () => {
   const location = useLocation();
-  const { connected, address, connect, disconnect, isConnecting } = useWallet();
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
-    };
+  const { wallet, connect, disconnect, connected } = useWallet();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { setTheme, theme } = useTheme();
 
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [scrolled]);
-  
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location]);
-
-  const handleWalletConnection = async () => {
-    if (connected) {
-      disconnect();
-    } else {
-      try {
-        await connect();
-      } catch (error) {
-        console.error("Wallet connection error:", error);
-      }
-    }
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Regular navigation links
-  const navLinks: NavLink[] = [
-    { to: "/", label: "Home" },
-    { to: "/discover", label: "Discover" },
-    { 
-      to: "/trade-demo", 
-      label: connected ? "Trade" : "Trade Demo", 
-      icon: <TrendingUp className="h-4 w-4 mr-1" /> 
-    },
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "/launch", label: "Launch" },
-    { to: "/package", label: "Launch Package" },
-  ];
-  
-  // Admin navigation links
-  const adminNavLinks: NavLink[] = [
-    { to: "/admin", label: "Dashboard" },
-    { to: "/admin-login", label: "Logout" },
-  ];
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
-  // Choose which links to display
-  const linksToDisplay = adminOnly ? adminNavLinks : navLinks;
-
-  // Truncate address for display - with safety check
-  const truncatedAddress = address ? 
-    `${address.substring(0, 4)}...${address.substring(address.length - 4)}` : 
-    '';
+  const navLinks = [
+    { label: "Discover", href: "/discover" },
+    { label: "Launch", href: "/launch" },
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Developer Roadmap", href: "/developer-roadmap" },
+  ];
 
   return (
-    <header 
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-100 bg-black ${
-        scrolled ? 'py-2 shadow-lg' : 'py-3'
-      }`}
+    <motion.header
+      className="bg-black/50 backdrop-blur-md sticky top-0 z-50 border-b border-wybe-primary/10"
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
-          {/* Using our new WybeFunLogo component */}
-          <WybeFunLogo size="lg" />
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {linksToDisplay.map((link, index) => (
-              <motion.div
-                key={link.to}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-              >
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo and Brand */}
+        <Link to="/" className="flex items-center font-bold text-xl text-white">
+          <img src="/wybe-logo-sm.svg" alt="Wybe Logo" className="h-8 w-auto mr-2" />
+          <span className="font-poppins">Wybe</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className={`text-gray-300 hover:text-white px-3 py-2 text-sm font-medium ${location.pathname === link.href ? 'text-white' : ''}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            to="/developer-roadmap"
+            className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
+          >
+            Developer Roadmap
+          </Link>
+        </nav>
+
+        {/* Mobile Navigation Trigger */}
+        <Sheet>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="bg-black border-r border-wybe-primary/10">
+            <SheetHeader className="space-y-2">
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription>
+                Navigate the Wybe platform.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              {navLinks.map((link) => (
                 <Link
-                  to={link.to}
-                  className={`nav-link text-sm font-medium transition-colors hover:text-wybe-primary flex items-center ${
-                    location.pathname === link.to 
-                      ? 'active-nav-link' 
-                      : 'text-white hover:text-wybe-primary/90'
-                  } ${link.to === '/trade-demo' ? 'bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1 rounded-md text-black' : ''}`}
+                  key={link.href}
+                  to={link.href}
+                  className={`block text-lg text-gray-300 hover:text-white py-2 ${location.pathname === link.href ? 'text-white' : ''}`}
                 >
-                  {link.icon && link.icon}
                   {link.label}
                 </Link>
-              </motion.div>
-            ))}
-          </nav>
-          
-          {/* Wallet Connection Button - Desktop */}
-          {!adminOnly && (
-            <div className="hidden md:flex items-center gap-4">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
+              ))}
+              <Link
+                to="/developer-roadmap"
+                className="block text-lg text-gray-300 hover:text-white py-2"
               >
-                <Button 
-                  onClick={handleWalletConnection} 
-                  className={connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}
-                  disabled={isConnecting}
-                >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  {isConnecting ? (
-                    "Connecting..."
-                  ) : connected ? (
-                    truncatedAddress
-                  ) : (
-                    "Connect Wallet"
-                  )}
-                </Button>
-              </motion.div>
+                Developer Roadmap
+              </Link>
             </div>
-          )}
-          
-          {/* Mobile Menu Button */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="md:hidden"
+          </SheetContent>
+        </Sheet>
+
+        {/* Wallet Connection & Actions */}
+        <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
           >
+            {theme === "light" ? <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" /> : <Sun className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+
+          {connected ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  className="p-2 text-white focus:outline-none"
-                >
-                  <Menu className="h-6 w-6" />
-                </button>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://robohash.org/${wallet}.png?size=48x48`} alt={wallet} />
+                    <AvatarFallback>{wallet ? wallet.substring(0, 2).toUpperCase() : "WY"}</AvatarFallback>
+                  </Avatar>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-black border border-white/10 mr-4">
-                {linksToDisplay.map((link) => (
-                  <DropdownMenuItem key={link.to} asChild>
-                    <Link
-                      to={link.to}
-                      className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
-                        location.pathname === link.to ? 'text-wybe-primary' : 'text-white'
-                      } ${link.to === '/trade-demo' ? 'bg-gradient-to-br from-orange-600/30 to-orange-500/30' : ''}`}
-                    >
-                      {link.icon && link.icon}
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* Package link with special styling */}
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/package"
-                    className={`w-full px-4 py-3 text-sm hover:bg-wybe-primary/20 rounded-md flex items-center ${
-                      location.pathname === '/package' ? 'text-wybe-primary' : 'text-white'
-                    }`}
-                  >
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Launch Package ($500)
-                  </Link>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>
+                  <span className="truncate">{wallet}</span>
                 </DropdownMenuItem>
-                
-                {!adminOnly && (
-                  <>
-                    {/* Wallet Button - Mobile */}
-                    <DropdownMenuItem asChild>
-                      <Button 
-                        onClick={handleWalletConnection} 
-                        className={`w-full mt-2 ${connected ? "bg-wybe-primary/20 text-wybe-primary border border-wybe-primary/50" : "bg-wybe-primary hover:bg-wybe-primary/90"}`}
-                        disabled={isConnecting}
-                      >
-                        <Wallet className="mr-2 h-4 w-4" />
-                        {isConnecting ? (
-                          "Connecting..."
-                        ) : connected ? (
-                          truncatedAddress
-                        ) : (
-                          "Connect Wallet"
-                        )}
-                      </Button>
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={disconnect}>
+                  Disconnect
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </motion.div>
+          ) : (
+            <Button variant="default" size="sm" onClick={connect} className="font-semibold font-poppins">
+              Connect Wallet
+            </Button>
+          )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

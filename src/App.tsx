@@ -16,6 +16,7 @@ import AdminTokens from "./pages/AdminTokens";
 import TokenDeployment from "./pages/TokenDeployment";
 import AdminLogin from "./pages/AdminLogin";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
+import DeveloperRoadmap from "./pages/DeveloperRoadmap";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/package" element={<LaunchPackage />} />
         <Route path="/security-report" element={<SecurityReport />} />
         <Route path="/bonding-curves" element={<BondingCurves />} />
+        <Route path="/developer-roadmap" element={<DeveloperRoadmap />} />
         
         {/* Admin routes */}
         <Route path="/admin-login" element={<AdminLogin />} />
