@@ -1,5 +1,5 @@
 
-import { createWeb3Modal, defaultConfig } from '@web3modal/ethers5/react';
+// import { createWeb3Modal, defaultConfig } from '@web3modal/ethers5/react';
 
 // 1. Get projectId from https://cloud.walletconnect.com
 // For Vite, environment variables must start with VITE_
@@ -39,18 +39,18 @@ export const configureWeb3Modal = () => {
     // For now, we'll let it proceed so the UI doesn't break entirely, but Web3Modal might not work.
   }
   
-  createWeb3Modal({
-    ethersConfig: defaultConfig({ metadata }),
-    chains: [mainnet, sepolia],
-    projectId: WALLETCONNECT_PROJECT_ID,
-    enableAnalytics: true, // Optional - defaults to your Cloud configuration
-    themeMode: 'dark',
-    defaultChain: mainnet,
-    tokens: {
-      [mainnet.chainId]: {
-        address: '0x substituethiswithyourtokenaddress', // Optional: your app's token
-        // image: 'https://...', // Optional: your app's token image
-      }
-    }
-  });
+  // createWeb3Modal({
+  //   ethersConfig: defaultConfig({ metadata }),
+  //   chains: [mainnet, sepolia],
+  //   projectId: WALLETCONNECT_PROJECT_ID,
+  //   enableAnalytics: true, // Optional - defaults to your Cloud configuration
+  //   themeMode: 'dark',
+  //   defaultChain: mainnet,
+  //   tokens: {
+  //     [mainnet.chainId]: {
+  //       address: '0x substituethiswithyourtokenaddress', // Optional: your app's token
+  //       // image: 'https://...', // Optional: your app's token image
+  //     }
+  //   }
+  // });
 };
