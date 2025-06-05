@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TokenTransaction } from '@/services/token/types'; // Updated import
+import { TokenTransaction } from '@/services/token/types';
 import { ArrowUpRight, ArrowDownLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,25 +19,52 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, i
   };
 
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      timeZoneName: 'short',
-    });
+    try {
+      // Handle various date formats and ensure we have a valid date
+      if (!dateString) {
+        return 'Invalid date';
+      }
+      
+      const date = new Date(dateString);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date string:', dateString);
+        return 'Invalid date';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZoneName: 'short',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date string:', dateString);
+      return 'Invalid date';
+    }
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    try {
+      // Ensure amount is a valid number
+      if (typeof amount !== 'number' || isNaN(amount)) {
+        return '$0.00';
+      }
+      
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return '$0.00';
+    }
   };
 
   return (
@@ -90,7 +117,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions, i
                   </div>
                   <div className="text-right">
                     <div className="font-medium">
-                      {transaction.side === 'buy' ? '+' : '-'} {transaction.amount.toFixed(6)}
+                      {transaction.side === 'buy' ? '+' : '-'} {(transaction.amount || 0).toFixed(6)}
                     </div>
                     <div className="text-xs text-gray-400">{formatCurrency(transaction.amountUsd || 0)}</div>
                   </div>

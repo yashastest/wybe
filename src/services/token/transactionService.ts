@@ -4,7 +4,7 @@ import { apiClient } from '../api/apiClient';
 import { TokenTransaction, TradeHistoryFilters } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
-// Mock transaction response with proper structure
+// Mock transaction response with proper structure and valid dates
 const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction[] => {
   const history: TokenTransaction[] = [
     {
@@ -12,36 +12,54 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
       txHash: 'tx_123456789abcdef',
       tokenSymbol: 'WYBE',
       tokenName: 'Wybe Token',
-      userId: 'user1', // Added userId property
+      userId: 'user1',
       type: 'buy',
-      side: 'buy', // For backwards compatibility 
+      side: 'buy',
       amount: 0.25,
       amountUsd: 75,
       price: 0.015,
       fee: 0.005,
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       walletAddress: 'wallet123',
       status: 'confirmed',
-      amountTokens: 5000, // For backwards compatibility
-      amountSol: 0.25 // For backwards compatibility
+      amountTokens: 5000,
+      amountSol: 0.25
     },
     {
       id: '2',
       txHash: 'tx_abcdef123456789',
       tokenSymbol: 'WYBE',
       tokenName: 'Wybe Token',
-      userId: 'user1', // Added userId property
+      userId: 'user1',
       type: 'sell',
-      side: 'sell', // For backwards compatibility
+      side: 'sell',
       amount: 0.15,
       amountUsd: 45,
       price: 0.014,
       fee: 0.003,
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
       walletAddress: 'wallet123',
       status: 'confirmed',
-      amountTokens: 3000, // For backwards compatibility
-      amountSol: 0.15 // For backwards compatibility
+      amountTokens: 3000,
+      amountSol: 0.15
+    },
+    {
+      id: '3',
+      txHash: 'tx_def123456789abc',
+      tokenSymbol: 'WYBE',
+      tokenName: 'Wybe Token',
+      userId: 'user1',
+      type: 'buy',
+      side: 'buy',
+      amount: 0.35,
+      amountUsd: 105,
+      price: 0.016,
+      fee: 0.007,
+      timestamp: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
+      walletAddress: 'wallet123',
+      status: 'confirmed',
+      amountTokens: 6500,
+      amountSol: 0.35
     }
   ];
 
@@ -56,17 +74,41 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
       }
       
       if (filters.startDate) {
-        const txDate = new Date(tx.timestamp);
-        const startDate = filters.startDate instanceof Date ? filters.startDate : new Date(filters.startDate);
-        if (txDate < startDate) {
+        try {
+          const txDate = new Date(tx.timestamp);
+          const startDate = filters.startDate instanceof Date ? filters.startDate : new Date(filters.startDate);
+          
+          // Validate both dates before comparing
+          if (isNaN(txDate.getTime()) || isNaN(startDate.getTime())) {
+            console.warn('Invalid date in filter comparison:', { txDate: tx.timestamp, startDate: filters.startDate });
+            return false;
+          }
+          
+          if (txDate < startDate) {
+            return false;
+          }
+        } catch (error) {
+          console.error('Error comparing start date:', error);
           return false;
         }
       }
       
       if (filters.endDate) {
-        const txDate = new Date(tx.timestamp);
-        const endDate = filters.endDate instanceof Date ? filters.endDate : new Date(filters.endDate);
-        if (txDate > endDate) {
+        try {
+          const txDate = new Date(tx.timestamp);
+          const endDate = filters.endDate instanceof Date ? filters.endDate : new Date(filters.endDate);
+          
+          // Validate both dates before comparing
+          if (isNaN(txDate.getTime()) || isNaN(endDate.getTime())) {
+            console.warn('Invalid date in filter comparison:', { txDate: tx.timestamp, endDate: filters.endDate });
+            return false;
+          }
+          
+          if (txDate > endDate) {
+            return false;
+          }
+        } catch (error) {
+          console.error('Error comparing end date:', error);
           return false;
         }
       }
@@ -79,8 +121,29 @@ const getMockTransactionData = (filters?: TradeHistoryFilters): TokenTransaction
 };
 
 const getUserTransactions = async (walletAddress: string, filters?: TradeHistoryFilters): Promise<TokenTransaction[]> => {
-  // Use mock data for now, will integrate real API later
-  return getMockTransactionData(filters);
+  try {
+    // Use mock data for now, will integrate real API later
+    const transactions = getMockTransactionData(filters);
+    
+    // Validate that all returned transactions have valid timestamps
+    return transactions.filter(tx => {
+      if (!tx.timestamp) {
+        console.warn('Transaction missing timestamp:', tx.id);
+        return false;
+      }
+      
+      const date = new Date(tx.timestamp);
+      if (isNaN(date.getTime())) {
+        console.warn('Transaction has invalid timestamp:', tx.id, tx.timestamp);
+        return false;
+      }
+      
+      return true;
+    });
+  } catch (error) {
+    console.error('Error in getUserTransactions:', error);
+    return [];
+  }
 };
 
 const getTransactionStats = async (tokenSymbol?: string) => {
